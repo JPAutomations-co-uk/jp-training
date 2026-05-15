@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JP Training — The Executive Performance Protocol</title>
+  <meta name="description" content="A 12-week performance protocol for business owners and executives — built entirely from your blood work. Not a gym programme. The first intervention that starts with what's actually wrong.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #000;
+      --bg-card:      #0b0f14;
+      --bg-elevated:  #141414;
+      --teal:         #2dd4bf;
+      --teal-bright:  #46ecd5;
+      --teal-dim:     #00baa7;
+      --teal-glow:    rgba(45,212,191,0.12);
+      --text:         #F2F0F8;
+      --text-2:       rgba(242,240,248,0.55);
+      --text-3:       rgba(242,240,248,0.30);
+      --border:       rgba(255,255,255,0.07);
+      --border-teal:  rgba(45,212,191,0.22);
+      --green:        #4ade80;
+      --red-stat:     #f87171;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    ::selection { background: var(--teal); color: #000; }
+
+    /* ── SCROLL PROGRESS ── */
+    #scroll-bar {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #005f5a, var(--teal), var(--teal-bright));
+      transform-origin: left; transform: scaleX(0);
+      z-index: 200; will-change: transform;
+    }
+
+    /* ── AMBIENT ORBS ── */
+    .orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(120px); pointer-events: none; z-index: 0;
+    }
+    .orb-a {
+      width: 700px; height: 700px; top: -150px; left: -200px;
+      background: radial-gradient(circle, rgba(45,212,191,0.07), transparent 70%);
+      animation: orb1 14s ease-in-out infinite;
+    }
+    .orb-b {
+      width: 600px; height: 600px; top: 40%; right: -250px;
+      background: radial-gradient(circle, rgba(45,212,191,0.05), transparent 70%);
+      animation: orb2 18s ease-in-out infinite;
+    }
+    .orb-c {
+      width: 500px; height: 500px; bottom: 10%; left: 20%;
+      background: radial-gradient(circle, rgba(45,212,191,0.04), transparent 70%);
+      animation: orb3 22s ease-in-out infinite;
+    }
+    @keyframes orb1 { 0%,100%{transform:translate(0,0)} 40%{transform:translate(55px,40px)} 70%{transform:translate(-25px,60px)} }
+    @keyframes orb2 { 0%,100%{transform:translate(0,0)} 35%{transform:translate(-40px,-50px)} 70%{transform:translate(30px,-20px)} }
+    @keyframes orb3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,-50px)} }
+
+    /* ── PARTICLE CANVAS ── */
+    #particles {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 48px;
+      border-bottom: 1px solid transparent;
+      backdrop-filter: blur(0px);
+      transition: all 0.35s ease;
+    }
+    nav.stuck {
+      padding: 13px 48px;
+      border-bottom-color: var(--border);
+      backdrop-filter: blur(24px);
+      background: rgba(0,0,0,0.92);
+    }
+    .logo-wrap { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-mark {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--teal-dim), var(--teal));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 900; color: #000; letter-spacing: -0.03em;
+      flex-shrink: 0; box-shadow: 0 0 20px rgba(45,212,191,0.35);
+    }
+    .logo-text { display: flex; flex-direction: column; }
+    .logo-name { font-size: 13.5px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; line-height: 1; }
+    .logo-tag  { font-size: 9px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.09em; margin-top: 2px; }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { font-size: 13px; font-weight: 500; color: var(--text-2); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      padding: 9px 22px;
+      background: linear-gradient(135deg, var(--teal-dim), var(--teal));
+      color: #000; border: none; border-radius: 9px;
+      font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none;
+      box-shadow: 0 0 22px rgba(45,212,191,0.28);
+      transition: all 0.22s ease;
+    }
+    .nav-cta:hover { box-shadow: 0 0 36px rgba(45,212,191,0.48); transform: translateY(-1px); }
+
+    /* ── REVEAL ── */
+    .r  { opacity:0; transform:translateY(28px);  transition: opacity .7s ease, transform .7s ease; }
+    .rl { opacity:0; transform:translateX(-28px); transition: opacity .7s ease, transform .7s ease; }
+    .rr { opacity:0; transform:translateX(28px);  transition: opacity .7s ease, transform .7s ease; }
+    .r.on, .rl.on, .rr.on { opacity:1; transform:none; }
+    .d1{transition-delay:.10s}.d2{transition-delay:.20s}.d3{transition-delay:.30s}.d4{transition-delay:.40s}.d5{transition-delay:.50s}
+
+    /* ── LAYOUT ── */
+    section { position: relative; z-index: 1; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
+    .div { width:100%; height:1px; background: linear-gradient(90deg,transparent,var(--border),transparent); }
+
+    /* ── EYEBROW ── */
+    .eye {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; color: var(--teal-bright);
+      letter-spacing: 0.09em; text-transform: uppercase;
+      background: rgba(45,212,191,0.08); border: 1px solid var(--border-teal);
+      border-radius: 100px; padding: 5px 13px; margin-bottom: 18px;
+    }
+    .eye-dot { width:5px; height:5px; border-radius:50%; background:var(--teal); }
+
+    h2 {
+      font-size: clamp(2rem, 3.5vw, 3.1rem);
+      font-weight: 800; letter-spacing: -0.028em; line-height: 1.08;
+      color: var(--text); margin-bottom: 18px;
+    }
+    .sub { font-size: 17px; color: var(--text-2); line-height: 1.65; max-width: 560px; }
+
+    /* ── HERO ── */
+    .hero { min-height: 100vh; display: flex; align-items: center; padding: 130px 0 80px; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(45,212,191,0.07); border: 1px solid var(--border-teal);
+      border-radius: 100px; padding: 6px 14px; margin-bottom: 16px;
+    }
+    .pulse-dot {
+      position: relative; width: 6px; height: 6px;
+      border-radius: 50%; background: var(--teal); flex-shrink:0;
+    }
+    .pulse-dot::after {
+      content:''; position:absolute; inset:0; border-radius:50%;
+      background:var(--teal); animation:ping 1.6s ease-out infinite;
+    }
+    @keyframes ping { 0%{transform:scale(1);opacity:.8} 100%{transform:scale(3.2);opacity:0} }
+    #badge-text {
+      font-size: 11px; font-weight: 600; color: var(--teal-bright);
+      font-family: monospace; letter-spacing: 0.04em;
+      min-width: 200px; transition: opacity .25s ease;
+    }
+
+    /* Hero eyebrow line */
+    .hero-eye {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--text-3); letter-spacing: 0.04em;
+      margin-bottom: 20px; line-height: 1.5;
+    }
+
+    h1 {
+      font-size: clamp(2.7rem, 4.6vw, 4.2rem);
+      font-weight: 900; line-height: 1.05; letter-spacing: -0.035em;
+      color: var(--text); margin-bottom: 22px;
+    }
+    h1 .grad {
+      background: linear-gradient(135deg, var(--teal) 20%, var(--teal-bright) 60%, #96f7e4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-p { font-size: 17px; color: var(--text-2); line-height: 1.7; max-width: 500px; margin-bottom: 36px; }
+
+    .ctas { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:48px; }
+    .btn-p {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 30px;
+      background: linear-gradient(135deg, var(--teal-dim) 0%, var(--teal) 60%, var(--teal-bright) 100%);
+      color: #000; border: none; border-radius: 11px;
+      font-size: 15px; font-weight: 700; cursor: pointer; text-decoration: none;
+      box-shadow: 0 0 32px rgba(45,212,191,0.30);
+      transition: all .25s ease;
+    }
+    .btn-p:hover { box-shadow: 0 0 52px rgba(45,212,191,0.52); transform: translateY(-2px); }
+    .btn-s {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 26px; background: rgba(255,255,255,0.04);
+      color: var(--text); border: 1px solid var(--border); border-radius: 11px;
+      font-size: 15px; font-weight: 600; text-decoration: none;
+      transition: all .25s ease;
+    }
+    .btn-s:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.14); }
+
+    .trust { display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+    .t-item { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:500; color:var(--text-3); }
+    .t-chk {
+      width:16px; height:16px; border-radius:50%;
+      background:rgba(45,212,191,0.09); border:1px solid rgba(45,212,191,0.24);
+      display:flex; align-items:center; justify-content:center; font-size:8px; color:var(--teal-bright);
+    }
+
+    /* ── HERO DATA PANEL ── */
+    .collage { position: relative; height: 560px; perspective: 1200px; }
+    .collage-glow {
+      position:absolute; inset:-30px; border-radius:30px;
+      background:radial-gradient(ellipse at 50% 50%, rgba(45,212,191,0.10), transparent 65%);
+      animation: glow-p 5s ease-in-out infinite; pointer-events:none; z-index:0;
+    }
+    @keyframes glow-p { 0%,100%{opacity:.8;transform:scale(1)} 50%{opacity:1.1;transform:scale(1.03)} }
+
+    .data-panel {
+      position: absolute; inset: 0;
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 50px 100px rgba(0,0,0,0.65);
+      z-index: 1;
+    }
+    .data-panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    .dp-title { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; }
+    .dp-live { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; color: var(--teal-bright); font-family: monospace; }
+    .dp-live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal); animation: ping 1.8s ease-out infinite; }
+    .data-panel-body { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+
+    .marker-row {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      transition: all 0.3s ease;
+    }
+    .marker-row:hover { border-color: var(--border-teal); background: rgba(45,212,191,0.04); }
+    .marker-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .marker-name { font-size: 11px; font-weight: 600; color: var(--text-2); letter-spacing: 0.02em; }
+    .marker-delta { font-size: 10px; font-weight: 700; border-radius: 100px; padding: 2px 8px; }
+    .delta-up { color: var(--green); background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.22); }
+    .delta-dn { color: var(--red-stat); background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.22); }
+    .marker-vals { display: flex; align-items: center; gap: 10px; }
+    .mv-before { font-size: 18px; font-weight: 800; color: var(--text-3); font-family: monospace; }
+    .mv-arrow { font-size: 14px; color: var(--teal); }
+    .mv-after { font-size: 22px; font-weight: 900; color: var(--text); font-family: monospace; }
+    .mv-unit { font-size: 10px; color: var(--text-3); }
+    .marker-bar { height: 4px; background: rgba(255,255,255,0.05); border-radius: 100px; margin-top: 10px; overflow: hidden; }
+    .marker-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--teal-dim), var(--teal-bright)); transition: width 1.5s ease; }
+
+    .data-panel-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.015);
+    }
+    .dp-week { font-size: 10px; color: var(--text-3); font-family: monospace; }
+    .dp-badge {
+      font-size: 9px; font-weight: 700; color: var(--teal-bright);
+      background: rgba(45,212,191,0.09); border: 1px solid var(--border-teal);
+      border-radius: 100px; padding: 3px 9px; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+
+    /* Floating chips */
+    .chip {
+      position:absolute; z-index:10;
+      background:rgba(10,10,20,0.92); backdrop-filter:blur(16px);
+      border:1px solid rgba(255,255,255,0.10); border-radius:14px;
+      padding:12px 16px;
+      box-shadow:0 14px 36px rgba(0,0,0,0.5);
+    }
+    .chip-top  { top:-18px; left:14px; animation:float 6s ease-in-out infinite; }
+    .chip-mid  { top:38%; right:-24px; animation:float 7s ease-in-out infinite 0.8s; }
+    .chip-bot  { bottom:10px; left:14px; z-index:10; }
+    .chip-lbl  { font-size:9.5px; font-weight:500; color:var(--text-3); margin-bottom:4px; }
+    .chip-val  { font-size:13px; font-weight:700; color:var(--text); }
+    .pill { display:inline-flex;align-items:center;gap:4px; font-size:10.5px;font-weight:700;border-radius:100px;padding:3px 9px; }
+    .pill-grn { color:#86efac; background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.22); }
+    .pill-teal { color:var(--teal-bright); background:rgba(45,212,191,0.1); border:1px solid var(--border-teal); }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+    .shine {
+      position:absolute; inset:0; z-index:2; pointer-events:none;
+      background:linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.04) 50%, transparent 62%);
+      animation:shine 6s ease-in-out infinite 2s;
+    }
+    @keyframes shine { 0%{transform:translateX(-160%) skewX(-12deg)} 100%{transform:translateX(260%) skewX(-12deg)} }
+
+    /* ── STRIP ── */
+    .strip-sec { padding:20px 0 60px; }
+    .strip-row { display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+    .s-chip {
+      display:flex; align-items:center; gap:8px;
+      padding:8px 18px; border-radius:100px;
+      background:rgba(255,255,255,0.03); border:1px solid var(--border);
+      font-size:12.5px; font-weight:500; color:var(--text-3);
+      transition:all .25s ease;
+      animation:float var(--anim,4s) ease-in-out infinite var(--adel,0s);
+    }
+    .s-chip:hover { border-color:var(--border-teal); color:var(--text-2); background:rgba(45,212,191,0.06); }
+
+    /* ── REALITY SECTION ── */
+    .reality-sec { padding: 84px 0; }
+    .reality-stmts { display:flex; flex-direction:column; gap:1px; margin-top:56px; }
+    .r-stmt {
+      padding: 28px 32px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 0;
+      border-left: 3px solid transparent;
+      cursor: default; transition: all 0.3s ease; position: relative; overflow:hidden;
+    }
+    .r-stmt:first-child { border-radius: 17px 17px 0 0; }
+    .r-stmt:last-child  { border-radius: 0 0 17px 17px; }
+    .r-stmt:hover { border-left-color: var(--teal); background: var(--bg-elevated); }
+    .r-stmt::before {
+      content:''; position:absolute; top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg, var(--teal), transparent);
+      opacity:0; transition:opacity .3s ease;
+    }
+    .r-stmt:hover::before { opacity:0.6; }
+    .r-num { font-size:10px;font-weight:700;color:var(--teal-dim);font-family:monospace;letter-spacing:.1em;margin-bottom:10px;text-transform:uppercase; }
+    .r-text { font-size:17px;font-weight:500;color:var(--text);line-height:1.6; }
+    .r-text em { color:var(--text-2); font-style:normal; }
+
+    /* ── TRAJECTORY ── */
+    .traj-sec { padding:84px 0; }
+    .traj-grid { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; margin-top:56px; }
+    .traj-timeline { display:flex; flex-direction:column; gap:0; }
+    .traj-item { display:flex; gap:20px; padding:0 0 32px 0; position:relative; }
+    .traj-item:not(:last-child)::after {
+      content:''; position:absolute; left:19px; top:42px; bottom:0;
+      width:1px; background:linear-gradient(180deg, var(--border-teal), transparent);
+    }
+    .traj-icon {
+      width:40px; height:40px; border-radius:50%; flex-shrink:0;
+      border:1px solid var(--border-teal);
+      background:rgba(45,212,191,0.08);
+      display:flex; align-items:center; justify-content:center;
+      font-size:15px; position:relative; z-index:1;
+    }
+    .traj-icon.danger { border-color:rgba(248,113,113,0.3); background:rgba(248,113,113,0.08); }
+    .traj-yr { font-size:10px;font-weight:700;color:var(--teal-bright);font-family:monospace;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px; }
+    .traj-yr.danger { color:var(--red-stat); }
+    .traj-copy { font-size:14px;color:var(--text-2);line-height:1.6; }
+
+    .traj-right { position:sticky; top:120px; }
+    .traj-cta-box {
+      background:linear-gradient(135deg,rgba(45,212,191,0.07),rgba(45,212,191,0.02));
+      border:1px solid var(--border-teal); border-radius:22px;
+      padding:40px; position:relative; overflow:hidden;
+    }
+    .traj-cta-box::before {
+      content:''; position:absolute; top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(45,212,191,0.5),transparent);
+    }
+    .traj-vs { display:flex;gap:12px;margin-bottom:28px; }
+    .vs-col { flex:1; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:13px; padding:18px 16px; }
+    .vs-col.active { border-color:var(--border-teal); background:rgba(45,212,191,0.04); }
+    .vs-label { font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px; }
+    .vs-label.bad { color:var(--red-stat); }
+    .vs-label.good { color:var(--green); }
+    .vs-item { font-size:12px;color:var(--text-2);padding:5px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px; }
+    .vs-item:last-child { border:none; }
+    .vs-ico { font-size:11px; }
+
+    /* ── MECHANISM ── */
+    .mech-sec { padding:84px 0; }
+    .mech-grid { display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start; margin-top:56px; }
+    .mech-cards { display:flex;flex-direction:column;gap:14px; }
+    .mech-card {
+      padding:22px 24px; background:var(--bg-card);
+      border:1px solid var(--border); border-radius:16px;
+      cursor:pointer; transition:all .3s ease; position:relative; overflow:hidden;
+    }
+    .mech-card.active { border-color:var(--border-teal); background:var(--bg-elevated); }
+    .mech-card::before {
+      content:''; position:absolute; left:0;top:0;bottom:0;width:3px;
+      background:var(--teal); opacity:0; transition:opacity .3s;
+    }
+    .mech-card.active::before { opacity:1; }
+    .mech-card-top { display:flex;align-items:center;justify-content:space-between;margin-bottom:8px; }
+    .mech-card-name { font-size:13px;font-weight:700;color:var(--text); }
+    .mech-card-nums { display:flex;align-items:center;gap:6px; }
+    .mn-before { font-size:13px;font-weight:700;color:var(--text-3);font-family:monospace; }
+    .mn-arrow { color:var(--teal);font-size:12px; }
+    .mn-after { font-size:15px;font-weight:900;color:var(--teal-bright);font-family:monospace; }
+    .mech-card-desc { font-size:12.5px;color:var(--text-2);line-height:1.55;max-height:0;overflow:hidden;transition:max-height .4s ease,opacity .4s ease;opacity:0; }
+    .mech-card.active .mech-card-desc { max-height:100px;opacity:1; }
+    .mech-bar { height:3px;background:rgba(255,255,255,0.05);border-radius:100px;margin-top:10px;overflow:hidden; }
+    .mech-fill { height:100%;border-radius:100px;background:linear-gradient(90deg,var(--teal-dim),var(--teal-bright));transition:width 0.8s ease; }
+
+    .mech-detail {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:22px;
+      overflow:hidden; position:sticky; top:120px;
+    }
+    .md-header { padding:20px 24px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02); }
+    .md-eyebrow { font-size:9px;font-weight:700;color:var(--teal-bright);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px; }
+    .md-title { font-size:20px;font-weight:800;color:var(--text);line-height:1.2; }
+    .md-body { padding:24px; }
+    .md-desc { font-size:14px;color:var(--text-2);line-height:1.7;margin-bottom:20px; }
+    .md-impact { background:rgba(45,212,191,0.06);border:1px solid var(--border-teal);border-radius:12px;padding:16px 18px; }
+    .md-impact-label { font-size:10px;font-weight:700;color:var(--teal-bright);text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px; }
+    .md-impact-text { font-size:13px;color:var(--text-2);line-height:1.6; }
+    .md-stats { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px; }
+    .md-stat { background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px; }
+    .md-stat-num { font-size:22px;font-weight:900;color:var(--text);font-family:monospace;letter-spacing:-.03em; }
+    .md-stat-num span { color:var(--teal); }
+    .md-stat-lbl { font-size:10.5px;color:var(--text-3);margin-top:3px; }
+
+    /* ── PROTOCOL / TIMELINE ── */
+    .proto-sec { padding:84px 0; }
+    .proto-grid { display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;margin-top:56px; }
+    .timeline { background:var(--bg-card); border:1px solid var(--border); border-radius:20px; overflow:hidden; }
+    .tl-head {
+      display:flex;align-items:center;gap:8px;padding:14px 20px;
+      border-bottom:1px solid var(--border); background:rgba(255,255,255,0.015);
+    }
+    .tl-dot { position:relative;width:6px;height:6px;border-radius:50%;background:var(--teal); }
+    .tl-dot::after { content:'';position:absolute;inset:0;border-radius:50%;background:var(--teal);animation:ping 1.6s ease-out infinite; }
+    .tl-label { font-size:10px;font-family:monospace;color:var(--text-3);letter-spacing:.1em;text-transform:uppercase; }
+    .tl-steps { display:flex;flex-direction:column; }
+    .tl-step {
+      display:flex;align-items:center;gap:14px;padding:13px 20px;
+      border-left:2px solid transparent; cursor:pointer; transition:all .25s ease;
+    }
+    .tl-step.on { background:rgba(255,255,255,0.03); border-left-color:var(--teal); }
+    .tl-step:hover:not(.on) { background:rgba(255,255,255,0.015); }
+    .step-num {
+      width:28px;height:28px;border-radius:50%;
+      background:rgba(255,255,255,0.03);border:1px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:700;color:var(--text-3);flex-shrink:0;
+      transition:all .25s ease;
+    }
+    .tl-step.on .step-num { background:rgba(45,212,191,0.12);border-color:var(--border-teal);color:var(--teal-bright); }
+    .step-title { font-size:13px;font-weight:600;color:var(--text-2);transition:color .25s; }
+    .tl-step.on .step-title { color:var(--text); }
+    .step-sub { font-size:11.5px;color:var(--text-3);margin-top:2px; }
+    .tl-footer { padding:12px 16px;border-top:1px solid rgba(255,255,255,0.03); }
+    .tl-bars { display:flex;gap:3px;height:16px; }
+    .tl-bar { flex:1;border-radius:3px;background:rgba(45,212,191,0.15); }
+
+    .proto-detail { display:flex;flex-direction:column;gap:16px;position:sticky;top:120px; }
+    .pd-card { background:var(--bg-card);border:1px solid var(--border);border-radius:17px;padding:28px; }
+    .pd-num { font-size:11px;font-weight:600;color:var(--teal-bright);letter-spacing:.09em;margin-bottom:10px;font-family:monospace; }
+    .pd-title { font-size:22px;font-weight:800;color:var(--text);margin-bottom:12px;line-height:1.2; }
+    .pd-desc { font-size:14px;color:var(--text-2);line-height:1.65; }
+    .pd-tags { display:flex;gap:6px;flex-wrap:wrap;margin-top:16px; }
+    .pd-tag { font-size:10px;font-weight:600;color:var(--teal-bright);background:rgba(45,212,191,0.09);border:1px solid var(--border-teal);border-radius:100px;padding:3px 10px; }
+
+    /* ── INCLUDED GRID ── */
+    .incl-sec { padding:84px 0; }
+    .incl-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:56px; }
+    .incl-card {
+      padding:26px 24px; background:var(--bg-card);
+      border:1px solid var(--border); border-radius:17px;
+      cursor:default; transition:all .3s ease; position:relative; overflow:hidden;
+    }
+    .incl-card::before {
+      content:''; position:absolute; top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg, transparent, var(--teal), transparent);
+      opacity:0; transition:opacity .3s ease;
+    }
+    .incl-card:hover { border-color:var(--border-teal); transform:translateY(-5px); box-shadow:0 24px 50px rgba(45,212,191,0.07); }
+    .incl-card:hover::before { opacity:1; }
+    .incl-ico { font-size:24px; margin-bottom:14px; }
+    .incl-badge { font-size:9px;font-weight:700;color:var(--teal-bright);background:rgba(45,212,191,0.09);border:1px solid var(--border-teal);border-radius:100px;padding:2px 9px;display:inline-block;margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase; }
+    .incl-title { font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.3; }
+    .incl-desc { font-size:13px;color:var(--text-2);line-height:1.6; }
+
+    /* ── GUARANTEES ── */
+    .guar-sec { padding:84px 0; }
+    .guar-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px; }
+    .guar-card {
+      padding:36px 30px; background:var(--bg-card);
+      border:1px solid var(--border-teal);
+      border-radius:20px; position:relative; overflow:hidden;
+      transition:all .3s ease;
+    }
+    .guar-card:hover { background:var(--bg-elevated); box-shadow:0 24px 60px rgba(45,212,191,0.08); transform:translateY(-4px); }
+    .guar-card::before {
+      content:''; position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(45,212,191,0.55),transparent);
+    }
+    .guar-num { font-size:11px;font-weight:700;color:var(--teal-dim);font-family:monospace;letter-spacing:.1em;margin-bottom:20px;text-transform:uppercase; }
+    .guar-ico { font-size:32px;margin-bottom:16px; }
+    .guar-title { font-size:18px;font-weight:800;color:var(--text);margin-bottom:14px;line-height:1.2; }
+    .guar-text { font-size:13.5px;color:var(--text-2);line-height:1.65; }
+    .guar-fine { font-size:11px;color:var(--teal-bright);margin-top:16px;font-weight:600; }
+    .guar-footer { text-align:center;margin-top:40px; }
+    .guar-footer p { font-size:15px;color:var(--text-2);font-style:italic; }
+    .guar-footer strong { color:var(--teal-bright); }
+
+    /* ── INVESTMENT ── */
+    .invest-sec { padding:84px 0; }
+    .invest-box {
+      background:linear-gradient(135deg,rgba(45,212,191,0.07),rgba(45,212,191,0.02));
+      border:1px solid var(--border-teal); border-radius:26px;
+      overflow:hidden; position:relative;
+    }
+    .invest-box::before {
+      content:'';position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(45,212,191,0.6),transparent);
+    }
+    .invest-grid { display:grid;grid-template-columns:1fr 1fr;gap:0; }
+    .invest-left { padding:60px; border-right:1px solid var(--border); }
+    .invest-price { font-size:clamp(3rem,5vw,4.5rem);font-weight:900;color:var(--text);letter-spacing:-.04em;line-height:1; }
+    .invest-price .curr { font-size:0.45em;font-weight:700;color:var(--teal);vertical-align:super; }
+    .invest-per { font-size:15px;color:var(--text-3);margin-top:6px;margin-bottom:6px; }
+    .invest-total { font-size:13px;color:var(--text-2); }
+    .invest-total strong { color:var(--teal-bright); }
+    .invest-right { padding:60px; }
+    .invest-right h3 { font-size:17px;font-weight:700;color:var(--text);margin-bottom:20px; }
+    .invest-item { display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border); }
+    .invest-item:last-child { border:none; }
+    .inv-chk { width:18px;height:18px;border-radius:50%;background:rgba(45,212,191,0.12);border:1px solid var(--border-teal);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--teal-bright);flex-shrink:0;margin-top:1px; }
+    .inv-text { font-size:13px;color:var(--text-2);line-height:1.5; }
+    .inv-text strong { color:var(--text);font-weight:600; }
+
+    /* ── FAQ ── */
+    .faq-sec { padding:84px 0; }
+    .faq-list { display:flex;flex-direction:column;gap:8px;margin-top:56px;max-width:780px; }
+    .faq-item {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:14px; overflow:hidden; cursor:pointer;
+      transition:border-color .25s ease;
+    }
+    .faq-item.open { border-color:var(--border-teal); }
+    .faq-q {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:20px 24px; font-size:15px;font-weight:600;color:var(--text);
+      user-select:none;
+    }
+    .faq-icon { width:22px;height:22px;border-radius:50%;background:rgba(45,212,191,0.09);border:1px solid var(--border-teal);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--teal-bright);flex-shrink:0;transition:transform .3s ease; }
+    .faq-item.open .faq-icon { transform:rotate(45deg); }
+    .faq-a { font-size:14px;color:var(--text-2);line-height:1.68;max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s ease;padding:0 24px; }
+    .faq-item.open .faq-a { max-height:300px;padding:0 24px 20px; }
+
+    /* ── CTA / APPLICATION ── */
+    .app-sec { padding:84px 0 120px; }
+    .app-box {
+      background:var(--bg-card);
+      border:1px solid var(--border-teal); border-radius:26px;
+      padding:68px 60px; position:relative; overflow:hidden;
+    }
+    .app-box::before {
+      content:'';position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(45,212,191,0.6),transparent);
+    }
+    .app-glow {
+      position:absolute;top:-100px;right:60px;width:600px;height:600px;
+      background:radial-gradient(circle,rgba(45,212,191,0.06),transparent 65%);
+      pointer-events:none;
+    }
+    .app-grid { display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start; }
+    .app-tag { display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--teal-bright);letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px; }
+    .app-box h2 { font-size:clamp(1.9rem,3vw,2.8rem);margin-bottom:14px;line-height:1.1; }
+    .app-box p { font-size:15px;color:var(--text-2);line-height:1.65;max-width:440px; }
+    .app-spots { display:flex;align-items:center;gap:10px;margin-top:28px; }
+    .spot-dot { width:8px;height:8px;border-radius:50%;background:var(--teal); }
+    .spot-txt { font-size:13px;color:var(--text-3); }
+    .spot-txt strong { color:var(--teal-bright); }
+
+    .app-form { display:flex;flex-direction:column;gap:14px; }
+    .form-group { display:flex;flex-direction:column;gap:6px; }
+    .form-label { font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em; }
+    .form-input, .form-select, .form-textarea {
+      background:rgba(255,255,255,0.04); border:1px solid var(--border);
+      border-radius:10px; padding:13px 16px;
+      font-size:14px; color:var(--text); font-family:inherit;
+      transition:all .25s ease; width:100%;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline:none; border-color:var(--border-teal);
+      background:rgba(45,212,191,0.04);
+      box-shadow:0 0 0 3px rgba(45,212,191,0.08);
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color:var(--text-3); }
+    .form-select { appearance:none; cursor:pointer; }
+    .form-textarea { resize:vertical; min-height:90px; }
+    .form-submit {
+      padding:15px 28px;
+      background:linear-gradient(135deg,var(--teal-dim),var(--teal),var(--teal-bright));
+      color:#000; border:none; border-radius:11px;
+      font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+      box-shadow:0 0 32px rgba(45,212,191,0.28);
+      transition:all .25s ease;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+    }
+    .form-submit:hover { box-shadow:0 0 52px rgba(45,212,191,0.5); transform:translateY(-2px); }
+    .form-note { font-size:11px;color:var(--text-3);text-align:center;margin-top:4px; }
+
+    /* ── FOOTER ── */
+    footer { padding:48px 0 34px;border-top:1px solid var(--border); }
+    .foot-row { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px; }
+    .foot-logo { display:flex;align-items:center;gap:10px;text-decoration:none; }
+    .foot-copy { font-size:12px;color:var(--text-3); }
+    .foot-links { display:flex;gap:28px; }
+    .foot-links a { font-size:12px;color:var(--text-3);text-decoration:none;transition:color .2s; }
+    .foot-links a:hover { color:var(--text-2); }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:1024px){
+      .incl-grid { grid-template-columns:repeat(2,1fr); }
+      .mech-grid,.proto-grid,.traj-grid { grid-template-columns:1fr; }
+      .mech-detail,.proto-detail,.traj-right { position:static; }
+      .invest-grid { grid-template-columns:1fr; }
+      .invest-left { border-right:none; border-bottom:1px solid var(--border); }
+    }
+    @media(max-width:768px){
+      nav,nav.stuck{padding:13px 20px}
+      .nav-links{display:none}
+      .wrap{padding:0 20px}
+      .hero-grid{grid-template-columns:1fr}
+      .collage{display:none}
+      h1{font-size:2.4rem}
+      .guar-grid{grid-template-columns:1fr}
+      .incl-grid{grid-template-columns:1fr}
+      .app-grid{grid-template-columns:1fr}
+      .app-box{padding:40px 28px}
+      .invest-left,.invest-right{padding:36px 28px}
+      .foot-row{flex-direction:column;align-items:flex-start}
+      .invest-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+  <div id="scroll-bar"></div>
+
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+  <canvas id="particles"></canvas>
+
+  <!-- ── NAV ── -->
+  <nav id="nav">
+    <a href="#" class="logo-wrap">
+      <div class="logo-mark">JP</div>
+      <div class="logo-text">
+        <span class="logo-name">JP Training</span>
+        <span class="logo-tag">Executive Performance</span>
+      </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#results">The Problem</a></li>
+      <li><a href="#protocol">Protocol</a></li>
+      <li><a href="#guarantees">Guarantees</a></li>
+      <li><a href="#apply">Apply</a></li>
+    </ul>
+    <a href="#apply" class="nav-cta">Apply Now</a>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+
+        <div>
+          <!-- Eyebrow: calls out ICP -->
+          <div class="badge r">
+            <div class="pulse-dot"></div>
+            <span id="badge-text">For executives who've optimised everything except themselves.</span>
+          </div>
+
+          <!-- Heading: dream state + guarantee -->
+          <h1 class="r d1">Your brain, body<br>and energy —<br><span class="grad">rebuilt in 12 weeks.</span></h1>
+
+          <!-- Subheading: pain → solution -->
+          <p class="hero-p r d2">
+            You're carrying weight you can't shift, making decisions with a brain running below capacity, and sleeping badly despite knowing it's a problem. We find the root cause in your blood and fix it. Built from your biology — not a template. Results guaranteed in writing.
+          </p>
+
+          <div class="ctas r d3">
+            <a href="#apply" class="btn-p">
+              Apply for a Discovery Call
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a href="#protocol" class="btn-s">See the Protocol</a>
+          </div>
+
+          <div class="trust r d4">
+            <div class="t-item"><div class="t-chk">✓</div> Results guaranteed in writing</div>
+            <div class="t-item"><div class="t-chk">✓</div> Built from your blood work</div>
+            <div class="t-item"><div class="t-chk">✓</div> Everything included at £2,500/mo</div>
+            <div class="t-item"><div class="t-chk">✓</div> 4 spaces max</div>
+          </div>
+        </div>
+
+        <!-- Data Panel Visual -->
+        <div class="collage rr">
+          <div class="collage-glow"></div>
+
+          <div class="data-panel" id="tilt-card">
+            <div class="shine"></div>
+            <div class="data-panel-header">
+              <span class="dp-title">Blood Marker Report — Week 12</span>
+              <span class="dp-live"><span class="dp-live-dot"></span> JP Training Protocol</span>
+            </div>
+            <div class="data-panel-body">
+
+              <div class="marker-row">
+                <div class="marker-top">
+                  <span class="marker-name">FREE TESTOSTERONE</span>
+                  <span class="marker-delta delta-up">↑ 94%</span>
+                </div>
+                <div class="marker-vals">
+                  <span class="mv-before">240</span>
+                  <span class="mv-arrow">→</span>
+                  <span class="mv-after">467</span>
+                  <span class="mv-unit">ng/dL</span>
+                </div>
+                <div class="marker-bar"><div class="marker-fill" style="width:78%"></div></div>
+              </div>
+
+              <div class="marker-row">
+                <div class="marker-top">
+                  <span class="marker-name">hsCRP (INFLAMMATION)</span>
+                  <span class="marker-delta delta-up">↓ 71%</span>
+                </div>
+                <div class="marker-vals">
+                  <span class="mv-before">3.8</span>
+                  <span class="mv-arrow">→</span>
+                  <span class="mv-after">1.1</span>
+                  <span class="mv-unit">mg/L</span>
+                </div>
+                <div class="marker-bar"><div class="marker-fill" style="width:29%"></div></div>
+              </div>
+
+              <div class="marker-row">
+                <div class="marker-top">
+                  <span class="marker-name">SLEEP EFFICIENCY</span>
+                  <span class="marker-delta delta-up">↑ 54%</span>
+                </div>
+                <div class="marker-vals">
+                  <span class="mv-before">54%</span>
+                  <span class="mv-arrow">→</span>
+                  <span class="mv-after">83%</span>
+                  <span class="mv-unit">Oura</span>
+                </div>
+                <div class="marker-bar"><div class="marker-fill" style="width:83%"></div></div>
+              </div>
+
+              <div class="marker-row">
+                <div class="marker-top">
+                  <span class="marker-name">COGNITIVE SCORE</span>
+                  <span class="marker-delta delta-up">↑ 22%</span>
+                </div>
+                <div class="marker-vals">
+                  <span class="mv-before">61</span>
+                  <span class="mv-arrow">→</span>
+                  <span class="mv-after">74</span>
+                  <span class="mv-unit">CBS</span>
+                </div>
+                <div class="marker-bar"><div class="marker-fill" style="width:74%"></div></div>
+              </div>
+
+            </div>
+            <div class="data-panel-footer">
+              <span class="dp-week">PROTOCOL WEEK 12 / DATA: MEDICHECKS + OURA + CBS</span>
+              <span class="dp-badge">Results In Writing</span>
+            </div>
+          </div>
+
+          <div class="chip chip-top">
+            <div class="chip-lbl">Visceral Fat</div>
+            <div class="chip-val">−2.4kg <span class="pill pill-grn">DEXA</span></div>
+          </div>
+          <div class="chip chip-mid">
+            <div class="chip-lbl">Energy Score</div>
+            <div class="chip-val">4.2 → 7.9 <span class="pill pill-teal">Week 12</span></div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STRIP ── -->
+  <section class="strip-sec">
+    <div class="wrap">
+      <div class="strip-row">
+        <div class="s-chip" style="--anim:5s;--adel:0s">🩸 Blood-based diagnosis</div>
+        <div class="s-chip" style="--anim:4s;--adel:.3s">⌚ Oura Ring included</div>
+        <div class="s-chip" style="--anim:6s;--adel:.6s">🫀 DEXA scan included</div>
+        <div class="s-chip" style="--anim:4.5s;--adel:.9s">🧠 Cognitive benchmarking</div>
+        <div class="s-chip" style="--anim:5.5s;--adel:1.2s">💊 Full supplement stack</div>
+        <div class="s-chip" style="--anim:4s;--adel:1.5s">📈 Results guaranteed</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="div"></div></div>
+
+  <!-- ── REALITY ── -->
+  <section class="reality-sec" id="results">
+    <div class="wrap">
+      <div class="r">
+        <div class="eye"><span class="eye-dot"></span> The Honest Assessment</div>
+        <h2>You already know<br>something's wrong.</h2>
+        <p class="sub">You're not looking for motivation. You're looking for a reason it's happening — and someone who knows how to fix it.</p>
+      </div>
+      <div class="reality-stmts r d1">
+
+        <div class="r-stmt">
+          <div class="r-num">01 / 05</div>
+          <div class="r-text">You drink 3–4 nights a week. You'd call it networking. <em>Your testosterone, liver markers, and sleep architecture tell a different story.</em></div>
+        </div>
+
+        <div class="r-stmt">
+          <div class="r-num">02 / 05</div>
+          <div class="r-text">You've tried the gym. You've done the diet. You lost the same 10kg twice and it came back. <em>It came back because you never addressed what was driving it.</em></div>
+        </div>
+
+        <div class="r-stmt">
+          <div class="r-num">03 / 05</div>
+          <div class="r-text">The brain fog isn't tiredness. It's systemic inflammation crossing the blood-brain barrier. <em>Your blood panel would show this within 48 hours.</em></div>
+        </div>
+
+        <div class="r-stmt">
+          <div class="r-num">04 / 05</div>
+          <div class="r-text">You're getting 7 hours of sleep and waking up exhausted. Alcohol sedates but doesn't restore. <em>You're spending years in the wrong sleep phases.</em></div>
+        </div>
+
+        <div class="r-stmt">
+          <div class="r-num">05 / 05</div>
+          <div class="r-text">The belly won't move regardless of what you eat. It's not calories — it's insulin resistance. <em>Which is a blood problem. Which has a specific fix.</em></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="div"></div></div>
+
+  <!-- ── TRAJECTORY ── -->
+  <section class="traj-sec">
+    <div class="wrap">
+      <div class="r">
+        <div class="eye"><span class="eye-dot"></span> The Trajectory</div>
+        <h2>What the next 5 years<br>looks like without this.</h2>
+        <p class="sub">This isn't projection. It's the documented physiological path for a man in your position who doesn't intervene.</p>
+      </div>
+      <div class="traj-grid">
+
+        <div class="traj-timeline rl">
+          <div class="traj-item">
+            <div class="traj-icon">📅</div>
+            <div>
+              <div class="traj-yr">Today</div>
+              <div class="traj-copy">Fatigue you've learned to work around. Weight you've accepted. A mental edge that used to be sharper. You're functional — just not at the level you know you're capable of.</div>
+            </div>
+          </div>
+          <div class="traj-item">
+            <div class="traj-icon danger">📉</div>
+            <div>
+              <div class="traj-yr danger">Year 1</div>
+              <div class="traj-copy">Testosterone drops another 1–2% annually without intervention. The fatigue deepens. The weight becomes harder. The recovery from a heavy night takes longer. You chalk it up to age.</div>
+            </div>
+          </div>
+          <div class="traj-item">
+            <div class="traj-icon danger">⚠️</div>
+            <div>
+              <div class="traj-yr danger">Year 2–3</div>
+              <div class="traj-copy">The inflammation is now a clinical finding. Your GP starts mentioning statins. Sleep quality has deteriorated enough that your partner has noticed. You're cancelling things you used to show up for.</div>
+            </div>
+          </div>
+          <div class="traj-item">
+            <div class="traj-icon danger">🧠</div>
+            <div>
+              <div class="traj-yr danger">Year 4</div>
+              <div class="traj-copy">The cognitive decline is visible to others before it's visible to you. The sharpness in a room. The edge in a negotiation. People notice before you do.</div>
+            </div>
+          </div>
+          <div class="traj-item">
+            <div class="traj-icon danger">🔚</div>
+            <div>
+              <div class="traj-yr danger">Year 5</div>
+              <div class="traj-copy">This is just who you are now. Nobody frames it as reversible — because nobody ran the right tests. You're forty-eight and you feel sixty-three.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="traj-right r d2">
+          <div class="traj-cta-box">
+            <div class="eye"><span class="eye-dot"></span> Every one of these outcomes is preventable</div>
+            <h3 style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:20px;line-height:1.2;">The protocol addresses the root cause — not the symptom.</h3>
+            <div class="traj-vs">
+              <div class="vs-col">
+                <div class="vs-label bad">Without intervention</div>
+                <div class="vs-item"><span class="vs-ico">📉</span> Testosterone declining annually</div>
+                <div class="vs-item"><span class="vs-ico">🔥</span> Inflammation worsening</div>
+                <div class="vs-item"><span class="vs-ico">😴</span> Sleep quality deteriorating</div>
+                <div class="vs-item"><span class="vs-ico">🧠</span> Cognitive edge diminishing</div>
+                <div class="vs-item"><span class="vs-ico">📊</span> No data, no direction</div>
+              </div>
+              <div class="vs-col active">
+                <div class="vs-label good">12 weeks in</div>
+                <div class="vs-item"><span class="vs-ico">⬆️</span> Testosterone recovering</div>
+                <div class="vs-item"><span class="vs-ico">❄️</span> Inflammation measurably down</div>
+                <div class="vs-item"><span class="vs-ico">💤</span> Deep sleep restored</div>
+                <div class="vs-item"><span class="vs-ico">⚡</span> Cognitive clarity returning</div>
+                <div class="vs-item"><span class="vs-ico">📈</span> Blood data proves every change</div>
+              </div>
+            </div>
+            <a href="#apply" class="btn-p" style="width:100%;justify-content:center;">
+              Apply for Your Discovery Call
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="div"></div></div>
+
+  <!-- ── MECHANISM ── -->
+  <section class="mech-sec" id="mechanism">
+    <div class="wrap">
+      <div class="r">
+        <div class="eye"><span class="eye-dot"></span> Why Everything Else Failed</div>
+        <h2>You weren't solving<br>the right problem.</h2>
+        <p class="sub">Every programme you've tried failed because none of them started with your blood. You were applying willpower to an undiagnosed physiological problem.</p>
+      </div>
+      <div class="mech-grid">
+
+        <div class="mech-cards rl">
+          <div class="mech-card active" data-i="0">
+            <div class="mech-card-top">
+              <span class="mech-card-name">Testosterone Suppression</span>
+              <div class="mech-card-nums">
+                <span class="mn-before">240</span><span class="mn-arrow">→</span><span class="mn-after">467</span><span style="font-size:9px;color:var(--text-3);margin-left:3px;">ng/dL</span>
+              </div>
+            </div>
+            <div class="mech-card-desc">Alcohol elevates aromatase — the enzyme that converts testosterone to oestrogen — and suppresses the hormonal signals that drive production. It's not age. It's reversible biochemistry.</div>
+            <div class="mech-bar"><div class="mech-fill" style="width:78%"></div></div>
+          </div>
+          <div class="mech-card" data-i="1">
+            <div class="mech-card-top">
+              <span class="mech-card-name">Systemic Inflammation</span>
+              <div class="mech-card-nums">
+                <span class="mn-before">3.8</span><span class="mn-arrow">→</span><span class="mn-after">1.1</span><span style="font-size:9px;color:var(--text-3);margin-left:3px;">mg/L</span>
+              </div>
+            </div>
+            <div class="mech-card-desc">Sits just below the clinical threshold your GP checks — but directly above the level that impairs your prefrontal cortex. The fog isn't in your head. It's in your blood.</div>
+            <div class="mech-bar"><div class="mech-fill" style="width:29%"></div></div>
+          </div>
+          <div class="mech-card" data-i="2">
+            <div class="mech-card-top">
+              <span class="mech-card-name">Sleep Architecture Destroyed</span>
+              <div class="mech-card-nums">
+                <span class="mn-before">54%</span><span class="mn-arrow">→</span><span class="mn-after">83%</span><span style="font-size:9px;color:var(--text-3);margin-left:3px;">efficiency</span>
+              </div>
+            </div>
+            <div class="mech-card-desc">Alcohol is sedating but not sleep-inducing. It eliminates deep restorative sleep. You're getting the hours but not the recovery. The Oura Ring makes this undeniable in data.</div>
+            <div class="mech-bar"><div class="mech-fill" style="width:83%"></div></div>
+          </div>
+          <div class="mech-card" data-i="3">
+            <div class="mech-card-top">
+              <span class="mech-card-name">Insulin Resistance</span>
+              <div class="mech-card-nums">
+                <span class="mn-before">19</span><span class="mn-arrow">→</span><span class="mn-after">8</span><span style="font-size:9px;color:var(--text-3);margin-left:3px;">μU/mL</span>
+              </div>
+            </div>
+            <div class="mech-card-desc">The 3pm crash, the visceral belly that won't move, the afternoon fog. All driven by insulin resistance. Not calories — a metabolic problem that shows in the blood and has a specific fix.</div>
+            <div class="mech-bar"><div class="mech-fill" style="width:42%"></div></div>
+          </div>
+          <div class="mech-card" data-i="4">
+            <div class="mech-card-top">
+              <span class="mech-card-name">Nutrient Depletion</span>
+              <div class="mech-card-nums">
+                <span class="mn-before">Low</span><span class="mn-arrow">→</span><span class="mn-after">Optimal</span>
+              </div>
+            </div>
+            <div class="mech-card-desc">Alcohol depletes B12, magnesium, zinc, and Vitamin D at a rate diet can't compensate for. Zinc drives testosterone. Magnesium controls sleep and cortisol. All identified in the panel. All fixed in the stack.</div>
+            <div class="mech-bar"><div class="mech-fill" style="width:90%"></div></div>
+          </div>
+        </div>
+
+        <div class="mech-detail rr" id="mech-detail">
+          <div class="md-header">
+            <div class="md-eyebrow" id="md-eye">Marker 01 of 05</div>
+            <div class="md-title" id="md-title">Testosterone Suppression</div>
+          </div>
+          <div class="md-body">
+            <div class="md-desc" id="md-desc">Alcohol chronically elevates the aromatase enzyme — converting your testosterone into oestrogen — and suppresses LH, the signal that tells your testes to produce more. The result is a man operating with the hormonal profile of someone twenty years older. Low libido. Low drive. Low confidence. Inability to build or retain muscle regardless of training. This is not what getting older feels like. This is what unaddressed alcohol damage feels like.</div>
+            <div class="md-impact">
+              <div class="md-impact-label">Business Impact</div>
+              <div class="md-impact-text" id="md-impact">Testosterone drives assertiveness, risk tolerance, and the willingness to back yourself in a high-stakes moment. Men with suppressed testosterone are measurably less effective in negotiation — more likely to capitulate, less likely to pursue the aggressive growth move when the moment presents.</div>
+            </div>
+            <div class="md-stats">
+              <div class="md-stat">
+                <div class="md-stat-num" id="md-s1">240<span> ng/dL</span></div>
+                <div class="md-stat-lbl">Typical intake reading</div>
+              </div>
+              <div class="md-stat">
+                <div class="md-stat-num" id="md-s2">467<span> ng/dL</span></div>
+                <div class="md-stat-lbl">Typical week 12 reading</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="div"></div></div>
+
+  <!-- ── PROTOCOL ── -->
+  <section class="proto-sec" id="protocol">
+    <div class="wrap">
+      <div class="r">
+        <div class="eye"><span class="eye-dot"></span> The 12-Week Protocol</div>
+        <h2>Blood first.<br>Everything else follows.</h2>
+        <p class="sub">Before a single session. Before a supplement. Before anything — we know exactly what we're dealing with.</p>
+      </div>
+      <div class="proto-grid">
+
+        <div class="rl">
+          <div class="timeline">
+            <div class="tl-head">
+              <div class="tl-dot"></div>
+              <span class="tl-label">The Protocol</span>
+              <span class="tl-label" style="margin-left:auto;">6 phases</span>
+            </div>
+            <div class="tl-steps" id="tl-steps">
+              <div class="tl-step on" data-i="0">
+                <div class="step-num">01</div>
+                <div><div class="step-title">Full Diagnostic Baseline</div><div class="step-sub">Week 1 — blood panel, DEXA, CGM, Oura, cognitive test</div></div>
+              </div>
+              <div class="tl-step" data-i="1">
+                <div class="step-num">02</div>
+                <div><div class="step-title">Results Interpretation</div><div class="step-sub">Week 2 — 75 minutes, every marker connected to every symptom</div></div>
+              </div>
+              <div class="tl-step" data-i="2">
+                <div class="step-num">03</div>
+                <div><div class="step-title">Protocol Delivery</div><div class="step-sub">Day 10–14 — full written programme built from your data</div></div>
+              </div>
+              <div class="tl-step" data-i="3">
+                <div class="step-num">04</div>
+                <div><div class="step-title">Foundation Phase</div><div class="step-sub">Weeks 3–6 — training, nutrition, sleep protocol bedding in</div></div>
+              </div>
+              <div class="tl-step" data-i="4">
+                <div class="step-num">05</div>
+                <div><div class="step-title">Compound Effect</div><div class="step-sub">Weeks 7–10 — cognitive clarity shift, markers visibly moving</div></div>
+              </div>
+              <div class="tl-step" data-i="5">
+                <div class="step-num">06</div>
+                <div><div class="step-title">The Proof</div><div class="step-sub">Week 12 — full repeat blood panel, DEXA, cognitive retest</div></div>
+              </div>
+            </div>
+            <div class="tl-footer">
+              <div class="tl-bars" id="tl-bars"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="proto-detail rr">
+          <div class="pd-card">
+            <div class="pd-num" id="pd-num">PHASE 01</div>
+            <div class="pd-title" id="pd-title">Full Diagnostic Baseline</div>
+            <div class="pd-desc" id="pd-desc">Comprehensive Medichecks blood panel covering testosterone, cortisol, thyroid, insulin resistance, liver function, inflammation markers, and key nutrients. DEXA body composition scan. Abbott FreeStyle Libre CGM for two weeks. Oura Ring set up and synced. Cambridge Brain Sciences cognitive baseline. Before we build anything, we know exactly what we're dealing with — down to the marker.</div>
+            <div class="pd-tags" id="pd-tags">
+              <span class="pd-tag">🩸 Medichecks Panel</span>
+              <span class="pd-tag">🫀 DEXA Scan</span>
+              <span class="pd-tag">📊 CGM</span>
+              <span class="pd-tag">⌚ Oura Ring</span>
+              <span class="pd-tag">🧠 Cognitive Test</span>
+            </div>
+          </div>
+          <div class="pd-card" style="background:var(--bg-elevated);">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;">What sets this apart</div>
+            <div style="font-size:14px;color:var(--text-2);line-height:1.7;">Most programmes start with a programme. JP Training starts with a diagnosis. The protocol is built from your data — not borrowed from another client's results. Nothing assumed. Everything evidenced.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="div"></div></div>
+
+  <!-- ── INCLUDED ── -->
+  <section class="incl-sec">
+    <div class="wrap">
+      <div class="r" style="text-align:center;">
+        <div class="eye" style="margin:0 auto 18px;"><span class="eye-dot"></span> Everything Included</div>
+        <h2>One price. Nothing extra.<br>Nothing to source or set up.</h2>
+        <p class="sub" style="margin:0 auto;">Every cost absorbed. You pay one number and show up. We handle everything else.</p>
+      </div>
+      <div class="incl-grid">
+
+        <div class="incl-card r d1">
+          <div class="incl-ico">🩸</div>
+          <div class="incl-badge">Intake + 90-Day Retest</div>
+          <div class="incl-title">Medichecks Blood Panel ×2</div>
+          <div class="incl-desc">Full hormone, inflammation, metabolic, and liver panel. Testosterone, cortisol, thyroid, insulin, hsCRP, Vitamin D, B12, zinc, and more. Before and after — in data.</div>
+        </div>
+
+        <div class="incl-card r d2">
+          <div class="incl-ico">⌚</div>
+          <div class="incl-badge">Yours to Keep</div>
+          <div class="incl-title">Oura Ring Gen 3</div>
+          <div class="incl-desc">Sleep staging, HRV, resting heart rate, and body temperature — tracked every night. The data that changes behaviour faster than any explanation.</div>
+        </div>
+
+        <div class="incl-card r d3">
+          <div class="incl-ico">🫀</div>
+          <div class="incl-badge">Precise Body Composition</div>
+          <div class="incl-title">DEXA Body Scan</div>
+          <div class="incl-desc">Exact visceral fat mass, lean mass, and bone density. Not a percentage from a scale. The most accurate measurement available outside a hospital.</div>
+        </div>
+
+        <div class="incl-card r d1">
+          <div class="incl-ico">📊</div>
+          <div class="incl-badge">First 2 Weeks</div>
+          <div class="incl-title">Continuous Glucose Monitor</div>
+          <div class="incl-desc">Abbott FreeStyle Libre. See exactly what that client dinner does to your blood sugar. Watch the 3pm crash happen in real time. The mechanism becomes undeniable when it's your own data.</div>
+        </div>
+
+        <div class="incl-card r d2">
+          <div class="incl-ico">💊</div>
+          <div class="incl-badge">Delivered to You</div>
+          <div class="incl-title">Full 12-Week Supplement Stack</div>
+          <div class="incl-desc">Milk thistle, NAC, alpha-lipoic acid, omega-3, methylated B-complex, zinc, magnesium glycinate, Vitamin D3/K2, L-glutamine, and probiotic — targeted to your specific blood deficiencies.</div>
+        </div>
+
+        <div class="incl-card r d3">
+          <div class="incl-ico">🧠</div>
+          <div class="incl-badge">Week 1 + Week 12</div>
+          <div class="incl-title">Cognitive Performance Test</div>
+          <div class="incl-desc">Cambridge Brain Sciences validated assessment. Decision-making, working memory, attention, and reasoning — scored and benchmarked. The week 12 improvement is typically what surprises clients most.</div>
+        </div>
+
+        <div class="incl-card r d1">
+          <div class="incl-ico">🏋️</div>
+          <div class="incl-badge">Built Around Your Diary</div>
+          <div class="incl-title">2–3 In-Person Sessions Per Week</div>
+          <div class="incl-desc">Phased training adapted weekly from your Oura recovery data and energy state. Not the same session regardless of how you slept. The programme responds to what's actually happening.</div>
+        </div>
+
+        <div class="incl-card r d2">
+          <div class="incl-ico">📞</div>
+          <div class="incl-badge">Every Week, Same Time</div>
+          <div class="incl-title">Weekly Strategy Call</div>
+          <div class="incl-desc">30 minutes. Review the week's data, adjust the protocol, set one specific focus for the coming week. Structured, purposeful, never skipped.</div>
+        </div>
+
+        <div class="incl-card r d3">
+          <div class="incl-ico">💬</div>
+          <div class="incl-badge">Same-Day Response</div>
+          <div class="incl-title">WhatsApp Access</div>
+          <div class="incl-desc">Every question answered the day you ask it. No waiting for the next session. A question that doesn't get answered quickly becomes the reason someone falls off the protocol.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="div"></div></div>
+
+  <!-- ── GUARANTEES ── -->
+  <section class="guar-sec" id="guarantees">
+    <div class="wrap">
+      <div class="r" style="text-align:center;">
+        <div class="eye" style="margin:0 auto 18px;"><span class="eye-dot"></span> The Guarantees</div>
+        <h2>Three guarantees.<br>All of them in writing.</h2>
+        <p class="sub" style="margin:0 auto;">Not marketing promises. Contractual commitments. If the programme doesn't deliver what's stated, the financial consequence falls on JP Training — not on you.</p>
+      </div>
+      <div class="guar-grid">
+
+        <div class="guar-card r d1">
+          <div class="guar-num">Guarantee 01</div>
+          <div class="guar-ico">📈</div>
+          <div class="guar-title">The Results Guarantee</div>
+          <div class="guar-text">Complete the 12 weeks — attend your sessions, follow the protocol, do your weekly check-ins — and if your blood markers, energy scores, and cognitive performance haven't measurably improved, your final four weeks are free.</div>
+          <div class="guar-fine">No conversation. No conditions. No negotiation.</div>
+        </div>
+
+        <div class="guar-card r d2">
+          <div class="guar-num">Guarantee 02</div>
+          <div class="guar-ico">🤝</div>
+          <div class="guar-title">The Fit Guarantee</div>
+          <div class="guar-text">After your blood results interpretation session — within the first two weeks — if you don't believe this programme is right for you, you pay nothing more. We would rather lose a client than keep someone not fully committed to the outcome.</div>
+          <div class="guar-fine">Zero obligation past the first 14 days if it's not right.</div>
+        </div>
+
+        <div class="guar-card r d3">
+          <div class="guar-num">Guarantee 03</div>
+          <div class="guar-ico">🔬</div>
+          <div class="guar-title">The Clarity Guarantee</div>
+          <div class="guar-text">Within 14 days of starting, you will know exactly why your body is the way it is — what's driving the fatigue, the fog, the weight that won't move — backed by data. If you don't, your first month is refunded in full.</div>
+          <div class="guar-fine">Data-backed clarity within 14 days, guaranteed.</div>
+        </div>
+
+      </div>
+      <div class="guar-footer r">
+        <p>The offer is structured to make the risk of doing nothing <strong>greater than the risk of starting.</strong></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="div"></div></div>
+
+  <!-- ── INVESTMENT ── -->
+  <section class="invest-sec">
+    <div class="wrap">
+      <div class="r">
+        <div class="eye"><span class="eye-dot"></span> The Investment</div>
+        <h2>One price.<br>No hidden costs.</h2>
+      </div>
+      <div class="invest-box r">
+        <div class="invest-grid">
+          <div class="invest-left">
+            <div class="invest-price"><span class="curr">£</span>2,500</div>
+            <div class="invest-per">per month</div>
+            <div class="invest-total">3-month minimum — <strong>£7,500 total</strong></div>
+            <p style="font-size:14px;color:var(--text-2);line-height:1.7;margin-top:24px;max-width:380px;">
+              Every cost absorbed. Blood work, hardware, supplements, scans, testing. Nothing to buy separately. Nothing to set up yourself.
+            </p>
+            <p style="font-size:14px;color:var(--text-2);line-height:1.7;margin-top:14px;max-width:380px;">
+              What's one sharper afternoon worth to you? One deal you stayed in the room for. One bad decision you didn't make. This pays for itself in month one — and it's in the contract if it doesn't.
+            </p>
+            <a href="#apply" class="btn-p" style="margin-top:32px;display:inline-flex;">
+              Apply for Your Discovery Call
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+          <div class="invest-right">
+            <h3>Everything that's included</h3>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>Medichecks blood panel ×2</strong> — intake and 90-day retest</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>Oura Ring Gen 3</strong> — set up, synced, and yours to keep</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>DEXA body composition scan</strong> — intake and 90-day retest</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>Abbott FreeStyle Libre CGM</strong> — weeks 1 and 2</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>Monthly testosterone tests ×2</strong> — months 1 and 2</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>Full 12-week supplement stack</strong> — targeted to your blood deficiencies, delivered</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>Cognitive performance test</strong> — baseline and 12-week retest</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>2–3 in-person sessions per week</strong> — built around your schedule</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>Weekly 30-minute strategy call</strong> — every week, without exception</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>WhatsApp access</strong> — same-day response</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>Monthly 90-minute deep review</strong> — full data analysis</div></div>
+            <div class="invest-item"><div class="inv-chk">✓</div><div class="inv-text"><strong>Three written guarantees</strong> — contractual, not marketing</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="div"></div></div>
+
+  <!-- ── FAQ ── -->
+  <section class="faq-sec">
+    <div class="wrap">
+      <div class="r">
+        <div class="eye"><span class="eye-dot"></span> Common Questions</div>
+        <h2>Straight answers.<br>No sales speak.</h2>
+      </div>
+      <div class="faq-list r">
+
+        <div class="faq-item">
+          <div class="faq-q">I've tried things before and they haven't worked. Why would this be different? <span class="faq-icon">+</span></div>
+          <div class="faq-a">Because none of them started with your blood. The gym. The PT. The January plan. All of them were applying willpower to an undiagnosed physiological problem — which produces exactly the results you've already seen. We start with the diagnosis. Everything is built from that.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Is this just personal training? <span class="faq-icon">+</span></div>
+          <div class="faq-a">No. Training is one component. The diagnostic blood work, the targeted supplementation, the sleep and recovery system, the weekly performance coaching, the blood marker tracking throughout — these produce the result. A personal trainer gives you sessions. This gives you a system built around your physiology.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">How is this different from seeing my GP? <span class="faq-icon">+</span></div>
+          <div class="faq-a">Your GP has ten minutes and a referral threshold set for sick people — not high-performing people who want to optimise. The markers we track — free testosterone, cortisol, hsCRP, fasting insulin, DHEA-S — are rarely in a standard NHS panel. A result just below the clinical intervention threshold won't prompt a conversation. We're looking at a different picture for a different purpose.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">I don't have time for this. <span class="faq-icon">+</span></div>
+          <div class="faq-a">Two to three hours per week across sessions and your check-in call. Your supplement stack takes two minutes. The Oura Ring tracks your sleep while you sleep. Built around your actual schedule — not an ideal version of it. If you have time to be exhausted, you have time for this.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Do I have to stop drinking? <span class="faq-icon">+</span></div>
+          <div class="faq-a">No. The programme includes a specific alcohol harm reduction protocol — not abstinence, but a practical framework that minimises the physiological impact of the drinking embedded in your professional life. The goal is to reverse the accumulated damage and make ongoing drinking as low-impact as possible.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">What results can I actually expect in 12 weeks? <span class="faq-icon">+</span></div>
+          <div class="faq-a">Typical outcomes on this protocol: testosterone improving 60–100% from baseline, hsCRP halving or better, Vitamin D normalising from deficient to optimal, HRV improving 15–30%, cognitive performance score up 15–25%, visceral fat reducing 1–3kg on DEXA, daily energy scores improving from 4–5 to 7–8. The 90-day blood panel comparison makes every change objective and undeniable.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="div"></div></div>
+
+  <!-- ── APPLICATION ── -->
+  <section class="app-sec" id="apply">
+    <div class="wrap">
+      <div class="app-box r">
+        <div class="app-glow"></div>
+        <div class="app-grid">
+
+          <div>
+            <div class="app-tag">
+              <div class="pulse-dot" style="position:relative;width:6px;height:6px;"></div>
+              Applications Open
+            </div>
+            <h2>At some point, the cost of doing nothing becomes greater than the cost of this.</h2>
+            <p>You already know something is wrong. The question isn't whether to fix it — it's how long you're going to keep watching it get worse before you do.</p>
+            <p style="margin-top:14px;font-size:15px;color:var(--text-2);line-height:1.65;max-width:440px;">Three months from now you're either in the same place — or your blood markers tell a completely different story.</p>
+            <div class="app-spots">
+              <div class="spot-dot"></div>
+              <div class="spot-txt">Maximum <strong>4 clients</strong> at any one time. <strong>Applications reviewed within 24 hours.</strong></div>
+            </div>
+          </div>
+
+          <div>
+            <form class="app-form" id="app-form">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" placeholder="James Richardson" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-input" placeholder="james@yourbusiness.co.uk" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">What's your biggest health challenge right now?</label>
+                <textarea class="form-textarea" placeholder="Be specific — the more context you give, the more useful the discovery call will be." required></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">How long has this been affecting you?</label>
+                <select class="form-select" required>
+                  <option value="" disabled selected style="color:#666">Select a timeframe</option>
+                  <option>Under 1 year</option>
+                  <option>1–3 years</option>
+                  <option>3–5 years</option>
+                  <option>5+ years</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">What made you decide to look into this today?</label>
+                <textarea class="form-textarea" placeholder="A specific moment, something you read, something someone said..." style="min-height:70px;"></textarea>
+              </div>
+              <button type="submit" class="form-submit">
+                Submit Application
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+              <div class="form-note">45-minute discovery call. No obligation. If it's not the right fit, you'll know.</div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-row">
+        <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
+          <a href="#" class="foot-logo">
+            <div class="logo-mark" style="width:30px;height:30px;font-size:12px;">JP</div>
+            <div class="logo-text">
+              <span class="logo-name" style="font-size:12px;">JP Training</span>
+              <span class="logo-tag">Executive Performance</span>
+            </div>
+          </a>
+          <span class="foot-copy">© 2025 JP Training. All rights reserved.</span>
+        </div>
+        <div class="foot-links">
+          <a href="#results">The Problem</a>
+          <a href="#protocol">Protocol</a>
+          <a href="#guarantees">Guarantees</a>
+          <a href="#apply">Apply</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* ── SCROLL PROGRESS ── */
+    const bar = document.getElementById('scroll-bar');
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+      bar.style.transform = `scaleX(${pct})`;
+      nav.classList.toggle('stuck', window.scrollY > 24);
+    }, { passive: true });
+
+    /* ── REVEAL ON SCROLL ── */
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); obs.unobserve(e.target); } });
+    }, { rootMargin: '-50px 0px', threshold: 0.07 });
+    document.querySelectorAll('.r,.rl,.rr').forEach(el => obs.observe(el));
+
+    /* ── BADGE TEXT (keeps the live-data feel cycling) ── */
+    const badgeLabels = [
+      'For executives who\'ve optimised everything except themselves.',
+      'Testosterone recovery: 240 → 467 ng/dL',
+      'Inflammation halved. Brain fog gone.',
+      'Sleep efficiency: 54% → 83%',
+      'Cognitive score +22% in 12 weeks',
+      '4 spaces max. Currently reviewing applications.',
+    ];
+    let bIdx = 0;
+    const bText = document.getElementById('badge-text');
+    setInterval(() => {
+      bText.style.opacity = '0';
+      setTimeout(() => {
+        bIdx = (bIdx + 1) % badgeLabels.length;
+        bText.textContent = badgeLabels[bIdx];
+        bText.style.opacity = '1';
+      }, 280);
+    }, 3200);
+
+    /* ── MECHANISM CARDS ── */
+    const mechData = [
+      {
+        eye: 'Marker 01 of 05', title: 'Testosterone Suppression',
+        desc: 'Alcohol chronically elevates the aromatase enzyme — converting testosterone into oestrogen — and suppresses LH, the signal that tells your body to produce more. The result is a man operating with the hormonal profile of someone twenty years older. Low libido. Low drive. Inability to build muscle regardless of training. This is not what getting older feels like.',
+        impact: 'Testosterone drives assertiveness, risk tolerance, and the willingness to back yourself in a high-stakes moment. Men with suppressed testosterone are measurably less effective in negotiation — more likely to capitulate, less likely to pursue the aggressive growth move when the moment presents.',
+        s1: '240 ng/dL', s1l: 'Typical intake reading', s2: '467 ng/dL', s2l: 'Typical week 12 reading'
+      },
+      {
+        eye: 'Marker 02 of 05', title: 'Systemic Inflammation',
+        desc: 'Chronic low-grade inflammation sits just below the clinical threshold your GP checks for — but directly above the level that impairs prefrontal cortex function. That\'s your strategic thinking, decision quality, and mental sharpness in every high-stakes moment. The fog isn\'t in your head. It\'s in your blood.',
+        impact: 'High inflammation shifts you from strategic mode to threat-response mode — reactive, defensive, short-term. The prefrontal cortex is where your long-term business thinking lives. You\'re making major decisions with it suppressed, every day.',
+        s1: '3.8 mg/L', s1l: 'Typical intake hsCRP', s2: '1.1 mg/L', s2l: 'Typical week 12 hsCRP'
+      },
+      {
+        eye: 'Marker 03 of 05', title: 'Sleep Architecture Destroyed',
+        desc: 'Alcohol is sedating but not sleep-inducing. It eliminates deep restorative sleep and REM — replacing them with shallow, broken cycles. You\'re getting the hours but not the recovery. The fatigue is not tiredness. It\'s the consequence of years of architectural sleep deprivation that your GP has never measured.',
+        impact: 'Operating on poor sleep quality is cognitively equivalent to mild intoxication. You\'re making major business decisions in this state, every day — and you\'ve been doing it long enough that you\'ve stopped recognising it as impaired.',
+        s1: '54%', s1l: 'Avg sleep efficiency (drinking nights)', s2: '83%', s2l: 'Week 12 sleep efficiency'
+      },
+      {
+        eye: 'Marker 04 of 05', title: 'Insulin Resistance',
+        desc: 'The 3pm crash isn\'t tiredness — it\'s your blood sugar spiking and collapsing because your cells have become resistant to insulin. It drives visceral fat around the organs. It drives afternoon cognitive impairment. And it won\'t respond to standard dieting because the root cause isn\'t calories.',
+        impact: 'Every afternoon meeting, every late-day call, every strategic session that runs into the evening happens on the downslope of this crash. Entirely reversible with the right metabolic intervention — which starts with the blood panel.',
+        s1: '19 μU/mL', s1l: 'Typical intake insulin', s2: '8 μU/mL', s2l: 'Typical week 12 insulin'
+      },
+      {
+        eye: 'Marker 05 of 05', title: 'Critical Nutrient Depletion',
+        desc: 'Alcohol depletes B12, magnesium, zinc, and Vitamin D at a rate diet cannot compensate for. Zinc is required for testosterone synthesis. Magnesium governs sleep quality and cortisol regulation. B12 drives neurological function. All identified in the blood panel. All corrected in the supplement stack.',
+        impact: 'These deficiencies don\'t show up as dramatic symptoms — they show up as gradual dimming. A little less sharp. A little more tired. A little less motivated. Permanent subclinical decline that most men attribute to getting older.',
+        s1: 'Deficient', s1l: 'Zinc, D3, B12, Mg at intake', s2: 'Optimal', s2l: 'All markers at week 12'
+      },
+    ];
+    const mechCards = document.querySelectorAll('.mech-card');
+    function setMech(i) {
+      mechCards.forEach((c,j) => c.classList.toggle('active', j === i));
+      const d = mechData[i];
+      document.getElementById('md-eye').textContent    = d.eye;
+      document.getElementById('md-title').textContent  = d.title;
+      document.getElementById('md-desc').textContent   = d.desc;
+      document.getElementById('md-impact').textContent = d.impact;
+      document.getElementById('md-s1').innerHTML       = `${d.s1}<span></span>`;
+      document.querySelector('#md-s1 + .md-stat-lbl').textContent = d.s1l;
+      document.getElementById('md-s2').innerHTML       = `${d.s2}<span></span>`;
+      document.querySelector('#md-s2 + .md-stat-lbl').textContent = d.s2l;
+    }
+    mechCards.forEach((c,i) => c.addEventListener('click', () => setMech(i)));
+
+    /* ── PROTOCOL TIMELINE ── */
+    const protoSteps = document.querySelectorAll('#tl-steps .tl-step');
+    const protoInfo = [
+      { n:'PHASE 01', t:'Full Diagnostic Baseline', d:'Comprehensive Medichecks blood panel — testosterone, cortisol, thyroid, insulin resistance, liver function, inflammation, key nutrients. DEXA scan. Abbott FreeStyle Libre CGM for two weeks. Oura Ring set up. Cambridge Brain Sciences cognitive baseline. Before we build anything, we know exactly what we\'re dealing with.', tags:['🩸 Medichecks Panel','🫀 DEXA Scan','📊 CGM','⌚ Oura Ring','🧠 Cognitive Test'] },
+      { n:'PHASE 02', t:'Results Interpretation Session', d:'75 minutes. Every blood marker explained in plain language. Every symptom connected to a specific measurement. Most clients describe this as the first time in their adult life that someone has joined these dots. This session alone changes how you understand your own body.', tags:['🩸 Full Marker Review','💡 Symptom Connections','📋 Protocol Preview'] },
+      { n:'PHASE 03', t:'Protocol Delivery', d:'Full written protocol delivered and walked through — training programme, nutrition framework built from your metabolic picture, supplementation stack targeting your specific deficiencies, sleep protocol, alcohol harm reduction strategy. Nothing borrowed from another client. Everything derived from your data.', tags:['🏋️ Training Plan','🥩 Nutrition Framework','💊 Supplement Stack','😴 Sleep Protocol'] },
+      { n:'PHASE 04', t:'Foundation Phase (Weeks 3–6)', d:'The protocol beds in. Daily WhatsApp check-ins give you a real-time data feed. Weekly calls calibrate what\'s working. Month 1 testosterone and inflammation retests at week 4 — the markers start moving before the physical changes are visible. The cognitive clarity shift typically begins here.', tags:['📈 Month 1 Retest','📞 Weekly Calls','💬 Daily Check-ins'] },
+      { n:'PHASE 05', t:'Compound Effect (Weeks 7–10)', d:'This is where clients describe the fog lifting. The 3pm crash gone. Afternoon energy flat and sustained. Sleep measurably better. Month 2 retest confirms the markers are moving. The Oura data shows recovery improving week on week. The results are undeniable at this point.', tags:['📈 Month 2 Retest','🧠 Cognitive Shift','⚡ Energy Restoration'] },
+      { n:'PHASE 06', t:'The Proof (Week 12)', d:'Full repeat Medichecks panel side by side with intake results. DEXA comparison — visceral fat, lean mass, body composition. Cognitive performance retest. The before and after is in the data — not a photo, not a feeling. Numbers. Every marker compared. Every improvement evidenced.', tags:['🩸 Full Retest','🫀 DEXA Comparison','🧠 Cognitive Retest','📊 Full Report'] },
+    ];
+    let activeProto = 0;
+    function setProto(i) {
+      activeProto = i;
+      protoSteps.forEach((s,j) => s.classList.toggle('on', j === i));
+      const d = protoInfo[i];
+      document.getElementById('pd-num').textContent   = d.n;
+      document.getElementById('pd-title').textContent = d.t;
+      document.getElementById('pd-desc').textContent  = d.d;
+      const tagsEl = document.getElementById('pd-tags');
+      tagsEl.innerHTML = d.tags.map(t => `<span class="pd-tag">${t}</span>`).join('');
+    }
+    protoSteps.forEach((s,i) => s.addEventListener('click', () => setProto(i)));
+    setInterval(() => setProto((activeProto + 1) % protoInfo.length), 3500);
+
+    /* Protocol bars */
+    const barsEl = document.getElementById('tl-bars');
+    for (let i = 0; i < 24; i++) {
+      const b = document.createElement('div');
+      b.className = 'tl-bar';
+      b.style.animation = `bar ${1.0 + Math.random() * 0.9}s ease-in-out infinite`;
+      b.style.animationDelay = `${i * 0.075}s`;
+      barsEl.appendChild(b);
+    }
+    const barStyle = document.createElement('style');
+    barStyle.textContent = `@keyframes bar{0%,100%{opacity:.2;transform:scaleY(.4)}50%{opacity:.9;transform:scaleY(1)}}`;
+    document.head.appendChild(barStyle);
+
+    /* ── FAQ ── */
+    document.querySelectorAll('.faq-item').forEach(item => {
+      item.querySelector('.faq-q').addEventListener('click', () => {
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+    });
+
+    /* ── FORM SUBMIT ── */
+    document.getElementById('app-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const btn = e.target.querySelector('.form-submit');
+      btn.textContent = '✓ Application received — we\'ll be in touch within 24 hours.';
+      btn.style.background = 'linear-gradient(135deg,#1a5c52,#2dd4bf)';
+      btn.style.color = '#000';
+      btn.disabled = true;
+    });
+
+    /* ── TEAL PARTICLES ── */
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+    const particles = Array.from({ length: 40 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: window.innerHeight * (0.2 + Math.random() * 0.8),
+      r: 0.5 + Math.random() * 1.2,
+      vy: 0.2 + Math.random() * 0.45,
+      vx: (Math.random() - 0.5) * 0.3,
+      op: Math.random() * 0.4,
+      life: Math.random(),
+      hue: 172 + Math.floor(Math.random() * 10),
+    }));
+    (function tick() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.y  -= p.vy;
+        p.x  += p.vx + Math.sin(Date.now() / 2000 + p.x * 0.01) * 0.15;
+        p.life += 0.0025;
+        const a = Math.sin(p.life * Math.PI) * p.op;
+        if (p.life >= 1 || p.y < -10) {
+          p.y = canvas.height + 8; p.x = Math.random() * canvas.width;
+          p.life = 0; p.op = Math.random() * 0.4;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue},80%,60%,${a})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(tick);
+    })();
+
+    /* ── 3D CARD TILT ── */
+    document.querySelectorAll('.incl-card,.guar-card,.mech-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width  - 0.5;
+        const y = (e.clientY - r.top)  / r.height - 0.5;
+        card.style.transform = `translateY(-5px) rotateX(${y * -7}deg) rotateY(${x * 7}deg)`;
+        card.style.transformStyle = 'preserve-3d';
+      });
+      card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+    });
+
+    /* ── HERO PANEL TILT ── */
+    const tiltCard = document.getElementById('tilt-card');
+    if (tiltCard) {
+      const collage = tiltCard.closest('.collage');
+      collage?.addEventListener('mousemove', e => {
+        const r = collage.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width  - 0.5;
+        const y = (e.clientY - r.top)  / r.height - 0.5;
+        tiltCard.style.transform = `rotateX(${y * -5}deg) rotateY(${x * 5}deg)`;
+        tiltCard.style.transformStyle = 'preserve-3d';
+        tiltCard.style.transition = 'transform 0.08s ease';
+      });
+      collage?.addEventListener('mouseleave', () => {
+        tiltCard.style.transform = '';
+        tiltCard.style.transition = 'transform 0.5s ease';
+      });
+    }
+
+    /* ── COUNTER ANIMATION (bar fills) ── */
+    const counterObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const fills = e.target.querySelectorAll('.marker-fill');
+          fills.forEach(f => { const w = f.style.width; f.style.width = '0'; setTimeout(() => { f.style.width = w; }, 100); });
+          counterObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    document.querySelectorAll('.data-panel').forEach(p => counterObs.observe(p));
+  </script>
+</body>
+</html>
