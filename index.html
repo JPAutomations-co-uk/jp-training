@@ -745,64 +745,250 @@ document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.le
   let W,H,frame=0;
   const TC='44,212,196';
 
-  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight}
+  const dataMap={
+    'HRV':'58 ms','GLUCOSE':'94 mg/dL','SLEEP':'7.4h REM+',
+    'CORTISOL':'12.3 nmol/L','TESTOSTERONE':'24.6 nmol/L',
+    'VO2 MAX':'52 ml/kg/min','HORMONES':'OPTIMAL',
+    'TRAINING':'LOAD ↑ 12%','NUTRITION':'89% score',
+    'COGNITION':'94th %ile','LONGEVITY':'BIO AGE −8yr',
+  };
 
-  /* Three orbital rings — each tilted at a different angle in screen space.
-     aF = semi-major fraction of scale, bF = semi-minor (how "flat" the ring looks).
-     The ratio bF/aF implies the 3D tilt: low ratio = ring nearly horizontal,
-     high ratio = ring nearly upright. */
+  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight}
+  function sc(){return Math.min(W,H)*.42;}
+
+  /* 5 gyroscope rings — each at a distinct tilt and speed.
+     aF = semi-major as fraction of scale, bF = semi-minor.
+     Lower bF/aF ratio = ring appears more horizontal (Saturn-like).
+     Higher ratio = ring appears more upright. */
   const rings=[
-    {aF:.52,bF:.13,rot:.58,spd:.0048,
-     nodes:[{lbl:'SLEEP',a:0},{lbl:'VO2 MAX',a:2.2},{lbl:'HRV',a:4.4}]},
-    {aF:.76,bF:.33,rot:-.32,spd:.0031,
-     nodes:[{lbl:'TRAINING',a:.8},{lbl:'HORMONES',a:4.0}]},
-    {aF:1.0,bF:.60,rot:.16,spd:.0019,
-     nodes:[{lbl:'NUTRITION',a:1.4},{lbl:'COGNITION',a:3.2},{lbl:'LONGEVITY',a:5.2}]},
+    {aF:.38,bF:.09,rot:.62,spd:.0072,
+     nodes:[{lbl:'HRV',a:0},{lbl:'GLUCOSE',a:3.2}]},
+    {aF:.54,bF:.19,rot:-.48,spd:.0051,
+     nodes:[{lbl:'SLEEP',a:.9},{lbl:'CORTISOL',a:4.0}]},
+    {aF:.70,bF:.32,rot:.38,spd:.0036,
+     nodes:[{lbl:'TESTOSTERONE',a:1.2},{lbl:'VO2 MAX',a:4.4}]},
+    {aF:.86,bF:.46,rot:-.18,spd:.0024,
+     nodes:[{lbl:'HORMONES',a:.4},{lbl:'TRAINING',a:3.6}]},
+    {aF:1.04,bF:.62,rot:.12,spd:.0016,
+     nodes:[{lbl:'NUTRITION',a:1.6},{lbl:'COGNITION',a:3.3},{lbl:'LONGEVITY',a:5.2}]},
   ];
 
   let pulses=[];
+  let dust=[];
 
-  /* Project a node at angle theta on a ring to screen coordinates.
-     depth: +1 = closest to viewer, -1 = furthest. We approximate depth
-     from the local-frame y (sin(theta)) — nodes at the "top" of the
-     local ellipse are behind the centre; nodes at the "bottom" are in front. */
+  function initDust(){
+    dust=Array.from({length:55},()=>({
+      x:Math.random()*W,y:Math.random()*H,
+      vx:(Math.random()-.5)*.18,vy:(Math.random()-.5)*.18,
+      r:Math.random()*.7+.15,a:Math.random()*.12+.03
+    }));
+  }
+
   function nPos(ring,theta){
-    const sc=Math.min(W,H)*.40;
-    const a=ring.aF*sc,b=ring.bF*sc,cx=W/2,cy=H/2;
+    const s=sc(),a=ring.aF*s,b=ring.bF*s,cx=W/2,cy=H/2;
     const lx=a*Math.cos(theta),ly=b*Math.sin(theta);
     const x=cx+lx*Math.cos(ring.rot)-ly*Math.sin(ring.rot);
     const y=cy+lx*Math.sin(ring.rot)+ly*Math.cos(ring.rot);
     return{x,y,depth:-Math.sin(theta)};
   }
 
-  function drawRing(ring){
-    const sc=Math.min(W,H)*.40;
-    const a=ring.aF*sc,b=ring.bF*sc,cx=W/2,cy=H/2;
+  /* DNA helix in upper corners */
+  function drawDNA(cornerX,cornerY,flip){
+    const gap=14,turns=5,amp=13;
     ctx.save();
-    ctx.translate(cx,cy);ctx.rotate(ring.rot);
+    for(let i=0;i<turns*2;i++){
+      const y0=cornerY+i*gap,y1=y0+gap;
+      const t0=i/turns*Math.PI*2,t1=(i+1)/turns*Math.PI*2;
+      const x0=cornerX+(flip?1:-1)*Math.cos(t0)*amp;
+      const x1=cornerX+(flip?1:-1)*Math.cos(t1)*amp;
+      const al=Math.max(0,(1-(i/(turns*2)))*.20);
+      ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);
+      ctx.strokeStyle=`rgba(${TC},${al})`;ctx.lineWidth=.7;ctx.stroke();
+      if(i%2===0){
+        const mx=(x0+x1)/2,my=(y0+y1)/2;
+        const rx=cornerX+(flip?-1:1)*Math.cos(t0+Math.PI)*amp;
+        ctx.beginPath();ctx.moveTo(mx,my);ctx.lineTo(rx,my);
+        ctx.strokeStyle=`rgba(${TC},${al*.65})`;ctx.lineWidth=.5;ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  /* Human body silhouette with internal biological systems */
+  function drawBody(){
+    const s=sc(),cx=W/2,cy=H/2;
+    const bH=s*1.08;
+    const shW=s*.37,wW=s*.23,hW=s*.27;
+    const hR=s*.15,nW=s*.09;
+    const headCY=cy-bH*.48;
+    const neckTop=headCY+hR;
+    const shoulderY=neckTop+s*.08;
+    const chestY=cy-bH*.10;
+    const waistY=cy+bH*.12;
+    const hipY=cy+bH*.30;
+    const botY=cy+bH*.50;
+    const heartX=cx,heartY=cy-bH*.12;
+
+    ctx.save();
+
+    /* head glow */
+    const hgrd=ctx.createRadialGradient(cx,headCY,0,cx,headCY,hR*1.5);
+    hgrd.addColorStop(0,`rgba(${TC},.06)`);hgrd.addColorStop(1,`rgba(${TC},0)`);
+    ctx.beginPath();ctx.arc(cx,headCY,hR*1.5,0,Math.PI*2);
+    ctx.fillStyle=hgrd;ctx.fill();
+    /* head outline */
+    ctx.beginPath();ctx.arc(cx,headCY,hR,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(${TC},.28)`;ctx.lineWidth=.75;ctx.stroke();
+    /* brain */
+    ctx.beginPath();ctx.arc(cx,headCY-hR*.08,hR*.62,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(${TC},.12)`;ctx.lineWidth=.55;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,headCY-hR*.68);
+    ctx.bezierCurveTo(cx+hR*.42,headCY-hR*.58,cx+hR*.56,headCY-hR*.18,cx,headCY+hR*.2);
+    ctx.strokeStyle=`rgba(${TC},.08)`;ctx.lineWidth=.5;ctx.stroke();
+
+    /* body silhouette */
+    ctx.beginPath();
+    ctx.moveTo(cx-nW,neckTop);
+    ctx.bezierCurveTo(cx-nW,shoulderY-s*.025,cx-shW*.88,shoulderY,cx-shW,shoulderY);
+    ctx.bezierCurveTo(cx-shW*1.08,chestY,cx-wW*1.15,waistY,cx-hW,hipY);
+    ctx.lineTo(cx-hW*.88,botY);ctx.lineTo(cx+hW*.88,botY);ctx.lineTo(cx+hW,hipY);
+    ctx.bezierCurveTo(cx+wW*1.15,waistY,cx+shW*1.08,chestY,cx+shW,shoulderY);
+    ctx.bezierCurveTo(cx+shW*.88,shoulderY,cx+nW,shoulderY-s*.025,cx+nW,neckTop);
+    ctx.closePath();
+    const bgrd=ctx.createLinearGradient(cx,shoulderY,cx,botY);
+    bgrd.addColorStop(0,`rgba(${TC},.05)`);
+    bgrd.addColorStop(.4,`rgba(${TC},.08)`);
+    bgrd.addColorStop(1,`rgba(${TC},.01)`);
+    ctx.fillStyle=bgrd;ctx.fill();
+    ctx.strokeStyle=`rgba(${TC},.26)`;ctx.lineWidth=.75;ctx.stroke();
+
+    /* spine */
+    ctx.beginPath();ctx.moveTo(cx,neckTop+s*.04);ctx.lineTo(cx,botY);
+    ctx.strokeStyle=`rgba(${TC},.10)`;ctx.lineWidth=.6;
+    ctx.setLineDash([2,5]);ctx.stroke();ctx.setLineDash([]);
+
+    /* lungs */
+    const lungTopY=shoulderY+s*.06,lungBotY=chestY+s*.12,lungW=s*.14;
+    [-1,1].forEach(side=>{
+      const lx=cx+side*(lungW*.6+s*.02);
+      ctx.beginPath();
+      ctx.ellipse(lx,(lungTopY+lungBotY)/2,lungW*.46,(lungBotY-lungTopY)*.5,0,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(${TC},.10)`;ctx.lineWidth=.6;ctx.stroke();
+      for(let ri=0;ri<4;ri++){
+        const ry=lungTopY+ri*(lungBotY-lungTopY)/4+s*.02;
+        ctx.beginPath();ctx.moveTo(cx+side*s*.04,ry);ctx.lineTo(cx+side*(lungW*.9+s*.02),ry);
+        ctx.strokeStyle=`rgba(${TC},.06)`;ctx.lineWidth=.45;ctx.stroke();
+      }
+    });
+
+    /* vascular lines — 6 branching vessels, pulse-animated opacity */
+    const vessels=[
+      [[heartX,heartY],[cx-shW*.32,chestY],[cx-shW*.58,waistY-s*.08]],
+      [[cx-shW*.58,waistY-s*.08],[cx-hW*.48,hipY],[cx-hW*.42,botY]],
+      [[heartX,heartY],[cx+shW*.32,chestY],[cx+shW*.58,waistY-s*.08]],
+      [[cx+shW*.58,waistY-s*.08],[cx+hW*.48,hipY],[cx+hW*.42,botY]],
+      [[heartX,heartY],[cx,shoulderY-s*.04],[cx,headCY+hR*.6]],
+      [[cx,headCY-hR*.3],[cx-hR*.55,headCY-hR*.5],[cx-hR*.7,headCY-hR*.2]],
+    ];
+    vessels.forEach((pts,i)=>{
+      ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+      for(let k=1;k<pts.length;k++){
+        const mx=(pts[k-1][0]+pts[k][0])/2,my=(pts[k-1][1]+pts[k][1])/2;
+        ctx.quadraticCurveTo(pts[k-1][0],pts[k-1][1],mx,my);
+      }
+      ctx.lineTo(pts[pts.length-1][0],pts[pts.length-1][1]);
+      const pf=(Math.sin(frame*.038+i*.75)+1)*.5;
+      ctx.strokeStyle=`rgba(${TC},${.055+pf*.055})`;
+      ctx.lineWidth=.55;ctx.stroke();
+    });
+
+    /* neural branches from head */
+    const nb=[
+      {e:[cx-shW*.48,shoulderY+s*.04],c:[cx-shW*.26,headCY+hR*.85]},
+      {e:[cx+shW*.48,shoulderY+s*.04],c:[cx+shW*.26,headCY+hR*.85]},
+      {e:[cx-hR*.9,headCY-hR*.25],c:[cx-hR*.55,headCY-hR*.45]},
+      {e:[cx+hR*.9,headCY-hR*.25],c:[cx+hR*.55,headCY-hR*.45]},
+    ];
+    nb.forEach((b,i)=>{
+      ctx.beginPath();ctx.moveTo(cx,headCY);
+      ctx.quadraticCurveTo(b.c[0],b.c[1],b.e[0],b.e[1]);
+      const pf=(Math.sin(frame*.055+i*1.3)+1)*.5;
+      ctx.strokeStyle=`rgba(${TC},${.07+pf*.07})`;
+      ctx.lineWidth=.5;ctx.stroke();
+    });
+
+    /* heart node — secondary pulse point inside the body */
+    const hp=Math.sin(frame*.09)*.5+.5;
+    const hgrd2=ctx.createRadialGradient(heartX,heartY,0,heartX,heartY,10+hp*5);
+    hgrd2.addColorStop(0,`rgba(${TC},${.45+hp*.25})`);
+    hgrd2.addColorStop(1,`rgba(${TC},0)`);
+    ctx.beginPath();ctx.arc(heartX,heartY,10+hp*5,0,Math.PI*2);ctx.fillStyle=hgrd2;ctx.fill();
+    ctx.beginPath();ctx.arc(heartX,heartY,2.5,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${TC},.9)`;ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawRing(ring){
+    const s=sc(),a=ring.aF*s,b=ring.bF*s,cx=W/2,cy=H/2;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(ring.rot);
+    /* glow pass */
+    ctx.beginPath();ctx.ellipse(0,0,a+2,b+2,0,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(${TC},.05)`;ctx.lineWidth=5;ctx.stroke();
+    /* ring */
     ctx.beginPath();ctx.ellipse(0,0,a,b,0,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(${TC},.15)`;ctx.lineWidth=.8;
-    ctx.setLineDash([3,7]);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle=`rgba(${TC},.13)`;ctx.lineWidth=.7;
+    ctx.setLineDash([3,8]);ctx.stroke();ctx.setLineDash([]);
     ctx.restore();
   }
 
   function drawNode(x,y,depth,lbl){
-    const al=depth>0?.88:.24;
-    // halo glow
-    const g=ctx.createRadialGradient(x,y,0,x,y,22);
-    g.addColorStop(0,`rgba(${TC},${al*.5})`);
-    g.addColorStop(1,`rgba(${TC},0)`);
-    ctx.beginPath();ctx.arc(x,y,22,0,Math.PI*2);
-    ctx.fillStyle=g;ctx.fill();
-    // node dot
-    ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);
-    ctx.fillStyle=`rgba(${TC},${al})`;ctx.fill();
-    // label — only draw for front-facing nodes
+    const al=depth>0?.90:.22;
+    const nr=depth>0?14:9;
+    /* outer glow */
+    const og=ctx.createRadialGradient(x,y,0,x,y,nr*2.8);
+    og.addColorStop(0,`rgba(${TC},${al*.22})`);og.addColorStop(1,`rgba(${TC},0)`);
+    ctx.beginPath();ctx.arc(x,y,nr*2.8,0,Math.PI*2);ctx.fillStyle=og;ctx.fill();
+    /* 3D glass sphere — offset gradient source for highlight */
+    const sg=ctx.createRadialGradient(x-nr*.35,y-nr*.35,nr*.06,x,y,nr);
+    sg.addColorStop(0,`rgba(255,255,255,${al*.55})`);
+    sg.addColorStop(.28,`rgba(${TC},${al*.62})`);
+    sg.addColorStop(.72,`rgba(${TC},${al*.24})`);
+    sg.addColorStop(1,`rgba(${TC},${al*.07})`);
+    ctx.beginPath();ctx.arc(x,y,nr,0,Math.PI*2);ctx.fillStyle=sg;ctx.fill();
+    /* rim */
+    ctx.beginPath();ctx.arc(x,y,nr,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(${TC},${al*.40})`;ctx.lineWidth=.8;ctx.stroke();
+    /* specular highlight */
+    ctx.beginPath();ctx.arc(x-nr*.3,y-nr*.3,nr*.21,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${al*.36})`;ctx.fill();
+    /* label + data readout */
     if(al>0.4){
-      ctx.font='700 9px "Barlow Condensed",sans-serif';
-      ctx.fillStyle=`rgba(255,255,255,${al*.7})`;
       ctx.textAlign='center';
-      ctx.fillText(lbl,x,y-14);
+      ctx.font='700 9px "Barlow Condensed",sans-serif';
+      ctx.fillStyle=`rgba(255,255,255,${al*.80})`;
+      ctx.fillText(lbl,x,y-nr-5);
+      const val=dataMap[lbl];
+      if(val){
+        ctx.font='300 7px "Poppins",sans-serif';
+        ctx.fillStyle=`rgba(${TC},${al*.65})`;
+        ctx.fillText(val,x,y-nr-15);
+      }
+    }
+  }
+
+  /* Faint network lines between nodes within proximity */
+  function drawConnections(nodes){
+    const thresh=Math.min(W,H)*.30;
+    for(let i=0;i<nodes.length;i++){
+      for(let j=i+1;j<nodes.length;j++){
+        const d=Math.hypot(nodes[i].x-nodes[j].x,nodes[i].y-nodes[j].y);
+        if(d<thresh){
+          ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);
+          ctx.strokeStyle=`rgba(${TC},${(1-d/thresh)*.055})`;
+          ctx.lineWidth=.4;ctx.stroke();
+        }
+      }
     }
   }
 
@@ -810,64 +996,55 @@ document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.le
     ctx.clearRect(0,0,W,H);
     frame++;
 
-    // advance angles
-    rings.forEach(r=>r.nodes.forEach(n=>n.a+=r.spd));
+    /* DNA helixes — upper corners */
+    drawDNA(W*.08,H*.04,false);
+    drawDNA(W*.92,H*.04,true);
 
-    // draw orbital ellipses
+    /* ambient dust particles */
+    dust.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${TC},${p.a})`;ctx.fill();
+    });
+
+    drawBody();
+
+    rings.forEach(r=>r.nodes.forEach(n=>n.a+=r.spd));
     rings.forEach(r=>drawRing(r));
 
-    // collect all nodes with screen positions
     const nodes=[];
     rings.forEach(r=>r.nodes.forEach(n=>{
-      const p=nPos(r,n.a);
-      nodes.push({...p,lbl:n.lbl});
+      const p=nPos(r,n.a);nodes.push({...p,lbl:n.lbl});
     }));
-    // sort back-to-front so closer nodes render on top
     nodes.sort((a,b)=>a.depth-b.depth);
 
-    // draw nodes that sit behind the central orb
+    drawConnections(nodes);
     nodes.filter(n=>n.depth<0).forEach(n=>drawNode(n.x,n.y,n.depth,n.lbl));
 
-    // central orb
-    const cx=W/2,cy=H/2;
-    const breathe=Math.sin(frame*.022)*.5+.5;
-    const cr=13+breathe*5;
+    /* central orb */
+    const cx=W/2,cy=H/2,br=Math.sin(frame*.022)*.5+.5;
+    const cr=11+br*4;
+    const og=ctx.createRadialGradient(cx,cy,0,cx,cy,cr*5);
+    og.addColorStop(0,`rgba(${TC},.7)`);og.addColorStop(.3,`rgba(${TC},.12)`);og.addColorStop(1,`rgba(${TC},0)`);
+    ctx.beginPath();ctx.arc(cx,cy,cr*5,0,Math.PI*2);ctx.fillStyle=og;ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,cr,0,Math.PI*2);ctx.fillStyle=`rgba(${TC},.95)`;ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,cr*.38,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.92)';ctx.fill();
 
-    // outer glow
-    const og=ctx.createRadialGradient(cx,cy,0,cx,cy,cr*5.5);
-    og.addColorStop(0,`rgba(${TC},.65)`);
-    og.addColorStop(.3,`rgba(${TC},.12)`);
-    og.addColorStop(1,`rgba(${TC},0)`);
-    ctx.beginPath();ctx.arc(cx,cy,cr*5.5,0,Math.PI*2);
-    ctx.fillStyle=og;ctx.fill();
-
-    // orb body
-    ctx.beginPath();ctx.arc(cx,cy,cr,0,Math.PI*2);
-    ctx.fillStyle=`rgba(${TC},.95)`;ctx.fill();
-
-    // white hot core
-    ctx.beginPath();ctx.arc(cx,cy,cr*.38,0,Math.PI*2);
-    ctx.fillStyle='rgba(255,255,255,.92)';ctx.fill();
-
-    // expanding pulse rings from centre
-    if(frame%85===0)pulses.push({r:cr,a:.38});
+    if(frame%80===0)pulses.push({r:cr,a:.34});
     pulses=pulses.filter(p=>{
-      p.r+=.85;p.a-=.0055;
-      if(p.a<=0)return false;
+      p.r+=.8;p.a-=.005;if(p.a<=0)return false;
       ctx.beginPath();ctx.arc(cx,cy,p.r,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(${TC},${p.a})`;
-      ctx.lineWidth=.9;ctx.stroke();
+      ctx.strokeStyle=`rgba(${TC},${p.a})`;ctx.lineWidth=.9;ctx.stroke();
       return true;
     });
 
-    // draw nodes in front of the central orb
     nodes.filter(n=>n.depth>=0).forEach(n=>drawNode(n.x,n.y,n.depth,n.lbl));
-
     requestAnimationFrame(draw);
   }
 
-  window.addEventListener('resize',resize);
-  resize();draw();
+  window.addEventListener('resize',()=>{resize();initDust();});
+  resize();initDust();draw();
 })();
 
 /* CTA CANVAS — expanding rings */
