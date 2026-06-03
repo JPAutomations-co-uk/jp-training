@@ -52,8 +52,8 @@
     .nav-cta:hover{background:#3eeade;box-shadow:0 0 24px rgba(44,212,196,.4)}
 
     /* ── HERO ── */
-    .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;
-      justify-content:center;padding:120px 10% 80px;overflow:hidden}
+    .hero{position:relative;height:100vh;display:flex;flex-direction:column;
+      justify-content:center;align-items:center;text-align:center;padding:80px 8% 60px;overflow:hidden}
     #hero-c{position:absolute;inset:0;z-index:0;pointer-events:none}
     .orb{position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
     .o1{width:700px;height:700px;
@@ -62,43 +62,31 @@
     .o2{width:400px;height:400px;
       background:radial-gradient(circle,rgba(44,212,196,.06) 0%,transparent 65%);
       bottom:-50px;left:5%;animation:f2 14s ease-in-out infinite}
+    .o3{width:800px;height:800px;
+      background:radial-gradient(circle,rgba(44,212,196,.05) 0%,transparent 60%);
+      top:50%;left:50%;transform:translate(-50%,-50%);animation:f3 18s ease-in-out infinite}
+    @keyframes f3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.08)}}
     @keyframes f1{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,30px)}}
     @keyframes f2{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-20px)}}
-    .hero-flex{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;
-      position:relative;z-index:2;width:100%}
-    .hero-inner{min-width:0}
-    .hero-graphic{position:relative;height:540px;min-width:0}
-    #opt-c{position:absolute;inset:0;width:100%;height:100%}
-    .hero-loc{display:inline-flex;align-items:center;gap:10px;
+    .hero-content{position:relative;z-index:2;width:100%;max-width:760px}
+    .hero-loc{display:inline-flex;align-items:center;gap:10px;justify-content:center;
       font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
       color:var(--teal);margin-bottom:28px;
       opacity:0;animation:fup .7s var(--ease) .2s forwards}
     .hero-loc::before{content:'';width:24px;height:1px;background:var(--teal)}
     .hero-h1{font-family:var(--D);font-weight:900;text-transform:uppercase;
-      font-size:clamp(60px,8.5vw,130px);line-height:.92;letter-spacing:-.01em;
+      font-size:clamp(52px,7.5vw,110px);line-height:.92;letter-spacing:-.01em;
       margin-bottom:8px;
       opacity:0;animation:fup .7s var(--ease) .4s forwards}
     .hero-h1 .teal{color:var(--teal)}
     .hero-h1 .stroke{-webkit-text-stroke:2px var(--white);color:transparent}
-    .hero-sub{font-size:18px;font-weight:300;color:var(--muted);
-      max-width:50ch;line-height:1.8;margin-top:24px;margin-bottom:40px;
+    .hero-sub{font-size:17px;font-weight:300;color:var(--muted);
+      max-width:52ch;line-height:1.8;margin:20px auto 36px;
       opacity:0;animation:fup .7s var(--ease) .6s forwards}
     .hero-sub strong{color:var(--white);font-weight:500}
 
-    /* guarantee box */
-    .guarantee-box{
-      display:inline-flex;align-items:flex-start;gap:16px;
-      border:1px solid rgba(44,212,196,.35);
-      background:rgba(44,212,196,.05);
-      padding:20px 24px;margin-bottom:36px;max-width:540px;
-      opacity:0;animation:fup .7s var(--ease) .65s forwards;
-    }
-    .g-icon{width:20px;height:20px;color:var(--teal);flex-shrink:0;margin-top:2px}
-    .g-text{font-size:14px;color:var(--muted);line-height:1.65}
-    .g-text strong{display:block;color:var(--white);font-weight:600;font-size:15px;margin-bottom:4px}
-
-    .hero-btns{display:flex;gap:20px;align-items:center;
-      opacity:0;animation:fup .7s var(--ease) .85s forwards}
+    .hero-btns{display:flex;gap:20px;align-items:center;justify-content:center;
+      opacity:0;animation:fup .7s var(--ease) .8s forwards}
     .btn-main{font-family:var(--D);font-size:16px;font-weight:800;
       letter-spacing:.1em;text-transform:uppercase;color:var(--black);
       background:var(--teal);padding:18px 48px;text-decoration:none;
@@ -339,9 +327,9 @@
     @media(max-width:768px){
       body{cursor:auto}#cur,#cur-ring{display:none}
       nav{padding:0 20px}.nav-links{display:none}
-      .hero{padding:100px 6% 64px}
-      .hero-flex{grid-template-columns:1fr}
-      .hero-graphic{display:none}
+      .hero{padding:68px 6% 48px;height:100svh}
+      .hero-h1{font-size:clamp(42px,11vw,80px)}
+      .o3{width:360px;height:360px}
       .psych-inner{grid-template-columns:1fr;gap:40px;padding:72px 6%}
       .sec,.sec-full{padding:72px 6%}
       .sec-full{padding:72px 6%}
@@ -384,28 +372,17 @@
   <canvas id="hero-c"></canvas>
   <div class="orb o1"></div>
   <div class="orb o2"></div>
-  <div class="hero-flex">
-  <div class="hero-inner">
-    <p class="hero-loc">Birmingham · Longevity Performance Coaching · For Men</p>
+  <div class="orb o3"></div>
+  <div class="hero-content">
+    <p class="hero-loc">Birmingham · Executive Performance Coaching · Men 35–55</p>
     <h1 class="hero-h1">
-      THE BEST<br>
-      SHAPE OF<br>
-      YOUR <span class="teal">LIFE.</span><br>
-      <span class="stroke">GUARANTEED.</span>
+      YOU BUILT<br>
+      THE CAREER.<br>
+      NOW BUILD THE <span class="teal">BODY.</span>
     </h1>
     <p class="hero-sub">
-      Most men know what they should be doing. The problem isn't information — it's having the right programme, <strong>built for your biology</strong>, with a reason behind it that's strong enough to make you actually do it. That's what this is.
+      Most men at your level know something's off — the energy, the body composition, the recovery. We <strong>measure exactly what it is</strong> — blood work, hormones, body composition — and build a protocol around your actual biology. Not a template. Not guesswork.
     </p>
-
-    <!-- GUARANTEE BOX -->
-    <div class="guarantee-box">
-      <svg class="g-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>
-      <div class="g-text">
-        <strong>The JP Training Guarantee</strong>
-        Book a free 30-minute call. If you don't come away with more clarity about your body and what's actually holding you back than you've had in years — I'll write you a full personalised training plan, completely free. You've got nothing to lose except thirty minutes.
-      </div>
-    </div>
-
     <div class="hero-btns">
       <a href="#consult" class="btn-main">Book Your Free 30-Min Call</a>
       <a href="#journey" class="btn-ghost">
@@ -414,10 +391,6 @@
       </a>
     </div>
   </div>
-  <div class="hero-graphic">
-    <canvas id="opt-c"></canvas>
-  </div>
-  </div><!-- /hero-flex -->
   <div class="scroll-cue"><div class="s-line"></div></div>
 </section>
 
@@ -737,8 +710,8 @@ document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.le
   window.addEventListener('resize',resize);init();draw();
 })();
 
-/* OPTIMISATION SYSTEM CANVAS */
-(function(){
+/* OPTIMISATION SYSTEM CANVAS — removed, canvas element deleted */
+if(false){(function(){
   const c=document.getElementById('opt-c');
   if(!c)return;
   const ctx=c.getContext('2d');
@@ -1045,7 +1018,7 @@ document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.le
 
   window.addEventListener('resize',()=>{resize();initDust();});
   resize();initDust();draw();
-})();
+})();}
 
 /* CTA CANVAS — expanding rings */
 (function(){
