@@ -55,18 +55,37 @@
     .hero{position:relative;height:100vh;display:flex;flex-direction:column;
       justify-content:center;align-items:center;text-align:center;padding:80px 8% 60px;overflow:hidden}
     #hero-c{position:absolute;inset:0;z-index:0;pointer-events:none}
-    .orb{position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
+    /* ── ORBS (hero + section) ── */
+    .orb,.s-orb{position:absolute;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0}
+    /* hero orbs */
     .o1{width:700px;height:700px;
-      background:radial-gradient(circle,rgba(44,212,196,.1) 0%,transparent 65%);
+      background:radial-gradient(circle,rgba(44,212,196,.10) 0%,transparent 65%);
       top:-200px;right:-100px;animation:f1 10s ease-in-out infinite}
     .o2{width:400px;height:400px;
-      background:radial-gradient(circle,rgba(44,212,196,.06) 0%,transparent 65%);
+      background:radial-gradient(circle,rgba(44,212,196,.07) 0%,transparent 65%);
       bottom:-50px;left:5%;animation:f2 14s ease-in-out infinite}
     .o3{width:800px;height:800px;
       background:radial-gradient(circle,rgba(44,212,196,.05) 0%,transparent 60%);
       top:50%;left:50%;transform:translate(-50%,-50%);animation:f3 18s ease-in-out infinite}
-    @keyframes f3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.08)}}
+    /* section orb variants */
+    .so-tl{width:480px;height:480px;
+      background:radial-gradient(circle,rgba(44,212,196,.07) 0%,transparent 60%);
+      top:-140px;left:-140px;animation:f1 22s ease-in-out infinite}
+    .so-tr{width:420px;height:420px;
+      background:radial-gradient(circle,rgba(44,212,196,.06) 0%,transparent 60%);
+      top:-100px;right:-100px;animation:f2 26s ease-in-out infinite}
+    .so-br{width:460px;height:460px;
+      background:radial-gradient(circle,rgba(44,212,196,.07) 0%,transparent 60%);
+      bottom:-120px;right:-120px;animation:f1 20s ease-in-out infinite reverse}
+    .so-bl{width:380px;height:380px;
+      background:radial-gradient(circle,rgba(44,212,196,.055) 0%,transparent 60%);
+      bottom:-90px;left:-90px;animation:f2 24s ease-in-out infinite reverse}
+    .so-c{width:560px;height:560px;
+      background:radial-gradient(circle,rgba(44,212,196,.04) 0%,transparent 58%);
+      top:50%;left:50%;transform:translate(-50%,-50%);animation:f3 28s ease-in-out infinite}
     @keyframes f1{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,30px)}}
+    @keyframes f2{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-20px)}}
+    @keyframes f3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.08)}}
     @keyframes f2{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-20px)}}
     .hero-content{position:relative;z-index:2;width:100%;max-width:760px}
     .hero-loc{display:inline-flex;align-items:center;gap:10px;justify-content:center;
@@ -87,6 +106,9 @@
 
     .hero-btns{display:flex;gap:20px;align-items:center;justify-content:center;
       opacity:0;animation:fup .7s var(--ease) .8s forwards}
+    .hero-guarantee{font-size:12px;color:var(--dim);margin-top:20px;line-height:1.6;
+      opacity:0;animation:fup .7s var(--ease) 1.0s forwards}
+    .hero-guarantee em{font-style:normal;color:var(--teal)}
     .btn-main{font-family:var(--D);font-size:16px;font-weight:800;
       letter-spacing:.1em;text-transform:uppercase;color:var(--black);
       background:var(--teal);padding:18px 48px;text-decoration:none;
@@ -119,8 +141,10 @@
     .t-dot{width:4px;height:4px;border-radius:50%;background:var(--teal);flex-shrink:0}
 
     /* ── SHARED SECTION ── */
-    .sec{padding:100px 10%;max-width:1400px;margin:0 auto}
-    .sec-full{padding:100px 10%}
+    .sec{padding:100px 10%;max-width:1400px;margin:0 auto;position:relative}
+    .sec-full{padding:100px 10%;position:relative;overflow:hidden}
+    /* any element following an s-orb sits above it */
+    .s-orb~*{position:relative;z-index:1}
     hr.rule{border:none;border-top:1px solid var(--border);max-width:1200px;margin:0 auto}
     .label{display:inline-flex;align-items:center;gap:12px;
       font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
@@ -133,7 +157,7 @@
     .body-s{font-size:15px;color:var(--muted);line-height:1.85}
 
     /* ── PSYCH LEVER ── */
-    .psych{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .psych{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
     .psych-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;padding:100px 10%;max-width:1400px;margin:0 auto}
     .psych-big{font-family:var(--D);font-size:clamp(48px,6vw,90px);font-weight:900;
       text-transform:uppercase;line-height:1.0;letter-spacing:-.01em;margin-bottom:32px}
@@ -330,6 +354,7 @@
       .hero{padding:68px 6% 48px;height:100svh}
       .hero-h1{font-size:clamp(42px,11vw,80px)}
       .o3{width:360px;height:360px}
+      .so-tl,.so-tr,.so-br,.so-bl,.so-c{width:260px;height:260px}
       .psych-inner{grid-template-columns:1fr;gap:40px;padding:72px 6%}
       .sec,.sec-full{padding:72px 6%}
       .sec-full{padding:72px 6%}
@@ -374,14 +399,14 @@
   <div class="orb o2"></div>
   <div class="orb o3"></div>
   <div class="hero-content">
-    <p class="hero-loc">Birmingham · Executive Performance Coaching · Men 35–55</p>
+    <p class="hero-loc">Birmingham · Performance Coaching · For Men</p>
     <h1 class="hero-h1">
-      YOU BUILT<br>
-      THE CAREER.<br>
-      NOW BUILD THE <span class="teal">BODY.</span>
+      BUILD THE BODY<br>
+      YOU ACTUALLY WANT.<br>
+      <span class="teal">GUARANTEED.</span>
     </h1>
     <p class="hero-sub">
-      Most men at your level know something's off — the energy, the body composition, the recovery. We <strong>measure exactly what it is</strong> — blood work, hormones, body composition — and build a protocol around your actual biology. Not a template. Not guesswork.
+      We measure what's actually stopping you — blood work, body composition, hormones — then build a protocol around <strong>your biology</strong>. Not a template. Not guesswork.
     </p>
     <div class="hero-btns">
       <a href="#consult" class="btn-main">Book Your Free 30-Min Call</a>
@@ -390,6 +415,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
+    <p class="hero-guarantee">Come away with more clarity about your body than you've had in years — <em>or I'll write your full training plan for free.</em></p>
   </div>
   <div class="scroll-cue"><div class="s-line"></div></div>
 </section>
@@ -399,6 +425,8 @@
 
 <!-- PSYCH LEVER -->
 <div class="psych">
+  <div class="s-orb so-tr"></div>
+  <div class="s-orb so-bl"></div>
   <div class="psych-inner">
     <div class="left">
       <p class="label">Why Most Plans Fail</p>
@@ -418,6 +446,8 @@
 
 <!-- JOURNEY OVERVIEW -->
 <section class="sec" id="journey">
+  <div class="s-orb so-tl"></div>
+  <div class="s-orb so-br"></div>
   <div class="up">
     <p class="label">The Three-Stage Longevity Process</p>
     <h2>HOW IT<br><span class="t">ALL WORKS</span></h2>
@@ -449,7 +479,9 @@
 </section>
 
 <!-- ═══ STAGE 1 ═══ -->
-<div class="stage-1" id="foundations">
+<div class="stage-1" id="foundations" style="position:relative;overflow:hidden">
+  <div class="s-orb so-tl"></div>
+  <div class="s-orb so-br"></div>
   <div class="stage-inner">
     <div class="stage-header">
       <div class="stage-h-wrap left">
@@ -507,7 +539,9 @@
 </div>
 
 <!-- ═══ STAGE 2 ═══ -->
-<div class="stage-2" id="boosters">
+<div class="stage-2" id="boosters" style="position:relative;overflow:hidden">
+  <div class="s-orb so-tr"></div>
+  <div class="s-orb so-bl"></div>
   <div class="stage-inner">
     <div class="stage-header">
       <div class="stage-h-wrap left">
@@ -574,7 +608,9 @@
 </div>
 
 <!-- ═══ STAGE 3 ═══ -->
-<div class="stage-3" id="optimisation">
+<div class="stage-3" id="optimisation" style="position:relative;overflow:hidden">
+  <div class="s-orb so-tl"></div>
+  <div class="s-orb so-br"></div>
   <div class="stage-inner" style="position:relative;z-index:1">
     <div class="stage-header">
       <div class="stage-h-wrap left">
@@ -633,7 +669,9 @@
 </div>
 
 <!-- THE PROCESS -->
-<div class="process-wrap" id="process">
+<div class="process-wrap" id="process" style="position:relative;overflow:hidden">
+  <div class="s-orb so-tr"></div>
+  <div class="s-orb so-bl"></div>
   <div class="process-inner">
     <div class="up" style="margin-bottom:0">
       <p class="label">Getting Started</p>
@@ -663,6 +701,8 @@
 <!-- CTA -->
 <section class="cta-wrap" id="consult">
   <canvas id="cta-c"></canvas>
+  <div class="s-orb so-tl"></div>
+  <div class="s-orb so-br"></div>
   <div class="cta-inner up">
     <div class="cta-badge">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg>
@@ -688,7 +728,7 @@
     <img src="logo.jpg" alt="JP Training">
     <span class="foot-brand">JP <em>Training</em></span>
   </div>
-  <span class="foot-copy">Birmingham · Longevity Performance Coaching for Men · jpautomations12@gmail.com</span>
+  <span class="foot-copy">Birmingham · Performance Coaching for Men · jpautomations12@gmail.com</span>
 </footer>
 
 <script>
