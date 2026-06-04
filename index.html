@@ -157,21 +157,49 @@
     h2 .sk{-webkit-text-stroke:2px var(--white);color:transparent}
     .body-s{font-size:15px;color:var(--muted);line-height:1.85}
 
-    /* ── PSYCH LEVER ── */
-    .psych{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
-    .psych-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;padding:100px 10%;max-width:1400px;margin:0 auto}
-    .psych-big{font-family:var(--D);font-size:clamp(48px,6vw,90px);font-weight:900;
-      text-transform:uppercase;line-height:1.0;letter-spacing:-.01em;margin-bottom:32px}
-    .psych-big .t{color:var(--teal)}
-    .psych-big .sk{-webkit-text-stroke:2px var(--white);color:transparent}
-    .psych-body{font-size:16px;color:var(--muted);line-height:1.9;margin-bottom:20px}
-    .psych-body strong{color:var(--white);font-weight:500}
-    .psych-body em{font-style:italic;color:var(--teal)}
-    .psych-quote{
-      border-left:2px solid var(--teal);padding:20px 24px;
-      margin-top:32px;background:var(--teal-lo);
-    }
-    .psych-quote p{font-size:15px;color:var(--white);line-height:1.75;font-style:italic}
+    /* ── INTRO / WHO THIS IS FOR ── */
+    .intro-sec{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+    .intro-inner{padding:100px 10%;max-width:1400px;margin:0 auto}
+    .intro-head{text-align:center;margin-bottom:72px}
+    .intro-lead{font-size:17px;color:var(--muted);max-width:54ch;margin:20px auto 0;line-height:1.8}
+
+    /* persona cards */
+    .personas{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-bottom:80px}
+    .persona{background:var(--card);padding:44px 36px;position:relative;overflow:hidden;
+      cursor:default;transition:background .3s}
+    .persona:hover{background:#161616}
+    .persona::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:var(--teal);transform:scaleX(0);transform-origin:left;
+      transition:transform .4s var(--ease)}
+    .persona:hover::before{transform:scaleX(1)}
+    .pers-age{font-family:var(--D);font-size:110px;font-weight:900;line-height:1;
+      letter-spacing:-.04em;color:var(--teal);opacity:.08;margin-bottom:-12px;
+      pointer-events:none}
+    .pers-type{font-family:var(--D);font-size:11px;font-weight:700;letter-spacing:.22em;
+      text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+    .pers-name{font-family:var(--D);font-size:26px;font-weight:800;text-transform:uppercase;
+      letter-spacing:.04em;color:var(--white);margin-bottom:20px}
+    .pers-want{font-size:15px;color:var(--white);font-weight:400;line-height:1.75;
+      margin-bottom:24px;font-style:italic}
+    .pers-now{font-size:13px;color:var(--muted);line-height:1.7;
+      border-top:1px solid var(--border);padding-top:20px}
+    .pers-now strong{color:var(--teal);font-weight:600;display:block;
+      font-size:10px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}
+
+    /* bottom body text */
+    .intro-body{display:grid;grid-template-columns:1fr 1fr;gap:72px;
+      border-top:1px solid var(--border);padding-top:64px;align-items:start}
+    .intro-body p{font-size:15px;color:var(--muted);line-height:1.9;margin-bottom:20px}
+    .intro-body p:last-child{margin-bottom:0}
+    .intro-body strong{color:var(--white);font-weight:500}
+    .intro-body em{color:var(--teal);font-style:normal}
+    .ib-head{font-family:var(--D);font-size:clamp(28px,3.5vw,48px);font-weight:900;
+      text-transform:uppercase;line-height:1.0;letter-spacing:-.01em;margin-bottom:28px}
+    .ib-head .t{color:var(--teal)}
+    .ib-head .sk{-webkit-text-stroke:2px var(--white);color:transparent}
+    .guarantee-pull{border-left:2px solid var(--teal);padding:20px 24px;
+      margin:28px 0;background:var(--teal-lo)}
+    .guarantee-pull p{font-size:14px;color:var(--white);line-height:1.75;font-style:italic;margin:0}
 
     /* ── JOURNEY OVERVIEW ── */
     .journey-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:64px}
@@ -356,7 +384,9 @@
       .hero-h1{font-size:clamp(42px,11vw,80px)}
       .o3{width:360px;height:360px}
       .so-tl,.so-tr,.so-br,.so-bl,.so-c{width:260px;height:260px}
-      .psych-inner{grid-template-columns:1fr;gap:40px;padding:72px 6%}
+      .personas{grid-template-columns:1fr}
+      .intro-inner{padding:72px 6%}
+      .intro-body{grid-template-columns:1fr;gap:48px}
       .sec,.sec-full{padding:72px 6%}
       .sec-full{padding:72px 6%}
       .stage-inner{padding:0 6%}
@@ -426,24 +456,68 @@
 <!-- TICKER -->
 <div class="ticker" aria-hidden="true"><div class="t-track" id="ticker"></div></div>
 
-<!-- PSYCH LEVER -->
-<div class="psych">
+<!-- INTRO — WHO THIS IS FOR -->
+<div class="intro-sec">
   <div class="s-orb so-tr"></div>
   <div class="s-orb so-bl"></div>
-  <div class="psych-inner">
-    <div class="left">
-      <p class="label">Why Most Plans Fail</p>
-      <h2 class="psych-big">THE REASON<br>YOU'VE<br><span class="t">STOPPED</span><br><span class="sk">BEFORE</span></h2>
+  <div class="intro-inner">
+
+    <div class="intro-head up">
+      <p class="label">Who This Is For</p>
+      <h2>THREE MEN.<br><span class="t">ONE STARTING POINT.</span></h2>
+      <p class="intro-lead">Your goals look nothing like each other's. But where the answer lives is the same place for all of you.</p>
     </div>
-    <div class="right">
-      <p class="psych-body">It wasn't discipline. It wasn't your schedule. It wasn't the programme — even if the programme was wrong.</p>
-      <p class="psych-body">It was that your <strong>real reason — the deep, specific, uncomfortable one</strong> — was never found. Never named. Never actually used.</p>
-      <p class="psych-body">The first thing we do together isn't write a training plan. It's find <em>that</em>. The reason underneath everything else. The one that makes showing up feel non-negotiable — not because you're disciplined, but because not showing up would feel like a betrayal of something that actually matters.</p>
-      <p class="psych-body">Once we have it, <strong>the hard days stop being hard</strong> in the same way. Every missed session, every difficult choice, every moment of doubt — the lever handles it. That's why we start here.</p>
-      <div class="psych-quote">
-        <p>"Most men don't have a motivation problem. They have a reason problem. The right reason makes everything else feel obvious. That's where we always start."</p>
+
+    <div class="personas stag">
+      <div class="persona">
+        <div class="pers-age">15</div>
+        <p class="pers-type">The Athlete</p>
+        <p class="pers-name">Optimise to Dominate</p>
+        <p class="pers-want">"I want to be the best player on that pitch. Better speed, more power, faster recovery — and a real edge over every opponent who's training just as hard."</p>
+        <div class="pers-now">
+          <strong>Right now</strong>
+          Training hard but guessing at everything. No protocol around nutrition, sleep, or recovery. No idea how his biology is limiting his ceiling.
+        </div>
+      </div>
+      <div class="persona">
+        <div class="pers-age">26</div>
+        <p class="pers-type">The Transformer</p>
+        <p class="pers-name">Finally Get There</p>
+        <p class="pers-want">"I want to get to 10–12% body fat and stay there. Not a crash diet. A body that actually looks the way I want it to — and stays that way."</p>
+        <div class="pers-now">
+          <strong>Right now</strong>
+          Three years in the gym. Same body fat percentage. Every programme works for a month and then plateaus. Wondering if his body just doesn't respond.
+        </div>
+      </div>
+      <div class="persona">
+        <div class="pers-age">50</div>
+        <p class="pers-type">The Reclaimer</p>
+        <p class="pers-name">Get It Back</p>
+        <p class="pers-want">"I want my energy back. My mobility back. The drive I had at 35 — and a body that feels like it's working with me, not against me."</p>
+        <div class="pers-now">
+          <strong>Right now</strong>
+          GP said everything is fine. Nobody has actually investigated what's happening. Just told to reduce stress and come back in six months.
+        </div>
       </div>
     </div>
+
+    <div class="intro-body">
+      <div class="left up">
+        <h3 class="ib-head">THREE GOALS.<br><span class="t">ONE TRUTH.</span></h3>
+        <p>Three completely different men. Three completely different goals. One thing in common: <strong>the answer is inside their biology — and nobody has bothered to look.</strong></p>
+        <p>Men's health is a system of interconnected parts — hormones, training, nutrition, sleep, recovery. Pull one lever and the others move. Ignore one and the whole system underperforms. Every man has a ceiling, and most never find out what theirs actually is because they never looked at the full picture.</p>
+        <p>That ceiling is higher than you think. For all three of them.</p>
+      </div>
+      <div class="right up">
+        <h3 class="ib-head">THE ONLY AREA<br><span class="t">WITH A</span> <span class="sk">GUARANTEE.</span></h3>
+        <p>Most things in life don't work like this. You can grind in business and still fail. You can give everything to a relationship and still lose it.</p>
+        <div class="guarantee-pull">
+          <p>But follow a protocol built specifically for your biological state — your blood work, your hormones, your body composition, your goals — and you will get there. Every time. No exceptions. Health is the one area of life where the right inputs, applied consistently, always produce the result.</p>
+        </div>
+        <p>That's what JP Training is built on. We find out exactly how your body works. Then we build around it — <strong>training, nutrition, sleep, hormonal health</strong> — all connected, all specific to you. Whatever your starting point, whatever the goal. This is how you get there.</p>
+      </div>
+    </div>
+
   </div>
 </div>
 
