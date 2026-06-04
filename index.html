@@ -54,9 +54,10 @@
     /* ── HERO ── */
     .hero{position:relative;height:100vh;display:flex;flex-direction:column;
       justify-content:center;align-items:center;text-align:center;padding:80px 8% 60px;overflow:hidden}
-    #hero-c{position:absolute;inset:0;z-index:0;pointer-events:none}
+    #hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
+    .hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.72) 0%,rgba(0,0,0,.55) 50%,rgba(0,0,0,.75) 100%);z-index:1;pointer-events:none}
     /* ── ORBS (hero + section) ── */
-    .orb,.s-orb{position:absolute;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0}
+    .orb,.s-orb{position:absolute;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:2}
     /* hero orbs */
     .o1{width:700px;height:700px;
       background:radial-gradient(circle,rgba(44,212,196,.10) 0%,transparent 65%);
@@ -87,7 +88,7 @@
     @keyframes f2{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-20px)}}
     @keyframes f3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.08)}}
     @keyframes f2{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-20px)}}
-    .hero-content{position:relative;z-index:2;width:100%;max-width:760px}
+    .hero-content{position:relative;z-index:3;width:100%;max-width:760px}
     .hero-loc{display:inline-flex;align-items:center;gap:10px;justify-content:center;
       font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
       color:var(--teal);margin-bottom:28px;
@@ -394,7 +395,10 @@
 
 <!-- HERO -->
 <section class="hero">
-  <canvas id="hero-c"></canvas>
+  <video id="hero-video" autoplay muted loop playsinline poster="" aria-hidden="true">
+    <source src="hero.mp4" type="video/mp4">
+  </video>
+  <div class="hero-overlay"></div>
   <div class="orb o1"></div>
   <div class="orb o2"></div>
   <div class="orb o3"></div>
@@ -737,17 +741,7 @@ let mx=0,my=0,rx=0,ry=0;
 document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
 (function loop(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop)})();
 
-/* HERO CANVAS */
-(function(){
-  const c=document.getElementById('hero-c'),ctx=c.getContext('2d');
-  let W,H,pts=[];const N=80,TC='44,212,196';
-  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight}
-  function Pt(){this.x=Math.random()*W;this.y=Math.random()*H;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.r=Math.random()*1.2+.3;this.a=Math.random()*.35+.08}
-  Pt.prototype.tick=function(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W)this.vx*=-1;if(this.y<0||this.y>H)this.vy*=-1};
-  function init(){resize();pts=Array.from({length:N},()=>new Pt())}
-  function draw(){ctx.clearRect(0,0,W,H);for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.hypot(dx,dy);if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(${TC},${(1-d/120)*.09})`;ctx.lineWidth=.5;ctx.stroke()}}pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(${TC},${p.a})`;ctx.fill();p.tick()});requestAnimationFrame(draw)}
-  window.addEventListener('resize',resize);init();draw();
-})();
+/* hero canvas removed — replaced by video */
 
 /* OPTIMISATION SYSTEM CANVAS — removed, canvas element deleted */
 if(false){(function(){
