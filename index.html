@@ -158,27 +158,38 @@
     .body-s{font-size:15px;color:var(--muted);line-height:1.85}
 
     /* ── PROBLEM CLOUD ── */
-    .cloud-sec{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
-    .cloud-inner{padding:100px 10%;max-width:1000px;margin:0 auto;text-align:center}
-    .cloud-anchor{font-family:var(--D);font-size:clamp(34px,4.5vw,62px);font-weight:900;
-      text-transform:uppercase;line-height:1.0;letter-spacing:-.01em;margin-bottom:16px}
+    .cloud-sec{background:var(--s1);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+    .cloud-header{padding:64px 10% 52px;max-width:1000px;margin:0 auto;text-align:center}
+    .cloud-anchor{font-family:var(--D);font-size:clamp(28px,3.8vw,56px);font-weight:900;
+      text-transform:uppercase;line-height:1.05;letter-spacing:-.01em;margin-bottom:14px}
     .cloud-anchor .t{color:var(--teal)}
-    .cloud-sub{font-size:16px;color:var(--muted);line-height:1.75;
-      max-width:46ch;margin:0 auto 60px}
-    /* tag cloud */
-    .tag-cloud{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:72px}
-    .tag{display:inline-flex;align-items:center;
-      border:1px solid rgba(44,212,196,.20);background:rgba(44,212,196,.04);
-      color:var(--muted);font-family:var(--B);font-weight:300;letter-spacing:.02em;
-      font-size:13px;padding:8px 18px;cursor:default;
-      transition:border-color .2s,background .2s,color .2s}
-    .tag:hover{border-color:rgba(44,212,196,.55);background:rgba(44,212,196,.09);color:var(--white)}
-    .tag.lg{font-size:15px;padding:11px 22px;border-color:rgba(44,212,196,.28);
-      background:rgba(44,212,196,.06);color:rgba(255,255,255,.75)}
-    .tag.xl{font-size:18px;padding:14px 28px;font-weight:400;
-      border-color:rgba(44,212,196,.40);background:rgba(44,212,196,.09);color:var(--white)}
-    /* bridge to stages */
-    .cloud-bridge{border-top:1px solid var(--border);padding-top:60px}
+    .cloud-sub{font-size:16px;color:var(--muted);line-height:1.75;max-width:44ch;margin:0 auto}
+    /* scrolling rows */
+    .cloud-rows{display:flex;flex-direction:column;gap:14px;padding:0 0 60px;
+      -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 10%,#000 90%,transparent 100%);
+      mask-image:linear-gradient(to right,transparent 0%,#000 10%,#000 90%,transparent 100%)}
+    .cloud-row{overflow:hidden}
+    .cloud-track{display:inline-flex;gap:14px;white-space:nowrap;will-change:transform}
+    .cloud-track.left{animation:cLeft 42s linear infinite}
+    .cloud-track.right{animation:cRight 50s linear infinite}
+    .cloud-track.left-slow{animation:cLeft 62s linear infinite}
+    .cloud-rows:hover .cloud-track{animation-play-state:paused}
+    @keyframes cLeft{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    @keyframes cRight{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+    /* individual tags */
+    .ctag{display:inline-flex;align-items:center;white-space:nowrap;
+      border:1px solid rgba(44,212,196,.22);background:rgba(44,212,196,.05);
+      color:rgba(255,255,255,.62);font-family:var(--B);font-weight:400;letter-spacing:.03em;
+      font-size:14px;padding:10px 22px;cursor:default;
+      transition:border-color .25s,background .25s,color .25s}
+    .ctag:hover{border-color:rgba(44,212,196,.75);background:rgba(44,212,196,.13);color:var(--white)}
+    .ctag.l{font-size:17px;padding:13px 28px;border-color:rgba(44,212,196,.30);
+      background:rgba(44,212,196,.07);color:rgba(255,255,255,.78)}
+    .ctag.xl{font-size:21px;padding:16px 34px;font-weight:500;
+      border-color:rgba(44,212,196,.42);background:rgba(44,212,196,.09);color:var(--white)}
+    /* bridge */
+    .cloud-bridge{border-top:1px solid var(--border);padding:60px 10%;text-align:center}
+    .cloud-bridge-inner{max-width:800px;margin:0 auto}
     .cloud-truth{font-family:var(--D);font-size:clamp(22px,3vw,38px);font-weight:900;
       text-transform:uppercase;line-height:1.05;letter-spacing:-.01em;
       margin-bottom:24px;color:var(--white)}
@@ -370,9 +381,11 @@
       .hero-h1{font-size:clamp(42px,11vw,80px)}
       .o3{width:360px;height:360px}
       .so-tl,.so-tr,.so-br,.so-bl,.so-c{width:260px;height:260px}
-      .cloud-inner{padding:72px 6%}
-      .tag.xl{font-size:15px;padding:11px 20px}
-      .tag.lg{font-size:13px;padding:9px 16px}
+      .cloud-header{padding:48px 6% 40px}
+      .ctag.xl{font-size:16px;padding:12px 22px}
+      .ctag.l{font-size:14px;padding:10px 20px}
+      .ctag{font-size:12px;padding:8px 16px}
+      .cloud-bridge{padding:48px 6%}
       .sec,.sec-full{padding:72px 6%}
       .sec-full{padding:72px 6%}
       .stage-inner{padding:0 6%}
@@ -446,46 +459,106 @@
 <div class="cloud-sec">
   <div class="s-orb so-tr"></div>
   <div class="s-orb so-bl"></div>
-  <div class="cloud-inner">
 
-    <div class="up">
-      <p class="label">What We Fix</p>
-      <h2 class="cloud-anchor">MEN COME HERE WITH<br><span class="t">COMPLETELY DIFFERENT PROBLEMS.</span></h2>
-      <p class="cloud-sub">What they share is one thing.</p>
+  <div class="cloud-header up">
+    <p class="label">What We Fix</p>
+    <h2 class="cloud-anchor">MEN COME HERE WITH<br><span class="t">COMPLETELY DIFFERENT PROBLEMS.</span></h2>
+    <p class="cloud-sub">Whatever it is — the answer starts in your biology.</p>
+  </div>
+
+  <!-- ROW 1 — XL tags, scroll left -->
+  <div class="cloud-rows" aria-hidden="true">
+    <div class="cloud-row">
+      <div class="cloud-track left">
+        <span class="ctag xl">Low Energy</span>
+        <span class="ctag xl">Fat Loss</span>
+        <span class="ctag xl">Low Testosterone</span>
+        <span class="ctag xl">Hormonal Decline</span>
+        <span class="ctag xl">Athletic Performance</span>
+        <span class="ctag xl">Poor Sleep</span>
+        <span class="ctag xl">Muscle Building</span>
+        <span class="ctag xl">Height Plateau</span>
+        <span class="ctag xl">Body Recomposition</span>
+        <span class="ctag xl">Brain Fog</span>
+        <!-- duplicate for seamless loop -->
+        <span class="ctag xl">Low Energy</span>
+        <span class="ctag xl">Fat Loss</span>
+        <span class="ctag xl">Low Testosterone</span>
+        <span class="ctag xl">Hormonal Decline</span>
+        <span class="ctag xl">Athletic Performance</span>
+        <span class="ctag xl">Poor Sleep</span>
+        <span class="ctag xl">Muscle Building</span>
+        <span class="ctag xl">Height Plateau</span>
+        <span class="ctag xl">Body Recomposition</span>
+        <span class="ctag xl">Brain Fog</span>
+      </div>
     </div>
 
-    <div class="tag-cloud stag">
-      <span class="tag xl">Low Energy</span>
-      <span class="tag xl">Fat Loss</span>
-      <span class="tag xl">Athletic Performance</span>
-      <span class="tag xl">Hormonal Decline</span>
-      <span class="tag lg">Poor Sleep</span>
-      <span class="tag lg">Body Recomposition</span>
-      <span class="tag lg">Low Testosterone</span>
-      <span class="tag lg">Slow Recovery</span>
-      <span class="tag lg">Brain Fog</span>
-      <span class="tag lg">Muscle Loss</span>
-      <span class="tag">Low Libido</span>
-      <span class="tag">Stubborn Belly Fat</span>
-      <span class="tag">Gym Plateau</span>
-      <span class="tag">Weak Endurance</span>
-      <span class="tag">Mental Clarity</span>
-      <span class="tag">Mobility Issues</span>
-      <span class="tag">Chronic Fatigue</span>
-      <span class="tag">Poor Focus</span>
-      <span class="tag">No Drive</span>
-      <span class="tag">Visceral Fat</span>
-      <span class="tag">Speed & Power</span>
-      <span class="tag">Sleep Quality</span>
-      <span class="tag">Stress Response</span>
-      <span class="tag">Weak Grip Strength</span>
-      <span class="tag">Low VO2 Max</span>
-      <span class="tag">Inflammation</span>
-      <span class="tag">Blood Sugar</span>
-      <span class="tag">3am Waking</span>
+    <!-- ROW 2 — L tags, scroll right -->
+    <div class="cloud-row">
+      <div class="cloud-track right">
+        <span class="ctag l">Slow Recovery</span>
+        <span class="ctag l">Visceral Fat</span>
+        <span class="ctag l">Gym Plateau</span>
+        <span class="ctag l">Low Libido</span>
+        <span class="ctag l">Stubborn Belly Fat</span>
+        <span class="ctag l">No Drive</span>
+        <span class="ctag l">Mental Clarity</span>
+        <span class="ctag l">Chronic Fatigue</span>
+        <span class="ctag l">3am Waking</span>
+        <span class="ctag l">Stress Response</span>
+        <span class="ctag l">Muscle Loss</span>
+        <span class="ctag l">Sleep Quality</span>
+        <!-- duplicate -->
+        <span class="ctag l">Slow Recovery</span>
+        <span class="ctag l">Visceral Fat</span>
+        <span class="ctag l">Gym Plateau</span>
+        <span class="ctag l">Low Libido</span>
+        <span class="ctag l">Stubborn Belly Fat</span>
+        <span class="ctag l">No Drive</span>
+        <span class="ctag l">Mental Clarity</span>
+        <span class="ctag l">Chronic Fatigue</span>
+        <span class="ctag l">3am Waking</span>
+        <span class="ctag l">Stress Response</span>
+        <span class="ctag l">Muscle Loss</span>
+        <span class="ctag l">Sleep Quality</span>
+      </div>
     </div>
 
-    <div class="cloud-bridge up">
+    <!-- ROW 3 — base tags, scroll left slow -->
+    <div class="cloud-row">
+      <div class="cloud-track left-slow">
+        <span class="ctag">Low VO2 Max</span>
+        <span class="ctag">Weak Endurance</span>
+        <span class="ctag">Inflammation</span>
+        <span class="ctag">Blood Sugar</span>
+        <span class="ctag">Mobility Issues</span>
+        <span class="ctag">Weak Grip Strength</span>
+        <span class="ctag">Poor Focus</span>
+        <span class="ctag">Speed & Power</span>
+        <span class="ctag">Posture Issues</span>
+        <span class="ctag">Joint Pain</span>
+        <span class="ctag">Bone Density</span>
+        <span class="ctag">Poor Nutrition</span>
+        <!-- duplicate -->
+        <span class="ctag">Low VO2 Max</span>
+        <span class="ctag">Weak Endurance</span>
+        <span class="ctag">Inflammation</span>
+        <span class="ctag">Blood Sugar</span>
+        <span class="ctag">Mobility Issues</span>
+        <span class="ctag">Weak Grip Strength</span>
+        <span class="ctag">Poor Focus</span>
+        <span class="ctag">Speed & Power</span>
+        <span class="ctag">Posture Issues</span>
+        <span class="ctag">Joint Pain</span>
+        <span class="ctag">Bone Density</span>
+        <span class="ctag">Poor Nutrition</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cloud-bridge up">
+    <div class="cloud-bridge-inner">
       <p class="cloud-truth">WHATEVER IT IS —<br>THE ANSWER STARTS IN <span class="t">YOUR BIOLOGY.</span></p>
       <p class="cloud-bridge-body">
         No matter what brought you here, every man who works with JP Training follows the same three-stage process. It builds in the right order, starts wherever you are, and moves at the pace your biology actually dictates — not someone else's timeline.
@@ -495,7 +568,6 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
-
   </div>
 </div>
 
