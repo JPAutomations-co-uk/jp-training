@@ -52,8 +52,8 @@
     .nav-cta:hover{background:#3eeade;box-shadow:0 0 24px rgba(44,212,196,.4)}
 
     /* ── HERO ── */
-    .hero{position:relative;height:100vh;display:flex;flex-direction:column;
-      justify-content:center;align-items:center;text-align:center;padding:80px 8% 60px;overflow:hidden}
+    .hero{position:relative;height:calc(100vh - 43px);display:flex;flex-direction:column;
+      justify-content:flex-end;align-items:center;text-align:center;padding:80px 8% 72px;overflow:hidden}
     #hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
     .hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.72) 0%,rgba(0,0,0,.55) 50%,rgba(0,0,0,.75) 100%);z-index:1;pointer-events:none}
     /* ── ORBS (hero + section) ── */
@@ -110,6 +110,10 @@
     .hero-guarantee{font-size:12px;color:var(--dim);margin-top:20px;line-height:1.6;
       opacity:0;animation:fup .7s var(--ease) 1.0s forwards}
     .hero-guarantee em{font-style:normal;color:var(--teal)}
+    .hero-socials{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:20px;
+      opacity:0;animation:fup .7s var(--ease) 1.2s forwards}
+    .hero-socials a{color:rgba(255,255,255,.25);transition:color .3s;display:flex;align-items:center}
+    .hero-socials a:hover{color:var(--teal)}
     .btn-main{font-family:var(--D);font-size:16px;font-weight:800;
       letter-spacing:.1em;text-transform:uppercase;color:var(--black);
       background:var(--teal);padding:18px 48px;text-decoration:none;
@@ -122,8 +126,8 @@
     .btn-ghost:hover{color:var(--teal)}
     .btn-ghost svg{transition:transform .2s}
     .btn-ghost:hover svg{transform:translateX(4px)}
-    .scroll-cue{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
-      z-index:2;opacity:0;animation:fup .7s var(--ease) 1.2s forwards}
+    .scroll-cue{display:flex;justify-content:center;margin-top:28px;
+      z-index:2;opacity:0;animation:fup .7s var(--ease) 1.4s forwards}
     .s-line{width:1px;height:48px;background:linear-gradient(to bottom,transparent,var(--teal));animation:pulse 2s ease-in-out infinite;margin:0 auto}
     @keyframes fup{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
@@ -142,8 +146,8 @@
     .t-dot{width:4px;height:4px;border-radius:50%;background:var(--teal);flex-shrink:0}
 
     /* ── SHARED SECTION ── */
-    .sec{padding:100px 10%;max-width:1400px;margin:0 auto;position:relative}
-    .sec-full{padding:100px 10%;position:relative;overflow:hidden}
+    .sec{padding:80px 10% 72px;max-width:1400px;margin:0 auto;position:relative}
+    .sec-full{padding:80px 10% 72px;position:relative;overflow:hidden}
     /* any element following an s-orb sits above it */
     .s-orb~*{position:relative;z-index:1}
     hr.rule{border:none;border-top:1px solid var(--border);max-width:1200px;margin:0 auto}
@@ -158,48 +162,89 @@
     .body-s{font-size:15px;color:var(--muted);line-height:1.85}
 
     /* ── PROBLEM CLOUD ── */
-    .cloud-sec{background:var(--s1);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
-    .cloud-header{padding:64px 10% 52px;max-width:1000px;margin:0 auto;text-align:center}
-    .cloud-anchor{font-family:var(--D);font-size:clamp(28px,3.8vw,56px);font-weight:900;
-      text-transform:uppercase;line-height:1.05;letter-spacing:-.01em;margin-bottom:14px}
-    .cloud-anchor .t{color:var(--teal)}
-    .cloud-sub{font-size:16px;color:var(--muted);line-height:1.75;max-width:44ch;margin:0 auto}
-    /* scrolling rows */
-    .cloud-rows{display:flex;flex-direction:column;gap:14px;padding:0 0 60px;
+    /* #000 vs ticker's #0C0C0C — creates visible contrast at the border, eliminating dead-space perception */
+    .cloud-sec{background:#000;border-bottom:1px solid var(--border);position:relative;overflow:visible}
+    .cloud-header{padding:80px 10% 64px !important;text-align:center;position:relative;z-index:3}
+    .cloud-anchor{font-family:var(--D);font-size:clamp(44px,6.5vw,96px);font-weight:900;
+      text-transform:uppercase;line-height:.88;letter-spacing:-.02em;margin:0}
+    .cloud-rows{display:flex;flex-direction:column;gap:14px;padding:0 0 16px}
+    .cloud-row{display:flex;overflow:hidden;
       -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 10%,#000 90%,transparent 100%);
       mask-image:linear-gradient(to right,transparent 0%,#000 10%,#000 90%,transparent 100%)}
-    .cloud-row{overflow:hidden}
-    .cloud-track{display:inline-flex;gap:14px;white-space:nowrap;will-change:transform}
+    .cloud-track{display:inline-flex;gap:14px;white-space:nowrap;will-change:transform;flex-shrink:0}
     .cloud-track.left{animation:cLeft 42s linear infinite}
     .cloud-track.right{animation:cRight 50s linear infinite}
     .cloud-track.left-slow{animation:cLeft 62s linear infinite}
     .cloud-rows:hover .cloud-track{animation-play-state:paused}
-    @keyframes cLeft{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-    @keyframes cRight{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-    /* individual tags */
+    @keyframes cLeft{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+    @keyframes cRight{from{transform:translateX(-100%)}to{transform:translateX(0)}}
     .ctag{display:inline-flex;align-items:center;white-space:nowrap;
       border:1px solid rgba(44,212,196,.22);background:rgba(44,212,196,.05);
       color:rgba(255,255,255,.62);font-family:var(--B);font-weight:400;letter-spacing:.03em;
-      font-size:14px;padding:10px 22px;cursor:default;
-      transition:border-color .25s,background .25s,color .25s}
+      font-size:14px;padding:10px 22px;cursor:default;transition:border-color .25s,background .25s,color .25s}
     .ctag:hover{border-color:rgba(44,212,196,.75);background:rgba(44,212,196,.13);color:var(--white)}
-    .ctag.l{font-size:17px;padding:13px 28px;border-color:rgba(44,212,196,.30);
-      background:rgba(44,212,196,.07);color:rgba(255,255,255,.78)}
-    .ctag.xl{font-size:21px;padding:16px 34px;font-weight:500;
-      border-color:rgba(44,212,196,.42);background:rgba(44,212,196,.09);color:var(--white)}
-    /* bridge */
-    .cloud-bridge{border-top:1px solid var(--border);padding:60px 10%;text-align:center}
-    .cloud-bridge-inner{max-width:800px;margin:0 auto}
-    .cloud-truth{font-family:var(--D);font-size:clamp(22px,3vw,38px);font-weight:900;
-      text-transform:uppercase;line-height:1.05;letter-spacing:-.01em;
-      margin-bottom:24px;color:var(--white)}
-    .cloud-truth .t{color:var(--teal)}
-    .cloud-bridge-body{font-size:16px;color:var(--muted);line-height:1.85;
-      max-width:52ch;margin:0 auto 36px}
-    .cloud-bridge-body strong{color:var(--white);font-weight:500}
+    .ctag.l{font-size:17px;padding:13px 28px;border-color:rgba(44,212,196,.30);background:rgba(44,212,196,.07);color:rgba(255,255,255,.78)}
+    .ctag.xl{font-size:21px;padding:16px 34px;font-weight:500;border-color:rgba(44,212,196,.42);background:rgba(44,212,196,.09);color:var(--white)}
+    /* ── COPY SECTION — editorial layout ── */
+    .cloud-copy{border-top:1px solid var(--border)}
+    /* Opening */
+    .cc-opening{padding:72px 10% 52px;border-bottom:1px solid var(--border)}
+    .cc-opening-inner{max-width:1000px;margin:0 auto}
+    .cc-h1{font-size:clamp(28px,4.2vw,58px);font-weight:300;color:var(--white);line-height:1.15;margin-bottom:20px}
+    .cc-h1 em{font-style:normal;color:var(--teal);font-weight:700}
+    .cc-h2{font-family:var(--D);font-size:clamp(22px,3vw,42px);font-weight:900;
+      text-transform:uppercase;letter-spacing:-.01em;color:rgba(255,255,255,.28);line-height:1}
+    /* Three men grid */
+    .cc-men{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border)}
+    .cc-man{padding:48px 40px;border-right:1px solid var(--border)}
+    .cc-man:first-child{padding-left:10%}
+    .cc-man:last-child{border-right:none;padding-right:10%}
+    .cc-man-n{font-family:var(--D);font-size:11px;font-weight:700;letter-spacing:.22em;color:var(--teal);
+      display:flex;align-items:center;gap:12px;margin-bottom:20px}
+    .cc-man-n::after{content:'';flex:1;height:1px;background:rgba(44,212,196,.2)}
+    .cc-man-body{font-size:14px;color:rgba(255,255,255,.58);line-height:1.9}
+    /* Pull quote */
+    .cc-pull{padding:64px 10% 48px;text-align:center;border-bottom:1px solid var(--border)}
+    .cc-pull p{font-family:var(--D);font-size:clamp(36px,5.5vw,80px);font-weight:900;
+      text-transform:uppercase;letter-spacing:-.01em;line-height:.95;color:var(--white)}
+    .cc-pull .sk{-webkit-text-stroke:2px var(--white);color:transparent}
+    /* Systems word field */
+    .cc-sys-field{padding:72px 10% 64px;border-bottom:1px solid var(--border);text-align:center;background:#040808}
+    .cc-sys-label{font-size:clamp(17px,2vw,26px);font-weight:300;color:var(--muted);margin-bottom:32px;line-height:1.4}
+    .cc-sys-label em{font-style:italic;color:rgba(255,255,255,.65)}
+    .cc-sys-words{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;
+      gap:6px 18px;margin-bottom:32px}
+    .cc-sys-words span{font-family:var(--D);font-weight:700;text-transform:uppercase;
+      letter-spacing:.04em;cursor:default;transition:color .25s}
+    .cc-sys-words span:hover{color:var(--teal)}
+    .cc-sys-words .w-sm{font-size:clamp(12px,1.4vw,19px);color:rgba(255,255,255,.22)}
+    .cc-sys-words .w-md{font-size:clamp(17px,2vw,28px);color:rgba(255,255,255,.42)}
+    .cc-sys-words .w-lg{font-size:clamp(22px,2.8vw,40px);color:rgba(255,255,255,.65)}
+    .cc-sys-words .w-xl{font-size:clamp(28px,3.8vw,56px);color:rgba(255,255,255,.9)}
+    .cc-sys-post{font-size:15px;color:var(--muted);max-width:52ch;margin:0 auto;line-height:1.9}
+    /* Biology argument */
+    .cc-bio{padding:72px 10% 64px;border-bottom:1px solid var(--border)}
+    .cc-bio-inner{max-width:960px;margin:0 auto}
+    .cc-bio-intro{font-size:clamp(18px,2vw,26px);font-weight:300;color:rgba(255,255,255,.45);margin-bottom:32px}
+    .cc-bio-rows{display:flex;flex-direction:column;gap:1px;background:var(--border)}
+    .cc-bio-row{display:grid;grid-template-columns:180px 1fr;background:#000;min-height:0}
+    .cc-bio-ctx{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+      color:var(--dim);padding:26px 28px;border-right:1px solid var(--border);display:flex;align-items:center}
+    .cc-bio-val{font-size:16px;color:rgba(255,255,255,.55);padding:26px 36px;line-height:1.65;display:flex;align-items:center}
+    .cc-bio-row.win{background:#04100D}
+    .cc-bio-row.win .cc-bio-ctx{color:var(--teal)}
+    .cc-bio-row.win .cc-bio-val{color:var(--white);font-size:18px}
+    .cc-bio-note{font-size:15px;color:var(--muted);max-width:52ch;margin:24px auto 0;
+      text-align:center;line-height:1.9}
+    .cc-bio-note strong{color:rgba(255,255,255,.8);font-weight:500}
+    /* Finale */
+    .cc-finale{padding:72px 10% 72px;text-align:center}
+    .cc-finale-text{font-size:clamp(26px,3.8vw,54px);font-weight:300;color:rgba(255,255,255,.88);
+      line-height:1.25;margin-bottom:24px}
+    .cc-finale-text strong{color:var(--teal);font-weight:700}
 
     /* ── JOURNEY OVERVIEW ── */
-    .journey-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:64px}
+    .journey-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:48px}
     .j-card{
       background:var(--card);padding:48px 36px;position:relative;overflow:hidden;
       cursor:default;transition:background .3s var(--ease);
@@ -223,9 +268,9 @@
 
     /* ── STAGE SECTIONS ── */
     /* Stage 1 */
-    .stage-1{background:var(--black);padding:100px 0;border-top:1px solid var(--border)}
-    .stage-inner{max-width:1400px;margin:0 auto;padding:0 10%}
-    .stage-header{display:grid;grid-template-columns:1fr 1.2fr;gap:80px;align-items:start;margin-bottom:72px}
+    .stage-1{background:var(--black);padding:0 0 80px;border-top:1px solid var(--border)}
+    .stage-inner{max-width:1400px;margin:0 auto;padding:80px 10% 0}
+    .stage-header{display:grid;grid-template-columns:1fr 1.2fr;gap:64px;align-items:start;margin-bottom:52px}
     .stage-num-big{font-family:var(--D);font-size:clamp(100px,15vw,200px);font-weight:900;
       line-height:.85;letter-spacing:-.04em;color:var(--teal);opacity:.07;margin-bottom:0;
       position:absolute;right:0;top:-20px}
@@ -240,21 +285,31 @@
     .stage-lead{font-size:18px;font-weight:300;color:var(--muted);line-height:1.85;margin-bottom:20px}
     .stage-lead strong{color:var(--white);font-weight:500}
 
-    /* pillars grid for stage 1 */
-    .pillars{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);margin-top:64px}
-    .pillar{background:var(--s1);padding:40px 36px;position:relative;overflow:hidden;cursor:default;transition:background .25s}
-    .pillar:hover{background:#111}
+    /* ── HORIZONTAL PILLAR STRIP (Stage 1) ── */
+    .pillars-h{display:flex;margin-top:48px;border:1px solid var(--border);overflow:hidden}
+    .pillar-h{flex:1;min-width:0;padding:44px 28px;border-right:1px solid var(--border);
+      background:var(--s1);position:relative;overflow:hidden;cursor:default;transition:background .3s var(--ease);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+    .pillar-h:last-child{border-right:none}
+    .pillar-h:hover{background:#0D1210}
+    .pillar-h::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,var(--teal) 0%,rgba(44,212,196,0) 100%);
+      transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ease)}
+    .pillar-h:hover::before{transform:scaleX(1)}
+    .pillar-h.featured{background:linear-gradient(135deg,#0A0A0A,#081210)}
+    .pillar-h.featured::before{transform:scaleX(1);opacity:.5}
     .pillar-icon{width:32px;height:32px;color:var(--teal);margin-bottom:20px;transition:transform .25s}
-    .pillar:hover .pillar-icon{transform:scale(1.15)}
-    .pillar-name{font-family:var(--D);font-size:22px;font-weight:800;
+    .pillar-h:hover .pillar-icon{transform:scale(1.15)}
+    .pillar-name{font-family:var(--D);font-size:20px;font-weight:800;
       text-transform:uppercase;letter-spacing:.04em;color:var(--white);margin-bottom:12px}
-    .pillar-desc{font-size:14px;color:var(--muted);line-height:1.8}
+    .pillar-desc{font-size:13px;color:var(--muted);line-height:1.8}
     .pillar-desc strong{color:var(--white);font-weight:500}
 
     /* stage 2 */
-    .stage-2{background:var(--s2);border-top:1px solid var(--border);padding:100px 0}
-    .boosters-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:64px}
-    .booster{background:#090F0F;padding:36px 28px;position:relative;overflow:hidden;cursor:default;transition:background .25s}
+    .stage-2{background:var(--s2);border-top:1px solid var(--border);padding:0 0 80px}
+    .boosters-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:48px}
+    .booster{background:#090F0F;padding:36px 28px;position:relative;overflow:hidden;cursor:default;transition:background .25s;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
     .booster:hover{background:#0D1515}
     .booster::after{content:'';position:absolute;inset:0;
       background:linear-gradient(135deg,rgba(44,212,196,.05) 0%,transparent 60%);
@@ -267,11 +322,11 @@
     .booster-desc{font-size:13px;color:var(--muted);line-height:1.75}
 
     /* stage 3 */
-    .stage-3{background:var(--s3);border-top:1px solid var(--border);padding:100px 0;position:relative}
+    .stage-3{background:var(--s3);border-top:1px solid var(--border);padding:0 0 80px;position:relative}
     .stage-3::before{content:'';position:absolute;inset:0;
       background:radial-gradient(ellipse 60% 70% at 50% 40%,rgba(44,212,196,.06) 0%,transparent 70%);
       pointer-events:none}
-    .markers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-top:64px}
+    .markers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-top:48px}
     .marker{background:rgba(0,10,10,.9);padding:32px 24px;cursor:default;
       border-bottom:2px solid transparent;transition:border-color .25s,background .25s}
     .marker:hover{background:rgba(0,20,18,.9);border-bottom-color:var(--teal)}
@@ -293,9 +348,9 @@
     .conn-arrow{color:var(--dim);flex-shrink:0}
 
     /* ── THE PROCESS ── */
-    .process-wrap{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:100px 10%}
+    .process-wrap{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 10% 80px}
     .process-inner{max-width:1200px;margin:0 auto}
-    .process-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:64px}
+    .process-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:48px}
     .p-step{background:var(--s1);padding:48px 36px;position:relative}
     .p-step::after{content:attr(data-n);position:absolute;right:20px;bottom:10px;
       font-family:var(--D);font-size:96px;font-weight:900;
@@ -309,9 +364,9 @@
     .p-step p{font-size:14px;color:var(--muted);line-height:1.8}
 
     /* ── CTA ── */
-    .cta-wrap{min-height:100vh;display:flex;flex-direction:column;
+    .cta-wrap{display:flex;flex-direction:column;
       justify-content:center;align-items:center;text-align:center;
-      padding:120px 10%;position:relative;overflow:hidden}
+      padding:96px 10%;position:relative;overflow:hidden}
     #cta-c{position:absolute;inset:0;z-index:0;pointer-events:none}
     .cta-inner{position:relative;z-index:1;max-width:800px}
     .cta-badge{display:inline-flex;align-items:center;gap:8px;
@@ -363,6 +418,17 @@
     .stag.on>*:nth-child(5){opacity:1;transform:none;transition-delay:.28s}
     .stag.on>*:nth-child(6){opacity:1;transform:none;transition-delay:.35s}
     .stag.on>*:nth-child(n+7){opacity:1;transform:none;transition-delay:.42s}
+    /* ── SLIDE IN FROM RIGHT (stage cards) ── */
+    /* cubic-bezier(0.16,1,0.3,1): fast out + very slow deceleration — confident, physical feel */
+    .slide-r>*{opacity:0;transform:translateX(80px);
+      transition:opacity .65s cubic-bezier(0.16,1,0.3,1),transform .65s cubic-bezier(0.16,1,0.3,1)}
+    .slide-r.on>*:nth-child(1){opacity:1;transform:none;transition-delay:0s}
+    .slide-r.on>*:nth-child(2){opacity:1;transform:none;transition-delay:.10s}
+    .slide-r.on>*:nth-child(3){opacity:1;transform:none;transition-delay:.20s}
+    .slide-r.on>*:nth-child(4){opacity:1;transform:none;transition-delay:.30s}
+    .slide-r.on>*:nth-child(5){opacity:1;transform:none;transition-delay:.40s}
+    .slide-r.on>*:nth-child(6){opacity:1;transform:none;transition-delay:.50s}
+    .slide-r.on>*:nth-child(n+7){opacity:1;transform:none;transition-delay:.60s}
 
     /* char reveal */
     .char{display:inline-block;opacity:0;transform:translateY(18px);
@@ -381,25 +447,39 @@
       .hero-h1{font-size:clamp(42px,11vw,80px)}
       .o3{width:360px;height:360px}
       .so-tl,.so-tr,.so-br,.so-bl,.so-c{width:260px;height:260px}
-      .cloud-header{padding:48px 6% 40px}
+      .cloud-header{padding:56px 6% 48px !important}
+      .cloud-anchor{font-size:clamp(36px,10vw,72px);line-height:.88;margin:0}
+      .cc-opening{padding:56px 6% 48px}
+      .cc-men{grid-template-columns:1fr}
+      .cc-man,.cc-man:first-child,.cc-man:last-child{padding:40px 6%;border-right:none;border-bottom:1px solid var(--border)}
+      .cc-man:last-child{border-bottom:none}
+      .cc-pull{padding:48px 6% 48px}
+      .cc-sys-field{padding:56px 6% 56px}
+      .cc-bio{padding:56px 6% 56px}
+      .cc-bio-row{grid-template-columns:1fr}
+      .cc-bio-ctx{border-right:none;border-bottom:1px solid var(--border);padding:16px 20px}
+      .cc-bio-val{padding:16px 20px}
+      .cc-finale{padding:56px 6% 64px}
       .ctag.xl{font-size:16px;padding:12px 22px}
       .ctag.l{font-size:14px;padding:10px 20px}
       .ctag{font-size:12px;padding:8px 16px}
-      .cloud-bridge{padding:48px 6%}
-      .sec,.sec-full{padding:72px 6%}
-      .sec-full{padding:72px 6%}
-      .stage-inner{padding:0 6%}
+      .sec,.sec-full{padding:56px 6% 56px}
+      .sec-full{padding:56px 6% 56px}
+      .stage-inner{padding:56px 6% 0}
       .stage-header{grid-template-columns:1fr;gap:40px}
-      .journey-grid,.pillars,.boosters-grid,.markers-grid,.process-steps{grid-template-columns:1fr}
+      .pillars-h{flex-direction:column}
+      .pillar-h{border-right:none;border-bottom:1px solid var(--border)}
+      .pillar-h:last-child{border-bottom:none}
+      .journey-grid,.boosters-grid,.markers-grid,.process-steps{grid-template-columns:1fr}
       footer{flex-direction:column;gap:16px;text-align:center;padding:32px 6%}
       .cta-wrap{padding:80px 6%}
       .stage-connector{flex-direction:column;gap:16px;padding:24px 6%}
       .conn-arrow{transform:rotate(90deg)}
-      .process-wrap{padding:72px 6%}
+      .process-wrap{padding:56px 6% 64px}
     }
     @media(prefers-reduced-motion:reduce){
       *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
-      .up,.left,.right,.stag>*,.char{opacity:1!important;transform:none!important}
+      .up,.left,.right,.stag>*,.slide-r>*,.char{opacity:1!important;transform:none!important}
     }
   </style>
 </head>
@@ -432,7 +512,7 @@
   <div class="orb o2"></div>
   <div class="orb o3"></div>
   <div class="hero-content">
-    <p class="hero-loc">Birmingham · Performance Coaching · For Men (Aged 14–55)</p>
+    <p class="hero-loc">Birmingham &amp; Online · Performance Coaching · For Men (Aged 14–55)</p>
     <h1 class="hero-h1">
       STOP GUESSING.<br>
       <span class="teal">START OPTIMISING.</span>
@@ -448,8 +528,16 @@
       </a>
     </div>
     <p class="hero-guarantee">Come away with more clarity about your body than you've had in years — <em>or I'll write your full training plan for free.</em></p>
+    <div class="hero-socials">
+      <a href="https://www.instagram.com/jpautomations/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      </a>
+      <a href="https://www.linkedin.com/in/james-harvey-0583b2370/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+    </div>
+    <div class="scroll-cue"><div class="s-line"></div></div>
   </div>
-  <div class="scroll-cue"><div class="s-line"></div></div>
 </section>
 
 <!-- TICKER -->
@@ -460,114 +548,109 @@
   <div class="s-orb so-tr"></div>
   <div class="s-orb so-bl"></div>
 
-  <div class="cloud-header up">
-    <p class="label">What We Fix</p>
-    <h2 class="cloud-anchor">MEN COME HERE WITH<br><span class="t">COMPLETELY DIFFERENT PROBLEMS.</span></h2>
-    <p class="cloud-sub">Whatever it is — the answer starts in your biology.</p>
+  <div class="cloud-header">
+    <h2 class="cloud-anchor">ONE PROGRAMME.<br><span class="t">EVERY MAN.</span></h2>
   </div>
 
-  <!-- ROW 1 — XL tags, scroll left -->
+  <!-- SCROLLING ROWS -->
   <div class="cloud-rows" aria-hidden="true">
     <div class="cloud-row">
-      <div class="cloud-track left">
-        <span class="ctag xl">Low Energy</span>
-        <span class="ctag xl">Fat Loss</span>
-        <span class="ctag xl">Low Testosterone</span>
-        <span class="ctag xl">Hormonal Decline</span>
-        <span class="ctag xl">Athletic Performance</span>
-        <span class="ctag xl">Poor Sleep</span>
-        <span class="ctag xl">Muscle Building</span>
-        <span class="ctag xl">Height Plateau</span>
-        <span class="ctag xl">Body Recomposition</span>
-        <span class="ctag xl">Brain Fog</span>
-        <!-- duplicate for seamless loop -->
-        <span class="ctag xl">Low Energy</span>
-        <span class="ctag xl">Fat Loss</span>
-        <span class="ctag xl">Low Testosterone</span>
-        <span class="ctag xl">Hormonal Decline</span>
-        <span class="ctag xl">Athletic Performance</span>
-        <span class="ctag xl">Poor Sleep</span>
-        <span class="ctag xl">Muscle Building</span>
-        <span class="ctag xl">Height Plateau</span>
-        <span class="ctag xl">Body Recomposition</span>
-        <span class="ctag xl">Brain Fog</span>
-      </div>
+      <div class="cloud-track left"><span class="ctag xl">Low Energy</span><span class="ctag xl">Fat Loss</span><span class="ctag xl">Low Testosterone</span><span class="ctag xl">Hormonal Decline</span><span class="ctag xl">Athletic Performance</span><span class="ctag xl">Poor Sleep</span><span class="ctag xl">Muscle Building</span><span class="ctag xl">Height Plateau</span><span class="ctag xl">Body Recomposition</span><span class="ctag xl">Brain Fog</span></div>
+      <div class="cloud-track left" aria-hidden="true"><span class="ctag xl">Low Energy</span><span class="ctag xl">Fat Loss</span><span class="ctag xl">Low Testosterone</span><span class="ctag xl">Hormonal Decline</span><span class="ctag xl">Athletic Performance</span><span class="ctag xl">Poor Sleep</span><span class="ctag xl">Muscle Building</span><span class="ctag xl">Height Plateau</span><span class="ctag xl">Body Recomposition</span><span class="ctag xl">Brain Fog</span></div>
     </div>
-
-    <!-- ROW 2 — L tags, scroll right -->
     <div class="cloud-row">
-      <div class="cloud-track right">
-        <span class="ctag l">Slow Recovery</span>
-        <span class="ctag l">Visceral Fat</span>
-        <span class="ctag l">Gym Plateau</span>
-        <span class="ctag l">Low Libido</span>
-        <span class="ctag l">Stubborn Belly Fat</span>
-        <span class="ctag l">No Drive</span>
-        <span class="ctag l">Mental Clarity</span>
-        <span class="ctag l">Chronic Fatigue</span>
-        <span class="ctag l">3am Waking</span>
-        <span class="ctag l">Stress Response</span>
-        <span class="ctag l">Muscle Loss</span>
-        <span class="ctag l">Sleep Quality</span>
-        <!-- duplicate -->
-        <span class="ctag l">Slow Recovery</span>
-        <span class="ctag l">Visceral Fat</span>
-        <span class="ctag l">Gym Plateau</span>
-        <span class="ctag l">Low Libido</span>
-        <span class="ctag l">Stubborn Belly Fat</span>
-        <span class="ctag l">No Drive</span>
-        <span class="ctag l">Mental Clarity</span>
-        <span class="ctag l">Chronic Fatigue</span>
-        <span class="ctag l">3am Waking</span>
-        <span class="ctag l">Stress Response</span>
-        <span class="ctag l">Muscle Loss</span>
-        <span class="ctag l">Sleep Quality</span>
-      </div>
+      <div class="cloud-track right"><span class="ctag l">Slow Recovery</span><span class="ctag l">Visceral Fat</span><span class="ctag l">Gym Plateau</span><span class="ctag l">Low Libido</span><span class="ctag l">Stubborn Belly Fat</span><span class="ctag l">No Drive</span><span class="ctag l">Mental Clarity</span><span class="ctag l">Chronic Fatigue</span><span class="ctag l">3am Waking</span><span class="ctag l">Stress Response</span><span class="ctag l">Muscle Loss</span><span class="ctag l">Sleep Quality</span></div>
+      <div class="cloud-track right" aria-hidden="true"><span class="ctag l">Slow Recovery</span><span class="ctag l">Visceral Fat</span><span class="ctag l">Gym Plateau</span><span class="ctag l">Low Libido</span><span class="ctag l">Stubborn Belly Fat</span><span class="ctag l">No Drive</span><span class="ctag l">Mental Clarity</span><span class="ctag l">Chronic Fatigue</span><span class="ctag l">3am Waking</span><span class="ctag l">Stress Response</span><span class="ctag l">Muscle Loss</span><span class="ctag l">Sleep Quality</span></div>
     </div>
-
-    <!-- ROW 3 — base tags, scroll left slow -->
     <div class="cloud-row">
-      <div class="cloud-track left-slow">
-        <span class="ctag">Low VO2 Max</span>
-        <span class="ctag">Weak Endurance</span>
-        <span class="ctag">Inflammation</span>
-        <span class="ctag">Blood Sugar</span>
-        <span class="ctag">Mobility Issues</span>
-        <span class="ctag">Weak Grip Strength</span>
-        <span class="ctag">Poor Focus</span>
-        <span class="ctag">Speed & Power</span>
-        <span class="ctag">Posture Issues</span>
-        <span class="ctag">Joint Pain</span>
-        <span class="ctag">Bone Density</span>
-        <span class="ctag">Poor Nutrition</span>
-        <!-- duplicate -->
-        <span class="ctag">Low VO2 Max</span>
-        <span class="ctag">Weak Endurance</span>
-        <span class="ctag">Inflammation</span>
-        <span class="ctag">Blood Sugar</span>
-        <span class="ctag">Mobility Issues</span>
-        <span class="ctag">Weak Grip Strength</span>
-        <span class="ctag">Poor Focus</span>
-        <span class="ctag">Speed & Power</span>
-        <span class="ctag">Posture Issues</span>
-        <span class="ctag">Joint Pain</span>
-        <span class="ctag">Bone Density</span>
-        <span class="ctag">Poor Nutrition</span>
-      </div>
+      <div class="cloud-track left-slow"><span class="ctag">Low VO2 Max</span><span class="ctag">Weak Endurance</span><span class="ctag">Inflammation</span><span class="ctag">Blood Sugar</span><span class="ctag">Mobility Issues</span><span class="ctag">Weak Grip Strength</span><span class="ctag">Poor Focus</span><span class="ctag">Speed &amp; Power</span><span class="ctag">Posture Issues</span><span class="ctag">Joint Pain</span><span class="ctag">Bone Density</span><span class="ctag">Poor Nutrition</span></div>
+      <div class="cloud-track left-slow" aria-hidden="true"><span class="ctag">Low VO2 Max</span><span class="ctag">Weak Endurance</span><span class="ctag">Inflammation</span><span class="ctag">Blood Sugar</span><span class="ctag">Mobility Issues</span><span class="ctag">Weak Grip Strength</span><span class="ctag">Poor Focus</span><span class="ctag">Speed &amp; Power</span><span class="ctag">Posture Issues</span><span class="ctag">Joint Pain</span><span class="ctag">Bone Density</span><span class="ctag">Poor Nutrition</span></div>
     </div>
   </div>
 
-  <div class="cloud-bridge up">
-    <div class="cloud-bridge-inner">
-      <p class="cloud-truth">WHATEVER IT IS —<br>THE ANSWER STARTS IN <span class="t">YOUR BIOLOGY.</span></p>
-      <p class="cloud-bridge-body">
-        No matter what brought you here, every man who works with JP Training follows the same three-stage process. It builds in the right order, starts wherever you are, and moves at the pace your biology actually dictates — not someone else's timeline.
-      </p>
+  <!-- COPY — editorial layout -->
+  <div class="cloud-copy">
+
+    <!-- 1. Opening statement -->
+    <div class="cc-opening">
+      <div class="cc-opening-inner up">
+        <p class="cc-h1">Men come to JP Training with <em>completely different problems.</em></p>
+        <p class="cc-h2">What they share is one thing.</p>
+      </div>
+    </div>
+
+    <!-- 2. Three men — editorial grid, slides in from right -->
+    <div class="cc-men slide-r">
+      <div class="cc-man">
+        <span class="cc-man-n">01</span>
+        <p class="cc-man-body">A 15-year-old training for his school rugby squad who wants to get ahead of the competition before anyone else starts taking their physiology seriously. The right programme at this age doesn't just improve performance — it sets the trajectory for the next decade of his physical development.</p>
+      </div>
+      <div class="cc-man">
+        <span class="cc-man-n">02</span>
+        <p class="cc-man-body">A 26-year-old who's tried the calorie deficits, the gym splits, the supplements — and still can't shift the fat around his midsection or reach 10–12% body fat in a way that lasts. Not because he isn't working hard enough. Because nobody has ever looked at why his body is holding onto it.</p>
+      </div>
+      <div class="cc-man">
+        <span class="cc-man-n">03</span>
+        <p class="cc-man-body">A 50-year-old who's built the career, the business, the life — and quietly notices he's operating on a fraction of what he used to have. The energy isn't there. The drive is different. None of it is inevitable. None of it is just age. Every one of those things has a measurable cause — and a measurable solution.</p>
+      </div>
+    </div>
+
+    <!-- 3. Pull quote -->
+    <div class="cc-pull up">
+      <p>All three are equally <span class="sk">qualified</span> to be here.</p>
+    </div>
+
+    <!-- 4. Systems word field -->
+    <div class="cc-sys-field">
+      <p class="cc-sys-label up">Men's health isn't one problem — <em>it's a system.</em></p>
+      <div class="cc-sys-words slide-r">
+        <span class="w-xl">Low Testosterone</span>
+        <span class="w-lg">Stress Hormones</span>
+        <span class="w-sm">Sleep Quality</span>
+        <span class="w-md">Blood Sugar</span>
+        <span class="w-xl">Cardio Fitness</span>
+        <span class="w-md">Muscle Loss</span>
+        <span class="w-sm">Gut Health</span>
+        <span class="w-lg">Recovery</span>
+        <span class="w-sm">Metabolism</span>
+        <span class="w-md">Inflammation</span>
+        <span class="w-sm">Bone Strength</span>
+        <span class="w-xl">Biological Age</span>
+      </div>
+      <p class="cc-sys-post up">Every part connects. Every part influences every other. And every part can be measured, addressed, and improved when you know where to look.</p>
+    </div>
+
+    <!-- 5. Biology argument -->
+    <div class="cc-bio">
+      <div class="cc-bio-inner">
+        <p class="cc-bio-intro up">Health is unlike almost anything else in life.</p>
+        <div class="cc-bio-rows stag">
+          <div class="cc-bio-row">
+            <div class="cc-bio-ctx">In business</div>
+            <div class="cc-bio-val">You can work as hard as humanly possible — and still fail.</div>
+          </div>
+          <div class="cc-bio-row">
+            <div class="cc-bio-ctx">In relationships</div>
+            <div class="cc-bio-val">You can invest everything you have — and still lose it.</div>
+          </div>
+          <div class="cc-bio-row win">
+            <div class="cc-bio-ctx">In your biology</div>
+            <div class="cc-bio-val">Follow a protocol built directly around your biology — and you will achieve it. No one is exempt from this.</div>
+          </div>
+        </div>
+        <p class="cc-bio-note up">It is the one area of life where the effort always pays off, because the variables are not outside your control. <strong>If the protocol is right, the result follows.</strong> That is not a sales line. That is physiology.</p>
+      </div>
+    </div>
+
+    <!-- 6. Finale -->
+    <div class="cc-finale up">
+      <p class="cc-finale-text">Whatever it is — the answer starts in the same place. <strong>Your biology.</strong></p>
       <a href="#journey" class="btn-ghost" style="display:inline-flex">
-        See the Three Stages
+        See how it works
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
+
   </div>
 </div>
 
@@ -622,26 +705,26 @@
         <p class="stage-lead" style="font-size:14px">This works at any starting point — 17 and building from scratch, 35 and rebuilding, 52 and done settling for less than you're capable of.</p>
       </div>
     </div>
-    <div class="pillars stag">
-      <div class="pillar">
+    <div class="pillars-h slide-r">
+      <div class="pillar-h">
         <svg class="pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
         <div class="pillar-name">Training That Works</div>
-        <p class="pillar-desc">Not the programme someone else is doing. Not the one you found online that looks hard enough to be working. The one that suits <strong>your body, your schedule, and where you actually are right now.</strong> Training that compounds — not training that burns you out in a month.</p>
+        <p class="pillar-desc">Not the programme someone else is doing. Not the one you found online that looks hard enough to be working. The one that suits <strong>your body, your schedule, and where you actually are right now.</strong> Training that compounds — not training that burns you out.</p>
       </div>
-      <div class="pillar">
+      <div class="pillar-h">
         <svg class="pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
         <div class="pillar-name">Nutrition That Fits Your Life</div>
-        <p class="pillar-desc">Not a list of things you're not allowed to eat. Not a meal plan that lasts three weeks before real life gets in the way. <strong>A way of eating that fuels what you're building — and that actually holds up when you're busy, tired, or travelling.</strong> Which you will be.</p>
+        <p class="pillar-desc">Not a list of things you're not allowed to eat. Not a meal plan that lasts three weeks before real life gets in the way. <strong>A way of eating that fuels what you're building — and that actually holds up when you're busy, tired, or travelling.</strong></p>
       </div>
-      <div class="pillar">
+      <div class="pillar-h">
         <svg class="pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
         <div class="pillar-name">Sleep as a Performance Tool</div>
         <p class="pillar-desc">Most men think their sleep is fine because they're not collapsing. It isn't. One week of five hours a night drops testosterone by 10–15% in otherwise healthy men. <strong>We fix sleep before we do anything else</strong> — because nothing else works properly until we do.</p>
       </div>
-      <div class="pillar" style="background:linear-gradient(135deg,#0A0A0A,#0A1010);border:1px solid rgba(44,212,196,.15)">
-        <svg class="pillar-icon" style="color:var(--teal);opacity:1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
+      <div class="pillar-h featured">
+        <svg class="pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
         <div class="pillar-name" style="color:var(--teal)">The Psychological Lever</div>
-        <p class="pillar-desc">The thing that separates men who stick with it from men who don't isn't discipline — it's having a reason specific enough, and personal enough, that quitting feels worse than the hard day. <strong>We find that before we do anything else.</strong> It's the most important work we do together.</p>
+        <p class="pillar-desc">The thing that separates men who stick with it from men who don't isn't discipline — it's having a reason specific enough, and personal enough, that quitting feels worse than the hard day. <strong>We find that before we do anything else.</strong></p>
       </div>
     </div>
   </div>
@@ -681,7 +764,7 @@
         <p class="stage-lead">When your training, nutrition, and sleep are locked in, every booster we add actually does what it's supposed to. They're not shortcuts. <strong>They're accelerants on a fire that's already burning.</strong></p>
       </div>
     </div>
-    <div class="boosters-grid stag">
+    <div class="boosters-grid slide-r">
       <div class="booster">
         <svg class="booster-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg>
         <div class="booster-name">Targeted Supplementation</div>
@@ -750,7 +833,7 @@
         <p class="stage-lead">Not because data is exciting. Because without it, you're guessing. And guessing is what most men do — not for a month, but <strong>for the rest of their lives.</strong></p>
       </div>
     </div>
-    <div class="markers-grid stag">
+    <div class="markers-grid slide-r">
       <div class="marker">
         <div class="marker-val">30+</div>
         <div class="marker-name">Blood Markers Analysed</div>
@@ -1201,11 +1284,30 @@ if(false){(function(){
 const io=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}});
 },{threshold:.08,rootMargin:'0px 0px -16px 0px'});
-document.querySelectorAll('.up,.left,.right,.stag').forEach(el=>io.observe(el));
+document.querySelectorAll('.up,.left,.right,.stag,.slide-r').forEach(el=>io.observe(el));
 
 /* NAV scroll */
 const nav=document.getElementById('nav');
 window.addEventListener('scroll',()=>{nav.style.borderBottomColor=window.scrollY>60?'rgba(44,212,196,.22)':'rgba(44,212,196,.1)';},{passive:true});
+
+/* FIX: Safari CSS filter creates phantom layout height on position:absolute elements.
+   Wrap all .s-orb siblings into a zero-footprint absolutely-positioned container
+   so their blur filter cannot push siblings or affect parent flow. */
+(function(){
+  var orbs=document.querySelectorAll('.s-orb');
+  var map=new Map();
+  orbs.forEach(function(o){var p=o.parentElement;if(!map.has(p))map.set(p,[]);map.get(p).push(o);});
+  map.forEach(function(list,parent){
+    var wrap=document.createElement('div');
+    wrap.className='orb-wrap';
+    wrap.style.cssText='position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;overflow:visible;z-index:0';
+    parent.insertBefore(wrap,list[0]);
+    list.forEach(function(o){wrap.appendChild(o);});
+  });
+  var st=document.createElement('style');
+  st.textContent='.orb-wrap~*{position:relative;z-index:1}';
+  document.head.appendChild(st);
+})();
 </script>
 </body>
 </html>
