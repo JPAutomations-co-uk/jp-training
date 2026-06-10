@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Your Free Call — JP Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000;
+      --s1: #0C0C0C;
+      --card: #111;
+      --border: #1A1A1A;
+      --teal: #2CD4C4;
+      --teal-lo: rgba(44,212,196,.08);
+      --white: #FFF;
+      --muted: #888;
+      --dim: #444;
+      --D: 'Barlow Condensed', sans-serif;
+      --B: 'Poppins', sans-serif;
+      --ease: cubic-bezier(.25,.46,.45,.94);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: var(--B);
+      background: var(--black);
+      color: var(--white);
+      -webkit-font-smoothing: antialiased;
+      cursor: none;
+    }
+
+    /* ── CURSOR ── */
+    #cur { position: fixed; width: 8px; height: 8px; background: var(--teal); border-radius: 50%;
+      pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); }
+    #cur-ring { position: fixed; width: 34px; height: 34px; border: 1px solid rgba(44,212,196,.4);
+      border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%);
+      transition: width .2s, height .2s, border-color .2s; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar {
+      position: fixed; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--border); z-index: 100;
+    }
+    .progress-fill {
+      height: 100%; background: var(--teal); width: 0%;
+      transition: width 0.45s var(--ease);
+      box-shadow: 0 0 12px rgba(44,212,196,.5);
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 99;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 48px;
+    }
+    .nav-logo-link {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--white);
+    }
+    .nav-logo-link img { height: 36px; width: 36px; border-radius: 6px; object-fit: cover; }
+    .nav-brand { font-family: var(--D); font-size: 18px; font-weight: 800;
+      letter-spacing: .08em; text-transform: uppercase; }
+    .nav-brand em { font-style: normal; color: var(--teal); }
+    .step-counter {
+      font-size: 12px; color: var(--muted); letter-spacing: .08em; min-width: 80px; text-align: right;
+    }
+    .step-counter span { color: var(--teal); font-weight: 600; }
+
+    /* ── BACK BUTTON ── */
+    .back-btn {
+      position: fixed; bottom: 40px; left: 48px; z-index: 99;
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); font-family: var(--B); font-size: 12px;
+      padding: 10px 20px; cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      transition: color .2s, border-color .2s, opacity .3s;
+      letter-spacing: .04em;
+    }
+    .back-btn:hover { color: var(--white); border-color: var(--dim); }
+    .back-btn.hidden { opacity: 0; pointer-events: none; }
+
+    /* ── ENTER HINT ── */
+    .enter-hint {
+      position: fixed; bottom: 40px; right: 48px; z-index: 99;
+      font-size: 12px; color: var(--dim);
+      display: flex; align-items: center; gap: 8px;
+      transition: opacity .3s;
+    }
+    .enter-hint kbd {
+      background: var(--s1); border: 1px solid var(--border);
+      color: var(--muted); font-family: var(--B); font-size: 11px;
+      padding: 4px 10px; letter-spacing: .04em;
+    }
+    .enter-hint.hidden { opacity: 0; pointer-events: none; }
+
+    /* ── QUESTION SCREENS ── */
+    .question {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 88px 10% 88px;
+      transform: translateY(72px);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.52s var(--ease), opacity 0.4s var(--ease);
+    }
+    .question.above {
+      transform: translateY(-72px);
+      opacity: 0;
+    }
+    .question.active {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .q-inner { width: 100%; max-width: 640px; }
+
+    .q-num {
+      font-size: 11px; font-weight: 600; letter-spacing: .22em;
+      text-transform: uppercase; color: var(--teal); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .q-num::before { content: ''; width: 20px; height: 1px; background: var(--teal); }
+
+    .q-title {
+      font-family: var(--D); font-size: clamp(36px, 5.5vw, 64px);
+      font-weight: 900; text-transform: uppercase;
+      line-height: .96; letter-spacing: -.01em; margin-bottom: 12px;
+    }
+    .q-title .t { color: var(--teal); }
+
+    .q-sub {
+      font-size: 15px; font-weight: 300; color: var(--muted);
+      line-height: 1.75; margin-bottom: 36px; max-width: 52ch;
+    }
+
+    /* Text input — underline style */
+    .q-input {
+      width: 100%; background: transparent;
+      border: none; border-bottom: 2px solid rgba(44,212,196,.25);
+      color: var(--white); font-family: var(--B);
+      font-size: clamp(20px, 3vw, 28px); font-weight: 300;
+      padding: 10px 0 12px; outline: none;
+      transition: border-color .25s; margin-bottom: 28px;
+      -webkit-appearance: none;
+    }
+    .q-input::placeholder { color: var(--dim); }
+    .q-input:focus { border-color: var(--teal); }
+
+    /* Contact fields */
+    .contact-label {
+      font-size: 10px; font-weight: 600; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--teal); margin-bottom: 2px; margin-top: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .contact-label:first-of-type { margin-top: 0; }
+    .optional-tag {
+      color: var(--dim); font-weight: 400; letter-spacing: 0;
+      text-transform: none; font-size: 10px; font-style: italic;
+    }
+    .field-error {
+      font-size: 12px; color: #ff6b6b;
+      margin-bottom: 12px; margin-top: -16px;
+    }
+
+    /* Textarea */
+    .q-textarea {
+      width: 100%; background: transparent;
+      border: none; border-bottom: 2px solid rgba(44,212,196,.25);
+      color: var(--white); font-family: var(--B);
+      font-size: 17px; font-weight: 300;
+      padding: 10px 0 12px; outline: none;
+      resize: none; min-height: 64px;
+      transition: border-color .25s; margin-bottom: 28px; line-height: 1.65;
+    }
+    .q-textarea::placeholder { color: var(--dim); }
+    .q-textarea:focus { border-color: var(--teal); }
+
+    /* Choice list */
+    .choices { display: flex; flex-direction: column; gap: 8px; }
+    .choice {
+      display: flex; align-items: center; gap: 16px;
+      padding: 14px 18px; border: 1px solid var(--border);
+      background: rgba(255,255,255,.02); cursor: pointer;
+      transition: border-color .2s, background .2s;
+      user-select: none;
+    }
+    .choice:hover { border-color: rgba(44,212,196,.4); background: rgba(44,212,196,.05); }
+    .choice.selected { border-color: var(--teal); background: rgba(44,212,196,.09); }
+    .choice-key {
+      font-family: var(--D); font-size: 11px; font-weight: 700;
+      letter-spacing: .1em; color: var(--teal);
+      border: 1px solid rgba(44,212,196,.35);
+      width: 26px; height: 26px; min-width: 26px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, color .2s;
+    }
+    .choice.selected .choice-key { background: var(--teal); color: var(--black); border-color: var(--teal); }
+    .choice-text { font-size: 14px; font-weight: 400; color: rgba(255,255,255,.78); line-height: 1.4; }
+
+    /* Continue button */
+    .btn-continue {
+      font-family: var(--D); font-size: 15px; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--black); background: var(--teal);
+      padding: 15px 40px; border: none; cursor: pointer;
+      clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+      display: inline-flex; align-items: center; gap: 12px;
+      transition: background .2s, transform .2s, box-shadow .2s;
+      position: relative; overflow: hidden;
+    }
+    .btn-continue::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+      transform: translateX(-100%); transition: transform .5s var(--ease);
+    }
+    .btn-continue:hover::before { transform: translateX(100%); }
+    .btn-continue:hover { background: #3eeade; transform: translateY(-2px); box-shadow: 0 12px 40px rgba(44,212,196,.4); }
+
+    /* ── SUCCESS SCREEN ── */
+    .success-screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 40px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .5s var(--ease);
+    }
+    .success-screen.visible { opacity: 1; pointer-events: auto; }
+    .success-icon {
+      width: 72px; height: 72px; border: 1px solid rgba(44,212,196,.4);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      color: var(--teal); margin-bottom: 32px;
+    }
+    .success-h {
+      font-family: var(--D); font-size: clamp(52px, 7vw, 88px);
+      font-weight: 900; text-transform: uppercase; line-height: .92;
+      margin-bottom: 24px; letter-spacing: -.01em;
+    }
+    .success-h .t { color: var(--teal); }
+    .success-h .sk { -webkit-text-stroke: 2px var(--white); color: transparent; }
+    .success-p {
+      font-size: 16px; font-weight: 300; color: var(--muted);
+      max-width: 44ch; line-height: 1.8; margin-bottom: 40px;
+    }
+    .success-p strong { color: var(--white); font-weight: 500; }
+    .success-cta {
+      display: inline-block; padding: 16px 40px;
+      background: var(--teal); color: #000;
+      font-family: var(--D); font-size: 15px; font-weight: 800;
+      letter-spacing: .08em; text-transform: uppercase;
+      text-decoration: none; border-radius: 2px;
+      margin-bottom: 20px;
+      transition: opacity .2s;
+    }
+    .success-cta:hover { opacity: .85; }
+    .success-note {
+      font-size: 13px; color: var(--muted); margin-bottom: 40px;
+    }
+    .back-home {
+      font-family: var(--D); font-size: 13px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: color .2s;
+    }
+    .back-home:hover { color: var(--teal); }
+
+    /* ── SKIP LINK ── */
+    .skip-link {
+      position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
+      z-index: 99; font-size: 12px; color: var(--muted);
+      text-align: center; white-space: nowrap;
+      background: none; border: 1px solid rgba(255,255,255,.1); cursor: pointer;
+      font-family: var(--B); letter-spacing: .02em;
+      transition: color .2s, border-color .2s, opacity .3s;
+      padding: 10px 22px;
+    }
+    .skip-link:hover { color: var(--white); border-color: rgba(255,255,255,.28); }
+    .skip-link.hidden { opacity: 0; pointer-events: none; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 640px) {
+      .top-nav { padding: 16px 20px; }
+      .back-btn { left: 20px; bottom: 24px; }
+      .enter-hint { right: 20px; bottom: 24px; }
+      .skip-link { bottom: 16px; font-size: 11px; max-width: 90vw; white-space: normal; padding: 9px 18px; }
+      .question { padding: 80px 24px 96px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- Progress bar -->
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- Top nav -->
+<nav class="top-nav">
+  <a href="index.html" class="nav-logo-link">
+    <img src="logo.jpg" alt="JP Training">
+    <span class="nav-brand">JP <em>Training</em></span>
+  </a>
+  <span class="step-counter" id="step-counter"></span>
+</nav>
+
+<!-- Back button -->
+<button class="back-btn hidden" id="back-btn">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+  Back
+</button>
+
+<!-- Press enter hint -->
+<div class="enter-hint" id="enter-hint">
+  Press <kbd>Enter ↵</kbd> to continue
+</div>
+
+<!-- Skip to calendar -->
+<button class="skip-link hidden" id="skip-link">
+  Let me fill this out later, just let me book the call ffs →
+</button>
+
+<!-- ─────────────────────────── QUESTIONS ─────────────────────────── -->
+
+<!-- STEP 0 — Contact details -->
+<div class="question active" id="q0">
+  <div class="q-inner">
+    <p class="q-num">Let's get started</p>
+    <h1 class="q-title">A FEW QUICK<br><span class="t">DETAILS.</span></h1>
+    <p class="q-sub">Takes under 2 minutes. JP will reach out directly to confirm your call time.</p>
+
+    <p class="contact-label">Your name</p>
+    <input type="text" class="q-input" id="f-name" placeholder="First name" autocomplete="given-name">
+
+    <p class="contact-label">Phone number</p>
+    <input type="tel" class="q-input" id="f-phone" placeholder="+44 7700 000000" autocomplete="tel">
+
+    <p class="contact-label">Email <span class="optional-tag">(optional)</span></p>
+    <input type="email" class="q-input" id="f-email" placeholder="you@email.com" autocomplete="email">
+
+    <p class="field-error" id="contact-error" style="display:none"></p>
+
+    <button class="btn-continue" id="btn-q0">
+      Continue
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- STEP 1 — Age -->
+<div class="question" id="q1">
+  <div class="q-inner">
+    <p class="q-num">Question 1 of 10</p>
+    <h2 class="q-title">HOW OLD<br><span class="t">ARE YOU?</span></h2>
+    <p class="q-sub">Training load, recovery, and hormonal protocols all shift with age. This keeps your programme relevant to where your body actually is.</p>
+    <input type="number" class="q-input" id="f-age" placeholder="e.g. 38" min="14" max="80" autocomplete="off">
+    <button class="btn-continue" id="btn-q1">
+      Continue
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- STEP 2 — Main goal (multi-select) -->
+<div class="question" id="q2">
+  <div class="q-inner">
+    <p class="q-num">Question 2 of 10</p>
+    <h2 class="q-title">WHAT'S YOUR<br><span class="t">MAIN GOAL?</span></h2>
+    <p class="q-sub">Select everything that applies — we'll prioritise together on the call.</p>
+    <div class="choices" id="choices-q2">
+      <div class="choice" data-val="fat-loss">
+        <span class="choice-key">A</span>
+        <span class="choice-text">Fat loss &amp; body recomposition</span>
+      </div>
+      <div class="choice" data-val="muscle">
+        <span class="choice-key">B</span>
+        <span class="choice-text">Build muscle &amp; strength</span>
+      </div>
+      <div class="choice" data-val="energy">
+        <span class="choice-key">C</span>
+        <span class="choice-text">Optimise energy &amp; daily performance</span>
+      </div>
+      <div class="choice" data-val="longevity">
+        <span class="choice-key">D</span>
+        <span class="choice-text">Improve longevity &amp; healthspan</span>
+      </div>
+      <div class="choice" data-val="hormones">
+        <span class="choice-key">E</span>
+        <span class="choice-text">Fix hormones / low testosterone</span>
+      </div>
+      <div class="choice" data-val="athletic">
+        <span class="choice-key">F</span>
+        <span class="choice-text">Athletic or sport performance</span>
+      </div>
+    </div>
+    <br>
+    <button class="btn-continue" id="btn-q2">
+      Continue
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- STEP 3 — Training history (single, auto-advance) -->
+<div class="question" id="q3">
+  <div class="q-inner">
+    <p class="q-num">Question 3 of 10</p>
+    <h2 class="q-title">YOUR TRAINING<br><span class="t">HISTORY.</span></h2>
+    <p class="q-sub">Be straight with me — the more accurate this is, the better the protocol fits.</p>
+    <div class="choices" id="choices-q3">
+      <div class="choice" data-val="beginner">
+        <span class="choice-key">A</span>
+        <span class="choice-text">Never trained seriously — complete beginner</span>
+      </div>
+      <div class="choice" data-val="returning">
+        <span class="choice-key">B</span>
+        <span class="choice-text">Used to train, fell off it — looking to restart</span>
+      </div>
+      <div class="choice" data-val="inconsistent">
+        <span class="choice-key">C</span>
+        <span class="choice-text">Training occasionally but never consistently</span>
+      </div>
+      <div class="choice" data-val="no-results">
+        <span class="choice-key">D</span>
+        <span class="choice-text">Training regularly but not seeing results</span>
+      </div>
+      <div class="choice" data-val="experienced">
+        <span class="choice-key">E</span>
+        <span class="choice-text">Experienced — consistent for years, want the next level</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4 — Biggest frustration (free text) -->
+<div class="question" id="q4">
+  <div class="q-inner">
+    <p class="q-num">Question 4 of 10</p>
+    <h2 class="q-title">WHAT'S ACTUALLY<br><span class="t">GOING ON?</span></h2>
+    <p class="q-sub">What's the thing frustrating you most right now? Don't hold back — this is where the useful stuff is.</p>
+    <textarea class="q-textarea" id="f-frustration" placeholder="e.g. I've been training for years but nothing's changed. I'm always exhausted. I know what I should be doing but it never sticks…" rows="3"></textarea>
+    <button class="btn-continue" id="btn-q4">
+      Continue
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- STEP 5 — Lifestyle (single, auto-advance) -->
+<div class="question" id="q5">
+  <div class="q-inner">
+    <p class="q-num">Question 5 of 10</p>
+    <h2 class="q-title">WHAT'S YOUR<br><span class="t">DAY LIKE?</span></h2>
+    <p class="q-sub">Training should fit around your life, not fight against it.</p>
+    <div class="choices" id="choices-q5">
+      <div class="choice" data-val="desk">
+        <span class="choice-key">A</span>
+        <span class="choice-text">Office / desk-based — mostly sedentary</span>
+      </div>
+      <div class="choice" data-val="manual">
+        <span class="choice-key">B</span>
+        <span class="choice-text">Manual or physical work — on my feet all day</span>
+      </div>
+      <div class="choice" data-val="mixed">
+        <span class="choice-key">C</span>
+        <span class="choice-text">Mixed — some desk, some active</span>
+      </div>
+      <div class="choice" data-val="shift">
+        <span class="choice-key">D</span>
+        <span class="choice-text">Shift work or irregular hours</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 6 — Sleep (single, auto-advance) -->
+<div class="question" id="q6">
+  <div class="q-inner">
+    <p class="q-num">Question 6 of 10</p>
+    <h2 class="q-title">HOW'S YOUR<br><span class="t">SLEEP?</span></h2>
+    <p class="q-sub">Sleep is where most of the results actually happen. Be straight with me.</p>
+    <div class="choices" id="choices-q6">
+      <div class="choice" data-val="good">
+        <span class="choice-key">A</span>
+        <span class="choice-text">Good — 7+ hours, wake up feeling rested</span>
+      </div>
+      <div class="choice" data-val="average">
+        <span class="choice-key">B</span>
+        <span class="choice-text">Average — enough hours but not great quality</span>
+      </div>
+      <div class="choice" data-val="poor">
+        <span class="choice-key">C</span>
+        <span class="choice-text">Poor — struggle to fall asleep or stay asleep</span>
+      </div>
+      <div class="choice" data-val="very-poor">
+        <span class="choice-key">D</span>
+        <span class="choice-text">Very poor — regularly under 6 hours</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 7 — Energy (single, auto-advance) -->
+<div class="question" id="q7">
+  <div class="q-inner">
+    <p class="q-num">Question 7 of 10</p>
+    <h2 class="q-title">ENERGY LEVELS<br><span class="t">DAY TO DAY?</span></h2>
+    <p class="q-sub">Not just when you wake up — across the whole day.</p>
+    <div class="choices" id="choices-q7">
+      <div class="choice" data-val="high">
+        <span class="choice-key">A</span>
+        <span class="choice-text">High — consistent energy throughout the day</span>
+      </div>
+      <div class="choice" data-val="afternoon-crash">
+        <span class="choice-key">B</span>
+        <span class="choice-text">Crashes mid-afternoon, running on caffeine to get through</span>
+      </div>
+      <div class="choice" data-val="low">
+        <span class="choice-key">C</span>
+        <span class="choice-text">Low overall — struggling to get through most days</span>
+      </div>
+      <div class="choice" data-val="variable">
+        <span class="choice-key">D</span>
+        <span class="choice-text">Very variable — some great days, some terrible ones</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 8 — Health conditions (free text, optional) -->
+<div class="question" id="q8">
+  <div class="q-inner">
+    <p class="q-num">Question 8 of 10</p>
+    <h2 class="q-title">ANYTHING I<br><span class="t">NEED TO KNOW?</span></h2>
+    <p class="q-sub">Injuries, health conditions, medications, past surgeries. Anything relevant before we speak. Leave blank if nothing applies.</p>
+    <textarea class="q-textarea" id="f-health" placeholder="e.g. Lower back issues, high blood pressure, on TRT, previous knee surgery, type 2 diabetes…" rows="3"></textarea>
+    <button class="btn-continue" id="btn-q8">
+      Continue
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- STEP 9 — Previous coaching (single, auto-advance) -->
+<div class="question" id="q9">
+  <div class="q-inner">
+    <p class="q-num">Question 9 of 10</p>
+    <h2 class="q-title">WORKED WITH A<br><span class="t">COACH BEFORE?</span></h2>
+    <p class="q-sub">No wrong answer — this just tells me where you're starting from.</p>
+    <div class="choices" id="choices-q9">
+      <div class="choice" data-val="never">
+        <span class="choice-key">A</span>
+        <span class="choice-text">Never — first time considering it</span>
+      </div>
+      <div class="choice" data-val="tried-failed">
+        <span class="choice-key">B</span>
+        <span class="choice-text">Yes — tried it before but it didn't deliver</span>
+      </div>
+      <div class="choice" data-val="tried-good">
+        <span class="choice-key">C</span>
+        <span class="choice-text">Yes — had a good experience, looking for something more</span>
+      </div>
+      <div class="choice" data-val="current">
+        <span class="choice-key">D</span>
+        <span class="choice-text">Currently have a coach but it's not working</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 10 — Timeline (single, submit on select) -->
+<div class="question" id="q10">
+  <div class="q-inner">
+    <p class="q-num">Question 10 of 10</p>
+    <h2 class="q-title">WHEN DO YOU<br><span class="t">WANT TO START?</span></h2>
+    <p class="q-sub">Helps me understand where you are in the decision.</p>
+    <div class="choices" id="choices-q10">
+      <div class="choice" data-val="now">
+        <span class="choice-key">A</span>
+        <span class="choice-text">Now — I'm ready to commit and get moving</span>
+      </div>
+      <div class="choice" data-val="few-weeks">
+        <span class="choice-key">B</span>
+        <span class="choice-text">Within the next few weeks</span>
+      </div>
+      <div class="choice" data-val="exploring">
+        <span class="choice-key">C</span>
+        <span class="choice-text">Just exploring — not sure yet</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────── SUCCESS ─────────────────────────── -->
+<div class="success-screen" id="success-screen">
+  <div class="success-icon">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <h1 class="success-h">YOU'RE<br><span class="t">ALL SET.</span></h1>
+  <p class="success-p"><strong>Your answers are with JP.</strong><br>Lock in your call time now — pick a slot and it's done.</p>
+  <a href="https://calendar.app.google/4vZYVLHsThfsdPxC7" target="_blank" rel="noopener noreferrer" class="success-cta">Pick Your Call Time →</a>
+  <p class="success-note">Or JP will reach out on your phone within a few hours.</p>
+  <a href="index.html" class="back-home">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back to JP Training
+  </a>
+</div>
+
+<script>
+/* ── CURSOR ── */
+var cur = document.getElementById('cur'), ring = document.getElementById('cur-ring');
+var mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', function(e) {
+  mx = e.clientX; my = e.clientY;
+  cur.style.left = mx + 'px'; cur.style.top = my + 'px';
+});
+(function loop() {
+  rx += (mx - rx) * .12; ry += (my - ry) * .12;
+  ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+  requestAnimationFrame(loop);
+})();
+
+/* ── STATE ── */
+var step = 0;
+var TOTAL_STEPS = 11; // steps 0–10
+var answers = {};
+
+// Which steps are single-choice (auto-advance on select)
+var AUTO_ADVANCE = [3, 5, 6, 7, 9];
+// Which steps have no Enter-to-continue (single choice)
+var NO_ENTER = [3, 5, 6, 7, 9, 10];
+
+// Google Calendar booking link
+var CALENDAR_URL = 'https://calendar.app.google/4vZYVLHsThfsdPxC7';
+
+/* ── UI HELPERS ── */
+function updateUI() {
+  // Progress bar
+  var pct = step === 0 ? 4 : Math.round((step / 10) * 100);
+  document.getElementById('progress').style.width = pct + '%';
+
+  // Step counter
+  var counter = document.getElementById('step-counter');
+  counter.innerHTML = step === 0 ? '' : 'Step <span>' + step + '</span> of 10';
+
+  // Back button
+  var backBtn = document.getElementById('back-btn');
+  step > 0 ? backBtn.classList.remove('hidden') : backBtn.classList.add('hidden');
+
+  // Enter hint
+  var hintEl = document.getElementById('enter-hint');
+  NO_ENTER.indexOf(step) !== -1
+    ? hintEl.classList.add('hidden')
+    : hintEl.classList.remove('hidden');
+
+  // Skip link — visible from step 1 onwards
+  var skipEl = document.getElementById('skip-link');
+  step > 0 ? skipEl.classList.remove('hidden') : skipEl.classList.add('hidden');
+}
+
+function showStep(idx) {
+  var el = document.getElementById('q' + idx);
+  if (!el) return;
+  el.classList.remove('above');
+  el.classList.add('active');
+  // Focus first interactive element
+  setTimeout(function() {
+    var inp = el.querySelector('input, textarea');
+    if (inp) inp.focus();
+  }, 80);
+}
+
+function hideStepAbove(idx) {
+  var el = document.getElementById('q' + idx);
+  if (!el) return;
+  el.classList.remove('active');
+  el.classList.add('above');
+}
+
+function hideStepBelow(idx) {
+  var el = document.getElementById('q' + idx);
+  if (!el) return;
+  el.classList.remove('active', 'above');
+}
+
+/* ── NAVIGATION ── */
+function nextStep() {
+  if (step === 0) {
+    var name = document.getElementById('f-name').value.trim();
+    var phone = document.getElementById('f-phone').value.trim();
+    var errEl = document.getElementById('contact-error');
+    if (!name || !phone) {
+      errEl.textContent = 'Please enter your name and phone number to continue.';
+      errEl.style.display = 'block';
+      document.getElementById(name ? 'f-phone' : 'f-name').focus();
+      return;
+    }
+    errEl.style.display = 'none';
+    answers.name = name;
+    answers.phone = phone;
+    answers.email = document.getElementById('f-email').value.trim();
+  } else if (step === 1) {
+    answers.age = document.getElementById('f-age').value.trim() || '—';
+  } else if (step === 4) {
+    answers.frustration = document.getElementById('f-frustration').value.trim() || '—';
+  } else if (step === 8) {
+    answers.health = document.getElementById('f-health').value.trim() || 'None noted';
+  }
+
+  hideStepAbove(step);
+  step++;
+  showStep(step);
+  updateUI();
+}
+
+function goBack() {
+  if (step === 0) return;
+  hideStepBelow(step);
+  step--;
+  var prev = document.getElementById('q' + step);
+  prev.classList.remove('above');
+  prev.classList.add('active');
+  setTimeout(function() {
+    var inp = prev.querySelector('input:not([type=hidden]), textarea');
+    if (inp) inp.focus();
+  }, 80);
+  updateUI();
+}
+
+/* ── CHOICE SELECTION ── */
+function selectChoice(choiceEl, qIdx, multi) {
+  var container = document.getElementById('choices-q' + qIdx);
+  if (!multi) {
+    container.querySelectorAll('.choice').forEach(function(c) { c.classList.remove('selected'); });
+    choiceEl.classList.add('selected');
+    answers['q' + qIdx] = choiceEl.getAttribute('data-val');
+    if (AUTO_ADVANCE.indexOf(qIdx) !== -1) {
+      setTimeout(nextStep, 300);
+    } else if (qIdx === 10) {
+      setTimeout(submitForm, 300);
+    }
+  } else {
+    choiceEl.classList.toggle('selected');
+    var vals = [];
+    container.querySelectorAll('.choice.selected').forEach(function(c) {
+      vals.push(c.getAttribute('data-val'));
+    });
+    answers['q' + qIdx] = vals;
+  }
+}
+
+/* ── WIRE UP CHOICES ── */
+document.querySelectorAll('.choices').forEach(function(container) {
+  var qIdx = parseInt(container.id.replace('choices-q', ''), 10);
+  var isMulti = qIdx === 2;
+  container.querySelectorAll('.choice').forEach(function(choice) {
+    choice.addEventListener('click', function() {
+      selectChoice(choice, qIdx, isMulti);
+    });
+  });
+});
+
+/* ── WIRE UP CONTINUE BUTTONS ── */
+document.getElementById('btn-q0').addEventListener('click', nextStep);
+document.getElementById('btn-q1').addEventListener('click', nextStep);
+document.getElementById('btn-q2').addEventListener('click', nextStep);
+document.getElementById('btn-q4').addEventListener('click', nextStep);
+document.getElementById('btn-q8').addEventListener('click', nextStep);
+
+/* ── BACK BUTTON ── */
+document.getElementById('back-btn').addEventListener('click', goBack);
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown', function(e) {
+  var activeEl = document.activeElement;
+  var inTextArea = activeEl && activeEl.tagName === 'TEXTAREA';
+
+  // Enter to advance (except single-choice and textarea)
+  if (e.key === 'Enter' && !e.shiftKey && !inTextArea) {
+    if (NO_ENTER.indexOf(step) === -1 && step < 10) {
+      e.preventDefault();
+      nextStep();
+    }
+  }
+
+  // Letter shortcuts for choices (A–F)
+  if (!inTextArea && !(activeEl && activeEl.tagName === 'INPUT' && activeEl.type !== 'number')) {
+    var keyMap = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5 };
+    var k = e.key.toLowerCase();
+    if (k in keyMap) {
+      var qEl = document.getElementById('q' + step);
+      if (!qEl) return;
+      var choicesEl = qEl.querySelector('.choices');
+      if (!choicesEl) return;
+      var choices = choicesEl.querySelectorAll('.choice');
+      var idx = keyMap[k];
+      if (choices[idx]) choices[idx].click();
+    }
+  }
+});
+
+/* ── SUBMIT ── */
+async function submitForm() {
+  // Fade out main UI
+  document.querySelectorAll('.question.active').forEach(function(q) {
+    q.classList.remove('active'); q.classList.add('above');
+  });
+  document.getElementById('back-btn').style.display = 'none';
+  document.getElementById('enter-hint').style.display = 'none';
+  document.getElementById('progress').style.width = '100%';
+  document.getElementById('step-counter').innerHTML = '';
+
+  // Build message
+  var goals = Array.isArray(answers.q2) ? answers.q2.join(', ') : (answers.q2 || '—');
+  var lines = [
+    '=== CONTACT ===',
+    'Name:    ' + (answers.name || '—'),
+    'Phone:   ' + (answers.phone || '—'),
+    'Email:   ' + (answers.email || '—'),
+    '',
+    '=== QUESTIONNAIRE ===',
+    'Age:               ' + (answers.age || '—'),
+    'Goals:             ' + goals,
+    'Training history:  ' + (answers.q3 || '—'),
+    'Biggest challenge: ' + (answers.frustration || '—'),
+    'Lifestyle:         ' + (answers.q5 || '—'),
+    'Sleep:             ' + (answers.q6 || '—'),
+    'Energy:            ' + (answers.q7 || '—'),
+    'Health / injuries: ' + (answers.health || '—'),
+    'Previous coaching: ' + (answers.q9 || '—'),
+    'Timeline:          ' + (answers.q10 || '—'),
+  ];
+
+  var body = new FormData();
+  // Replace YOUR_ACCESS_KEY with your key from web3forms.com (free)
+  body.append('access_key', 'd7afb74a-4ae2-49af-9090-d0f08cfd62ba');
+  body.append('subject', 'JP Training — Call Request: ' + (answers.name || 'Unknown') + ' · ' + (answers.phone || ''));
+  body.append('from_name', 'JP Training Website');
+  body.append('message', lines.join('\n'));
+  body.append('botcheck', '');
+
+  try {
+    await fetch('https://api.web3forms.com/submit', { method: 'POST', body: body });
+  } catch (e) { /* show success regardless */ }
+
+  // Show success
+  setTimeout(function() {
+    document.getElementById('success-screen').classList.add('visible');
+  }, 200);
+}
+
+/* ── SKIP TO CALENDAR ── */
+document.getElementById('skip-link').addEventListener('click', async function() {
+  // Submit whatever contact info + partial answers were collected
+  var body = new FormData();
+  body.append('access_key', 'd7afb74a-4ae2-49af-9090-d0f08cfd62ba');
+  body.append('subject', 'JP Training — Direct Calendar Booking: ' + (answers.name || 'Unknown') + ' · ' + (answers.phone || ''));
+  body.append('from_name', 'JP Training Website');
+  var lines = [
+    'Skipped questionnaire — booked directly via calendar.',
+    '',
+    '=== CONTACT ===',
+    'Name:  ' + (answers.name || '—'),
+    'Phone: ' + (answers.phone || '—'),
+    'Email: ' + (answers.email || '—'),
+  ];
+  body.append('message', lines.join('\n'));
+  body.append('botcheck', '');
+  try { await fetch('https://api.web3forms.com/submit', { method: 'POST', body: body }); } catch(e) {}
+  window.location.href = CALENDAR_URL;
+});
+
+/* ── INIT ── */
+updateUI();
+setTimeout(function() {
+  var first = document.getElementById('f-name');
+  if (first) first.focus();
+}, 100);
+</script>
+</body>
+</html>

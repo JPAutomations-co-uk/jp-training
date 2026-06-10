@@ -247,7 +247,8 @@
     .journey-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:48px}
     .j-card{
       background:var(--card);padding:48px 36px;position:relative;overflow:hidden;
-      cursor:default;transition:background .3s var(--ease);
+      cursor:pointer;transition:background .3s var(--ease);
+      text-decoration:none;color:inherit;display:block;
     }
     .j-card:hover{background:#161616}
     .j-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
@@ -393,6 +394,39 @@
     .btn-cta:hover{background:#3eeade;transform:translateY(-3px);box-shadow:0 20px 60px rgba(44,212,196,.5)}
     .cta-note{font-size:13px;color:var(--dim);margin-top:20px}
 
+    /* ── CONSULT FORM ── */
+    .consult-form{width:100%;max-width:560px;margin:0 auto;text-align:left}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-input,.form-textarea{width:100%;background:rgba(255,255,255,.04);
+      border:1px solid rgba(44,212,196,.2);color:var(--white);
+      font-family:var(--B);font-size:15px;font-weight:300;
+      padding:16px 20px;outline:none;
+      transition:border-color .25s,background .25s;margin-bottom:12px;
+      -webkit-appearance:none;appearance:none;border-radius:0}
+    .form-input::placeholder,.form-textarea::placeholder{color:var(--dim)}
+    .form-input:focus,.form-textarea:focus{border-color:var(--teal);background:rgba(44,212,196,.04)}
+    .form-textarea{resize:vertical;min-height:90px;font-size:14px}
+    .consult-form .btn-cta{width:100%;text-align:center;cursor:pointer;
+      border:none;font-family:var(--D);font-size:18px;font-weight:800;
+      letter-spacing:.1em;text-transform:uppercase;color:var(--black);
+      background:var(--teal);padding:22px 64px;display:block;
+      clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
+      position:relative;overflow:hidden;transition:all .3s var(--ease)}
+    .consult-form .btn-cta::before{content:'';position:absolute;inset:0;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);
+      transform:translateX(-100%);transition:transform .5s var(--ease)}
+    .consult-form .btn-cta:hover::before{transform:translateX(100%)}
+    .consult-form .btn-cta:hover{background:#3eeade;transform:translateY(-3px);box-shadow:0 20px 60px rgba(44,212,196,.5)}
+    .consult-form .btn-cta:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+    .form-success{text-align:center}
+    .form-success-icon{width:64px;height:64px;border:2px solid var(--teal);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;margin:0 auto 24px;color:var(--teal)}
+    .form-success h3{font-family:var(--D);font-size:32px;font-weight:900;
+      text-transform:uppercase;margin-bottom:12px}
+    .form-success p{font-size:15px;color:var(--muted);line-height:1.8}
+    .form-error{font-size:13px;color:#ff6b6b;margin-top:10px;text-align:center}
+    @media(max-width:600px){.form-row{grid-template-columns:1fr}}
+
     /* ── FOOTER ── */
     footer{border-top:1px solid var(--border);padding:36px 10%;
       display:flex;justify-content:space-between;align-items:center}
@@ -500,7 +534,7 @@
     <li><a href="#boosters">Boosters</a></li>
     <li><a href="#optimisation">Optimisation</a></li>
   </ul>
-  <a href="#consult" class="nav-cta">Free 30-Min Call</a>
+  <a href="book.html" class="nav-cta">Free 30-Min Call</a>
 </nav>
 
 <!-- HERO -->
@@ -522,7 +556,7 @@
       No two people share the same biology, which means there's a version of you that a generic programme will never reach. We find out how your body really functions and build every protocol around it — so you can reach your maximum potential in every aspect of life.
     </p>
     <div class="hero-btns">
-      <a href="#consult" class="btn-main">Book Your Free 30-Min Call</a>
+      <a href="book.html" class="btn-main">Book Your Free 30-Min Call</a>
       <a href="#journey" class="btn-ghost">
         See how it works
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -530,7 +564,7 @@
     </div>
     <p class="hero-guarantee">Come away with more clarity about your body than you've had in years — <em>or I'll write your full training plan for free.</em></p>
     <div class="hero-socials">
-      <a href="https://www.instagram.com/jpautomations/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+      <a href="https://www.instagram.com/jptr.aining/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
       </a>
       <a href="https://www.linkedin.com/in/james-harvey-0583b2370/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
@@ -665,27 +699,27 @@
     <p class="body-s" style="max-width:60ch;margin-top:16px">Most coaching starts at stage two or three — then wonders why it doesn't stick. This process is built in the right order. Every stage works on its own. Every stage makes the next one more effective. It starts wherever you are right now.</p>
   </div>
   <div class="journey-grid stag">
-    <div class="j-card">
+    <a class="j-card" href="#foundations">
       <div class="j-num">01</div>
       <p class="j-stage">Stage One</p>
       <h3 class="j-title">Foundations</h3>
       <p class="j-desc">Most programmes skip straight to the complicated stuff. This one doesn't. Training, nutrition, sleep, and the real reason you want to change — get these four things right and everything else becomes easier. They're not basic. They're the whole game.</p>
       <svg class="j-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </div>
-    <div class="j-card">
+    </a>
+    <a class="j-card" href="#boosters">
       <div class="j-num">02</div>
       <p class="j-stage">Stage Two</p>
       <h3 class="j-title">Protocol Boosters</h3>
       <p class="j-desc">Supplements, cold exposure, breathwork, circadian timing. The stuff everyone buys on day one — before the foundation is even there. When your base is solid, these things work. Without it, they're expensive noise.</p>
       <svg class="j-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </div>
-    <div class="j-card">
+    </a>
+    <a class="j-card" href="#optimisation">
       <div class="j-num">03</div>
       <p class="j-stage">Stage Three</p>
       <h3 class="j-title">Complete Optimisation</h3>
       <p class="j-desc">You can do everything right and still be running at 70% because of something invisible — a hormonal imbalance, an inflammatory marker, a thyroid issue nobody's caught. At this stage, we measure everything and remove the guesswork entirely.</p>
       <svg class="j-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </div>
+    </a>
   </div>
 </section>
 
@@ -928,7 +962,7 @@
       <strong>No pitch. No obligation. No advice that could've been written for anyone.</strong><br>
       Just an honest 30 minutes — where you are, what's actually going on, and whether I can help. The only way this goes wrong is if you don't book it.
     </p>
-    <a href="mailto:jpautomations12@gmail.com?subject=JP Training — Free 30-Minute Consultation" class="btn-cta">Book Your Free Call Now</a>
+    <a href="book.html" class="btn-cta">Book Your Free Call Now</a>
     <p class="cta-note">30 minutes · No commitment · Completely free</p>
   </div>
 </section>
@@ -939,7 +973,7 @@
     <img src="logo.jpg" alt="JP Training">
     <span class="foot-brand">JP <em>Training</em></span>
   </div>
-  <span class="foot-copy">Birmingham · Performance Coaching for Men · jpautomations12@gmail.com</span>
+  <span class="foot-copy">Birmingham · Performance Coaching for Men · jp@jptraining.fit</span>
 </footer>
 
 <script>
@@ -1309,6 +1343,7 @@ window.addEventListener('scroll',()=>{nav.style.borderBottomColor=window.scrollY
   st.textContent='.orb-wrap~*{position:relative;z-index:1}';
   document.head.appendChild(st);
 })();
+
 </script>
 </body>
 </html>
