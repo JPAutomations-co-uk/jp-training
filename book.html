@@ -864,7 +864,7 @@ async function submitForm() {
   try {
     await Promise.all([
       fetch('https://api.web3forms.com/submit', { method: 'POST', body: body }),
-      fetch('https://nick-90891--claude-orchestrator-jp-training-lead.modal.run', {
+      fetch('https://jp-80045--jp-training-jp-training-lead.modal.run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(modalPayload),
@@ -898,7 +898,7 @@ document.getElementById('skip-link').addEventListener('click', async function() 
   try {
     await Promise.all([
       fetch('https://api.web3forms.com/submit', { method: 'POST', body: body }),
-      fetch('https://nick-90891--claude-orchestrator-jp-training-lead.modal.run', {
+      fetch('https://jp-80045--jp-training-jp-training-lead.modal.run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: answers.name || '', email: answers.email || '', phone: answers.phone || '', timeline: 'skipped-to-calendar' }),
