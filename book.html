@@ -844,8 +844,32 @@ async function submitForm() {
   body.append('message', lines.join('\n'));
   body.append('botcheck', '');
 
+  // Fire both in parallel — Web3Forms (email) + Modal (MailerLite + Slack)
+  var modalPayload = {
+    name:             answers.name    || '',
+    email:            answers.email   || '',
+    phone:            answers.phone   || '',
+    age:              answers.age     || '',
+    goals:            Array.isArray(answers.q2) ? answers.q2 : (answers.q2 ? [answers.q2] : []),
+    training_history: answers.q3     || '',
+    frustration:      answers.frustration || '',
+    lifestyle:        answers.q5     || '',
+    sleep:            answers.q6     || '',
+    energy:           answers.q7     || '',
+    health:           answers.health || '',
+    previous_coaching: answers.q9   || '',
+    timeline:         answers.q10   || '',
+  };
+
   try {
-    await fetch('https://api.web3forms.com/submit', { method: 'POST', body: body });
+    await Promise.all([
+      fetch('https://api.web3forms.com/submit', { method: 'POST', body: body }),
+      fetch('https://nick-90891--claude-orchestrator-jp-training-lead.modal.run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(modalPayload),
+      }),
+    ]);
   } catch (e) { /* show success regardless */ }
 
   // Show success
@@ -871,7 +895,16 @@ document.getElementById('skip-link').addEventListener('click', async function() 
   ];
   body.append('message', lines.join('\n'));
   body.append('botcheck', '');
-  try { await fetch('https://api.web3forms.com/submit', { method: 'POST', body: body }); } catch(e) {}
+  try {
+    await Promise.all([
+      fetch('https://api.web3forms.com/submit', { method: 'POST', body: body }),
+      fetch('https://nick-90891--claude-orchestrator-jp-training-lead.modal.run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: answers.name || '', email: answers.email || '', phone: answers.phone || '', timeline: 'skipped-to-calendar' }),
+      }),
+    ]);
+  } catch(e) {}
   window.location.href = CALENDAR_URL;
 });
 
