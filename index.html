@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0TSNNHPPEG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0TSNNHPPEG');
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JP Training — Birmingham's Performance Coach for Men</title>
@@ -534,7 +542,7 @@
     <li><a href="#boosters">Boosters</a></li>
     <li><a href="#optimisation">Optimisation</a></li>
   </ul>
-  <a href="book.html" class="nav-cta">Free 30-Min Call</a>
+  <a href="book.html" class="nav-cta" onclick="gtag('event','cta_click',{cta_location:'nav'})">Free 30-Min Call</a>
 </nav>
 
 <!-- HERO -->
@@ -556,7 +564,7 @@
       No two people share the same biology, which means there's a version of you that a generic programme will never reach. We find out how your body really functions and build every protocol around it — so you can reach your maximum potential in every aspect of life.
     </p>
     <div class="hero-btns">
-      <a href="book.html" class="btn-main">Book Your Free 30-Min Call</a>
+      <a href="book.html" class="btn-main" onclick="gtag('event','cta_click',{cta_location:'hero'})">Book Your Free 30-Min Call</a>
       <a href="#journey" class="btn-ghost">
         See how it works
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -962,7 +970,7 @@
       <strong>No pitch. No obligation. No advice that could've been written for anyone.</strong><br>
       Just an honest 30 minutes — where you are, what's actually going on, and whether I can help. The only way this goes wrong is if you don't book it.
     </p>
-    <a href="book.html" class="btn-cta">Book Your Free Call Now</a>
+    <a href="book.html" class="btn-cta" onclick="gtag('event','cta_click',{cta_location:'bottom'})">Book Your Free Call Now</a>
     <p class="cta-note">30 minutes · No commitment · Completely free</p>
   </div>
 </section>

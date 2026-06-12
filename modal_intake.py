@@ -96,7 +96,7 @@ def jp_training_lead(body: dict):
     if not email:
         return JSONResponse({"status": "ok", "note": "no_email"})
 
-    group_id = get_or_create_group(segment, headers)
+    group_id = str(get_or_create_group(segment, headers))
 
     payload = {
         "email": email,
@@ -127,8 +127,16 @@ def jp_training_lead(body: dict):
     )
 
     if resp.status_code not in (200, 201):
-        logger.error(f"MailerLite error {resp.status_code}: {resp.text}")
+        logger.error(f"MailerLite subscriber error {resp.status_code}: {resp.text}")
         return JSONResponse({"status": "error", "detail": resp.text}, status_code=200)
+
+    # Explicitly assign to group as a backup (handles cases where groups array is ignored)
+    requests.post(
+        f"https://connect.mailerlite.com/api/groups/{group_id}/subscribers",
+        headers=headers,
+        json={"email": email},
+        timeout=10,
+    )
 
     logger.info(f"Added to MailerLite: {email} → {segment} (group {group_id})")
     return JSONResponse({"status": "ok", "segment": segment, "group_id": group_id})

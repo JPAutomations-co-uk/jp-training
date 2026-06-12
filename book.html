@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0TSNNHPPEG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0TSNNHPPEG');
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Your Free Call — JP Training</title>
@@ -603,7 +611,7 @@
   </div>
   <h1 class="success-h">YOU'RE<br><span class="t">ALL SET.</span></h1>
   <p class="success-p"><strong>Your answers are with JP.</strong><br>Lock in your call time now — pick a slot and it's done.</p>
-  <a href="https://calendar.app.google/4vZYVLHsThfsdPxC7" target="_blank" rel="noopener noreferrer" class="success-cta">Pick Your Call Time →</a>
+  <a href="https://calendar.app.google/4vZYVLHsThfsdPxC7" target="_blank" rel="noopener noreferrer" class="success-cta" onclick="gtag('event','calendar_click',{event_category:'booking_form'})">Pick Your Call Time →</a>
   <p class="success-note">Or JP will reach out on your phone within a few hours.</p>
   <a href="index.html" class="back-home">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -716,6 +724,15 @@ function nextStep() {
   step++;
   showStep(step);
   updateUI();
+
+  // GA4 — track form progress
+  if (typeof gtag !== 'undefined') {
+    if (step === 1) {
+      gtag('event', 'form_start', { event_category: 'booking_form' });
+    } else {
+      gtag('event', 'form_step_complete', { event_category: 'booking_form', step_number: step - 1 });
+    }
+  }
 }
 
 function goBack() {
@@ -806,6 +823,9 @@ document.addEventListener('keydown', function(e) {
 
 /* ── SUBMIT ── */
 async function submitForm() {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'form_submit', { event_category: 'booking_form' });
+  }
   // Fade out main UI
   document.querySelectorAll('.question.active').forEach(function(q) {
     q.classList.remove('active'); q.classList.add('above');
@@ -880,6 +900,9 @@ async function submitForm() {
 
 /* ── SKIP TO CALENDAR ── */
 document.getElementById('skip-link').addEventListener('click', async function() {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'form_skip', { event_category: 'booking_form', skipped_at_step: step });
+  }
   // Submit whatever contact info + partial answers were collected
   var body = new FormData();
   body.append('access_key', 'd7afb74a-4ae2-49af-9090-d0f08cfd62ba');
