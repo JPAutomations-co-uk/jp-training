@@ -285,7 +285,7 @@
         <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('habits')">Edit targets</button>
       </div>
       <div class="tag" id="habits-date"></div>
-      <div class="prog-label"><span>Progress</span><span id="habits-count">0 / 5</span></div>
+      <div class="prog-label"><span>Progress</span><span id="habits-count">0 / 10</span></div>
       <div class="prog-bar-wrap"><div class="prog-bar-fill" id="habits-bar" style="width:0%"></div></div>
       <div style="margin-top:16px" id="habits-list"></div>
     </div>
@@ -431,11 +431,16 @@ let OB={};
 function getHabits(){
   const h=OB.habits||{};
   return [
-    {key:'sunlight',  name:'Morning Sunlight', desc:`10+ min of natural light within 1hr of waking${h.wake_time?' (wake: '+h.wake_time+')':''}`},
-    {key:'protein',   name:'Protein Target',   desc:`Hit your daily target${h.protein_g?' ('+h.protein_g+'g)':''}`},
-    {key:'steps',     name:'Steps',            desc:`${h.steps_avg?'Target: '+Number(h.steps_avg).toLocaleString()+' steps':'8,000+ steps today'}`},
-    {key:'sleep',     name:'Sleep 8h+',        desc:`In bed by ${h.sleep_time||'your target time'} tonight`},
-    {key:'learning',  name:'Learning',         desc:'Read or listen to something worth your time'},
+    {key:'sunlight',    name:'Morning Sunlight',         desc:`Natural light within 1hr of waking${h.wake_time?' (wake '+h.wake_time+')':''} — sets your cortisol peak and circadian clock`},
+    {key:'training',    name:'Complete Training Session', desc:'Log today\'s session in the Train tab — strength drives testosterone, GH, and metabolic health'},
+    {key:'steps',       name:'Steps / Zone 2 Cardio',    desc:`${h.steps_goal?'Target: '+Number(h.steps_goal).toLocaleString()+' steps':'8,000–10,000 steps'} — cardiovascular fitness, insulin sensitivity, VO2 max`},
+    {key:'sleep',       name:'In Bed on Time',           desc:`Lights out by ${h.sleep_time||'10:30pm'} — deep sleep is when testosterone and growth hormone are secreted`},
+    {key:'cold',        name:'Cold Exposure',            desc:'Cold shower (2–3 min) or immersion — norepinephrine +530%, improved recovery, dopamine baseline'},
+    {key:'supplements', name:'Morning Stack',            desc:'Vitamin D3+K2, Magnesium, Zinc, Omega-3 — foundational for testosterone, sleep, and inflammation'},
+    {key:'stress',      name:'Stress Protocol',          desc:'10 min of breathwork, NSDR, or a walk without your phone — lowers cortisol, protects testosterone'},
+    {key:'no_phone',    name:'No Phone 1hr Before Bed',  desc:'Blue light and stimulus suppresses melatonin by 50% and elevates cortisol into the night'},
+    {key:'no_alcohol',  name:'Alcohol-Free',             desc:'Even 2 drinks suppresses testosterone by 6.8% and fragments REM sleep — skip it'},
+    {key:'hydration',   name:'Hydration',                desc:'2.5–3L water — every hormone, enzyme, and neurotransmitter runs on it'},
   ];
 }
 const HABITS=getHabits();
@@ -850,13 +855,14 @@ function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(
 const OB_DEFS = {
   habits: {
     label: 'Habits',
-    title: 'Set up your daily habits',
-    sub: 'Three quick answers so your habit targets mean something.',
+    title: 'Your daily protocol',
+    sub: 'Set your baselines so every habit target is calibrated to you.',
     steps: [
-      { id: 'wake_time',    label: 'What time do you wake up?',            type: 'time', default: '07:00' },
-      { id: 'sleep_time',   label: 'What time do you want to be in bed?',  type: 'time', default: '22:30' },
-      { id: 'steps_avg',    label: 'Current daily steps average',          type: 'number', placeholder: '5000', unit: 'steps/day' },
-      { id: 'protein_g',    label: 'Daily protein target',                 type: 'number', placeholder: '160', unit: 'g/day' },
+      { id: 'wake_time',   label: 'What time do you wake up?',             type: 'time',   default: '07:00' },
+      { id: 'sleep_time',  label: 'Target bedtime',                        type: 'time',   default: '22:30' },
+      { id: 'steps_goal',  label: 'Daily steps target',                    type: 'number', placeholder: '8000', unit: 'steps/day' },
+      { id: 'focus',       label: 'Primary health focus right now',        type: 'select',
+        options: ['Overall optimisation','Energy & hormones','Sleep quality','Fat loss & body composition','Muscle & strength','Cardiovascular fitness','Stress & cortisol management','Testosterone optimisation'] },
     ]
   },
   train: {
