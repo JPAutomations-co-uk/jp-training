@@ -300,7 +300,6 @@
         </div>
         <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('train')">Edit profile</button>
       </div>
-      </div>
       <div id="train-content"></div>
     </div>
 
@@ -427,6 +426,7 @@ const sb=supabase.createClient(SUPA_URL,SUPA_KEY,{
 
 let USER=null, PROFILE=null;
 const TODAY=new Date().toISOString().split('T')[0];
+let OB={};
 
 function getHabits(){
   const h=OB.habits||{};
@@ -846,7 +846,6 @@ function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(
 
 // Onboarding data is stored in Supabase user_metadata so it
 // persists across devices. localStorage is the instant fallback.
-let OB = {};
 
 const OB_DEFS = {
   habits: {
@@ -990,18 +989,19 @@ async function submitOnboarding() {
   const btn = document.getElementById('ob-save');
   btn.disabled = true; btn.textContent = 'Saving...';
 
-  await saveOnboardingSection(currentOBSection, data);
+  const section = currentOBSection;
+  await saveOnboardingSection(section, data);
 
   btn.disabled = false; btn.textContent = 'Save & Continue';
   closeOnboarding();
   showToast('✓ ' + def.label + ' profile saved');
 
   // Re-init the current tab with new data
-  if (currentOBSection === 'habits')   initHabits();
-  if (currentOBSection === 'train')    initTrain();
-  if (currentOBSection === 'eat')      initEat();
-  if (currentOBSection === 'progress') initProgress();
-  if (currentOBSection === 'coach')    initCoach();
+  if (section === 'habits')   initHabits();
+  if (section === 'train')    initTrain();
+  if (section === 'eat')      initEat();
+  if (section === 'progress') initProgress();
+  if (section === 'coach')    initCoach();
 }
 
 /* ── ADMIN SELF-APPROVE ── */
