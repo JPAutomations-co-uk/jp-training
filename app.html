@@ -430,17 +430,41 @@ let OB={};
 
 function getHabits(){
   const h=OB.habits||{};
+  const c=OB.coach||{};
+  const highStress=h.stress_level&&h.stress_level.startsWith('High')||h.stress_level&&h.stress_level.startsWith('Very');
+  const poorSleep=h.sleep_quality&&(h.sleep_quality.startsWith('Very poor')||h.sleep_quality.startsWith('Poor'));
+  const drinksAlcohol=h.alcohol&&h.alcohol!=='Never'&&h.alcohol!=='Rarely';
   return [
-    {key:'sunlight',    name:'Morning Sunlight',         desc:`Natural light within 1hr of waking${h.wake_time?' (wake '+h.wake_time+')':''} — sets your cortisol peak and circadian clock`},
-    {key:'training',    name:'Complete Training Session', desc:'Log today\'s session in the Train tab — strength drives testosterone, GH, and metabolic health'},
-    {key:'steps',       name:'Steps / Zone 2 Cardio',    desc:`${h.steps_goal?'Target: '+Number(h.steps_goal).toLocaleString()+' steps':'8,000–10,000 steps'} — cardiovascular fitness, insulin sensitivity, VO2 max`},
-    {key:'sleep',       name:'In Bed on Time',           desc:`Lights out by ${h.sleep_time||'10:30pm'} — deep sleep is when testosterone and growth hormone are secreted`},
-    {key:'cold',        name:'Cold Exposure',            desc:'Cold shower (2–3 min) or immersion — norepinephrine +530%, improved recovery, dopamine baseline'},
-    {key:'supplements', name:'Morning Stack',            desc:'Vitamin D3+K2, Magnesium, Zinc, Omega-3 — foundational for testosterone, sleep, and inflammation'},
-    {key:'stress',      name:'Stress Protocol',          desc:'10 min of breathwork, NSDR, or a walk without your phone — lowers cortisol, protects testosterone'},
-    {key:'no_phone',    name:'No Phone 1hr Before Bed',  desc:'Blue light and stimulus suppresses melatonin by 50% and elevates cortisol into the night'},
-    {key:'no_alcohol',  name:'Alcohol-Free',             desc:'Even 2 drinks suppresses testosterone by 6.8% and fragments REM sleep — skip it'},
-    {key:'hydration',   name:'Hydration',                desc:'2.5–3L water — every hormone, enzyme, and neurotransmitter runs on it'},
+    {key:'sunlight',
+     name:'Morning Sunlight',
+     desc:`Natural light within 1hr of waking${h.wake_time?' ('+h.wake_time+')':''} — triggers your cortisol peak, anchors your circadian clock, and sets melatonin timing for that night`},
+    {key:'training',
+     name:'Complete Training Session',
+     desc:'Log today\'s session in the Train tab — compound strength training is the single highest-leverage driver of testosterone, GH, and metabolic health'},
+    {key:'steps',
+     name:'Steps / Zone 2 Movement',
+     desc:`${h.steps_goal?'Hit '+Number(h.steps_goal).toLocaleString()+' steps today':'Target 8,000–10,000 steps'} — cardiovascular fitness, insulin sensitivity, cortisol clearance, VO2 max`},
+    {key:'sleep',
+     name:'In Bed on Time',
+     desc:`Lights out by ${h.sleep_time||'10:30pm'}${poorSleep?' — your sleep quality needs fixing: this is the first lever':' — testosterone and GH peak in the first 90 min of deep sleep'}`},
+    {key:'cold',
+     name:'Cold Exposure',
+     desc:'Cold shower (2–3 min) or immersion — norepinephrine +530%, dopamine baseline reset, accelerated recovery, reduced inflammation'},
+    {key:'supplements',
+     name:'Morning Stack',
+     desc:`Vitamin D3+K2, Magnesium Glycinate, Zinc, Omega-3${c.hormones&&c.hormones.includes('testosterone')?' — directly support testosterone synthesis':'  — the hormonal and inflammatory foundation everything else runs on'}`},
+    {key:'stress',
+     name:'Stress Protocol',
+     desc:`${highStress?'Your cortisol is elevated — ':''}10 min of breathwork, NSDR, or a phone-free walk — cortisol and testosterone are inversely related; chronic stress kills gains`},
+    {key:'no_phone',
+     name:'No Phone 1hr Before Bed',
+     desc:'Blue light suppresses melatonin by up to 50% and keeps cortisol elevated — one of the most impactful habits for sleep quality and hormone recovery'},
+    {key:'no_alcohol',
+     name:'Alcohol-Free',
+     desc:`${drinksAlcohol?'You\'re drinking '+h.alcohol.toLowerCase()+' — this is worth addressing: ':''}Even 2 drinks suppresses testosterone, fragments REM, and spikes cortisol through the night`},
+    {key:'hydration',
+     name:'Hydration',
+     desc:'2.5–3L water today — every hormone, enzyme, and neurotransmitter in the body depends on adequate hydration; performance and cognition drop before thirst kicks in'},
   ];
 }
 const HABITS=getHabits();
@@ -785,25 +809,76 @@ CREATE POLICY "Users manage own checkins"
 const coachHistory=[];
 
 function initCoach(){
-  const c=OB.coach||{};
+  const h=OB.habits||{};
   const t=OB.train||{};
   const e=OB.eat||{};
+  const p=OB.progress||{};
+  const c=OB.coach||{};
+  const name=(USER?.user_metadata?.display_name||'').split(' ')[0]||'there';
+
+  // Personalised greeting
   if(c.about){
-    const name=USER?.user_metadata?.display_name||'there';
     document.getElementById('coach-greeting').textContent=
-      `Hey ${name.split(' ')[0]}. I know you're focused on: ${c.about.slice(0,80)}${c.about.length>80?'...':''}. Ask me anything.`;
+      `Hey ${name}. I've got your full profile. Ask me anything about training, nutrition, sleep, hormones, or recovery.`;
   }
-  // Build context string for all coach calls
+
+  // Build comprehensive context for every coach call
   const parts=[];
+
+  // Identity
   if(c.age) parts.push(`Age: ${c.age}`);
-  if(t.goal) parts.push(`Training goal: ${t.goal}`);
-  if(t.experience) parts.push(`Experience: ${t.experience}`);
-  if(e.goal) parts.push(`Nutrition goal: ${e.goal}`);
   if(e.weight_kg) parts.push(`Weight: ${e.weight_kg}kg`);
-  if(c.about) parts.push(`Goals: ${c.about}`);
-  if(c.challenge) parts.push(`Biggest challenge: ${c.challenge}`);
+  if(e.height_cm) parts.push(`Height: ${e.height_cm}cm`);
+  if(e.body_fat) parts.push(`Body fat: ~${e.body_fat}%`);
+
+  // Training
+  if(t.experience) parts.push(`Training experience: ${t.experience}`);
+  if(t.days) parts.push(`Training availability: ${t.days}/week`);
+  if(t.current_activity) parts.push(`Current activity level: ${t.current_activity}`);
+  if(t.cardio_level) parts.push(`Cardiovascular fitness: ${t.cardio_level}`);
+  if(t.goal) parts.push(`Primary training goal: ${t.goal}`);
+  if(t.secondary_goal&&t.secondary_goal!=='None') parts.push(`Secondary goal: ${t.secondary_goal}`);
   if(t.injuries) parts.push(`Injuries/limitations: ${t.injuries}`);
-  window._coachContext=parts.length?parts.join('. '):null;
+
+  // Nutrition
+  if(e.goal) parts.push(`Nutrition goal: ${e.goal}`);
+  if(e.diet_approach) parts.push(`Diet approach: ${e.diet_approach}`);
+  if(e.meal_freq) parts.push(`Meal frequency: ${e.meal_freq}`);
+  if(e.protein_g) parts.push(`Protein target: ${e.protein_g}g/day`);
+  if(e.restrictions&&e.restrictions!=='None') parts.push(`Dietary restrictions: ${e.restrictions}`);
+  if(e.biggest_gap) parts.push(`Biggest nutrition gap: ${e.biggest_gap}`);
+
+  // Lifestyle & habits
+  if(h.wake_time) parts.push(`Wake time: ${h.wake_time}`);
+  if(h.sleep_time) parts.push(`Target bedtime: ${h.sleep_time}`);
+  if(h.sleep_hrs) parts.push(`Current sleep: ${h.sleep_hrs}`);
+  if(h.sleep_quality) parts.push(`Sleep quality: ${h.sleep_quality}`);
+  if(h.job_type) parts.push(`Job type: ${h.job_type}`);
+  if(h.stress_level) parts.push(`Stress level: ${h.stress_level}`);
+  if(h.alcohol&&h.alcohol!=='Never') parts.push(`Alcohol: ${h.alcohol}`);
+  if(h.steps_goal) parts.push(`Steps target: ${Number(h.steps_goal).toLocaleString()}/day`);
+  if(h.focus) parts.push(`Primary focus: ${h.focus}`);
+
+  // Progress baselines
+  if(p.start_weight) parts.push(`Starting weight: ${p.start_weight}kg`);
+  if(p.target_weight) parts.push(`Target weight: ${p.target_weight}kg`);
+  if(p.start_bf) parts.push(`Starting body fat: ${p.start_bf}%`);
+  if(p.target_bf) parts.push(`Target body fat: ${p.target_bf}%`);
+  if(p.timeline) parts.push(`Timeline: ${p.timeline}`);
+  if(p.resting_hr) parts.push(`Resting HR: ${p.resting_hr}bpm`);
+  if(p.vo2_max) parts.push(`VO2 max: ${p.vo2_max}ml/kg/min`);
+
+  // Health picture
+  if(c.symptoms&&c.symptoms!=='None of the below') parts.push(`Current symptoms: ${c.symptoms}`);
+  if(c.hormones&&c.hormones!=='No concerns / not sure') parts.push(`Hormonal concerns: ${c.hormones}`);
+  if(c.blood_work) parts.push(`Blood work: ${c.blood_work}`);
+  if(c.health_conditions) parts.push(`Health conditions / medications: ${c.health_conditions}`);
+  if(c.previous_attempts&&c.previous_attempts!=='Nothing — first time doing this properly') parts.push(`Previous attempts: ${c.previous_attempts}`);
+  if(c.about) parts.push(`Goals in their own words: ${c.about}`);
+
+  window._coachContext=parts.length
+    ? `This client's full profile:\n${parts.map(p=>`- ${p}`).join('\n')}`
+    : null;
 }
 
 async function sendMessage(){
@@ -854,66 +929,102 @@ function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(
 
 const OB_DEFS = {
   habits: {
-    label: 'Habits',
-    title: 'Your daily protocol',
-    sub: 'Set your baselines so every habit target is calibrated to you.',
+    label: 'Lifestyle',
+    title: 'Your daily life',
+    sub: 'The environment you live in determines 80% of your results.',
     steps: [
-      { id: 'wake_time',   label: 'What time do you wake up?',             type: 'time',   default: '07:00' },
-      { id: 'sleep_time',  label: 'Target bedtime',                        type: 'time',   default: '22:30' },
-      { id: 'steps_goal',  label: 'Daily steps target',                    type: 'number', placeholder: '8000', unit: 'steps/day' },
-      { id: 'focus',       label: 'Primary health focus right now',        type: 'select',
-        options: ['Overall optimisation','Energy & hormones','Sleep quality','Fat loss & body composition','Muscle & strength','Cardiovascular fitness','Stress & cortisol management','Testosterone optimisation'] },
+      { id: 'wake_time',      label: 'What time do you wake up?',                        type: 'time',   default: '07:00' },
+      { id: 'sleep_time',     label: 'Target bedtime',                                   type: 'time',   default: '22:30' },
+      { id: 'sleep_hrs',      label: 'How many hours do you currently sleep on average?',type: 'select',
+        options: ['Under 5 hours','5–6 hours','6–7 hours','7–8 hours','8+ hours'] },
+      { id: 'sleep_quality',  label: 'Sleep quality right now',                          type: 'select',
+        options: ['Very poor — wake frequently or unrefreshing','Poor — light sleep','Average','Good','Excellent'] },
+      { id: 'steps_goal',     label: 'Daily steps target',                               type: 'number', placeholder: '8000', unit: 'steps/day' },
+      { id: 'job_type',       label: 'What does your working day look like?',            type: 'select',
+        options: ['Desk-based (sedentary)','Mostly desk with some movement','Mixed physical and desk','Physically active job'] },
+      { id: 'stress_level',   label: 'Current stress level',                             type: 'select',
+        options: ['Low — well managed','Moderate — some daily pressure','High — frequently overwhelmed','Very high — consistently burnt out'] },
+      { id: 'alcohol',        label: 'How often do you drink alcohol?',                  type: 'select',
+        options: ['Never','Rarely (special occasions)','1–2x per week','3–4x per week','Daily'] },
+      { id: 'focus',          label: 'Primary health focus right now',                   type: 'select',
+        options: ['Overall optimisation','Energy & hormones','Sleep quality','Fat loss & body composition','Muscle & strength','Cardiovascular fitness','Stress & cortisol','Testosterone optimisation'] },
     ]
   },
   train: {
-    label: 'Train',
+    label: 'Training',
     title: 'Your training profile',
-    sub: 'This shapes which programme you get and how the weights are set.',
+    sub: 'This shapes your programme, loading strategy, and recovery demands.',
     steps: [
-      { id: 'experience', label: 'Training experience', type: 'select',
-        options: ['< 1 year','1–2 years','3–5 years','5+ years'] },
-      { id: 'days',       label: 'Days per week available', type: 'select',
+      { id: 'experience',     label: 'Resistance training experience',                   type: 'select',
+        options: ['Complete beginner','Less than 1 year','1–2 years','3–5 years','5+ years'] },
+      { id: 'days',           label: 'Days per week available to train',                 type: 'select',
         options: ['2 days','3 days','4 days','5 days','6 days'] },
-      { id: 'goal',       label: 'Primary goal', type: 'select',
-        options: ['Build muscle','Lose fat','Improve strength','Athletic performance','General health & longevity'] },
-      { id: 'injuries',   label: 'Any injuries or areas to avoid?', type: 'text', placeholder: 'e.g. Lower back, left knee — or leave blank' },
+      { id: 'current_activity',label: 'What are you currently doing for fitness?',       type: 'select',
+        options: ['Nothing right now','Casual walking / light activity','Gym training (inconsistent)','Regular gym training','High-level sport or performance training'] },
+      { id: 'cardio_level',   label: 'How is your cardiovascular fitness?',              type: 'select',
+        options: ['Poor — out of breath easily','Below average','Average','Good','Excellent — athlete level'] },
+      { id: 'goal',           label: 'Primary training goal',                            type: 'select',
+        options: ['Build muscle','Lose fat','Improve strength','Athletic performance','Cardiovascular health','General health & longevity'] },
+      { id: 'secondary_goal', label: 'Secondary goal',                                  type: 'select',
+        options: ['None','Build muscle','Lose fat','Improve strength','Cardiovascular health','Better recovery','Flexibility & mobility'] },
+      { id: 'injuries',       label: 'Any injuries, pain, or areas to avoid?',          type: 'text',
+        placeholder: 'e.g. Lower back pain, left knee — or leave blank if none' },
     ]
   },
   eat: {
-    label: 'Eat',
-    title: 'Your nutrition targets',
-    sub: 'Used to set your macro targets and track daily progress.',
+    label: 'Nutrition',
+    title: 'Your nutrition profile',
+    sub: 'Fuelling strategy, targets, and patterns — all calibrated to your physiology.',
     steps: [
-      { id: 'weight_kg',   label: 'Current weight', type: 'number', placeholder: '80', unit: 'kg' },
-      { id: 'height_cm',   label: 'Height',          type: 'number', placeholder: '178', unit: 'cm' },
-      { id: 'goal',        label: 'Nutrition goal', type: 'select',
-        options: ['Fat loss','Muscle gain','Body recomposition','Maintain & optimise'] },
-      { id: 'restrictions', label: 'Dietary restrictions', type: 'select',
-        options: ['None','Vegetarian','Vegan','Dairy-free','Gluten-free','Halal'] },
-      { id: 'protein_g',   label: 'Daily protein target (if known)', type: 'number', placeholder: '160', unit: 'g/day' },
+      { id: 'weight_kg',    label: 'Current weight',                                     type: 'number', placeholder: '80',  unit: 'kg' },
+      { id: 'height_cm',    label: 'Height',                                             type: 'number', placeholder: '178', unit: 'cm' },
+      { id: 'body_fat',     label: 'Estimated body fat % (if you know it)',              type: 'number', placeholder: '18',  unit: '%' },
+      { id: 'goal',         label: 'Nutrition goal',                                     type: 'select',
+        options: ['Fat loss','Muscle gain','Body recomposition','Maintain & optimise','Performance fuelling'] },
+      { id: 'diet_approach',label: 'Current diet approach',                              type: 'select',
+        options: ['No structure — just eating','High protein / flexible','Animal-based / carnivore','Mediterranean','Intermittent fasting (16:8+)','Plant-based / vegan','Keto / low carb','Other'] },
+      { id: 'meal_freq',    label: 'How many meals per day?',                            type: 'select',
+        options: ['1–2 (OMAD or 18:6)','2–3 meals','3 meals','3–4 meals','4–5+ meals'] },
+      { id: 'restrictions', label: 'Dietary restrictions',                               type: 'select',
+        options: ['None','Vegetarian','Vegan','Dairy-free','Gluten-free','Halal','Other'] },
+      { id: 'protein_g',    label: 'Daily protein target (if known)',                    type: 'number', placeholder: '160', unit: 'g/day' },
+      { id: 'biggest_gap',  label: 'Biggest nutrition challenge',                        type: 'select',
+        options: ['No clear structure','Not enough protein','Overeating / snacking','Too much alcohol','Gut issues / digestion','Energy crashes after meals','Consistency'] },
     ]
   },
   progress: {
-    label: 'Progress',
+    label: 'Baseline',
     title: 'Your starting point',
-    sub: 'Sets the baseline everything is measured against.',
+    sub: 'Objective baselines so progress is measured, not estimated.',
     steps: [
-      { id: 'start_weight',  label: 'Starting weight', type: 'number', placeholder: '80',  unit: 'kg' },
-      { id: 'start_bf',      label: 'Estimated body fat %', type: 'number', placeholder: '20', unit: '%' },
-      { id: 'target_weight', label: 'Target weight',    type: 'number', placeholder: '76',  unit: 'kg' },
-      { id: 'target_bf',     label: 'Target body fat %', type: 'number', placeholder: '14', unit: '%' },
+      { id: 'start_weight',  label: 'Starting weight',                                   type: 'number', placeholder: '80',  unit: 'kg' },
+      { id: 'target_weight', label: 'Target weight',                                     type: 'number', placeholder: '76',  unit: 'kg' },
+      { id: 'start_bf',      label: 'Starting body fat % (estimate if unsure)',          type: 'number', placeholder: '20',  unit: '%' },
+      { id: 'target_bf',     label: 'Target body fat %',                                 type: 'number', placeholder: '14',  unit: '%' },
+      { id: 'timeline',      label: 'Target timeline',                                   type: 'select',
+        options: ['4 weeks','8 weeks','12 weeks','6 months','12 months','No fixed deadline'] },
+      { id: 'resting_hr',    label: 'Resting heart rate (check on waking)',              type: 'number', placeholder: '65',  unit: 'bpm' },
+      { id: 'vo2_max',       label: 'VO2 max if known (Apple Watch, Garmin, etc)',       type: 'number', placeholder: '40',  unit: 'ml/kg/min' },
     ]
   },
   coach: {
-    label: 'Coach',
-    title: 'Introduce yourself to your coach',
-    sub: 'The more context you give, the more specific the answers.',
+    label: 'Health',
+    title: 'Your full health picture',
+    sub: 'The more honestly you answer this, the more specific everything becomes.',
     steps: [
-      { id: 'age',      label: 'Your age', type: 'number', placeholder: '38' },
-      { id: 'about',    label: 'In a few sentences — what do you want to achieve?', type: 'textarea',
-        placeholder: 'e.g. I want to lose 10kg, fix my sleep, and have consistent energy throughout the day without crashing at 3pm.' },
-      { id: 'challenge', label: 'Biggest challenge right now', type: 'select',
-        options: ['Low energy / fatigue','Fat loss / body composition','Building muscle','Sleep quality','Hormonal health','Stress & recovery','Motivation & consistency'] },
+      { id: 'age',              label: 'Your age',                                       type: 'number', placeholder: '38' },
+      { id: 'symptoms',         label: 'Which of these do you currently experience?',    type: 'select',
+        options: ['None of the below','Low energy / always tired','Brain fog / poor focus','Low libido','Poor sleep or 3am waking','Anxiety / high stress','Fat gain despite eating well','Slow recovery from training','Mood issues / irritability'] },
+      { id: 'hormones',         label: 'Any hormonal concerns?',                         type: 'select',
+        options: ['No concerns / not sure','Suspected low testosterone','High cortisol / burnout symptoms','Thyroid issues','Blood work has been flagged before','Currently on TRT or hormone therapy'] },
+      { id: 'blood_work',       label: 'Have you had blood work done recently?',         type: 'select',
+        options: ['Never','More than 2 years ago','Within the last 2 years','Within the last 6 months — results normal','Within the last 6 months — results flagged'] },
+      { id: 'health_conditions',label: 'Any existing health conditions or medications?', type: 'text',
+        placeholder: 'e.g. Type 2 diabetes, high blood pressure, on statins — or leave blank' },
+      { id: 'previous_attempts',label: 'What have you tried before that didn\'t work?', type: 'select',
+        options: ['Nothing — first time doing this properly','Generic gym programmes','Personal trainer','Calorie counting apps','Keto or low-carb diets','Various supplements','Multiple approaches — nothing stuck'] },
+      { id: 'about',            label: 'In your own words — what do you want and why?', type: 'textarea',
+        placeholder: 'e.g. I\'m 41, run my own business, two kids. I\'ve put on 15kg in 5 years, my energy is terrible by 2pm, and I haven\'t trained properly in 3 years. I want to feel like myself again.' },
     ]
   }
 };
