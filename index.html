@@ -15,7 +15,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
+    /* ── AUTH MODAL ── */
+    #auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);z-index:500;display:none;align-items:center;justify-content:center;padding:24px}
+    #auth-overlay.open{display:flex}
+    #auth-modal{width:100%;max-width:420px;background:#0C0C0C;border:1px solid #1A1A1A;position:relative}
+    #auth-modal .am-header{padding:28px 28px 0;border-bottom:1px solid #1A1A1A}
+    #auth-modal .am-tabs{display:flex;gap:0}
+    #auth-modal .am-tab{flex:1;padding:14px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;color:#444;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;background:none;border-top:none;border-left:none;border-right:none}
+    #auth-modal .am-tab.active{color:#2CD4C4;border-bottom-color:#2CD4C4}
+    #auth-modal .am-body{padding:24px 28px 28px;display:flex;flex-direction:column;gap:12px}
+    #auth-modal .am-field{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);padding:14px 16px;color:#fff;font-family:'Poppins',sans-serif;font-size:14px;font-weight:300;outline:none;transition:border-color .2s}
+    #auth-modal .am-field:focus{border-color:rgba(44,212,196,.5)}
+    #auth-modal .am-field::placeholder{color:#444}
+    #auth-modal .am-submit{width:100%;padding:16px;background:#2CD4C4;border:none;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#000;cursor:pointer;transition:background .2s;margin-top:4px}
+    #auth-modal .am-submit:hover{background:#3eeade}
+    #auth-modal .am-submit:disabled{opacity:.5;cursor:not-allowed}
+    #auth-modal .am-note{font-size:12px;color:#444;text-align:center;line-height:1.6}
+    #auth-modal .am-error{font-size:12px;color:#ff6b6b;text-align:center;padding:8px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);display:none}
+    #auth-modal .am-error.show{display:block}
+    #auth-modal .am-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border:none;background:none;color:#444;cursor:pointer;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center}
+    #auth-modal .am-close:hover{color:#fff}
+    .nav-signin{font-size:12px;font-weight:500;color:#888;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:color .2s;cursor:pointer;background:none;border:none;font-family:'Poppins',sans-serif}
+    .nav-signin:hover{color:#2CD4C4}
+    .nav-actions{display:flex;align-items:center;gap:24px}
+    #nav-app-btn{display:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#000;background:#2CD4C4;padding:10px 26px;text-decoration:none;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:background .2s}
     :root{
       --black:#000;--s1:#0C0C0C;--s2:#060D0D;--s3:#000B0B;
       --card:#111;--border:#1A1A1A;
@@ -486,8 +511,13 @@
       body{cursor:auto}#cur,#cur-ring{display:none}
       nav{padding:0 20px 0 20px}.nav-links{display:none}
       .nav-cta{font-size:12px;padding:9px 16px}
-      .hero{padding:68px 6% 48px;height:100svh}
+      .hero{padding:68px 6% 40px;height:100svh;justify-content:center}
       .hero-h1{font-size:clamp(42px,11vw,80px)}
+      .hero-loc{margin-bottom:16px}
+      .hero-sub{margin:12px auto 24px}
+      .hero-guarantee{margin-top:12px}
+      .hero-socials{margin-top:12px}
+      .scroll-cue{margin-top:16px}
       .o3{width:360px;height:360px}
       .so-tl,.so-tr,.so-br,.so-bl,.so-c{width:260px;height:260px}
       .cloud-header{padding:56px 6% 48px !important}
@@ -542,7 +572,11 @@
     <li><a href="#boosters">Boosters</a></li>
     <li><a href="#optimisation">Optimisation</a></li>
   </ul>
-  <a href="book.html" class="nav-cta" onclick="gtag('event','cta_click',{cta_location:'nav'})">Free 30-Min Call</a>
+  <div class="nav-actions">
+    <button class="nav-signin" id="nav-signin-btn" onclick="openAuth('login')">Sign In</button>
+    <a href="/app.html" id="nav-app-btn">Open App</a>
+    <a href="book.html" class="nav-cta" onclick="gtag('event','cta_click',{cta_location:'nav'})">Free 30-Min Call</a>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -564,7 +598,7 @@
       No two people share the same biology, which means there's a version of you that a generic programme will never reach. We find out how your body really functions and build every protocol around it — so you can reach your maximum potential in every aspect of life.
     </p>
     <div class="hero-btns">
-      <a href="book.html" class="btn-main" onclick="gtag('event','cta_click',{cta_location:'hero'})">Book Your Free 30-Min Call</a>
+      <a href="#" class="btn-main" onclick="openAuth('signup');return false;" id="hero-cta">Get Started Free</a>
       <a href="#journey" class="btn-ghost">
         See how it works
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -575,8 +609,8 @@
       <a href="https://www.instagram.com/jptr.aining/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
         <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
       </a>
-      <a href="https://www.linkedin.com/in/james-harvey-0583b2370/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      <a href="https://www.youtube.com/@JP_tra1ning" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
       </a>
     </div>
     <div class="scroll-cue"><div class="s-line"></div></div>
@@ -1303,6 +1337,81 @@ if(false){(function(){
   resize();initDust();draw();
 })();}
 
+/* ── SUPABASE AUTH ── */
+const SUPA_URL='https://uzzcvrduoswjsrvuopgv.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6emN2cmR1b3N3anNydnVvcGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDQyNDcsImV4cCI6MjA5NzUyMDI0N30.5tD1xhZdSJaZFnNWfDXozPsvHceeqHl682pClUppUFo';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// Check session on load
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){
+    document.getElementById('nav-signin-btn').style.display='none';
+    document.getElementById('nav-app-btn').style.display='flex';
+  }
+})();
+
+function openAuth(tab){
+  const ov=document.getElementById('auth-overlay');
+  ov.classList.add('open');
+  setAuthTab(tab);
+  document.body.style.overflow='hidden';
+}
+function closeAuth(){
+  document.getElementById('auth-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function setAuthTab(tab){
+  document.getElementById('tab-signup').classList.toggle('active',tab==='signup');
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('pane-signup').style.display=tab==='signup'?'flex':'none';
+  document.getElementById('pane-login').style.display=tab==='login'?'flex':'none';
+  document.getElementById('auth-error').classList.remove('show');
+}
+
+async function doSignup(){
+  const name=document.getElementById('su-name').value.trim();
+  const email=document.getElementById('su-email').value.trim().toLowerCase();
+  const pw=document.getElementById('su-pw').value;
+  const btn=document.getElementById('su-btn');
+  const err=document.getElementById('auth-error');
+  if(!name||!email||!pw){showErr('Fill in all fields.');return;}
+  if(pw.length<8){showErr('Password must be 8+ characters.');return;}
+  btn.disabled=true;btn.textContent='Creating account...';
+  // Server-side signup — creates user + profile atomically
+  const res=await fetch('/api/signup',{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({name,email,password:pw})
+  });
+  const d=await res.json();
+  if(!d.ok){showErr(d.error||'Signup failed.');btn.disabled=false;btn.textContent='Create Account & Book Call';return;}
+  // Set session in Supabase client so user is logged in
+  if(d.accessToken){
+    await sb.auth.setSession({access_token:d.accessToken,refresh_token:d.refreshToken});
+  }
+  // After signup → booking page
+  window.location.href='/book.html';
+}
+
+async function doLogin(){
+  const email=document.getElementById('li-email').value.trim().toLowerCase();
+  const pw=document.getElementById('li-pw').value;
+  const btn=document.getElementById('li-btn');
+  if(!email||!pw){showErr('Enter your email and password.');return;}
+  btn.disabled=true;btn.textContent='Signing in...';
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
+  if(error){showErr(error.message);btn.disabled=false;btn.textContent='Sign In';return;}
+  window.location.href='/app.html';
+}
+
+function showErr(msg){
+  const el=document.getElementById('auth-error');
+  el.textContent=msg;el.classList.add('show');
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAuth();});
+
 /* CTA CANVAS — expanding rings */
 (function(){
   const c=document.getElementById('cta-c'),ctx=c.getContext('2d');
@@ -1353,5 +1462,35 @@ window.addEventListener('scroll',()=>{nav.style.borderBottomColor=window.scrollY
 })();
 
 </script>
+
+<!-- AUTH MODAL -->
+<div id="auth-overlay" onclick="if(event.target===this)closeAuth()">
+  <div id="auth-modal">
+    <button class="am-close" onclick="closeAuth()" aria-label="Close">×</button>
+    <div class="am-header">
+      <div class="am-tabs">
+        <button class="am-tab active" id="tab-signup" onclick="setAuthTab('signup')">Get Started</button>
+        <button class="am-tab" id="tab-login" onclick="setAuthTab('login')">Sign In</button>
+      </div>
+    </div>
+    <!-- SIGNUP -->
+    <div class="am-body" id="pane-signup">
+      <p class="am-note" style="text-align:left;color:#888;margin-bottom:4px">Create your account — then book your free 30-min call to get your programme started.</p>
+      <div class="am-error" id="auth-error"></div>
+      <input class="am-field" id="su-name" type="text" placeholder="Your name" autocomplete="name">
+      <input class="am-field" id="su-email" type="email" placeholder="Email address" autocomplete="email">
+      <input class="am-field" id="su-pw" type="password" placeholder="Password (8+ characters)" autocomplete="new-password">
+      <button class="am-submit" id="su-btn" onclick="doSignup()">Create Account & Book Call</button>
+      <p class="am-note">Already have an account? <a href="#" onclick="setAuthTab('login');return false;" style="color:#2CD4C4;text-decoration:none">Sign in</a></p>
+    </div>
+    <!-- LOGIN -->
+    <div class="am-body" id="pane-login" style="display:none">
+      <input class="am-field" id="li-email" type="email" placeholder="Email address" autocomplete="email">
+      <input class="am-field" id="li-pw" type="password" placeholder="Password" autocomplete="current-password">
+      <button class="am-submit" id="li-btn" onclick="doLogin()">Sign In</button>
+      <p class="am-note">New here? <a href="#" onclick="setAuthTab('signup');return false;" style="color:#2CD4C4;text-decoration:none">Create an account</a></p>
+    </div>
+  </div>
+</div>
 </body>
 </html>

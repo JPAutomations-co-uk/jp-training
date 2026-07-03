@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>JP Training — Your Programme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    :root{
+      --black:#000;--s1:#0C0C0C;--s2:#111;--border:#1A1A1A;
+      --teal:#2CD4C4;--teal-lo:rgba(44,212,196,.08);--teal-mid:rgba(44,212,196,.18);
+      --white:#FFF;--muted:#888;--dim:#444;
+      --D:'Barlow Condensed',sans-serif;--B:'Poppins',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden;background:var(--black);color:var(--white);
+      font-family:var(--B);-webkit-font-smoothing:antialiased}
+
+    /* ── LAYOUT ── */
+    #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+    #topbar{display:flex;align-items:center;justify-content:space-between;
+      padding:0 20px;height:56px;border-bottom:1px solid var(--border);
+      background:rgba(0,0,0,.92);backdrop-filter:blur(20px);flex-shrink:0;position:relative;z-index:10}
+    #content{flex:1;overflow-y:auto;overflow-x:hidden}
+    #bottomnav{display:flex;border-top:1px solid var(--border);background:rgba(0,0,0,.95);
+      backdrop-filter:blur(20px);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+
+    /* ── TOP BAR ── */
+    .tb-logo{font-family:var(--D);font-size:18px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .tb-logo em{font-style:normal;color:var(--teal)}
+    .tb-user{display:flex;align-items:center;gap:10px}
+    .tb-avatar{width:32px;height:32px;border-radius:50%;background:var(--teal-lo);
+      border:1px solid var(--teal-mid);display:flex;align-items:center;justify-content:center;
+      font-family:var(--D);font-size:14px;font-weight:800;color:var(--teal)}
+    .tb-signout{font-size:11px;color:var(--dim);cursor:pointer;background:none;border:none;
+      font-family:var(--B);transition:color .2s;padding:4px}
+    .tb-signout:hover{color:var(--muted)}
+
+    /* ── BOTTOM NAV ── */
+    .bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:4px;padding:10px 4px;cursor:pointer;border:none;background:none;
+      color:var(--dim);transition:color .2s;font-family:var(--B);position:relative}
+    .bn-tab.active{color:var(--teal)}
+    .bn-tab svg{width:20px;height:20px;stroke:currentColor;fill:none;
+      stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .bn-tab span{font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+    .bn-tab.active::before{content:'';position:absolute;top:0;left:20%;right:20%;
+      height:2px;background:var(--teal)}
+
+    /* ── PANES ── */
+    .pane{display:none;padding:24px 20px;padding-bottom:40px;min-height:100%}
+    .pane.active{display:block}
+
+    /* ── PENDING ── */
+    #pane-pending{display:none;padding:60px 20px;text-align:center;align-items:center;justify-content:center;flex-direction:column;gap:20px;min-height:100%}
+    #pane-pending.active{display:flex}
+    .pending-icon{width:64px;height:64px;border-radius:50%;border:1px solid var(--teal-mid);
+      background:var(--teal-lo);display:flex;align-items:center;justify-content:center;
+      margin:0 auto 4px}
+
+    /* ── SECTION HEADERS ── */
+    .sh{margin-bottom:20px}
+    .sh-label{font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+      color:var(--teal);margin-bottom:6px}
+    .sh-title{font-family:var(--D);font-size:32px;font-weight:900;text-transform:uppercase;line-height:1}
+    .sh-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-top:6px}
+
+    /* ── CARDS ── */
+    .card{background:var(--s1);border:1px solid var(--border);padding:18px;margin-bottom:12px}
+    .card-title{font-family:var(--D);font-size:16px;font-weight:800;text-transform:uppercase;
+      letter-spacing:.06em;margin-bottom:8px}
+    .card-sub{font-size:12px;color:var(--muted);line-height:1.6}
+
+    /* ── HABITS ── */
+    .habit-item{display:flex;align-items:center;gap:14px;padding:16px;
+      background:var(--s1);border:1px solid var(--border);margin-bottom:10px;cursor:pointer;
+      transition:border-color .2s,background .2s;user-select:none}
+    .habit-item.done{border-color:rgba(44,212,196,.4);background:rgba(44,212,196,.05)}
+    .habit-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--dim);
+      flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .habit-item.done .habit-check{border-color:var(--teal);background:var(--teal)}
+    .habit-check svg{width:12px;height:12px;stroke:#000;fill:none;
+      stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .2s}
+    .habit-item.done .habit-check svg{opacity:1}
+    .habit-info{flex:1}
+    .habit-name{font-size:14px;font-weight:500;margin-bottom:2px}
+    .habit-desc{font-size:11px;color:var(--muted);line-height:1.5}
+    .habit-streak{font-family:var(--D);font-size:12px;font-weight:700;color:var(--teal);
+      letter-spacing:.05em;flex-shrink:0}
+
+    /* ── PROGRESS BAR ── */
+    .prog-bar-wrap{background:rgba(255,255,255,.06);height:6px;border-radius:3px;margin:14px 0 4px;overflow:hidden}
+    .prog-bar-fill{height:100%;background:var(--teal);border-radius:3px;transition:width .4s ease}
+    .prog-label{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+
+    /* ── SCORE GRID ── */
+    .score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+    .score-item{background:var(--s1);border:1px solid var(--border);padding:14px}
+    .score-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:8px}
+    .score-slider{width:100%;accent-color:var(--teal);cursor:pointer}
+    .score-val{font-family:var(--D);font-size:28px;font-weight:900;color:var(--teal);
+      text-align:right;margin-top:4px}
+
+    /* ── SUBMIT BUTTON ── */
+    .btn-primary{width:100%;padding:16px;background:var(--teal);border:none;
+      font-family:var(--D);font-size:16px;font-weight:800;letter-spacing:.1em;
+      text-transform:uppercase;color:#000;cursor:pointer;transition:background .2s;margin-top:4px}
+    .btn-primary:hover{background:#3eeade}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+    /* ── TRAIN ── */
+    .workout-ex{padding:16px;background:var(--s1);border:1px solid var(--border);margin-bottom:10px}
+    .ex-name{font-family:var(--D);font-size:18px;font-weight:800;text-transform:uppercase;
+      letter-spacing:.04em;margin-bottom:10px}
+    .ex-sets{display:flex;flex-direction:column;gap:6px}
+    .set-row{display:flex;align-items:center;gap:10px}
+    .set-num{font-size:11px;font-weight:600;color:var(--dim);width:20px;flex-shrink:0}
+    .set-field{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);
+      padding:10px 12px;color:var(--white);font-family:var(--B);font-size:13px;
+      text-align:center;min-width:0}
+    .set-field::placeholder{color:var(--dim)}
+    .set-field:focus{outline:none;border-color:rgba(44,212,196,.5)}
+    .set-unit{font-size:11px;color:var(--dim);flex-shrink:0;width:28px}
+    .set-done{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--dim);
+      background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;transition:all .2s}
+    .set-done.checked{border-color:var(--teal);background:var(--teal)}
+    .set-done svg{width:12px;height:12px;stroke:#000;fill:none;stroke-width:2.5;
+      stroke-linecap:round;stroke-linejoin:round;opacity:0}
+    .set-done.checked svg{opacity:1}
+
+    /* ── EAT ── */
+    .macro-bar-wrap{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:20px}
+    .macro-tile{background:var(--s1);border:1px solid var(--border);padding:14px;text-align:center}
+    .macro-name{font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:6px}
+    .macro-val{font-family:var(--D);font-size:26px;font-weight:900;color:var(--white);line-height:1}
+    .macro-unit{font-size:10px;color:var(--dim)}
+    .food-list{margin-bottom:16px}
+    .food-row{display:flex;align-items:center;gap:12px;padding:12px 14px;
+      background:var(--s1);border:1px solid var(--border);margin-bottom:8px}
+    .food-name{flex:1;font-size:13px;font-weight:500}
+    .food-macros{font-size:11px;color:var(--muted);text-align:right}
+    .food-del{background:none;border:none;color:var(--dim);cursor:pointer;
+      font-size:16px;padding:2px 4px;transition:color .2s;flex-shrink:0}
+    .food-del:hover{color:#ff6b6b}
+    .food-form{background:var(--s1);border:1px solid var(--border);padding:16px;margin-bottom:16px}
+    .food-form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .food-form input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);
+      padding:10px 12px;color:var(--white);font-family:var(--B);font-size:13px}
+    .food-form input::placeholder{color:var(--dim)}
+    .food-form input:focus{outline:none;border-color:rgba(44,212,196,.5)}
+    .food-form-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:4px;display:block}
+
+    /* ── COACH ── */
+    .coach-messages{display:flex;flex-direction:column;gap:14px;margin-bottom:20px;min-height:200px}
+    .msg{max-width:85%;padding:12px 16px;line-height:1.6;font-size:13px}
+    .msg.user{background:rgba(44,212,196,.12);border:1px solid rgba(44,212,196,.25);
+      align-self:flex-end;color:var(--white)}
+    .msg.coach{background:var(--s1);border:1px solid var(--border);
+      align-self:flex-start;color:rgba(255,255,255,.85)}
+    .msg.loading{color:var(--dim);font-style:italic}
+    .coach-input-wrap{display:flex;gap:10px;align-items:flex-end}
+    .coach-input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);
+      padding:12px 14px;color:var(--white);font-family:var(--B);font-size:13px;
+      resize:none;min-height:48px;max-height:140px;overflow-y:auto;line-height:1.5}
+    .coach-input:focus{outline:none;border-color:rgba(44,212,196,.5)}
+    .coach-input::placeholder{color:var(--dim)}
+    .coach-send{padding:12px 20px;background:var(--teal);border:none;
+      font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.1em;
+      text-transform:uppercase;color:#000;cursor:pointer;flex-shrink:0;
+      transition:background .2s;align-self:flex-end}
+    .coach-send:hover{background:#3eeade}
+    .coach-send:disabled{opacity:.5;cursor:not-allowed}
+
+    /* ── CHECK-IN HISTORY ── */
+    .checkin-row{display:flex;align-items:center;gap:12px;padding:12px 14px;
+      background:var(--s1);border:1px solid var(--border);margin-bottom:8px}
+    .checkin-date{font-size:12px;color:var(--muted);flex-shrink:0;width:72px}
+    .checkin-dots{display:flex;gap:4px;flex:1}
+    .dot{width:10px;height:10px;border-radius:50%}
+
+    /* ── UTILITIES ── */
+    .divider{height:1px;background:var(--border);margin:20px 0}
+    .tag{display:inline-flex;align-items:center;padding:4px 10px;
+      border:1px solid rgba(44,212,196,.25);background:rgba(44,212,196,.06);
+      font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--teal);margin-bottom:14px}
+    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      background:#0C0C0C;border:1px solid rgba(44,212,196,.4);padding:10px 20px;
+      font-size:12px;color:var(--teal);z-index:200;opacity:0;transition:opacity .3s;
+      pointer-events:none;white-space:nowrap}
+    .toast.show{opacity:1}
+
+    /* ── ONBOARDING OVERLAY ── */
+    #ob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(16px);
+      z-index:400;display:none;align-items:flex-end;justify-content:center;padding:0}
+    #ob-overlay.open{display:flex}
+    #ob-modal{width:100%;max-width:520px;background:#0C0C0C;border-top:1px solid #1A1A1A;
+      border-left:1px solid #1A1A1A;border-right:1px solid #1A1A1A;
+      max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+    .ob-header{padding:24px 24px 0;border-bottom:1px solid #1A1A1A;flex-shrink:0}
+    .ob-header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .ob-badge{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+      color:#2CD4C4;background:rgba(44,212,196,.1);border:1px solid rgba(44,212,196,.25);
+      padding:4px 10px}
+    .ob-close{background:none;border:none;color:#444;cursor:pointer;font-size:22px;
+      line-height:1;padding:2px;transition:color .2s}
+    .ob-close:hover{color:#fff}
+    #ob-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;
+      text-transform:uppercase;letter-spacing:.02em;color:#fff;margin-bottom:6px;line-height:1}
+    #ob-sub{font-size:13px;color:#888;line-height:1.6;padding-bottom:18px}
+    .ob-body{padding:20px 24px;overflow-y:auto;flex:1}
+    .ob-field{margin-bottom:16px}
+    .ob-label{display:block;font-size:11px;font-weight:600;letter-spacing:.14em;
+      text-transform:uppercase;color:#888;margin-bottom:6px}
+    .ob-unit{color:#444;font-weight:400;letter-spacing:0;text-transform:none}
+    .ob-input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);
+      padding:12px 14px;color:#fff;font-family:'Poppins',sans-serif;font-size:14px;
+      font-weight:300;outline:none;transition:border-color .2s;-webkit-appearance:none}
+    .ob-input:focus{border-color:rgba(44,212,196,.5)}
+    .ob-input option{background:#111;color:#fff}
+    .ob-textarea{resize:vertical;min-height:80px;line-height:1.6}
+    .ob-footer{padding:16px 24px 24px;border-top:1px solid #1A1A1A;display:flex;
+      align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+    #ob-save{flex:1;padding:16px;background:#2CD4C4;border:none;
+      font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;
+      letter-spacing:.1em;text-transform:uppercase;color:#000;cursor:pointer;
+      transition:background .2s}
+    #ob-save:hover{background:#3eeade}
+    #ob-save:disabled{opacity:.5;cursor:not-allowed}
+    .ob-skip{font-size:12px;color:#444;cursor:pointer;background:none;border:none;
+      font-family:'Poppins',sans-serif;transition:color .2s;white-space:nowrap}
+    .ob-skip:hover{color:#888}
+    /* edit trigger on each tab */
+    .ob-edit-btn{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+      color:rgba(44,212,196,.5);background:none;border:none;cursor:pointer;padding:0;
+      transition:color .2s;font-family:'Poppins',sans-serif}
+    .ob-edit-btn:hover{color:#2CD4C4}
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <span class="tb-logo">JP <em>Training</em></span>
+    <div class="tb-user">
+      <div class="tb-avatar" id="tb-avatar">?</div>
+      <button class="tb-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- PENDING -->
+    <div id="pane-pending" class="pane">
+      <div class="pending-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2CD4C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="sh" style="text-align:center">
+        <div class="sh-label">Account Created</div>
+        <div class="sh-title">Waiting for<br><span style="color:var(--teal)">your call</span></div>
+        <p class="sh-sub" style="max-width:280px;margin:10px auto 0">Your account is set up. The app unlocks once you've had your free 30-min call and JP has built your programme.</p>
+      </div>
+      <a href="/book.html" style="display:inline-block;padding:16px 32px;background:var(--teal);font-family:var(--D);font-size:16px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#000;text-decoration:none;margin-top:8px">Book Your Free Call</a>
+      <p style="font-size:11px;color:var(--dim);margin-top:12px">Already booked? JP will activate your programme within 24hrs of your call.</p>
+      <p style="font-size:11px;color:rgba(44,212,196,0.3);margin-top:20px;cursor:pointer" onclick="selfApprove()" id="admin-hint">· admin ·</p>
+    </div>
+
+    <!-- HABITS -->
+    <div id="pane-habits" class="pane active">
+      <div class="sh" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="sh-label">Today</div>
+          <div class="sh-title">Daily<br><span style="color:var(--teal)">Habits</span></div>
+        </div>
+        <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('habits')">Edit targets</button>
+      </div>
+      <div class="tag" id="habits-date"></div>
+      <div class="prog-label"><span>Progress</span><span id="habits-count">0 / 5</span></div>
+      <div class="prog-bar-wrap"><div class="prog-bar-fill" id="habits-bar" style="width:0%"></div></div>
+      <div style="margin-top:16px" id="habits-list"></div>
+    </div>
+
+    <!-- TRAIN -->
+    <div id="pane-train" class="pane">
+      <div class="sh" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="sh-label">Today's Session</div>
+          <div class="sh-title">Train</div>
+          <p class="sh-sub" id="train-sub">Loading your programme...</p>
+        </div>
+        <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('train')">Edit profile</button>
+      </div>
+      </div>
+      <div id="train-content"></div>
+    </div>
+
+    <!-- EAT -->
+    <div id="pane-eat" class="pane">
+      <div class="sh">
+        <div class="sh-label">Nutrition</div>
+        <div class="sh-title">Today's<br><span style="color:var(--teal)">Intake</span></div>
+      </div>
+      <div class="macro-bar-wrap" id="macro-totals">
+        <div class="macro-tile"><div class="macro-name">Calories</div><div class="macro-val" id="m-cal">0</div><div class="macro-unit">kcal</div></div>
+        <div class="macro-tile"><div class="macro-name">Protein</div><div class="macro-val" id="m-p">0</div><div class="macro-unit">g</div></div>
+        <div class="macro-tile"><div class="macro-name">Carbs</div><div class="macro-val" id="m-c">0</div><div class="macro-unit">g</div></div>
+        <div class="macro-tile"><div class="macro-name">Fat</div><div class="macro-val" id="m-f">0</div><div class="macro-unit">g</div></div>
+      </div>
+
+      <!-- Add food form -->
+      <div class="food-form">
+        <div class="sh-label" style="margin-bottom:10px">Log a meal or food</div>
+        <input id="f-name" type="text" placeholder="Food name (e.g. 200g chicken breast)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);padding:10px 12px;color:#fff;font-family:var(--B);font-size:13px;margin-bottom:8px">
+        <div class="food-form-row">
+          <div><label class="food-form-label">Calories</label><input id="f-cal" type="number" min="0" placeholder="0"></div>
+          <div><label class="food-form-label">Protein (g)</label><input id="f-p" type="number" min="0" placeholder="0"></div>
+          <div><label class="food-form-label">Carbs (g)</label><input id="f-c" type="number" min="0" placeholder="0"></div>
+          <div><label class="food-form-label">Fat (g)</label><input id="f-fat" type="number" min="0" placeholder="0"></div>
+        </div>
+        <button class="btn-primary" style="margin-top:12px" onclick="addFood()">Add Food</button>
+      </div>
+
+      <div class="food-list" id="food-list"></div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="pane-progress" class="pane">
+      <div class="sh">
+        <div class="sh-label">Weekly Check-in</div>
+        <div class="sh-title">Progress</div>
+        <p class="sh-sub">Score each area honestly. JP reviews these weekly.</p>
+      </div>
+      <div class="score-grid" id="score-grid"></div>
+      <button class="btn-primary" id="checkin-btn" onclick="submitCheckin()">Submit Check-in</button>
+      <div class="divider"></div>
+      <div class="sh-label" style="margin-bottom:12px">Last 4 Weeks</div>
+      <div id="checkin-history"></div>
+    </div>
+
+    <!-- COACH -->
+    <div id="pane-coach" class="pane">
+      <div class="sh" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="sh-label">AI Coach</div>
+          <div class="sh-title">Ask<br><span style="color:var(--teal)">JP</span></div>
+          <p class="sh-sub">Questions about your programme, nutrition, sleep, recovery — anything in your protocol.</p>
+        </div>
+        <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('coach')">Edit profile</button>
+      </div>
+      <div class="coach-messages" id="coach-messages">
+        <div class="msg coach" id="coach-greeting">Hey. Ask me anything about your training, nutrition, sleep or recovery — I've got your full protocol context.</div>
+      </div>
+      <div class="coach-input-wrap">
+        <textarea class="coach-input" id="coach-input" placeholder="Ask something..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+        <button class="coach-send" id="coach-send" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottomnav">
+    <button class="bn-tab active" data-tab="habits" onclick="switchTab('habits')">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span>Habits</span>
+    </button>
+    <button class="bn-tab" data-tab="train" onclick="switchTab('train')">
+      <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M4 12h16"/><circle cx="4" cy="7" r="1"/><circle cx="4" cy="17" r="1"/><circle cx="20" cy="7" r="1"/><circle cx="20" cy="17" r="1"/></svg>
+      <span>Train</span>
+    </button>
+    <button class="bn-tab" data-tab="eat" onclick="switchTab('eat')">
+      <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Eat</span>
+    </button>
+    <button class="bn-tab" data-tab="progress" onclick="switchTab('progress')">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Progress</span>
+    </button>
+    <button class="bn-tab" data-tab="coach" onclick="switchTab('coach')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span>Coach</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ONBOARDING MODAL -->
+<div id="ob-overlay">
+  <div id="ob-modal">
+    <div class="ob-header">
+      <div class="ob-header-top">
+        <span class="ob-badge">Setup</span>
+        <button class="ob-close" onclick="closeOnboarding()">×</button>
+      </div>
+      <div id="ob-title"></div>
+      <p id="ob-sub"></p>
+    </div>
+    <div class="ob-body">
+      <div id="ob-fields"></div>
+    </div>
+    <div class="ob-footer">
+      <button class="ob-skip" onclick="skipOnboarding()">Skip for now</button>
+      <button id="ob-save" onclick="submitOnboarding()">Save & Continue</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── INIT ── */
+const SUPA_URL='https://uzzcvrduoswjsrvuopgv.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6emN2cmR1b3N3anNydnVvcGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDQyNDcsImV4cCI6MjA5NzUyMDI0N30.5tD1xhZdSJaZFnNWfDXozPsvHceeqHl682pClUppUFo';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY,{
+  auth:{storage:window.localStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+});
+
+let USER=null, PROFILE=null;
+const TODAY=new Date().toISOString().split('T')[0];
+
+function getHabits(){
+  const h=OB.habits||{};
+  return [
+    {key:'sunlight',  name:'Morning Sunlight', desc:`10+ min of natural light within 1hr of waking${h.wake_time?' (wake: '+h.wake_time+')':''}`},
+    {key:'protein',   name:'Protein Target',   desc:`Hit your daily target${h.protein_g?' ('+h.protein_g+'g)':''}`},
+    {key:'steps',     name:'Steps',            desc:`${h.steps_avg?'Target: '+Number(h.steps_avg).toLocaleString()+' steps':'8,000+ steps today'}`},
+    {key:'sleep',     name:'Sleep 8h+',        desc:`In bed by ${h.sleep_time||'your target time'} tonight`},
+    {key:'learning',  name:'Learning',         desc:'Read or listen to something worth your time'},
+  ];
+}
+const HABITS=getHabits();
+
+const CHECK_METRICS=[
+  {key:'energy',      label:'Energy'},
+  {key:'sleep_q',     label:'Sleep Quality'},
+  {key:'mood',        label:'Mood'},
+  {key:'libido',      label:'Libido'},
+  {key:'adherence',   label:'Training'},
+];
+
+// Sample programme — will be personalised per user in future
+const PROGRAMME={
+  A:{name:'Upper A — Push',exercises:[
+    {name:'Bench Press',sets:4,rep:'6–8',notes:'Last weight:'},
+    {name:'Overhead Press',sets:3,rep:'8–10',notes:''},
+    {name:'Incline DB Press',sets:3,rep:'10–12',notes:''},
+    {name:'Lateral Raises',sets:4,rep:'15–20',notes:''},
+    {name:'Tricep Pushdown',sets:3,rep:'12–15',notes:''},
+  ]},
+  B:{name:'Lower A — Squat',exercises:[
+    {name:'Back Squat',sets:4,rep:'6–8',notes:''},
+    {name:'Romanian Deadlift',sets:4,rep:'8–10',notes:''},
+    {name:'Bulgarian Split Squat',sets:3,rep:'10',notes:'Each leg'},
+    {name:'Leg Press',sets:3,rep:'12–15',notes:''},
+    {name:'Calf Raises',sets:4,rep:'15–20',notes:''},
+  ]},
+  C:{name:'Upper B — Pull',exercises:[
+    {name:'Weighted Pull-up',sets:4,rep:'6–8',notes:''},
+    {name:'Barbell Row',sets:4,rep:'8–10',notes:''},
+    {name:'Seated Cable Row',sets:3,rep:'10–12',notes:''},
+    {name:'Face Pulls',sets:3,rep:'15–20',notes:''},
+    {name:'Barbell Curl',sets:3,rep:'10–12',notes:''},
+  ]},
+};
+
+const DAY_MAP=['B','A','C','B','A','C','B']; // Mon–Sun rotation
+
+/* ── BOOT ── */
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='/';return;}
+  USER=session.user;
+  const init=USER.user_metadata?.display_name||USER.email.split('@')[0];
+  document.getElementById('tb-avatar').textContent=init[0].toUpperCase();
+
+  // Load profile
+  const{data:prof}=await sb.from('profiles').select('*').eq('id',USER.id).single();
+  PROFILE=prof;
+
+  if(!prof||prof.status==='pending'||prof.status===null){
+    // Show pending screen only
+    document.querySelectorAll('.bn-tab').forEach(b=>b.style.display='none');
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById('pane-pending').classList.add('active');
+    return;
+  }
+
+  // Approved — load onboarding data then init tabs
+  loadOnboardingData();
+  initHabits();
+  initTrain();
+  initEat();
+  initProgress();
+  initCoach();
+})();
+
+/* ── NAV ── */
+function switchTab(tab){
+  document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+tab));
+  document.getElementById('content').scrollTop=0;
+  // Show onboarding on first visit if not yet done
+  const obTabs=['habits','train','eat','progress','coach'];
+  if(obTabs.includes(tab) && !isOnboarded(tab)){
+    setTimeout(()=>showOnboarding(tab), 320);
+  }
+}
+
+function skipOnboarding(){
+  // Mark as done so it doesn't re-trigger, but don't save data
+  if(currentOBSection) OB[currentOBSection+'_done']=true;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  closeOnboarding();
+}
+
+/* ── SIGN OUT ── */
+async function signOut(){
+  await sb.auth.signOut();
+  window.location.href='/';
+}
+
+/* ── TOAST ── */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ════════════════════════════════════════
+   HABITS
+════════════════════════════════════════ */
+let habitState={};
+
+async function initHabits(){
+  // Refresh personalised habits
+  const fresh=getHabits();
+  fresh.forEach((h,i)=>{ if(HABITS[i]) Object.assign(HABITS[i],h); });
+  document.getElementById('habits-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+
+  // Load today's habits from Supabase
+  const{data}=await sb.from('daily_habits')
+    .select('*').eq('user_id',USER.id).eq('date',TODAY);
+
+  habitState={};
+  (data||[]).forEach(r=>{if(r.completed)habitState[r.habit_name]=true;});
+  renderHabits();
+}
+
+function renderHabits(){
+  const done=Object.values(habitState).filter(Boolean).length;
+  document.getElementById('habits-count').textContent=`${done} / ${HABITS.length}`;
+  document.getElementById('habits-bar').style.width=`${(done/HABITS.length)*100}%`;
+
+  const list=document.getElementById('habits-list');
+  list.innerHTML=HABITS.map(h=>`
+    <div class="habit-item ${habitState[h.key]?'done':''}" onclick="toggleHabit('${h.key}')">
+      <div class="habit-check">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="habit-info">
+        <div class="habit-name">${h.name}</div>
+        <div class="habit-desc">${h.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function toggleHabit(key){
+  habitState[key]=!habitState[key];
+  renderHabits();
+  // Upsert to Supabase
+  await sb.from('daily_habits').upsert({
+    user_id:USER.id, date:TODAY, habit_name:key, completed:habitState[key]
+  },{onConflict:'user_id,date,habit_name'});
+  if(habitState[key])showToast('✓ '+HABITS.find(h=>h.key===key)?.name);
+}
+
+/* ════════════════════════════════════════
+   TRAIN
+════════════════════════════════════════ */
+function initTrain(){
+  const day=new Date().getDay(); // 0=Sun, 1=Mon...
+  const adjusted=day===0?6:day-1; // Mon=0
+  const session=PROGRAMME[DAY_MAP[adjusted]];
+
+  document.getElementById('train-sub').textContent=session.name;
+  document.getElementById('train-content').innerHTML=`
+    ${session.exercises.map((ex,ei)=>`
+      <div class="workout-ex">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-sets">
+          <div class="set-row" style="margin-bottom:4px">
+            <span class="set-num"></span>
+            <span style="flex:1;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:center">Reps (target: ${ex.rep})</span>
+            <span class="set-unit" style="text-align:center">kg</span>
+            <span class="set-unit"></span>
+          </div>
+          ${Array.from({length:ex.sets},(_,si)=>`
+            <div class="set-row">
+              <span class="set-num">${si+1}</span>
+              <input class="set-field" type="number" min="0" placeholder="${ex.rep.split('–')[0]}" id="reps-${ei}-${si}">
+              <input class="set-field" type="number" min="0" step="2.5" placeholder="0" id="wt-${ei}-${si}">
+              <button class="set-done" id="sd-${ei}-${si}" onclick="checkSet('${ei}-${si}')">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('')}
+    <button class="btn-primary" onclick="saveWorkout()">Save Session</button>
+    <p style="font-size:11px;color:var(--dim);text-align:center;margin-top:8px">Rest 2–3 min between sets on main compounds.</p>
+  `;
+}
+
+function checkSet(id){
+  const btn=document.getElementById('sd-'+id);
+  btn.classList.toggle('checked');
+}
+
+async function saveWorkout(){
+  const day=new Date().getDay();const adjusted=day===0?6:day-1;
+  const session=PROGRAMME[DAY_MAP[adjusted]];
+  const{data:ws}=await sb.from('workout_sessions').insert({
+    user_id:USER.id,date:TODAY,session_type:session.name
+  }).select().single();
+  if(!ws)return;
+  const sets=[];
+  session.exercises.forEach((ex,ei)=>{
+    for(let si=0;si<ex.sets;si++){
+      const reps=document.getElementById(`reps-${ei}-${si}`)?.value;
+      const wt=document.getElementById(`wt-${ei}-${si}`)?.value;
+      if(reps||wt)sets.push({session_id:ws.id,exercise_name:ex.name,set_number:si+1,reps:+reps||0,weight_kg:+wt||0});
+    }
+  });
+  if(sets.length)await sb.from('session_sets').insert(sets);
+  showToast('Session saved');
+}
+
+/* ════════════════════════════════════════
+   EAT
+════════════════════════════════════════ */
+let foods=[];
+
+async function initEat(){
+  const{data}=await sb.from('nutrition_logs').select('*').eq('user_id',USER.id).eq('date',TODAY).order('created_at');
+  foods=data||[];
+  renderFoods();
+}
+
+function renderFoods(){
+  const totals=foods.reduce((acc,f)=>({
+    cal:acc.cal+(+f.calories||0),p:acc.p+(+f.protein_g||0),
+    c:acc.c+(+f.carbs_g||0),fat:acc.fat+(+f.fat_g||0)
+  }),{cal:0,p:0,c:0,fat:0});
+  document.getElementById('m-cal').textContent=Math.round(totals.cal);
+  document.getElementById('m-p').textContent=Math.round(totals.p);
+  document.getElementById('m-c').textContent=Math.round(totals.c);
+  document.getElementById('m-f').textContent=Math.round(totals.fat);
+  document.getElementById('food-list').innerHTML=foods.map((f,i)=>`
+    <div class="food-row">
+      <div class="food-name">${f.food_name}</div>
+      <div class="food-macros">${Math.round(f.protein_g||0)}P · ${Math.round(f.carbs_g||0)}C · ${Math.round(f.fat_g||0)}F<br>${Math.round(f.calories||0)} kcal</div>
+      <button class="food-del" onclick="removeFood(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+async function addFood(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name)return;
+  const entry={user_id:USER.id,date:TODAY,food_name:name,
+    calories:+document.getElementById('f-cal').value||0,
+    protein_g:+document.getElementById('f-p').value||0,
+    carbs_g:+document.getElementById('f-c').value||0,
+    fat_g:+document.getElementById('f-fat').value||0};
+  const{data}=await sb.from('nutrition_logs').insert(entry).select().single();
+  if(data){foods.push(data);renderFoods();}
+  ['f-name','f-cal','f-p','f-c','f-fat'].forEach(id=>document.getElementById(id).value='');
+  showToast('Food logged');
+}
+
+async function removeFood(i){
+  const f=foods[i];
+  await sb.from('nutrition_logs').delete().eq('id',f.id);
+  foods.splice(i,1);renderFoods();
+}
+
+/* ════════════════════════════════════════
+   PROGRESS
+════════════════════════════════════════ */
+async function initProgress(){
+  renderScoreGrid();
+  loadCheckinHistory();
+}
+
+function renderScoreGrid(){
+  document.getElementById('score-grid').innerHTML=CHECK_METRICS.map(m=>`
+    <div class="score-item">
+      <div class="score-label">${m.label}</div>
+      <input class="score-slider" type="range" min="1" max="10" value="5" id="score-${m.key}"
+        oninput="document.getElementById('sv-${m.key}').textContent=this.value">
+      <div class="score-val" id="sv-${m.key}">5</div>
+    </div>
+  `).join('');
+}
+
+async function submitCheckin(){
+  const btn=document.getElementById('checkin-btn');
+  btn.disabled=true;btn.textContent='Saving...';
+  const scores={};
+  CHECK_METRICS.forEach(m=>scores[m.key]=+document.getElementById('score-'+m.key).value);
+  const{error}=await sb.from('progress_checkins').upsert({user_id:USER.id,date:TODAY,...scores});
+  btn.disabled=false;btn.textContent='Submit Check-in';
+  if(error){showToast('Set up the table first — see below');loadCheckinHistory();return;}
+  showToast('Check-in saved');
+  loadCheckinHistory();
+}
+
+async function loadCheckinHistory(){
+  const{data,error}=await sb.from('progress_checkins')
+    .select('*').eq('user_id',USER.id)
+    .order('date',{ascending:false}).limit(6);
+  const hist=document.getElementById('checkin-history');
+  if(error?.code==='42P01'){
+    hist.innerHTML=`<div style="background:#0C0C0C;border:1px solid rgba(44,212,196,0.2);padding:16px">
+      <p style="font-size:12px;color:var(--teal);margin-bottom:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">One-time setup needed</p>
+      <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px">Run this SQL in your <a href="https://supabase.com/dashboard/project/uzzcvrduoswjsrvuopgv/sql" target="_blank" style="color:var(--teal)">Supabase SQL editor</a>:</p>
+      <pre style="font-size:10px;color:#888;white-space:pre-wrap;background:#000;padding:10px;line-height:1.5">CREATE TABLE progress_checkins (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  date date NOT NULL DEFAULT CURRENT_DATE,
+  energy int CHECK (energy BETWEEN 1 AND 10),
+  sleep_q int CHECK (sleep_q BETWEEN 1 AND 10),
+  mood int CHECK (mood BETWEEN 1 AND 10),
+  libido int CHECK (libido BETWEEN 1 AND 10),
+  adherence int CHECK (adherence BETWEEN 1 AND 10),
+  notes text,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  UNIQUE(user_id, date)
+);
+ALTER TABLE progress_checkins ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own checkins"
+  ON progress_checkins FOR ALL
+  USING (auth.uid() = user_id);</pre>
+    </div>`;
+    return;
+  }
+  if(!data?.length){hist.innerHTML='<p style="font-size:13px;color:var(--dim)">No check-ins yet. Submit your first one above.</p>';return;}
+  const scoreColor=v=>{
+    if(v>=8)return'#2CD4C4';
+    if(v>=6)return'rgba(44,212,196,.6)';
+    if(v>=4)return'rgba(44,212,196,.35)';
+    return'rgba(44,212,196,.15)';
+  };
+  hist.innerHTML=data.map(r=>`
+    <div class="checkin-row">
+      <div class="checkin-date">${new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+      <div class="checkin-dots">
+        ${CHECK_METRICS.map(m=>`<div class="dot" style="background:${scoreColor(r[m.key]||5)}" title="${m.label}: ${r[m.key]||'–'}"></div>`).join('')}
+      </div>
+      <div style="font-family:var(--D);font-size:20px;font-weight:900;color:var(--teal)">${Math.round(CHECK_METRICS.reduce((s,m)=>s+(+r[m.key]||5),0)/CHECK_METRICS.length*10)/10}</div>
+    </div>
+  `).join('');
+}
+
+/* ════════════════════════════════════════
+   COACH
+════════════════════════════════════════ */
+const coachHistory=[];
+
+function initCoach(){
+  const c=OB.coach||{};
+  const t=OB.train||{};
+  const e=OB.eat||{};
+  if(c.about){
+    const name=USER?.user_metadata?.display_name||'there';
+    document.getElementById('coach-greeting').textContent=
+      `Hey ${name.split(' ')[0]}. I know you're focused on: ${c.about.slice(0,80)}${c.about.length>80?'...':''}. Ask me anything.`;
+  }
+  // Build context string for all coach calls
+  const parts=[];
+  if(c.age) parts.push(`Age: ${c.age}`);
+  if(t.goal) parts.push(`Training goal: ${t.goal}`);
+  if(t.experience) parts.push(`Experience: ${t.experience}`);
+  if(e.goal) parts.push(`Nutrition goal: ${e.goal}`);
+  if(e.weight_kg) parts.push(`Weight: ${e.weight_kg}kg`);
+  if(c.about) parts.push(`Goals: ${c.about}`);
+  if(c.challenge) parts.push(`Biggest challenge: ${c.challenge}`);
+  if(t.injuries) parts.push(`Injuries/limitations: ${t.injuries}`);
+  window._coachContext=parts.length?parts.join('. '):null;
+}
+
+async function sendMessage(){
+  const input=document.getElementById('coach-input');
+  const msg=input.value.trim();
+  if(!msg)return;
+  input.value='';
+
+  const msgs=document.getElementById('coach-messages');
+  msgs.innerHTML+=`<div class="msg user">${escHtml(msg)}</div>`;
+  msgs.innerHTML+=`<div class="msg loading" id="coach-loading">JP is thinking...</div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+
+  document.getElementById('coach-send').disabled=true;
+  coachHistory.push({role:'user',content:msg});
+
+  try{
+    const res=await fetch('/api/coach',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        messages:coachHistory,
+        userProfile:PROFILE||{},
+        userContext:window._coachContext||null
+      })
+    });
+    const d=await res.json();
+    const reply=d.reply||d.error||'Something went wrong — try again.';
+    coachHistory.push({role:'assistant',content:reply});
+    document.getElementById('coach-loading')?.remove();
+    msgs.innerHTML+=`<div class="msg coach">${escHtml(reply).replace(/\n/g,'<br>')}</div>`;
+  }catch(e){
+    document.getElementById('coach-loading')?.remove();
+    msgs.innerHTML+=`<div class="msg coach" style="color:var(--dim)">Couldn't reach the coach right now. Try again in a moment.</div>`;
+  }
+  document.getElementById('coach-send').disabled=false;
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ════════════════════════════════════════
+   ONBOARDING SYSTEM
+════════════════════════════════════════ */
+
+// Onboarding data is stored in Supabase user_metadata so it
+// persists across devices. localStorage is the instant fallback.
+let OB = {};
+
+const OB_DEFS = {
+  habits: {
+    label: 'Habits',
+    title: 'Set up your daily habits',
+    sub: 'Three quick answers so your habit targets mean something.',
+    steps: [
+      { id: 'wake_time',    label: 'What time do you wake up?',            type: 'time', default: '07:00' },
+      { id: 'sleep_time',   label: 'What time do you want to be in bed?',  type: 'time', default: '22:30' },
+      { id: 'steps_avg',    label: 'Current daily steps average',          type: 'number', placeholder: '5000', unit: 'steps/day' },
+      { id: 'protein_g',    label: 'Daily protein target',                 type: 'number', placeholder: '160', unit: 'g/day' },
+    ]
+  },
+  train: {
+    label: 'Train',
+    title: 'Your training profile',
+    sub: 'This shapes which programme you get and how the weights are set.',
+    steps: [
+      { id: 'experience', label: 'Training experience', type: 'select',
+        options: ['< 1 year','1–2 years','3–5 years','5+ years'] },
+      { id: 'days',       label: 'Days per week available', type: 'select',
+        options: ['2 days','3 days','4 days','5 days','6 days'] },
+      { id: 'goal',       label: 'Primary goal', type: 'select',
+        options: ['Build muscle','Lose fat','Improve strength','Athletic performance','General health & longevity'] },
+      { id: 'injuries',   label: 'Any injuries or areas to avoid?', type: 'text', placeholder: 'e.g. Lower back, left knee — or leave blank' },
+    ]
+  },
+  eat: {
+    label: 'Eat',
+    title: 'Your nutrition targets',
+    sub: 'Used to set your macro targets and track daily progress.',
+    steps: [
+      { id: 'weight_kg',   label: 'Current weight', type: 'number', placeholder: '80', unit: 'kg' },
+      { id: 'height_cm',   label: 'Height',          type: 'number', placeholder: '178', unit: 'cm' },
+      { id: 'goal',        label: 'Nutrition goal', type: 'select',
+        options: ['Fat loss','Muscle gain','Body recomposition','Maintain & optimise'] },
+      { id: 'restrictions', label: 'Dietary restrictions', type: 'select',
+        options: ['None','Vegetarian','Vegan','Dairy-free','Gluten-free','Halal'] },
+      { id: 'protein_g',   label: 'Daily protein target (if known)', type: 'number', placeholder: '160', unit: 'g/day' },
+    ]
+  },
+  progress: {
+    label: 'Progress',
+    title: 'Your starting point',
+    sub: 'Sets the baseline everything is measured against.',
+    steps: [
+      { id: 'start_weight',  label: 'Starting weight', type: 'number', placeholder: '80',  unit: 'kg' },
+      { id: 'start_bf',      label: 'Estimated body fat %', type: 'number', placeholder: '20', unit: '%' },
+      { id: 'target_weight', label: 'Target weight',    type: 'number', placeholder: '76',  unit: 'kg' },
+      { id: 'target_bf',     label: 'Target body fat %', type: 'number', placeholder: '14', unit: '%' },
+    ]
+  },
+  coach: {
+    label: 'Coach',
+    title: 'Introduce yourself to your coach',
+    sub: 'The more context you give, the more specific the answers.',
+    steps: [
+      { id: 'age',      label: 'Your age', type: 'number', placeholder: '38' },
+      { id: 'about',    label: 'In a few sentences — what do you want to achieve?', type: 'textarea',
+        placeholder: 'e.g. I want to lose 10kg, fix my sleep, and have consistent energy throughout the day without crashing at 3pm.' },
+      { id: 'challenge', label: 'Biggest challenge right now', type: 'select',
+        options: ['Low energy / fatigue','Fat loss / body composition','Building muscle','Sleep quality','Hormonal health','Stress & recovery','Motivation & consistency'] },
+    ]
+  }
+};
+
+function loadOnboardingData() {
+  // Load from user_metadata first, fall back to localStorage
+  const meta = USER?.user_metadata?.onboarding || {};
+  const local = JSON.parse(localStorage.getItem('jpt_ob') || '{}');
+  OB = { ...local, ...meta }; // metadata wins
+}
+
+async function saveOnboardingSection(section, data) {
+  OB[section] = data;
+  OB[section + '_done'] = true;
+  // Persist to localStorage immediately
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  // Sync to Supabase user_metadata
+  try {
+    await sb.auth.updateUser({ data: { onboarding: OB } });
+    // Also refresh user
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) USER = user;
+  } catch(e) { /* localStorage already saved */ }
+}
+
+function isOnboarded(section) {
+  return !!OB[section + '_done'];
+}
+
+/* ── ONBOARDING MODAL ── */
+let currentOBSection = null;
+
+function showOnboarding(section) {
+  currentOBSection = section;
+  const def = OB_DEFS[section];
+  const existing = OB[section] || {};
+
+  const fieldsHtml = def.steps.map(f => {
+    const val = existing[f.id] || f.default || '';
+    if (f.type === 'select') {
+      return `<div class="ob-field">
+        <label class="ob-label">${f.label}</label>
+        <select class="ob-input" id="ob-${f.id}">
+          ${f.options.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>`;
+    }
+    if (f.type === 'textarea') {
+      return `<div class="ob-field">
+        <label class="ob-label">${f.label}</label>
+        <textarea class="ob-input ob-textarea" id="ob-${f.id}" placeholder="${f.placeholder||''}">${escHtml(val)}</textarea>
+      </div>`;
+    }
+    return `<div class="ob-field">
+      <label class="ob-label">${f.label}${f.unit?` <span class="ob-unit">${f.unit}</span>`:''}</label>
+      <input class="ob-input" id="ob-${f.id}" type="${f.type}" value="${escHtml(String(val))}" placeholder="${f.placeholder||''}">
+    </div>`;
+  }).join('');
+
+  document.getElementById('ob-title').textContent = def.title;
+  document.getElementById('ob-sub').textContent = def.sub;
+  document.getElementById('ob-fields').innerHTML = fieldsHtml;
+  document.getElementById('ob-overlay').classList.add('open');
+}
+
+function closeOnboarding() {
+  document.getElementById('ob-overlay').classList.remove('open');
+  currentOBSection = null;
+}
+
+async function submitOnboarding() {
+  const def = OB_DEFS[currentOBSection];
+  const data = {};
+  def.steps.forEach(f => {
+    const el = document.getElementById('ob-' + f.id);
+    if (el) data[f.id] = el.value.trim();
+  });
+
+  const btn = document.getElementById('ob-save');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  await saveOnboardingSection(currentOBSection, data);
+
+  btn.disabled = false; btn.textContent = 'Save & Continue';
+  closeOnboarding();
+  showToast('✓ ' + def.label + ' profile saved');
+
+  // Re-init the current tab with new data
+  if (currentOBSection === 'habits')   initHabits();
+  if (currentOBSection === 'train')    initTrain();
+  if (currentOBSection === 'eat')      initEat();
+  if (currentOBSection === 'progress') initProgress();
+  if (currentOBSection === 'coach')    initCoach();
+}
+
+/* ── ADMIN SELF-APPROVE ── */
+async function selfApprove(){
+  document.getElementById('admin-hint').textContent='Approving...';
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session){document.getElementById('admin-hint').textContent='Not logged in';return;}
+  const res=await fetch('/api/admin?secret=jpt-admin-2026',{
+    method:'POST',
+    headers:{'content-type':'application/json','Authorization':'Bearer '+session.access_token},
+    body:JSON.stringify({self:true})
+  });
+  const d=await res.json();
+  if(d.ok){showToast('Account approved — reloading...');setTimeout(()=>location.reload(),1200);}
+  else{document.getElementById('admin-hint').textContent='Error: '+d.error;}
+}
+</script>
+</body>
+</html>
