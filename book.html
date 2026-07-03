@@ -15,6 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     :root {
       --black: #000;
@@ -328,9 +329,9 @@
   Press <kbd>Enter ↵</kbd> to continue
 </div>
 
-<!-- Skip to calendar -->
+<!-- Skip to app -->
 <button class="skip-link hidden" id="skip-link">
-  Let me fill this out later, just let me book the call ffs →
+  Skip — take me to the app →
 </button>
 
 <!-- ─────────────────────────── QUESTIONS ─────────────────────────── -->
@@ -338,18 +339,28 @@
 <!-- STEP 0 — Contact details -->
 <div class="question active" id="q0">
   <div class="q-inner">
-    <p class="q-num">Let's get started</p>
-    <h1 class="q-title">A FEW QUICK<br><span class="t">DETAILS.</span></h1>
-    <p class="q-sub">Takes under 2 minutes. JP will reach out directly to confirm your call time.</p>
+    <p class="q-num" id="q0-label">Let's get started</p>
+    <h1 class="q-title" id="q0-title">ONE LAST<br><span class="t">THING.</span></h1>
+    <p class="q-sub" id="q0-sub">JP will reach out directly to arrange your free 30-minute call — no commitment, just a conversation about what you're trying to fix.</p>
 
-    <p class="contact-label">Your name</p>
-    <input type="text" class="q-input" id="f-name" placeholder="First name" autocomplete="given-name">
+    <!-- Hidden inputs pre-filled from session -->
+    <input type="hidden" id="f-name" value="">
+    <input type="hidden" id="f-email" value="">
 
-    <p class="contact-label">Phone number</p>
+    <!-- Visible name field shown only when not logged in -->
+    <div id="f-name-wrap">
+      <p class="contact-label">Your name</p>
+      <input type="text" class="q-input" id="f-name-visible" placeholder="First name" autocomplete="given-name">
+    </div>
+
+    <p class="contact-label">Phone number <span class="optional-tag">(optional)</span></p>
     <input type="tel" class="q-input" id="f-phone" placeholder="+44 7700 000000" autocomplete="tel">
 
-    <p class="contact-label">Email <span class="optional-tag">(optional)</span></p>
-    <input type="email" class="q-input" id="f-email" placeholder="you@email.com" autocomplete="email">
+    <!-- Visible email shown only when not logged in -->
+    <div id="f-email-wrap">
+      <p class="contact-label">Email</p>
+      <input type="email" class="q-input" id="f-email-visible" placeholder="you@email.com" autocomplete="email">
+    </div>
 
     <p class="field-error" id="contact-error" style="display:none"></p>
 
@@ -357,6 +368,10 @@
       Continue
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </button>
+
+    <p style="margin-top:20px;font-size:12px;color:var(--dim);text-align:center">
+      Not ready to talk yet? <a href="/app.html" style="color:var(--teal);text-decoration:none">Go straight to the app →</a>
+    </p>
   </div>
 </div>
 
@@ -610,9 +625,10 @@
     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
   <h1 class="success-h">YOU'RE<br><span class="t">ALL SET.</span></h1>
-  <p class="success-p"><strong>Your answers are with JP.</strong><br>Lock in your call time now — pick a slot and it's done.</p>
-  <a href="https://calendar.app.google/4vZYVLHsThfsdPxC7" target="_blank" rel="noopener noreferrer" class="success-cta" onclick="gtag('event','calendar_click',{event_category:'booking_form'})">Pick Your Call Time →</a>
-  <p class="success-note">Or JP will reach out on your phone within a few hours.</p>
+  <p class="success-p"><strong>Your answers are with JP.</strong><br>He'll be in touch shortly. In the meantime, your app is ready to explore.</p>
+  <a href="/app.html" class="success-cta">Open the App →</a>
+  <a href="https://calendar.app.google/4vZYVLHsThfsdPxC7" target="_blank" rel="noopener noreferrer" style="margin-top:12px;font-size:13px;color:var(--muted);text-decoration:none;display:block" onclick="gtag('event','calendar_click',{event_category:'booking_form'})">Or pick a call time now →</a>
+  <p class="success-note">JP will reach out on your phone within a few hours.</p>
   <a href="index.html" class="back-home">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     Back to JP Training
@@ -699,19 +715,24 @@ function hideStepBelow(idx) {
 /* ── NAVIGATION ── */
 function nextStep() {
   if (step === 0) {
-    var name = document.getElementById('f-name').value.trim();
+    // Name: from hidden pre-filled field (logged in) or visible field (guest)
+    var nameHidden = document.getElementById('f-name').value.trim();
+    var nameVisible = document.getElementById('f-name-visible').value.trim();
+    var name = nameHidden || nameVisible;
     var phone = document.getElementById('f-phone').value.trim();
+    var emailHidden = document.getElementById('f-email').value.trim();
+    var emailVisible = document.getElementById('f-email-visible').value.trim();
     var errEl = document.getElementById('contact-error');
-    if (!name || !phone) {
-      errEl.textContent = 'Please enter your name and phone number to continue.';
+    if (!name) {
+      errEl.textContent = 'Please enter your name to continue.';
       errEl.style.display = 'block';
-      document.getElementById(name ? 'f-phone' : 'f-name').focus();
+      document.getElementById('f-name-visible').focus();
       return;
     }
     errEl.style.display = 'none';
     answers.name = name;
     answers.phone = phone;
-    answers.email = document.getElementById('f-email').value.trim();
+    answers.email = emailHidden || emailVisible;
   } else if (step === 1) {
     answers.age = document.getElementById('f-age').value.trim() || '—';
   } else if (step === 4) {
@@ -928,13 +949,44 @@ document.getElementById('skip-link').addEventListener('click', async function() 
       }),
     ]);
   } catch(e) {}
-  window.location.href = CALENDAR_URL;
+  window.location.href = '/app.html';
 });
+
+/* ── SESSION PRE-FILL ── */
+(function() {
+  try {
+    var SUPA_URL = 'https://uzzcvrduoswjsrvuopgv.supabase.co';
+    var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6emN2cmR1b3N3anNydnVvcGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2NDk2OTksImV4cCI6MjA2MjIyNTY5OX0.RyUHQwXMBLqfL3RqHVSjDLn3FVRmkLkLGXGJdwFgYwY';
+    var sb = supabase.createClient(SUPA_URL, SUPA_KEY, {
+      auth: { storage: window.localStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+    });
+    sb.auth.getSession().then(function(res) {
+      var session = res.data && res.data.session;
+      if (!session) return;
+      var user = session.user;
+      var name = (user.user_metadata && user.user_metadata.display_name) || '';
+      var email = user.email || '';
+      // Pre-fill hidden fields
+      document.getElementById('f-name').value = name;
+      document.getElementById('f-email').value = email;
+      // Hide the visible name/email inputs — we already have this from signup
+      if (name) {
+        document.getElementById('f-name-wrap').style.display = 'none';
+        document.getElementById('q0-label').textContent = 'Almost there, ' + name.split(' ')[0] + '.';
+        document.getElementById('q0-title').innerHTML = 'ONE LAST<br><span class="t">THING.</span>';
+        document.getElementById('q0-sub').textContent = 'Just your phone number so JP can reach out directly — or skip straight to the app if you\'d rather get started now.';
+      }
+      if (email) {
+        document.getElementById('f-email-wrap').style.display = 'none';
+      }
+    });
+  } catch(e) {}
+})();
 
 /* ── INIT ── */
 updateUI();
 setTimeout(function() {
-  var first = document.getElementById('f-name');
+  var first = document.getElementById('f-phone');
   if (first) first.focus();
 }, 100);
 </script>
