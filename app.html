@@ -242,6 +242,80 @@
       color:rgba(44,212,196,.5);background:none;border:none;cursor:pointer;padding:0;
       transition:color .2s;font-family:'Poppins',sans-serif}
     .ob-edit-btn:hover{color:#2CD4C4}
+
+    /* ── INTAKE OVERLAY ── */
+    #intake-overlay{position:fixed;inset:0;z-index:300;background:var(--black);
+      display:flex;flex-direction:column}
+    #intake-overlay.hidden{display:none}
+    #intake-header{padding:16px 20px;border-bottom:1px solid var(--border);
+      flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+    .intake-logo{font-family:var(--D);font-size:18px;font-weight:800;
+      letter-spacing:.08em;text-transform:uppercase}
+    .intake-logo em{font-style:normal;color:var(--teal)}
+    .intake-tagline{font-size:11px;color:var(--dim);letter-spacing:.04em;margin-top:2px}
+    #intake-chat{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    #intake-messages{flex:1;overflow-y:auto;padding:20px;display:flex;
+      flex-direction:column;gap:12px}
+    .im{max-width:88%;line-height:1.65;font-size:14px;padding:12px 16px;font-weight:300;white-space:pre-line}
+    .im.ai{align-self:flex-start;background:var(--s1);border:1px solid var(--border);color:var(--white)}
+    .im.user{align-self:flex-end;background:rgba(44,212,196,.08);
+      border:1px solid rgba(44,212,196,.2);color:var(--white)}
+    .im.loading{align-self:flex-start;color:var(--dim);background:var(--s1);
+      border:1px solid var(--border);font-style:italic}
+    #intake-bottom{display:flex;flex-direction:column;flex-shrink:0}
+    #intake-input-wrap{display:flex;border-top:1px solid var(--border)}
+    #intake-input{flex:1;background:rgba(255,255,255,.03);border:none;
+      color:var(--white);font-family:var(--B);font-size:14px;font-weight:300;
+      padding:16px 18px;resize:none;max-height:120px;overflow-y:auto;
+      border-right:1px solid var(--border)}
+    #intake-input:focus{outline:none;background:rgba(255,255,255,.05)}
+    #intake-send{padding:16px 24px;background:var(--teal);color:#000;
+      font-family:var(--D);font-size:16px;font-weight:800;letter-spacing:.06em;
+      text-transform:uppercase;border:none;cursor:pointer;flex-shrink:0;
+      transition:background .2s;min-width:80px}
+    #intake-send:hover{background:#3eeade}
+    #intake-send:disabled{opacity:.4;cursor:not-allowed}
+    #intake-skip-link{text-align:center;padding:10px 20px;font-size:11px;color:var(--dim)}
+    #intake-skip-link a{color:var(--dim);text-decoration:none}
+    #intake-skip-link a:hover{color:var(--muted)}
+    /* Confirm screen */
+    #intake-confirm{flex:1;overflow-y:auto;padding:24px 20px;
+      display:none;flex-direction:column;gap:0}
+    #intake-confirm.active{display:flex}
+    .confirm-title{font-family:var(--D);font-size:38px;font-weight:900;
+      text-transform:uppercase;line-height:.9;letter-spacing:-.01em;margin-bottom:20px}
+    .confirm-title span{color:var(--teal)}
+    .confirm-summary{font-size:13px;color:var(--muted);line-height:2;
+      white-space:pre-line;flex:1;padding-bottom:24px}
+    .confirm-actions{flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+    #intake-cta{width:100%;padding:18px;background:var(--teal);color:#000;
+      font-family:var(--D);font-size:17px;font-weight:800;letter-spacing:.08em;
+      text-transform:uppercase;border:none;cursor:pointer;transition:background .2s}
+    #intake-cta:hover{background:#3eeade}
+    #intake-cta:disabled{opacity:.5;cursor:not-allowed}
+    .confirm-sub{text-align:center;font-size:11px;color:var(--dim);margin-top:12px}
+    .confirm-sub a{color:var(--dim);text-decoration:none}
+    .confirm-sub a:hover{color:var(--muted)}
+    /* Overview card */
+    .overview-card{background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.18);
+      padding:16px;margin-bottom:16px}
+    .overview-label{font-size:10px;font-weight:600;letter-spacing:.22em;
+      text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+    .overview-item{display:flex;gap:10px;padding:7px 0;
+      border-bottom:1px solid rgba(44,212,196,.08);font-size:13px;
+      color:var(--muted);line-height:1.55}
+    .overview-item:last-child{border-bottom:none;padding-bottom:0}
+    .overview-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);
+      flex-shrink:0;margin-top:7px}
+    /* Multicheck in ob modal */
+    .ob-checks{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+    .ob-check{display:flex;align-items:center;gap:8px;padding:9px 12px;
+      background:rgba(255,255,255,.02);border:1px solid var(--border);
+      cursor:pointer;font-size:12px;color:var(--muted);
+      transition:all .15s;user-select:none}
+    .ob-check input[type=checkbox]{display:none}
+    .ob-check.checked{border-color:rgba(44,212,196,.4);color:var(--white);
+      background:rgba(44,212,196,.07)}
   </style>
 </head>
 <body>
@@ -287,6 +361,7 @@
       <div class="tag" id="habits-date"></div>
       <div class="prog-label"><span>Progress</span><span id="habits-count">0 / 10</span></div>
       <div class="prog-bar-wrap"><div class="prog-bar-fill" id="habits-bar" style="width:0%"></div></div>
+      <div id="overview-card-wrap"></div>
       <div style="margin-top:16px" id="habits-list"></div>
     </div>
 
@@ -391,6 +466,40 @@
     </button>
   </nav>
 
+</div>
+
+<!-- INTAKE OVERLAY -->
+<div id="intake-overlay" class="hidden">
+  <!-- Chat phase -->
+  <div id="intake-header">
+    <div>
+      <div class="intake-logo">JP <em>Training</em></div>
+      <div class="intake-tagline">Building your profile</div>
+    </div>
+  </div>
+  <div id="intake-chat">
+    <div id="intake-messages"></div>
+    <div id="intake-bottom">
+      <div id="intake-input-wrap">
+        <textarea id="intake-input" placeholder="Type your answer…" rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendIntakeMsg()}"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button id="intake-send" onclick="sendIntakeMsg()">Send</button>
+      </div>
+      <div id="intake-skip-link">
+        <a href="#" onclick="skipIntake();return false;">Skip — I'll fill this in manually</a>
+      </div>
+    </div>
+  </div>
+  <!-- Confirm phase -->
+  <div id="intake-confirm">
+    <div class="confirm-title">YOUR<br><span>PROFILE.</span></div>
+    <div class="confirm-summary" id="intake-summary"></div>
+    <div class="confirm-actions">
+      <button id="intake-cta" onclick="completeIntake()">That's me — let's go</button>
+      <div class="confirm-sub"><a href="#" onclick="skipIntake();return false;">Edit something manually instead</a></div>
+    </div>
+  </div>
 </div>
 
 <!-- ONBOARDING MODAL -->
@@ -526,12 +635,17 @@ const DAY_MAP=['B','A','C','B','A','C','B']; // Mon–Sun rotation
 
   // Approved — load onboarding data then init tabs
   loadOnboardingData();
+  initAll();
+  if (!isIntakeComplete()) showIntake();
+})();
+
+function initAll() {
   initHabits();
   initTrain();
   initEat();
   initProgress();
   initCoach();
-})();
+}
 
 /* ── NAV ── */
 function switchTab(tab){
@@ -571,6 +685,7 @@ function showToast(msg){
 let habitState={};
 
 async function initHabits(){
+  renderOverviewCard();
   // Refresh personalised habits
   const fresh=getHabits();
   fresh.forEach((h,i)=>{ if(HABITS[i]) Object.assign(HABITS[i],h); });
@@ -834,7 +949,7 @@ function initCoach(){
   // Training
   if(t.experience) parts.push(`Training experience: ${t.experience}`);
   if(t.days) parts.push(`Training availability: ${t.days}/week`);
-  if(t.current_activity) parts.push(`Current activity level: ${t.current_activity}`);
+  if(t.current_activity) parts.push(`Current sports/activities: ${Array.isArray(t.current_activity)?t.current_activity.join(', '):t.current_activity}`);
   if(t.cardio_level) parts.push(`Cardiovascular fitness: ${t.cardio_level}`);
   if(t.goal) parts.push(`Primary training goal: ${t.goal}`);
   if(t.secondary_goal&&t.secondary_goal!=='None') parts.push(`Secondary goal: ${t.secondary_goal}`);
@@ -959,8 +1074,8 @@ const OB_DEFS = {
         options: ['Complete beginner','Less than 1 year','1–2 years','3–5 years','5+ years'] },
       { id: 'days',           label: 'Days per week available to train',                 type: 'select',
         options: ['2 days','3 days','4 days','5 days','6 days'] },
-      { id: 'current_activity',label: 'What are you currently doing for fitness?',       type: 'select',
-        options: ['Nothing right now','Casual walking / light activity','Gym training (inconsistent)','Regular gym training','High-level sport or performance training'] },
+      { id: 'current_activity',label: 'What sports and activities do you currently do?', type: 'multicheck',
+        options: ['Gym / Weight training','Running','Cycling','Swimming','Football','Rugby','Basketball','Tennis / Racket sports','Martial arts / Combat sports','CrossFit / HIIT','Yoga / Pilates','Nothing right now'] },
       { id: 'cardio_level',   label: 'How is your cardiovascular fitness?',              type: 'select',
         options: ['Poor — out of breath easily','Below average','Average','Good','Excellent — athlete level'] },
       { id: 'goal',           label: 'Primary training goal',                            type: 'select',
@@ -1064,6 +1179,17 @@ function showOnboarding(section) {
 
   const fieldsHtml = def.steps.map(f => {
     const val = existing[f.id] || f.default || '';
+    if (f.type === 'multicheck') {
+      const selected = Array.isArray(existing[f.id]) ? existing[f.id] : (existing[f.id] ? [existing[f.id]] : []);
+      return `<div class="ob-field">
+        <label class="ob-label">${f.label}<br><span style="font-size:10px;color:var(--dim);text-transform:none;letter-spacing:0;font-weight:400">Select all that apply</span></label>
+        <div class="ob-checks" id="obchk-${f.id}">
+          ${f.options.map(o=>`<label class="ob-check${selected.includes(o)?' checked':''}" onclick="toggleObCheck(this)">
+            <input type="checkbox" value="${escHtml(o)}"${selected.includes(o)?' checked':''}>${escHtml(o)}
+          </label>`).join('')}
+        </div>
+      </div>`;
+    }
     if (f.type === 'select') {
       return `<div class="ob-field">
         <label class="ob-label">${f.label}</label>
@@ -1099,8 +1225,13 @@ async function submitOnboarding() {
   const def = OB_DEFS[currentOBSection];
   const data = {};
   def.steps.forEach(f => {
-    const el = document.getElementById('ob-' + f.id);
-    if (el) data[f.id] = el.value.trim();
+    if (f.type === 'multicheck') {
+      const wrap = document.getElementById('obchk-' + f.id);
+      if (wrap) data[f.id] = Array.from(wrap.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+    } else {
+      const el = document.getElementById('ob-' + f.id);
+      if (el) data[f.id] = el.value.trim();
+    }
   });
 
   const btn = document.getElementById('ob-save');
@@ -1119,6 +1250,252 @@ async function submitOnboarding() {
   if (section === 'eat')      initEat();
   if (section === 'progress') initProgress();
   if (section === 'coach')    initCoach();
+}
+
+/* ── MULTICHECK TOGGLE ── */
+function toggleObCheck(label) {
+  const cb = label.querySelector('input');
+  cb.checked = !cb.checked;
+  label.classList.toggle('checked', cb.checked);
+}
+
+/* ════════════════════════════════════════
+   OVERVIEW CARD
+════════════════════════════════════════ */
+function renderOverviewCard() {
+  const wrap = document.getElementById('overview-card-wrap');
+  if (!wrap) return;
+  const ov = OB._overview;
+  if (!ov || !ov.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="overview-card">
+    <div class="overview-label">Your Protocol Summary</div>
+    ${ov.map(line => `<div class="overview-item"><div class="overview-dot"></div><div>${escHtml(line)}</div></div>`).join('')}
+  </div>`;
+}
+
+async function generateOverview() {
+  // Re-init coach context with newly mapped OB data
+  initCoach();
+  if (!window._coachContext) return;
+  try {
+    const res = await fetch('/api/coach', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'Based on my full profile, give me a concise protocol overview — 5–7 one-sentence bullet points covering my key priorities across training, nutrition, sleep, hormones, and lifestyle. Be direct and specific to my numbers and situation. No generic advice. Format each as a plain sentence starting with an action or priority.' }],
+        userProfile: PROFILE || {},
+        userContext: window._coachContext
+      })
+    });
+    const d = await res.json();
+    if (d.reply) {
+      const lines = d.reply
+        .split('\n')
+        .map(l => l.replace(/^[-•*\d.]\s*/, '').trim())
+        .filter(l => l.length > 20 && l.length < 200);
+      OB._overview = lines.slice(0, 7);
+      localStorage.setItem('jpt_ob', JSON.stringify(OB));
+      try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e) {}
+      renderOverviewCard();
+    }
+  } catch(e) { /* silent — overview is non-critical */ }
+}
+
+/* ════════════════════════════════════════
+   INTAKE SYSTEM
+════════════════════════════════════════ */
+let intakeMessages = [];
+let intakeProfile  = {};
+
+function isIntakeComplete() {
+  return !!(OB._intake_done);
+}
+
+function showIntake() {
+  document.getElementById('intake-overlay').classList.remove('hidden');
+  // Kick off with AI speaking first
+  doIntakeExchange();
+}
+
+function skipIntake() {
+  document.getElementById('intake-overlay').classList.add('hidden');
+  OB._intake_done = true;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data: { onboarding: OB } }).catch(() => {});
+}
+
+function sendIntakeMsg() {
+  const input = document.getElementById('intake-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  input.style.height = 'auto';
+  addIntakeMsg('user', msg);
+  intakeMessages.push({ role: 'user', content: msg });
+  doIntakeExchange();
+}
+
+function addIntakeMsg(role, text) {
+  const wrap = document.getElementById('intake-messages');
+  const el = document.createElement('div');
+  el.className = 'im ' + role;
+  el.textContent = text;
+  wrap.appendChild(el);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+async function doIntakeExchange() {
+  const sendBtn = document.getElementById('intake-send');
+  const input   = document.getElementById('intake-input');
+  if (sendBtn) sendBtn.disabled = true;
+  if (input)   input.disabled = true;
+
+  const wrap = document.getElementById('intake-messages');
+  const loading = document.createElement('div');
+  loading.className = 'im loading';
+  loading.id = 'intake-loading';
+  loading.textContent = 'JP is reading your profile...';
+  wrap.appendChild(loading);
+  wrap.scrollTop = wrap.scrollHeight;
+
+  try {
+    const res = await fetch('/api/intake', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ messages: intakeMessages })
+    });
+    const d = await res.json();
+    document.getElementById('intake-loading')?.remove();
+
+    if (d.profile) {
+      Object.keys(d.profile).forEach(k => {
+        const v = d.profile[k];
+        if (v !== null && v !== undefined) {
+          if (Array.isArray(v) && v.length === 0 && Array.isArray(intakeProfile[k])) return;
+          intakeProfile[k] = v;
+        }
+      });
+    }
+
+    if (d.reply) {
+      addIntakeMsg('ai', d.reply);
+      intakeMessages.push({ role: 'assistant', content: d.reply });
+    }
+
+    if (d.done) {
+      showIntakeConfirm();
+    } else {
+      if (sendBtn) sendBtn.disabled = false;
+      if (input)   { input.disabled = false; input.focus(); }
+    }
+  } catch(e) {
+    document.getElementById('intake-loading')?.remove();
+    addIntakeMsg('ai', 'Connection issue — tap Send to try again.');
+    if (sendBtn) sendBtn.disabled = false;
+    if (input)   input.disabled = false;
+  }
+}
+
+function showIntakeConfirm() {
+  document.getElementById('intake-chat').style.display = 'none';
+  const confirm = document.getElementById('intake-confirm');
+  confirm.classList.add('active');
+
+  const p = intakeProfile;
+  const lines = [];
+  if (p.age)            lines.push(`Age: ${p.age}`);
+  if (p.weight_kg)      lines.push(`Weight: ${p.weight_kg}kg`);
+  if (p.height_cm)      lines.push(`Height: ${p.height_cm}cm`);
+  if (p.body_fat)       lines.push(`Body fat: ~${p.body_fat}%`);
+  if (p.sports?.length) lines.push(`Sports / training: ${p.sports.join(', ')}`);
+  if (p.training_days)  lines.push(`Training frequency: ${p.training_days}`);
+  if (p.training_experience) lines.push(`Experience: ${p.training_experience}`);
+  if (p.cardio_level)   lines.push(`Cardiovascular fitness: ${p.cardio_level}`);
+  if (p.primary_goal)   lines.push(`Primary goal: ${p.primary_goal}`);
+  if (p.secondary_goal) lines.push(`Secondary goal: ${p.secondary_goal}`);
+  if (p.sleep_hrs)      lines.push(`Sleep: ${p.sleep_hrs} hrs/night`);
+  if (p.sleep_quality)  lines.push(`Sleep quality: ${p.sleep_quality}`);
+  if (p.job_type)       lines.push(`Work style: ${p.job_type}`);
+  if (p.stress_level)   lines.push(`Stress: ${p.stress_level}`);
+  if (p.alcohol && p.alcohol !== 'Never') lines.push(`Alcohol: ${p.alcohol}`);
+  if (p.diet_approach)  lines.push(`Diet approach: ${p.diet_approach}`);
+  if (p.meal_freq)      lines.push(`Meal frequency: ${p.meal_freq}`);
+  if (p.symptoms?.length) lines.push(`Symptoms: ${p.symptoms.join(', ')}`);
+  if (p.hormones)       lines.push(`Hormonal concerns: ${p.hormones}`);
+  if (p.health_conditions) lines.push(`Health conditions: ${p.health_conditions}`);
+  if (p.previous_attempts) lines.push(`Previously tried: ${p.previous_attempts}`);
+  if (p.about)          lines.push(`In their words: "${p.about}"`);
+
+  document.getElementById('intake-summary').textContent = lines.join('\n');
+}
+
+function intakeToOB(p) {
+  OB.habits = Object.assign(OB.habits || {}, {
+    sleep_hrs:    p.sleep_hrs,
+    sleep_quality: p.sleep_quality,
+    wake_time:    p.wake_time,
+    sleep_time:   p.sleep_time,
+    job_type:     p.job_type,
+    stress_level: p.stress_level,
+    alcohol:      p.alcohol,
+    steps_goal:   p.steps_goal,
+    focus:        p.primary_goal,
+  });
+  OB.train = Object.assign(OB.train || {}, {
+    experience:       p.training_experience,
+    days:             p.training_days,
+    current_activity: p.sports || [],
+    cardio_level:     p.cardio_level,
+    goal:             p.primary_goal,
+    secondary_goal:   p.secondary_goal,
+    injuries:         p.injuries,
+  });
+  OB.eat = Object.assign(OB.eat || {}, {
+    weight_kg:    p.weight_kg,
+    height_cm:    p.height_cm,
+    body_fat:     p.body_fat,
+    goal:         p.nutrition_goal || p.primary_goal,
+    diet_approach: p.diet_approach,
+    meal_freq:    p.meal_freq,
+    protein_g:    p.protein_g,
+    restrictions: p.restrictions,
+    biggest_gap:  p.about,
+  });
+  OB.progress = Object.assign(OB.progress || {}, {
+    start_weight: p.weight_kg,
+    start_bf:     p.body_fat,
+    resting_hr:   p.resting_hr,
+    vo2_max:      p.vo2_max,
+  });
+  OB.coach = Object.assign(OB.coach || {}, {
+    age:              p.age,
+    symptoms:         Array.isArray(p.symptoms) ? p.symptoms.join(', ') : p.symptoms,
+    hormones:         p.hormones,
+    blood_work:       p.blood_work,
+    health_conditions: p.health_conditions,
+    previous_attempts: p.previous_attempts,
+    about:            p.about,
+  });
+  OB.habits_done = true; OB.train_done = true;
+  OB.eat_done = true;    OB.progress_done = true; OB.coach_done = true;
+}
+
+async function completeIntake() {
+  const btn = document.getElementById('intake-cta');
+  btn.disabled = true;
+  btn.textContent = 'Building your protocol...';
+
+  intakeToOB(intakeProfile);
+  OB._intake_done = true;
+
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e) {}
+
+  document.getElementById('intake-overlay').classList.add('hidden');
+  initAll();
+  generateOverview(); // async, non-blocking
+
+  showToast('Profile built — your protocol is live.');
 }
 
 /* ── ADMIN SELF-APPROVE ── */
