@@ -1136,7 +1136,10 @@ function renderFoods(){
     if(microWrap) microWrap.style.display = '';
   }
 
-  const timeStr = f => f.meal_time ? `<span style="font-size:10px;color:var(--dim);margin-left:6px">${f.meal_time.slice(0,5)}</span>` : '';
+  const timeStr = f => {
+    const t = f.meal_time || foodRatings[f.id]?.mealTime;
+    return t ? `<span style="font-size:10px;color:var(--dim);margin-left:6px">${String(t).slice(0,5)}</span>` : '';
+  };
   document.getElementById('food-list').innerHTML = foods.map((f,i) => {
     const r = foodRatings[f.id];
     const scoreHtml = r ? `<div class="food-score ${scoreClass(r.score)}">${r.score}</div>` : '';
@@ -1182,27 +1185,37 @@ async function callFoodAPI(name, timeVal) {
 }
 
 async function logFoodEntry(name, timeVal, d) {
-  const macros = { cal: d.cal||0, protein_g: d.protein||0, carbs_g: d.carbs||0, fat_g: d.fat||0 };
-  const rating = { score: d.score||null, headline: d.headline||null, reasons: d.reasons||null, tips: Array.isArray(d.tips)?d.tips:[], micros: d.micros||null };
+  const hasData = d && !d.error && d.cal != null;
+  const macros = {
+    cal: hasData ? (+d.cal||0) : 0,
+    protein_g: hasData ? (+d.protein||0) : 0,
+    carbs_g: hasData ? (+d.carbs||0) : 0,
+    fat_g: hasData ? (+d.fat||0) : 0
+  };
+  const rating = (hasData && d.score) ? {
+    score: d.score, headline: d.headline||null,
+    reasons: d.reasons||null, tips: Array.isArray(d.tips)?d.tips:[],
+    micros: d.micros||null, mealTime: timeVal||null
+  } : (timeVal ? { mealTime: timeVal } : null);
 
-  // Only insert columns that actually exist in the nutrition_logs table
+  // Insert only guaranteed columns — meal_time excluded (may not exist in schema)
   const entry = {
     user_id: USER.id, date: EAT_DATE, food_name: name,
     calories: macros.cal, protein_g: macros.protein_g,
-    carbs_g: macros.carbs_g, fat_g: macros.fat_g,
-    meal_time: timeVal || null
+    carbs_g: macros.carbs_g, fat_g: macros.fat_g
   };
 
   const { data, error } = await sb.from('nutrition_logs').insert(entry).select().single();
   if (data) {
     foods.push(data);
-    // Ratings live in localStorage — no extra Supabase columns needed
-    if(rating.score) {
+    if(rating) {
       foodRatings[data.id] = rating;
       _saveRatingsCache();
     }
     renderFoods();
-    showToast('Food logged');
+    if(hasData && d.score) showToast(`Logged · ${d.score}/10 — ${d.headline||'rated'}`);
+    else if(hasData) showToast('Food logged');
+    else showToast('Logged (add more detail for accurate macros)');
   } else {
     showToast('Save failed — ' + (error?.message || 'check connection'));
     console.error('logFoodEntry:', error);
@@ -1219,23 +1232,27 @@ async function addFood(){
   btn.disabled = true; btn.textContent = 'Analysing...';
 
   try {
-    const d = await callFoodAPI(name, timeVal);
+    const d = await callFoodAPI(name);
+
     if(d.needsClarification && d.clarificationQuestion) {
-      // Show clarification UI — hold food until answered
       _pendingFood = { name, timeVal };
       document.getElementById('food-clarify-q').textContent = d.clarificationQuestion;
       document.getElementById('food-clarify-wrap').style.display = '';
       document.getElementById('food-clarify-input').focus();
       nameEl.value = '';
-    } else if(!d.error) {
-      await logFoodEntry(name, timeVal, d);
-      nameEl.value = '';
-      document.getElementById('f-time').value = '';
+      btn.disabled = false; btn.textContent = 'Add & Rate';
+      return;
     }
+
+    await logFoodEntry(name, timeVal, d);
   } catch(e) {
-    showToast('Could not analyse food');
+    // Network / parse error — still save the food with 0 macros
+    await logFoodEntry(name, timeVal, {});
   }
 
+  nameEl.value = '';
+  const timeEl = document.getElementById('f-time');
+  if(timeEl) timeEl.value = '';
   btn.disabled = false; btn.textContent = 'Add & Rate';
 }
 
@@ -1245,6 +1262,7 @@ async function submitClarification() {
   if(!answer) return;
 
   const fullName = `${_pendingFood.name} — ${answer}`;
+  const pendingTime = _pendingFood.timeVal;
   document.getElementById('food-clarify-wrap').style.display = 'none';
   document.getElementById('food-clarify-input').value = '';
 
@@ -1252,9 +1270,11 @@ async function submitClarification() {
   btn.disabled = true; btn.textContent = 'Logging...';
 
   try {
-    const d = await callFoodAPI(fullName, _pendingFood.timeVal);
-    if(!d.error) await logFoodEntry(fullName, _pendingFood.timeVal, d);
-  } catch(e) { showToast('Could not log food'); }
+    const d = await callFoodAPI(fullName);
+    await logFoodEntry(fullName, pendingTime, d);
+  } catch(e) {
+    await logFoodEntry(fullName, pendingTime, {});
+  }
 
   _pendingFood = null;
   btn.disabled = false; btn.textContent = 'Add & Rate';
