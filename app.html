@@ -483,10 +483,11 @@
       </div>
       <div class="card" style="margin-bottom:16px">
         <div class="card-title">Your Protocol</div>
-        <p class="card-sub" style="margin-bottom:10px">Paste your current programme here. The coach reads this and uses it to give you specific advice.</p>
+        <p class="card-sub" style="margin-bottom:8px">Paste your programme here — exercises, sets, reps, and weights. The AI will organise it into a weekly calendar and consult on how to optimise it.</p>
+        <button id="import-coach-btn" onclick="importCoachPlan()" style="width:100%;padding:11px;background:rgba(44,212,196,.06);border:1px dashed rgba(44,212,196,.3);color:var(--teal);font-family:var(--B);font-size:12px;cursor:pointer;margin-bottom:10px;transition:all .2s" onmouseover="this.style.background='rgba(44,212,196,.1)'" onmouseout="this.style.background='rgba(44,212,196,.06)'">↓ Pull plan from coach conversation</button>
         <textarea class="prog-textarea" id="programme-input"
-          placeholder="e.g. PPL 6x/week — Push: bench 4x5, OHP 3x8, incline DB 3x10, lateral raises 4x15..."></textarea>
-        <button class="btn-primary" style="margin-top:10px" id="prog-save-btn" onclick="saveProgramme()">Save Programme</button>
+          placeholder="e.g.&#10;PPL ×6/week&#10;Push A: Bench 4×5 @100kg, OHP 3×8 @60kg, Incline DB 3×10, Lateral raises 4×15&#10;Pull A: Weighted pull-up 4×6, BB row 4×8 @80kg, Cable row 3×10, Face pulls 3×15, Curl 3×10&#10;Legs: Back squat 4×5 @120kg, RDL 4×8 @100kg, BSS 3×10, Leg press 3×12, Calf raises 4×20"></textarea>
+        <button class="btn-primary" style="margin-top:10px" id="prog-save-btn" onclick="saveProgramme()">Analyse &amp; Build Plan</button>
       </div>
       <div id="programme-analysis"></div>
       <div id="train-coach-wrap" style="display:none">
@@ -1956,7 +1957,36 @@ async function saveProgramme(){
   } catch(e) {
     if(analysisEl) analysisEl.innerHTML = '<p style="font-size:12px;color:var(--dim);padding:12px 0">Could not analyse programme — try again.</p>';
   } finally {
-    if(btn) { btn.disabled = false; btn.textContent = 'Save Programme'; }
+    if(btn) { btn.disabled = false; btn.textContent = 'Analyse & Build Plan'; }
+  }
+}
+
+function importCoachPlan() {
+  // Pull the most substantive assistant message from either the training chat or main coach
+  const sources = [
+    ...(typeof trainChatHistory !== 'undefined' ? trainChatHistory : []),
+    ...(typeof coachHistory !== 'undefined' ? coachHistory : []),
+  ];
+
+  // Find all assistant messages, pick the longest (most likely to contain a detailed plan)
+  const assistantMsgs = sources
+    .filter(m => m.role === 'assistant')
+    .sort((a, b) => b.content.length - a.content.length);
+
+  if (!assistantMsgs.length) {
+    showToast('No coach conversation found — chat with your coach first');
+    return;
+  }
+
+  const best = assistantMsgs[0].content;
+  const textarea = document.getElementById('programme-input');
+  if (textarea) {
+    textarea.value = best;
+    textarea.focus();
+    textarea.scrollTop = 0;
+    // Switch to train tab if not already there
+    switchTab('train');
+    showToast('Plan imported — review and click Analyse & Build Plan');
   }
 }
 
