@@ -12,7 +12,17 @@ Respond with valid JSON only — no markdown, no explanation outside the JSON.
   "score": <1-10 integer>,
   "headline": "<one sentence verdict, max 12 words>",
   "reasons": "<2-3 sentences: assess the food against hormonal optimisation and the client's stated goal. Name specific mechanisms — e.g. cholesterol for testosterone synthesis, zinc for T, saturated fat for anabolic hormones. Be direct.>",
-  "tips": ["<specific swap or addition aligned with the protocol below>", "<second tip>"]
+  "tips": ["<specific swap or addition aligned with the protocol below>", "<second tip>"],
+  "needsClarification": <true if input is too vague to estimate accurately — e.g. just "eggs" with no quantity, or "meat" with no cut or weight>,
+  "clarificationQuestion": "<if needsClarification is true: one short specific question to get accurate macros — e.g. 'How many eggs, and how were they cooked?'. null otherwise>",
+  "micros": {
+    "vitD_iu": <number or 0>,
+    "zinc_mg": <number or 0>,
+    "magnesium_mg": <number or 0>,
+    "iron_mg": <number or 0>,
+    "b12_ug": <number or 0>,
+    "omega3_mg": <number or 0>
+  }
 }
 
 NUTRITION PROTOCOL — apply these as absolute rules when rating and recommending:

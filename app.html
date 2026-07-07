@@ -489,6 +489,14 @@
         <button class="btn-primary" style="margin-top:10px" id="prog-save-btn" onclick="saveProgramme()">Save Programme</button>
       </div>
       <div id="programme-analysis"></div>
+      <div id="train-coach-wrap" style="display:none">
+        <div class="sh-label" style="margin:4px 0 10px">Refine your plan</div>
+        <div class="coach-messages" id="train-chat-msgs" style="min-height:60px;max-height:280px;overflow-y:auto"></div>
+        <div class="coach-input-wrap" style="margin-top:8px">
+          <input id="train-chat-input" class="coach-input" placeholder="Ask about the plan, request changes, or agree...">
+          <button id="train-chat-send" class="coach-send" onclick="sendTrainChat()">→</button>
+        </div>
+      </div>
       <div id="train-content"></div>
     </div>
 
@@ -503,6 +511,28 @@
         <div class="macro-tile"><div class="macro-name">Protein</div><div class="macro-val" id="m-p">0</div><div class="macro-unit">g</div></div>
         <div class="macro-tile"><div class="macro-name">Carbs</div><div class="macro-val" id="m-c">0</div><div class="macro-unit">g</div></div>
         <div class="macro-tile"><div class="macro-name">Fat</div><div class="macro-val" id="m-f">0</div><div class="macro-unit">g</div></div>
+      </div>
+      <div id="micro-totals" style="display:none;background:rgba(255,255,255,.02);border:1px solid var(--border);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--muted)">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:6px">Micronutrients today</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <div><span id="m-vitd" style="color:var(--white);font-weight:600">—</span> <span style="color:var(--dim)">Vit D IU</span></div>
+          <div><span id="m-zinc" style="color:var(--white);font-weight:600">—</span> <span style="color:var(--dim)">Zinc mg</span></div>
+          <div><span id="m-mag" style="color:var(--white);font-weight:600">—</span> <span style="color:var(--dim)">Magnesium mg</span></div>
+          <div><span id="m-iron" style="color:var(--white);font-weight:600">—</span> <span style="color:var(--dim)">Iron mg</span></div>
+          <div><span id="m-b12" style="color:var(--white);font-weight:600">—</span> <span style="color:var(--dim)">B12 μg</span></div>
+          <div><span id="m-omega3" style="color:var(--white);font-weight:600">—</span> <span style="color:var(--dim)">Omega-3 mg</span></div>
+        </div>
+      </div>
+      <!-- Food clarification chat -->
+      <div id="food-clarify-wrap" style="display:none;background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.2);padding:14px;margin-bottom:12px">
+        <div style="font-size:12px;color:var(--teal);margin-bottom:8px;font-weight:600">One quick question</div>
+        <div id="food-clarify-q" style="font-size:13px;color:var(--white);margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px">
+          <input id="food-clarify-input" type="text" placeholder="Your answer..."
+            style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);padding:10px 12px;color:#fff;font-family:var(--B);font-size:13px"
+            onkeydown="if(event.key==='Enter')submitClarification()">
+          <button class="btn-primary" style="flex-shrink:0" onclick="submitClarification()">Log it</button>
+        </div>
       </div>
 
       <!-- Date nav -->
@@ -905,8 +935,11 @@ function initTrain(){
   // Restore previously analysed weekly plan
   if(OB.train?.weeklyPlan?.length) {
     renderProgrammeAnalysis({ weeklyPlan: OB.train.weeklyPlan, analysis: OB.train.analysis, improvements: OB.train.improvements });
+    renderTodaySession(OB.train.weeklyPlan);
+    return;
   }
 
+  // Fallback to hardcoded default programme
   const day=new Date().getDay(); // 0=Sun, 1=Mon...
   const adjusted=day===0?6:day-1; // Mon=0
   const session=PROGRAMME[DAY_MAP[adjusted]];
@@ -941,21 +974,75 @@ function initTrain(){
   `;
 }
 
+let _activeSession = null; // {name, exercises: [{name, sets, reps, load}]}
+
+function renderTodaySession(weeklyPlan) {
+  const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+  const todayDay = weeklyPlan.find(d => d.day === todayName);
+
+  if(!todayDay || todayDay.type === 'rest') {
+    document.getElementById('train-sub').textContent = 'Rest Day';
+    document.getElementById('train-content').innerHTML = `<div class="card"><p style="font-size:13px;color:var(--muted);text-align:center;padding:12px 0">${escHtml(todayDay?.keyLifts||'Full recovery — sleep, nutrition, walk.')}</p></div>`;
+    _activeSession = null;
+    return;
+  }
+
+  _activeSession = { name: todayDay.sessionName, exercises: todayDay.exercises || [] };
+  document.getElementById('train-sub').textContent = todayDay.sessionName;
+  document.getElementById('train-content').innerHTML = `
+    ${todayDay.exercises.map((ex,ei)=>`
+      <div class="workout-ex">
+        <div class="ex-name">${escHtml(ex.name)}</div>
+        ${ex.notes?`<div style="font-size:11px;color:var(--dim);margin:-4px 0 6px">${escHtml(ex.notes)}</div>`:''}
+        <div class="ex-sets">
+          <div class="set-row" style="margin-bottom:4px">
+            <span class="set-num"></span>
+            <span style="flex:1;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:center">Reps (target: ${escHtml(ex.reps)})</span>
+            <span class="set-unit" style="text-align:center">kg</span>
+            <span class="set-unit"></span>
+          </div>
+          ${Array.from({length:+ex.sets||3},(_,si)=>`
+            <div class="set-row">
+              <span class="set-num">${si+1}</span>
+              <input class="set-field" type="number" min="0" placeholder="${String(ex.reps).split('–')[0].split('-')[0].replace(/[^0-9]/,'')||'—'}" id="reps-${ei}-${si}">
+              <input class="set-field" type="number" min="0" step="2.5" placeholder="${String(ex.load||'').replace(/[^0-9.]/g,'')||'0'}" id="wt-${ei}-${si}">
+              <button class="set-done" id="sd-${ei}-${si}" onclick="checkSet('${ei}-${si}')">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('')}
+    <button class="btn-primary" onclick="saveWorkout()">Save Session</button>
+    <p style="font-size:11px;color:var(--dim);text-align:center;margin-top:8px">Rest as prescribed between sets on main compounds.</p>
+  `;
+}
+
 function checkSet(id){
   const btn=document.getElementById('sd-'+id);
   btn.classList.toggle('checked');
 }
 
 async function saveWorkout(){
-  const day=new Date().getDay();const adjusted=day===0?6:day-1;
-  const session=PROGRAMME[DAY_MAP[adjusted]];
+  let sessionName, exercises;
+  if(_activeSession) {
+    sessionName = _activeSession.name;
+    exercises = _activeSession.exercises.map((ex,i)=>({...ex, _idx:i}));
+  } else {
+    const day=new Date().getDay();const adjusted=day===0?6:day-1;
+    const s=PROGRAMME[DAY_MAP[adjusted]];
+    sessionName = s.name;
+    exercises = s.exercises.map((ex,i)=>({name:ex.name, sets:ex.sets, reps:ex.rep, _idx:i}));
+  }
   const{data:ws}=await sb.from('workout_sessions').insert({
-    user_id:USER.id,date:TODAY,session_type:session.name
+    user_id:USER.id,date:TODAY,session_type:sessionName
   }).select().single();
   if(!ws)return;
   const sets=[];
-  session.exercises.forEach((ex,ei)=>{
-    for(let si=0;si<ex.sets;si++){
+  exercises.forEach((ex)=>{
+    const ei=ex._idx;
+    for(let si=0;si<(+ex.sets||3);si++){
       const reps=document.getElementById(`reps-${ei}-${si}`)?.value;
       const wt=document.getElementById(`wt-${ei}-${si}`)?.value;
       if(reps||wt)sets.push({session_id:ws.id,exercise_name:ex.name,set_number:si+1,reps:+reps||0,weight_kg:+wt||0});
@@ -1000,7 +1087,8 @@ function shiftEatDate(delta){
   initEat();
 }
 
-const foodRatings = {}; // id → { score, headline, reasons, tips }
+const foodRatings = {}; // id → { score, headline, reasons, tips, micros }
+let _pendingFood = null; // { name, timeVal } — held during clarification
 
 function scoreClass(s){ return s>=8?'hi':s>=5?'mid':'lo'; }
 
@@ -1014,13 +1102,35 @@ function renderFoods(){
   document.getElementById('m-c').textContent=Math.round(totals.c);
   document.getElementById('m-f').textContent=Math.round(totals.fat);
 
-  const timeStr = f => f.meal_time ? `<span style="font-size:10px;color:var(--dim);margin-left:6px">${f.meal_time}</span>` : '';
+  // Micronutrient totals
+  const microWrap = document.getElementById('micro-totals');
+  const ratedFoods = foods.filter(f => foodRatings[f.id]?.micros);
+  if(ratedFoods.length > 0) {
+    const mt = ratedFoods.reduce((acc,f)=>{
+      const m = foodRatings[f.id].micros;
+      return { vitD: acc.vitD+(+m.vitD_iu||0), zinc: acc.zinc+(+m.zinc_mg||0),
+               mag: acc.mag+(+m.magnesium_mg||0), iron: acc.iron+(+m.iron_mg||0),
+               b12: acc.b12+(+m.b12_ug||0), omega3: acc.omega3+(+m.omega3_mg||0) };
+    }, { vitD:0, zinc:0, mag:0, iron:0, b12:0, omega3:0 });
+    document.getElementById('m-vitd').textContent = Math.round(mt.vitD);
+    document.getElementById('m-zinc').textContent = mt.zinc.toFixed(1);
+    document.getElementById('m-mag').textContent = Math.round(mt.mag);
+    document.getElementById('m-iron').textContent = mt.iron.toFixed(1);
+    document.getElementById('m-b12').textContent = mt.b12.toFixed(1);
+    document.getElementById('m-omega3').textContent = Math.round(mt.omega3);
+    if(microWrap) microWrap.style.display = '';
+  }
+
+  const timeStr = f => f.meal_time ? `<span style="font-size:10px;color:var(--dim);margin-left:6px">${f.meal_time.slice(0,5)}</span>` : '';
   document.getElementById('food-list').innerHTML = foods.map((f,i) => {
     const r = foodRatings[f.id];
     const scoreHtml = r ? `<div class="food-score ${scoreClass(r.score)}">${r.score}</div>` : '';
     const tipsHtml = r ? `<div class="food-tips-wrap" id="tips-${f.id}">
       <div class="food-tips-reasons">${escHtml(r.reasons)}</div>
       ${(r.tips||[]).map(t=>`<div class="food-tip-item">${escHtml(t)}</div>`).join('')}
+      ${r.micros ? `<div style="font-size:11px;color:var(--dim);padding:4px 0 0">
+        ${r.micros.vitD_iu ? `Vit D ${Math.round(r.micros.vitD_iu)} IU · ` : ''}${r.micros.zinc_mg ? `Zinc ${(+r.micros.zinc_mg).toFixed(1)}mg · ` : ''}${r.micros.b12_ug ? `B12 ${(+r.micros.b12_ug).toFixed(1)}μg · ` : ''}${r.micros.omega3_mg ? `Omega-3 ${Math.round(r.micros.omega3_mg)}mg` : ''}
+      </div>` : ''}
     </div>` : '';
     return `<div style="background:var(--s1);border:1px solid var(--border);margin-bottom:8px">
       <div class="food-row" onclick="${r?`toggleFoodTips('${f.id}')`:''}" style="${r?'cursor:pointer':''}">
@@ -1029,7 +1139,7 @@ function renderFoods(){
         ${scoreHtml}
         <button class="food-del" onclick="event.stopPropagation();removeFood(${i})">×</button>
       </div>
-      ${r ? `<div style="font-size:11px;color:var(--dim);padding:0 14px 6px;font-style:italic">${escHtml(r.headline)} ${r?'(tap to see why)':''}</div>` : ''}
+      ${r ? `<div style="font-size:11px;color:var(--dim);padding:0 14px 6px;font-style:italic">${escHtml(r.headline)} — tap for detail</div>` : ''}
       ${tipsHtml}
     </div>`;
   }).join('');
@@ -1038,6 +1148,40 @@ function renderFoods(){
 function toggleFoodTips(id){
   const el = document.getElementById('tips-'+id);
   if(el) el.classList.toggle('open');
+}
+
+async function callFoodAPI(name, timeVal) {
+  const t = OB.train || {}; const e = OB.eat || {};
+  const res = await fetch('/api/food', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      name,
+      goals: t.goal || e.goal,
+      weight: e.weight_kg,
+      bodyFat: e.body_fat,
+      primaryGoal: t.goal
+    })
+  });
+  return res.json();
+}
+
+async function logFoodEntry(name, timeVal, d) {
+  const macros = { cal: d.cal||0, protein_g: d.protein||0, carbs_g: d.carbs||0, fat_g: d.fat||0 };
+  const rating = { score: d.score, headline: d.headline, reasons: d.reasons, tips: d.tips, micros: d.micros || null };
+  const entry = {
+    user_id: USER.id, date: EAT_DATE, food_name: name,
+    calories: macros.cal, protein_g: macros.protein_g,
+    carbs_g: macros.carbs_g, fat_g: macros.fat_g,
+    meal_time: timeVal || null
+  };
+  const { data } = await sb.from('nutrition_logs').insert(entry).select().single();
+  if (data) {
+    foods.push(data);
+    foodRatings[data.id] = rating;
+    renderFoods();
+  }
+  showToast('Food logged');
 }
 
 async function addFood(){
@@ -1049,44 +1193,46 @@ async function addFood(){
   const btn = document.getElementById('food-add-btn');
   btn.disabled = true; btn.textContent = 'Analysing...';
 
-  // Call AI to get macros + rating
-  let macros = { cal:0, protein_g:0, carbs_g:0, fat_g:0 };
-  let rating = null;
   try {
-    const t = OB.train || {}; const e = OB.eat || {};
-    const res = await fetch('/api/food', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        goals: t.goal || e.goal,
-        weight: e.weight_kg,
-        bodyFat: e.body_fat,
-        primaryGoal: t.goal
-      })
-    });
-    const d = await res.json();
-    if (!d.error) {
-      macros = { cal: d.cal||0, protein_g: d.protein||0, carbs_g: d.carbs||0, fat_g: d.fat||0 };
-      rating = { score: d.score, headline: d.headline, reasons: d.reasons, tips: d.tips };
+    const d = await callFoodAPI(name, timeVal);
+    if(d.needsClarification && d.clarificationQuestion) {
+      // Show clarification UI — hold food until answered
+      _pendingFood = { name, timeVal };
+      document.getElementById('food-clarify-q').textContent = d.clarificationQuestion;
+      document.getElementById('food-clarify-wrap').style.display = '';
+      document.getElementById('food-clarify-input').focus();
+      nameEl.value = '';
+    } else if(!d.error) {
+      await logFoodEntry(name, timeVal, d);
+      nameEl.value = '';
+      document.getElementById('f-time').value = '';
     }
-  } catch(e) { /* use zeros */ }
-
-  const entry = {
-    user_id: USER.id, date: EAT_DATE, food_name: name,
-    calories: macros.cal, protein_g: macros.protein_g,
-    carbs_g: macros.carbs_g, fat_g: macros.fat_g,
-    meal_time: timeVal || null
-  };
-  const { data } = await sb.from('nutrition_logs').insert(entry).select().single();
-  if (data) {
-    foods.push(data);
-    if (rating) foodRatings[data.id] = rating;
-    renderFoods();
+  } catch(e) {
+    showToast('Could not analyse food');
   }
-  nameEl.value = '';
+
   btn.disabled = false; btn.textContent = 'Add & Rate';
-  showToast('Food logged');
+}
+
+async function submitClarification() {
+  if(!_pendingFood) return;
+  const answer = document.getElementById('food-clarify-input')?.value.trim();
+  if(!answer) return;
+
+  const fullName = `${_pendingFood.name} — ${answer}`;
+  document.getElementById('food-clarify-wrap').style.display = 'none';
+  document.getElementById('food-clarify-input').value = '';
+
+  const btn = document.getElementById('food-add-btn');
+  btn.disabled = true; btn.textContent = 'Logging...';
+
+  try {
+    const d = await callFoodAPI(fullName, _pendingFood.timeVal);
+    if(!d.error) await logFoodEntry(fullName, _pendingFood.timeVal, d);
+  } catch(e) { showToast('Could not log food'); }
+
+  _pendingFood = null;
+  btn.disabled = false; btn.textContent = 'Add & Rate';
 }
 
 async function removeFood(i){
@@ -1375,7 +1521,7 @@ async function sendMessage(){
   msgs.scrollTop=msgs.scrollHeight;
 }
 
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function stripMd(s){
   return s
@@ -1852,6 +1998,72 @@ function renderProgrammeAnalysis(d){
     ${impHtml}
     ${plan.length ? `<div class="sh-label" style="margin-bottom:10px">Weekly plan</div><div class="week-cal">${calHtml}</div>` : ''}
   `;
+
+  // Show training coach chat for refinement
+  initTrainChat(analysis, improvements);
+}
+
+/* ── TRAINING CHAT ── */
+const trainChatHistory = [];
+
+function initTrainChat(analysis, improvements) {
+  const wrap = document.getElementById('train-coach-wrap');
+  if(!wrap) return;
+  wrap.style.display = '';
+  if(trainChatHistory.length) return; // already seeded
+
+  const msgs = document.getElementById('train-chat-msgs');
+  const seed = stripMd([
+    analysis ? analysis.split('.')[0]+'.' : '',
+    improvements?.length ? `Key changes: ${improvements[0]}` : '',
+    'Ask me about any exercise, request changes, or tell me what you want to keep or drop — once we agree, your plan updates.'
+  ].filter(Boolean).join(' '));
+  msgs.innerHTML = `<div class="msg coach">${escHtml(seed).replace(/\n/g,'<br>')}</div>`;
+  trainChatHistory.push({ role: 'assistant', content: seed });
+
+  const input = document.getElementById('train-chat-input');
+  if(input) input.addEventListener('keydown', e => { if(e.key==='Enter') sendTrainChat(); });
+}
+
+async function sendTrainChat() {
+  const input = document.getElementById('train-chat-input');
+  const msg = input?.value.trim();
+  if(!msg) return;
+  input.value = '';
+
+  const msgs = document.getElementById('train-chat-msgs');
+  msgs.innerHTML += `<div class="msg user">${escHtml(msg)}</div>`;
+  msgs.innerHTML += `<div class="msg loading" id="tc-loading">Thinking...</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById('train-chat-send').disabled = true;
+  trainChatHistory.push({ role: 'user', content: msg });
+
+  initCoach();
+  const t = OB.train || {};
+  const extraCtx = [
+    window._coachContext || '',
+    t.programme ? `\nSubmitted programme:\n${t.programme}` : '',
+    t.weeklyPlan?.length ? `\nCurrent weekly plan:\n${t.weeklyPlan.map(d=>`${d.day}: ${d.sessionName}${d.exercises?.length?' — '+d.exercises.map(e=>e.name).join(', '):''}`).join('\n')}` : '',
+    t.analysis ? `\nAnalysis: ${t.analysis}` : '',
+  ].filter(Boolean).join('\n');
+
+  try {
+    const res = await fetch('/api/coach', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ messages: trainChatHistory, userProfile: PROFILE || {}, userContext: extraCtx })
+    });
+    const d = await res.json();
+    const reply = d.reply || 'Something went wrong — try again.';
+    trainChatHistory.push({ role: 'assistant', content: reply });
+    document.getElementById('tc-loading')?.remove();
+    msgs.innerHTML += `<div class="msg coach">${escHtml(stripMd(reply)).replace(/\n/g,'<br>')}</div>`;
+  } catch(e) {
+    document.getElementById('tc-loading')?.remove();
+    msgs.innerHTML += `<div class="msg coach" style="color:var(--dim)">Couldn't reach the coach. Try again.</div>`;
+  }
+  document.getElementById('train-chat-send').disabled = false;
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 /* ── MULTICHECK TOGGLE ── */
