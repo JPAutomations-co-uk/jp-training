@@ -1061,6 +1061,10 @@ async function initEat(){
   updateEatDateUI();
   const{data}=await sb.from('nutrition_logs').select('*').eq('user_id',USER.id).eq('date',EAT_DATE).order('created_at');
   foods=data||[];
+  // Restore ratings from persisted rating_data column
+  foods.forEach(f => {
+    if(f.rating_data && f.rating_data.score) foodRatings[f.id] = f.rating_data;
+  });
   renderFoods();
 }
 
@@ -1168,20 +1172,24 @@ async function callFoodAPI(name, timeVal) {
 
 async function logFoodEntry(name, timeVal, d) {
   const macros = { cal: d.cal||0, protein_g: d.protein||0, carbs_g: d.carbs||0, fat_g: d.fat||0 };
-  const rating = { score: d.score, headline: d.headline, reasons: d.reasons, tips: d.tips, micros: d.micros || null };
+  const rating = { score: d.score||null, headline: d.headline||null, reasons: d.reasons||null, tips: Array.isArray(d.tips)?d.tips:[], micros: d.micros||null };
   const entry = {
     user_id: USER.id, date: EAT_DATE, food_name: name,
     calories: macros.cal, protein_g: macros.protein_g,
     carbs_g: macros.carbs_g, fat_g: macros.fat_g,
-    meal_time: timeVal || null
+    meal_time: timeVal || null,
+    rating_data: rating
   };
-  const { data } = await sb.from('nutrition_logs').insert(entry).select().single();
+  const { data, error } = await sb.from('nutrition_logs').insert(entry).select().single();
   if (data) {
     foods.push(data);
-    foodRatings[data.id] = rating;
+    if(rating.score) foodRatings[data.id] = rating;
     renderFoods();
+    showToast('Food logged');
+  } else {
+    showToast('Failed to save — check connection');
+    console.error('logFoodEntry insert error:', error);
   }
-  showToast('Food logged');
 }
 
 async function addFood(){
@@ -1246,7 +1254,7 @@ async function getMealSuggestion(){
   const wrap = document.getElementById('eat-suggestions');
   wrap.innerHTML = '<p style="font-size:13px;color:var(--dim);padding:10px 0">Building your meal plan...</p>';
   initCoach();
-  if(!window._coachContext){wrap.innerHTML='';return;}
+  if(!window._coachContext){wrap.innerHTML='<p style="font-size:12px;color:var(--dim);padding:8px 0">Complete your profile first so the plan can be personalised to you.</p>';return;}
   try{
     const e=OB.eat||{};
     const existing = foods.map(f=>f.food_name).join(', ');
@@ -1913,9 +1921,9 @@ async function saveProgramme(){
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         programme: val,
-        goal: t.primary_goal || OB.goals?.primary_goal || '',
-        experience: t.training_experience || '',
-        days: t.training_days || '',
+        goal: t.goal || '',
+        experience: t.experience || '',
+        days: t.days || '',
         injuries: t.injuries || ''
       })
     });
@@ -1938,7 +1946,10 @@ async function saveProgramme(){
 function renderProgrammeAnalysis(d){
   const el = document.getElementById('programme-analysis');
   if(!el || !d) return;
-  if(d.error) { el.innerHTML = ''; return; }
+  if(d.error) {
+    el.innerHTML = `<p style="font-size:12px;color:var(--dim);padding:12px 0;border-left:2px solid rgba(44,212,196,.3);padding-left:12px">Analysis failed: ${escHtml(d.error)}. The programme may be too long — try trimming it and resubmit.</p>`;
+    return;
+  }
 
   const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
   const plan = d.weeklyPlan || OB.train?.weeklyPlan || [];
@@ -1998,6 +2009,9 @@ function renderProgrammeAnalysis(d){
     ${impHtml}
     ${plan.length ? `<div class="sh-label" style="margin-bottom:10px">Weekly plan</div><div class="week-cal">${calHtml}</div>` : ''}
   `;
+
+  // Update today's workout tracker from the AI plan
+  if(plan.length) renderTodaySession(plan);
 
   // Show training coach chat for refinement
   initTrainChat(analysis, improvements);

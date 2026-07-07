@@ -11,7 +11,14 @@ Rules:
 - Maximum 3–4 short paragraphs per response. If they need more detail, they'll ask.
 - Never make up specific values (blood ranges, dosages) you aren't confident in.`
 
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
 export default async function handler(req) {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors })
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
   }
@@ -54,14 +61,11 @@ export default async function handler(req) {
     const reply = data.content?.[0]?.text ?? 'Something went wrong — try again.'
 
     return new Response(JSON.stringify({ reply }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Content-Type': 'application/json', ...cors },
     })
   } catch (err) {
     return new Response(JSON.stringify({ error: 'Coach unavailable' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' }
+      status: 500, headers: { 'Content-Type': 'application/json', ...cors }
     })
   }
 }
