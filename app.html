@@ -481,24 +481,33 @@
         </div>
         <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('train')">Edit profile</button>
       </div>
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-title">Your Protocol</div>
-        <p class="card-sub" style="margin-bottom:8px">Paste your programme here — exercises, sets, reps, and weights. The AI will organise it into a weekly calendar and consult on how to optimise it.</p>
-        <button id="import-coach-btn" onclick="importCoachPlan()" style="width:100%;padding:11px;background:rgba(44,212,196,.06);border:1px dashed rgba(44,212,196,.3);color:var(--teal);font-family:var(--B);font-size:12px;cursor:pointer;margin-bottom:10px;transition:all .2s" onmouseover="this.style.background='rgba(44,212,196,.1)'" onmouseout="this.style.background='rgba(44,212,196,.06)'">↓ Pull plan from coach conversation</button>
-        <textarea class="prog-textarea" id="programme-input"
-          placeholder="e.g.&#10;PPL ×6/week&#10;Push A: Bench 4×5 @100kg, OHP 3×8 @60kg, Incline DB 3×10, Lateral raises 4×15&#10;Pull A: Weighted pull-up 4×6, BB row 4×8 @80kg, Cable row 3×10, Face pulls 3×15, Curl 3×10&#10;Legs: Back squat 4×5 @120kg, RDL 4×8 @100kg, BSS 3×10, Leg press 3×12, Calf raises 4×20"></textarea>
-        <button class="btn-primary" style="margin-top:10px" id="prog-save-btn" onclick="saveProgramme()">Analyse &amp; Build Plan</button>
-      </div>
-      <div id="programme-analysis"></div>
-      <div id="train-coach-wrap" style="display:none">
-        <div class="sh-label" style="margin:4px 0 10px">Refine your plan</div>
-        <div class="coach-messages" id="train-chat-msgs" style="min-height:60px;max-height:280px;overflow-y:auto"></div>
+
+      <!-- Today's workout — primary view -->
+      <div id="train-content"></div>
+
+      <!-- Coach chat — always visible -->
+      <div style="margin-top:20px">
+        <div class="card-title" style="margin-bottom:10px">Adjust your plan</div>
+        <div class="coach-messages" id="train-chat-msgs" style="min-height:60px;max-height:300px;overflow-y:auto"></div>
         <div class="coach-input-wrap" style="margin-top:8px">
-          <input id="train-chat-input" class="coach-input" placeholder="Ask about the plan, request changes, or agree...">
+          <input id="train-chat-input" class="coach-input" placeholder="e.g. make bench 5×5, swap Wednesday to legs, add face pulls…">
           <button id="train-chat-send" class="coach-send" onclick="sendTrainChat()">→</button>
         </div>
       </div>
-      <div id="train-content"></div>
+
+      <!-- Protocol setup — secondary collapsible -->
+      <details style="margin-top:16px">
+        <summary style="font-size:12px;color:var(--dim);cursor:pointer;padding:8px 0;list-style:none">
+          <span>Set up from protocol text ▾</span>
+        </summary>
+        <div style="margin-top:8px">
+          <button onclick="importCoachPlan()" style="width:100%;padding:11px;background:rgba(44,212,196,.06);border:1px dashed rgba(44,212,196,.3);color:var(--teal);font-family:var(--B);font-size:12px;cursor:pointer;margin-bottom:10px">↓ Pull from coach conversation</button>
+          <textarea class="prog-textarea" id="programme-input"
+            placeholder="e.g.&#10;PPL ×6/week&#10;Push A: Bench 4×5 @100kg, OHP 3×8 @60kg…&#10;Pull A: Weighted pull-up 4×6, BB row 4×8 @80kg…&#10;Legs: Back squat 4×5 @120kg, RDL 4×8 @100kg…"></textarea>
+          <button class="btn-primary" style="margin-top:10px" id="prog-save-btn" onclick="saveProgramme()">Analyse &amp; Build Plan</button>
+        </div>
+      </details>
+      <div id="programme-analysis"></div>
     </div>
 
     <!-- EAT -->
@@ -933,9 +942,12 @@ function initTrain(){
   const progEl = document.getElementById('programme-input');
   if(progEl && saved) progEl.value = saved;
 
+  // Seed training chat on init
+  initTrainChat(OB.train?.analysis || null, OB.train?.improvements || null);
+  document.getElementById('train-chat-input')?.addEventListener('keydown', e => { if(e.key==='Enter') sendTrainChat(); });
+
   // Restore previously analysed weekly plan
   if(OB.train?.weeklyPlan?.length) {
-    renderProgrammeAnalysis({ weeklyPlan: OB.train.weeklyPlan, analysis: OB.train.analysis, improvements: OB.train.improvements });
     renderTodaySession(OB.train.weeklyPlan);
     return;
   }
@@ -1966,12 +1978,13 @@ async function saveProgramme(){
       })
     });
     const d = await res.json();
-    if(d.weeklyPlan) {
+    if(d.weeklyPlan?.length) {
       OB.train.weeklyPlan = d.weeklyPlan;
       OB.train.analysis = d.analysis;
       OB.train.improvements = d.improvements;
       localStorage.setItem('jpt_ob', JSON.stringify(OB));
       sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+      renderTodaySession(d.weeklyPlan);
     }
     renderProgrammeAnalysis(d);
   } catch(e) {
@@ -2088,22 +2101,22 @@ function renderProgrammeAnalysis(d){
 const trainChatHistory = [];
 
 function initTrainChat(analysis, improvements) {
-  const wrap = document.getElementById('train-coach-wrap');
-  if(!wrap) return;
-  wrap.style.display = '';
   if(trainChatHistory.length) return; // already seeded
 
   const msgs = document.getElementById('train-chat-msgs');
-  const seed = stripMd([
-    analysis ? analysis.split('.')[0]+'.' : '',
-    improvements?.length ? `Key changes: ${improvements[0]}` : '',
-    'Ask me about any exercise, request changes, or tell me what you want to keep or drop — once we agree, your plan updates.'
-  ].filter(Boolean).join(' '));
+  if(!msgs) return;
+
+  const hasPlan = !!OB.train?.weeklyPlan?.length;
+  const seed = hasPlan
+    ? stripMd([
+        analysis ? analysis.split('.')[0]+'.' : '',
+        improvements?.length ? `Main improvement: ${improvements[0]}.` : '',
+        "Tell me any changes you want — I'll update your plan instantly."
+      ].filter(Boolean).join(' '))
+    : "No plan set up yet. Tell me about your training — e.g. how many days a week, your goals, what you're currently doing — and I'll build you a plan.";
+
   msgs.innerHTML = `<div class="msg coach">${escHtml(seed).replace(/\n/g,'<br>')}</div>`;
   trainChatHistory.push({ role: 'assistant', content: seed });
-
-  const input = document.getElementById('train-chat-input');
-  if(input) input.addEventListener('keydown', e => { if(e.key==='Enter') sendTrainChat(); });
 }
 
 async function sendTrainChat() {
@@ -2138,13 +2151,53 @@ async function sendTrainChat() {
     const reply = d.reply || 'Something went wrong — try again.';
     trainChatHistory.push({ role: 'assistant', content: reply });
     document.getElementById('tc-loading')?.remove();
-    msgs.innerHTML += `<div class="msg coach">${escHtml(stripMd(reply)).replace(/\n/g,'<br>')}</div>`;
+    msgs.innerHTML += `<div class="msg coach">${escHtml(stripMd(reply)).replace(/\n/g,'<br>')}</div>
+<div style="text-align:right;margin:4px 0 8px">
+  <button onclick="applyTrainChatPlan(this)" style="font-size:11px;color:var(--teal);background:rgba(44,212,196,.06);border:1px solid rgba(44,212,196,.3);padding:5px 12px;cursor:pointer;font-family:var(--B)">↓ Apply to training</button>
+</div>`;
   } catch(e) {
     document.getElementById('tc-loading')?.remove();
     msgs.innerHTML += `<div class="msg coach" style="color:var(--dim)">Couldn't reach the coach. Try again.</div>`;
   }
   document.getElementById('train-chat-send').disabled = false;
   msgs.scrollTop = msgs.scrollHeight;
+}
+
+/* ── APPLY TRAIN CHAT PLAN ── */
+async function applyTrainChatPlan(btn) {
+  if(btn) { btn.disabled = true; btn.textContent = 'Applying…'; }
+  const t = OB.train || {};
+
+  // Build context: current plan + full conversation
+  const planCtx = t.weeklyPlan?.length
+    ? 'Current plan:\n' + t.weeklyPlan.map(d => `${d.day}: ${d.sessionName}${d.exercises?.length?' — '+d.exercises.map(e=>e.name).join(', '):''}`).join('\n') + '\n\n'
+    : '';
+  const conversation = trainChatHistory.map(m => `${m.role==='user'?'User':'Coach'}: ${m.content}`).join('\n');
+  const programme = planCtx + 'Conversation:\n' + conversation;
+
+  try {
+    const res = await fetch('/api/programme', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ programme, goal: t.goal||'', experience: t.experience||'', days: t.days||'', injuries: t.injuries||'' })
+    });
+    const d = await res.json();
+    if(d.weeklyPlan?.length) {
+      OB.train = t;
+      OB.train.weeklyPlan = d.weeklyPlan;
+      OB.train.analysis = d.analysis;
+      OB.train.improvements = d.improvements;
+      localStorage.setItem('jpt_ob', JSON.stringify(OB));
+      sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+      renderTodaySession(d.weeklyPlan);
+      showToast("Plan updated — today's session refreshed");
+    } else {
+      showToast(d.error || 'Could not extract plan — describe it more clearly');
+    }
+  } catch(e) {
+    showToast('Failed to apply — try again');
+  }
+  if(btn) { btn.disabled = false; btn.textContent = '↓ Apply to training'; }
 }
 
 /* ── MULTICHECK TOGGLE ── */
