@@ -43,7 +43,12 @@ export default async function handler(req) {
   let body
   try { body = await req.json() } catch { return new Response('Bad request', { status: 400 }) }
 
-  const { messages = [] } = body
+  let { messages = [] } = body
+
+  // Anthropic requires at least one user message — seed first exchange
+  if (messages.length === 0) {
+    messages = [{ role: 'user', content: 'Hi' }]
+  }
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
