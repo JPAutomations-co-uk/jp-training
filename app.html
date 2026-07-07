@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <style>
     :root{
       --black:#000;--s1:#0C0C0C;--s2:#111;--border:#1A1A1A;
@@ -243,6 +244,67 @@
       transition:color .2s;font-family:'Poppins',sans-serif}
     .ob-edit-btn:hover{color:#2CD4C4}
 
+    /* ── HABIT DETAIL DRAWER ── */
+    #habit-drawer{position:fixed;inset:0;z-index:350;display:flex;flex-direction:column;
+      justify-content:flex-end;background:rgba(0,0,0,.7);backdrop-filter:blur(8px)}
+    #habit-drawer.hidden{display:none}
+    .hd-panel{background:#0C0C0C;border-top:1px solid #1A1A1A;max-height:82vh;
+      overflow-y:auto;padding:24px 20px 0}
+    .hd-title{font-family:var(--D);font-size:28px;font-weight:900;text-transform:uppercase;
+      line-height:1;margin-bottom:6px}
+    .hd-why{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;
+      border-bottom:1px solid var(--border);padding-bottom:16px}
+    .hd-steps-label{font-size:10px;font-weight:600;letter-spacing:.2em;
+      text-transform:uppercase;color:var(--teal);margin-bottom:14px}
+    .hd-step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+    .hd-num{font-family:var(--D);font-size:20px;font-weight:900;color:var(--teal);
+      flex-shrink:0;width:22px;line-height:1.2}
+    .hd-text{font-size:13px;color:var(--white);line-height:1.7;font-weight:300}
+    .hd-close-btn{position:sticky;bottom:0;width:100%;padding:16px;background:#0C0C0C;
+      border:none;border-top:1px solid var(--border);color:var(--muted);
+      font-family:var(--B);font-size:13px;cursor:pointer;margin-top:16px}
+    /* ── CUSTOM HABITS ── */
+    .habit-add-wrap{display:flex;gap:8px;padding:12px 16px;
+      background:rgba(255,255,255,.02);border:1px dashed rgba(44,212,196,.2);margin-top:8px}
+    .habit-add-input{flex:1;background:transparent;border:none;color:var(--white);
+      font-family:var(--B);font-size:13px;font-weight:300;outline:none}
+    .habit-add-input::placeholder{color:var(--dim)}
+    .habit-add-btn{background:none;border:1px solid rgba(44,212,196,.3);color:var(--teal);
+      font-family:var(--D);font-size:13px;font-weight:700;letter-spacing:.08em;
+      padding:6px 14px;cursor:pointer;text-transform:uppercase;flex-shrink:0;transition:all .2s}
+    .habit-add-btn:hover{background:rgba(44,212,196,.08)}
+    .habit-expand{background:none;border:none;color:var(--dim);cursor:pointer;
+      font-size:11px;font-family:var(--B);padding:0;flex-shrink:0;transition:color .2s;
+      white-space:nowrap;letter-spacing:.04em}
+    .habit-expand:hover{color:var(--teal)}
+    .habit-del{width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+      background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;
+      flex-shrink:0;transition:color .2s;padding:0}
+    .habit-del:hover{color:#ff6b6b}
+    /* ── PROGRAMME ── */
+    .prog-textarea{width:100%;background:rgba(255,255,255,.04);
+      border:1px solid rgba(44,212,196,.2);padding:12px 14px;color:var(--white);
+      font-family:var(--B);font-size:13px;font-weight:300;min-height:120px;
+      resize:vertical;outline:none;line-height:1.65;transition:border-color .2s}
+    .prog-textarea:focus{border-color:rgba(44,212,196,.5)}
+    /* ── FOOD SCORE ── */
+    .food-score{font-family:var(--D);font-size:20px;font-weight:900;flex-shrink:0;
+      min-width:36px;text-align:center}
+    .food-score.hi{color:#2CD4C4}.food-score.mid{color:#f0a500}.food-score.lo{color:#ff6b6b}
+    .food-headline{font-size:11px;color:var(--dim);margin-top:2px;font-style:italic}
+    .food-tips-wrap{display:none;padding:10px 14px;background:rgba(44,212,196,.04);
+      border-top:1px solid rgba(44,212,196,.1);font-size:12px;line-height:1.75}
+    .food-tips-wrap.open{display:block}
+    .food-tips-reasons{color:var(--muted);margin-bottom:6px}
+    .food-tip-item{color:rgba(44,212,196,.8);padding-left:10px;position:relative}
+    .food-tip-item::before{content:'→';position:absolute;left:0;color:var(--teal)}
+    /* ── PROGRESS CHARTS ── */
+    .chart-card{background:var(--s1);border:1px solid var(--border);
+      padding:16px;margin-bottom:16px}
+    .chart-lbl{font-size:10px;font-weight:600;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--teal);margin-bottom:14px}
+    .chart-empty{font-size:12px;color:var(--dim);text-align:center;padding:16px 0}
+
     /* ── INTAKE OVERLAY ── */
     #intake-overlay{position:fixed;inset:0;z-index:300;background:var(--black);
       display:flex;flex-direction:column}
@@ -363,6 +425,12 @@
       <div class="prog-bar-wrap"><div class="prog-bar-fill" id="habits-bar" style="width:0%"></div></div>
       <div id="overview-card-wrap"></div>
       <div style="margin-top:16px" id="habits-list"></div>
+      <div class="habit-add-wrap">
+        <input class="habit-add-input" id="habit-add-input"
+          placeholder="Add your own habit (e.g. Read 20 minutes)…"
+          onkeydown="if(event.key==='Enter')addCustomHabit()">
+        <button class="habit-add-btn" onclick="addCustomHabit()">+ Add</button>
+      </div>
     </div>
 
     <!-- TRAIN -->
@@ -374,6 +442,13 @@
           <p class="sh-sub" id="train-sub">Loading your programme...</p>
         </div>
         <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('train')">Edit profile</button>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Your Protocol</div>
+        <p class="card-sub" style="margin-bottom:10px">Paste your current programme here. The coach reads this and uses it to give you specific advice.</p>
+        <textarea class="prog-textarea" id="programme-input"
+          placeholder="e.g. PPL 6x/week — Push: bench 4x5, OHP 3x8, incline DB 3x10, lateral raises 4x15..."></textarea>
+        <button class="btn-primary" style="margin-top:10px" onclick="saveProgramme()">Save Programme</button>
       </div>
       <div id="train-content"></div>
     </div>
@@ -393,31 +468,55 @@
 
       <!-- Add food form -->
       <div class="food-form">
-        <div class="sh-label" style="margin-bottom:10px">Log a meal or food</div>
-        <input id="f-name" type="text" placeholder="Food name (e.g. 200g chicken breast)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);padding:10px 12px;color:#fff;font-family:var(--B);font-size:13px;margin-bottom:8px">
-        <div class="food-form-row">
-          <div><label class="food-form-label">Calories</label><input id="f-cal" type="number" min="0" placeholder="0"></div>
-          <div><label class="food-form-label">Protein (g)</label><input id="f-p" type="number" min="0" placeholder="0"></div>
-          <div><label class="food-form-label">Carbs (g)</label><input id="f-c" type="number" min="0" placeholder="0"></div>
-          <div><label class="food-form-label">Fat (g)</label><input id="f-fat" type="number" min="0" placeholder="0"></div>
+        <div class="sh-label" style="margin-bottom:10px">Log food</div>
+        <input id="f-name" type="text"
+          placeholder="e.g. 200g chicken breast, 2 scrambled eggs, protein shake"
+          style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);padding:10px 12px;color:#fff;font-family:var(--B);font-size:13px;margin-bottom:8px"
+          onkeydown="if(event.key==='Enter')addFood()">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="f-time" type="time"
+            style="width:110px;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);padding:10px 12px;color:#fff;font-family:var(--B);font-size:13px">
+          <span style="font-size:11px;color:var(--dim)">Meal time (optional)</span>
         </div>
-        <button class="btn-primary" style="margin-top:12px" onclick="addFood()">Add Food</button>
+        <button class="btn-primary" id="food-add-btn" style="margin-top:10px" onclick="addFood()">Add &amp; Rate</button>
       </div>
 
+      <div id="eat-suggestions" style="margin-bottom:16px"></div>
+      <button onclick="getMealSuggestion()" style="width:100%;padding:12px;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:12px;cursor:pointer;margin-bottom:16px;transition:all .2s" onmouseover="this.style.borderColor='rgba(44,212,196,.3)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">What should I eat today?</button>
       <div class="food-list" id="food-list"></div>
     </div>
 
     <!-- PROGRESS -->
     <div id="pane-progress" class="pane">
       <div class="sh">
-        <div class="sh-label">Weekly Check-in</div>
+        <div class="sh-label">Tracking</div>
         <div class="sh-title">Progress</div>
-        <p class="sh-sub">Score each area honestly. JP reviews these weekly.</p>
+        <p class="sh-sub">Auto-tracked from your habits, training, and nutrition logs.</p>
       </div>
+
+      <div class="chart-card">
+        <div class="chart-lbl">Habit Completion — Last 7 Days</div>
+        <canvas id="chart-habits" height="110"></canvas>
+        <div id="chart-habits-empty" class="chart-empty" style="display:none">Log habits for a few days to see your trend.</div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-lbl">Wellbeing — Check-in Scores</div>
+        <canvas id="chart-checkin" height="110"></canvas>
+        <div id="chart-checkin-empty" class="chart-empty" style="display:none">Submit a few check-ins to see your trend.</div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-lbl">Daily Calories — Last 7 Days</div>
+        <canvas id="chart-cals" height="110"></canvas>
+        <div id="chart-cals-empty" class="chart-empty" style="display:none">Log meals in the Eat tab to track calories.</div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="sh-label" style="margin-bottom:6px">Weekly Check-in</div>
+      <p class="sh-sub" style="margin-bottom:14px">Rate each area — JP reviews these.</p>
       <div class="score-grid" id="score-grid"></div>
       <button class="btn-primary" id="checkin-btn" onclick="submitCheckin()">Submit Check-in</button>
       <div class="divider"></div>
-      <div class="sh-label" style="margin-bottom:12px">Last 4 Weeks</div>
+      <div class="sh-label" style="margin-bottom:12px">History</div>
       <div id="checkin-history"></div>
     </div>
 
@@ -466,6 +565,13 @@
     </button>
   </nav>
 
+</div>
+
+<!-- HABIT DETAIL DRAWER -->
+<div id="habit-drawer" class="hidden" onclick="if(event.target===this)closeHabitDetail()">
+  <div class="hd-panel" id="hd-panel">
+    <button class="hd-close-btn" onclick="closeHabitDetail()">Close</button>
+  </div>
 </div>
 
 <!-- INTAKE OVERLAY -->
@@ -543,7 +649,13 @@ function getHabits(){
   const highStress=h.stress_level&&h.stress_level.startsWith('High')||h.stress_level&&h.stress_level.startsWith('Very');
   const poorSleep=h.sleep_quality&&(h.sleep_quality.startsWith('Very poor')||h.sleep_quality.startsWith('Poor'));
   const drinksAlcohol=h.alcohol&&h.alcohol!=='Never'&&h.alcohol!=='Rarely';
-  return [
+  const custom = (OB.custom_habits||[]).map(ch=>({
+    key:'custom_'+ch.key,
+    name:ch.name,
+    desc:ch.desc||'Your custom habit',
+    custom:true
+  }));
+  const base = [
     {key:'sunlight',
      name:'Morning Sunlight',
      desc:`Natural light within 1hr of waking${h.wake_time?' ('+h.wake_time+')':''} — triggers your cortisol peak, anchors your circadian clock, and sets melatonin timing for that night`},
@@ -575,6 +687,7 @@ function getHabits(){
      name:'Hydration',
      desc:'2.5–3L water today — every hormone, enzyme, and neurotransmitter in the body depends on adequate hydration; performance and cognition drop before thirst kicks in'},
   ];
+  return [...base, ...custom];
 }
 const HABITS=getHabits();
 
@@ -701,20 +814,24 @@ async function initHabits(){
 }
 
 function renderHabits(){
+  const allH=getHabits();
   const done=Object.values(habitState).filter(Boolean).length;
-  document.getElementById('habits-count').textContent=`${done} / ${HABITS.length}`;
-  document.getElementById('habits-bar').style.width=`${(done/HABITS.length)*100}%`;
+  document.getElementById('habits-count').textContent=`${done} / ${allH.length}`;
+  document.getElementById('habits-bar').style.width=`${(done/allH.length)*100}%`;
 
   const list=document.getElementById('habits-list');
-  list.innerHTML=HABITS.map(h=>`
+  const allHabits=getHabits();
+  list.innerHTML=allHabits.map(h=>`
     <div class="habit-item ${habitState[h.key]?'done':''}" onclick="toggleHabit('${h.key}')">
       <div class="habit-check">
         <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div class="habit-info">
-        <div class="habit-name">${h.name}</div>
-        <div class="habit-desc">${h.desc}</div>
+        <div class="habit-name">${escHtml(h.name)}</div>
+        <div class="habit-desc">${escHtml(h.desc)}</div>
       </div>
+      ${HABIT_PROTOCOLS[h.key]?`<button class="habit-expand" onclick="event.stopPropagation();showHabitDetail('${h.key}')">Guide →</button>`:''}
+      ${h.custom?`<button class="habit-del" onclick="event.stopPropagation();removeCustomHabit('${h.key}')">×</button>`:''}
     </div>
   `).join('');
 }
@@ -733,6 +850,11 @@ async function toggleHabit(key){
    TRAIN
 ════════════════════════════════════════ */
 function initTrain(){
+  // Pre-fill saved programme
+  const saved = OB.train?.programme;
+  const progEl = document.getElementById('programme-input');
+  if(progEl && saved) progEl.value = saved;
+
   const day=new Date().getDay(); // 0=Sun, 1=Mon...
   const adjusted=day===0?6:day-1; // Mon=0
   const session=PROGRAMME[DAY_MAP[adjusted]];
@@ -802,6 +924,10 @@ async function initEat(){
   renderFoods();
 }
 
+const foodRatings = {}; // id → { score, headline, reasons, tips }
+
+function scoreClass(s){ return s>=8?'hi':s>=5?'mid':'lo'; }
+
 function renderFoods(){
   const totals=foods.reduce((acc,f)=>({
     cal:acc.cal+(+f.calories||0),p:acc.p+(+f.protein_g||0),
@@ -811,33 +937,104 @@ function renderFoods(){
   document.getElementById('m-p').textContent=Math.round(totals.p);
   document.getElementById('m-c').textContent=Math.round(totals.c);
   document.getElementById('m-f').textContent=Math.round(totals.fat);
-  document.getElementById('food-list').innerHTML=foods.map((f,i)=>`
-    <div class="food-row">
-      <div class="food-name">${f.food_name}</div>
-      <div class="food-macros">${Math.round(f.protein_g||0)}P · ${Math.round(f.carbs_g||0)}C · ${Math.round(f.fat_g||0)}F<br>${Math.round(f.calories||0)} kcal</div>
-      <button class="food-del" onclick="removeFood(${i})">×</button>
-    </div>
-  `).join('');
+
+  const timeStr = f => f.meal_time ? `<span style="font-size:10px;color:var(--dim);margin-left:6px">${f.meal_time}</span>` : '';
+  document.getElementById('food-list').innerHTML = foods.map((f,i) => {
+    const r = foodRatings[f.id];
+    const scoreHtml = r ? `<div class="food-score ${scoreClass(r.score)}">${r.score}</div>` : '';
+    const tipsHtml = r ? `<div class="food-tips-wrap" id="tips-${f.id}">
+      <div class="food-tips-reasons">${escHtml(r.reasons)}</div>
+      ${(r.tips||[]).map(t=>`<div class="food-tip-item">${escHtml(t)}</div>`).join('')}
+    </div>` : '';
+    return `<div style="background:var(--s1);border:1px solid var(--border);margin-bottom:8px">
+      <div class="food-row" onclick="${r?`toggleFoodTips('${f.id}')`:''}" style="${r?'cursor:pointer':''}">
+        <div class="food-name">${escHtml(f.food_name)}${timeStr(f)}</div>
+        <div class="food-macros">${Math.round(f.protein_g||0)}P · ${Math.round(f.carbs_g||0)}C · ${Math.round(f.fat_g||0)}F<br>${Math.round(f.calories||0)} kcal</div>
+        ${scoreHtml}
+        <button class="food-del" onclick="event.stopPropagation();removeFood(${i})">×</button>
+      </div>
+      ${r ? `<div style="font-size:11px;color:var(--dim);padding:0 14px 6px;font-style:italic">${escHtml(r.headline)} ${r?'(tap to see why)':''}</div>` : ''}
+      ${tipsHtml}
+    </div>`;
+  }).join('');
+}
+
+function toggleFoodTips(id){
+  const el = document.getElementById('tips-'+id);
+  if(el) el.classList.toggle('open');
 }
 
 async function addFood(){
-  const name=document.getElementById('f-name').value.trim();
-  if(!name)return;
-  const entry={user_id:USER.id,date:TODAY,food_name:name,
-    calories:+document.getElementById('f-cal').value||0,
-    protein_g:+document.getElementById('f-p').value||0,
-    carbs_g:+document.getElementById('f-c').value||0,
-    fat_g:+document.getElementById('f-fat').value||0};
-  const{data}=await sb.from('nutrition_logs').insert(entry).select().single();
-  if(data){foods.push(data);renderFoods();}
-  ['f-name','f-cal','f-p','f-c','f-fat'].forEach(id=>document.getElementById(id).value='');
+  const nameEl = document.getElementById('f-name');
+  const name = nameEl.value.trim();
+  if(!name) return;
+  const timeVal = document.getElementById('f-time')?.value || null;
+
+  const btn = document.getElementById('food-add-btn');
+  btn.disabled = true; btn.textContent = 'Analysing...';
+
+  // Call AI to get macros + rating
+  let macros = { cal:0, protein_g:0, carbs_g:0, fat_g:0 };
+  let rating = null;
+  try {
+    const t = OB.train || {}; const e = OB.eat || {};
+    const res = await fetch('/api/food', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        goals: t.goal || e.goal,
+        weight: e.weight_kg,
+        bodyFat: e.body_fat,
+        primaryGoal: t.goal
+      })
+    });
+    const d = await res.json();
+    if (!d.error) {
+      macros = { cal: d.cal||0, protein_g: d.protein||0, carbs_g: d.carbs||0, fat_g: d.fat||0 };
+      rating = { score: d.score, headline: d.headline, reasons: d.reasons, tips: d.tips };
+    }
+  } catch(e) { /* use zeros */ }
+
+  const entry = {
+    user_id: USER.id, date: TODAY, food_name: name,
+    calories: macros.cal, protein_g: macros.protein_g,
+    carbs_g: macros.carbs_g, fat_g: macros.fat_g,
+    meal_time: timeVal || null
+  };
+  const { data } = await sb.from('nutrition_logs').insert(entry).select().single();
+  if (data) {
+    foods.push(data);
+    if (rating) foodRatings[data.id] = rating;
+    renderFoods();
+  }
+  nameEl.value = '';
+  btn.disabled = false; btn.textContent = 'Add & Rate';
   showToast('Food logged');
 }
 
 async function removeFood(i){
   const f=foods[i];
   await sb.from('nutrition_logs').delete().eq('id',f.id);
+  delete foodRatings[f.id];
   foods.splice(i,1);renderFoods();
+}
+
+async function getMealSuggestion(){
+  const wrap = document.getElementById('eat-suggestions');
+  wrap.innerHTML = '<p style="font-size:13px;color:var(--dim);padding:10px 0">Building your meal plan...</p>';
+  initCoach();
+  if(!window._coachContext){wrap.innerHTML='';return;}
+  try{
+    const e=OB.eat||{};
+    const existing = foods.map(f=>f.food_name).join(', ');
+    const prompt = `Based on my full profile, give me a specific meal plan for today. ${existing?'I have already eaten: '+existing+'. ':''} Give me 3–4 meals with specific foods and quantities that hit my targets. Be precise — actual foods, actual grams.`;
+    const res = await fetch('/api/coach',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({messages:[{role:'user',content:prompt}],userProfile:PROFILE||{},userContext:window._coachContext})});
+    const d = await res.json();
+    wrap.innerHTML = `<div class="card"><div class="card-title" style="margin-bottom:8px">Today's Meal Plan</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8">${escHtml(stripMd(d.reply||'')).replace(/\n/g,'<br>')}</div></div>`;
+  }catch(e){wrap.innerHTML='';}
 }
 
 /* ════════════════════════════════════════
@@ -846,6 +1043,74 @@ async function removeFood(i){
 async function initProgress(){
   renderScoreGrid();
   loadCheckinHistory();
+  loadProgressCharts();
+}
+
+let _charts = {};
+
+async function loadProgressCharts(){
+  const d = new Date(); d.setDate(d.getDate()-6);
+  const from = d.toISOString().split('T')[0];
+
+  const [{ data: habitData }, { data: checkinData }, { data: calData }] = await Promise.all([
+    sb.from('daily_habits').select('date,completed').eq('user_id',USER.id).gte('date',from),
+    sb.from('progress_checkins').select('*').eq('user_id',USER.id).order('date',{ascending:true}).limit(10),
+    sb.from('nutrition_logs').select('date,calories').eq('user_id',USER.id).gte('date',from),
+  ]);
+
+  Object.values(_charts).forEach(c=>{ try{c.destroy()}catch(e){} });
+  _charts = {};
+
+  const days=[], pcts=[], calMap={};
+  for(let i=6;i>=0;i--){
+    const dt=new Date(); dt.setDate(dt.getDate()-i);
+    const ds=dt.toISOString().split('T')[0];
+    const dayH=(habitData||[]).filter(h=>h.date===ds);
+    const allH=getHabits();
+    const done=dayH.filter(h=>h.completed).length;
+    days.push(dt.toLocaleDateString('en-GB',{weekday:'short'}));
+    pcts.push(allH.length?Math.round((done/allH.length)*100):0);
+    calMap[ds]=(calData||[]).filter(f=>f.date===ds).reduce((s,f)=>s+(+f.calories||0),0);
+  }
+
+  const tealAlpha = v => v>=70?'rgba(44,212,196,.7)':v>=40?'rgba(44,212,196,.35)':'rgba(44,212,196,.15)';
+  const gridOpts = { y:{ticks:{color:'#444'},grid:{color:'#1A1A1A'},border:{display:false}},
+                     x:{ticks:{color:'#888'},grid:{display:false},border:{display:false}} };
+  const noLegend = { legend:{display:false} };
+
+  // Habits chart
+  const hc = document.getElementById('chart-habits');
+  const hasHabitData = pcts.some(v=>v>0);
+  document.getElementById('chart-habits-empty').style.display = hasHabitData?'none':'block';
+  if(hc && hasHabitData){
+    _charts.habits = new Chart(hc,{type:'bar',data:{labels:days,datasets:[{
+      data:pcts,backgroundColor:pcts.map(tealAlpha),borderRadius:3,
+    }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,max:100,ticks:{...gridOpts.y.ticks,callback:v=>v+'%'}}}}});
+  }
+
+  // Check-in scores
+  const cc = document.getElementById('chart-checkin');
+  const hasCheckin = (checkinData||[]).length > 1;
+  document.getElementById('chart-checkin-empty').style.display = hasCheckin?'none':'block';
+  if(cc && hasCheckin){
+    const labs = checkinData.map(r=>new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
+    const avgs = checkinData.map(r=>Math.round(CHECK_METRICS.reduce((s,m)=>s+(+r[m.key]||5),0)/CHECK_METRICS.length*10)/10);
+    _charts.checkin = new Chart(cc,{type:'line',data:{labels:labs,datasets:[{
+      data:avgs,borderColor:'#2CD4C4',backgroundColor:'rgba(44,212,196,.08)',
+      fill:true,tension:.4,pointBackgroundColor:'#2CD4C4',pointRadius:4,
+    }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,min:1,max:10}}}});
+  }
+
+  // Calorie chart
+  const calCanvas = document.getElementById('chart-cals');
+  const calVals = days.map((_,i)=>{const dt=new Date();dt.setDate(dt.getDate()-(6-i));return calMap[dt.toISOString().split('T')[0]]||0;});
+  const hasCals = calVals.some(v=>v>0);
+  document.getElementById('chart-cals-empty').style.display = hasCals?'none':'block';
+  if(calCanvas && hasCals){
+    _charts.cals = new Chart(calCanvas,{type:'bar',data:{labels:days,datasets:[{
+      data:calVals,backgroundColor:'rgba(44,212,196,.3)',borderRadius:3,
+    }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,ticks:{...gridOpts.y.ticks,callback:v=>v+'kcal'}}}}});
+  }
 }
 
 function renderScoreGrid(){
@@ -954,6 +1219,7 @@ function initCoach(){
   if(t.goal) parts.push(`Primary training goal: ${t.goal}`);
   if(t.secondary_goal&&t.secondary_goal!=='None') parts.push(`Secondary goal: ${t.secondary_goal}`);
   if(t.injuries) parts.push(`Injuries/limitations: ${t.injuries}`);
+  if(t.programme) parts.push(`Current training programme:\n${t.programme}`);
 
   // Nutrition
   if(e.goal) parts.push(`Nutrition goal: ${e.goal}`);
@@ -1024,7 +1290,7 @@ async function sendMessage(){
     const reply=d.reply||d.error||'Something went wrong — try again.';
     coachHistory.push({role:'assistant',content:reply});
     document.getElementById('coach-loading')?.remove();
-    msgs.innerHTML+=`<div class="msg coach">${escHtml(reply).replace(/\n/g,'<br>')}</div>`;
+    msgs.innerHTML+=`<div class="msg coach">${escHtml(stripMd(reply)).replace(/\n/g,'<br>')}</div>`;
   }catch(e){
     document.getElementById('coach-loading')?.remove();
     msgs.innerHTML+=`<div class="msg coach" style="color:var(--dim)">Couldn't reach the coach right now. Try again in a moment.</div>`;
@@ -1034,6 +1300,107 @@ async function sendMessage(){
 }
 
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function stripMd(s){
+  return s
+    .replace(/\*\*([^*]+)\*\*/g,'$1')
+    .replace(/\*([^*\n]+)\*/g,'$1')
+    .replace(/^[*\-•]\s+/gm,'')
+    .trim();
+}
+
+const HABIT_PROTOCOLS = {
+  sunlight: {
+    steps: [
+      'Get outside within 10 minutes of waking — before checking your phone.',
+      'Minimum 5 minutes, ideally 20–30. No sunglasses for the first 10 minutes.',
+      'If it is dark or overcast: use a 10,000 lux SAD lamp within 30 minutes of waking for the same effect.',
+      'Combine with a short walk — movement + light together amplifies the cortisol awakening response.',
+      'Consistency matters more than duration. Every day at the same time anchors your circadian clock.'
+    ]
+  },
+  training: {
+    steps: [
+      'Log today\'s session in the Train tab before or after training.',
+      'Compound lifts first — bench, squat, deadlift, press — when your nervous system is freshest.',
+      'Progressive overload is the mechanism: add reps or weight every session, even slightly.',
+      'Rest 2–3 minutes between heavy compound sets. 60–90 seconds for accessory work.',
+      'If energy is low: do a shorter session rather than skipping. A 20-minute session beats nothing.'
+    ]
+  },
+  steps: {
+    steps: [
+      'A 20-minute morning walk is the highest-leverage move — combines light, movement, and cortisol clearance.',
+      'Do not sit for more than 90 minutes without a 5-minute walk.',
+      'A 10-minute walk after each meal dramatically improves glucose clearance and insulin sensitivity.',
+      'Zone 2 pace: you can hold a full conversation and breathe through your nose comfortably.',
+      'Track on your phone or watch. Awareness of the number is the first step to hitting it.'
+    ]
+  },
+  sleep: {
+    steps: [
+      'Set a phone alarm 30 minutes before your target bedtime as a wind-down trigger.',
+      'Cool the room to 18–19°C. Your core temperature must drop 1–2°C to initiate deep sleep.',
+      'No screens after the alarm — replace with a physical book, light stretching, or breathwork.',
+      'Take Magnesium Glycinate 400mg 30 minutes before bed. It reduces cortisol and improves sleep depth.',
+      'Blackout blinds make a significant difference — even small amounts of light disrupt melatonin.'
+    ]
+  },
+  cold: {
+    steps: [
+      'End your warm shower with 2–3 minutes of cold. Start on your legs and feet, then torso, then face.',
+      'Breathe through the cold — slow exhales. Do not hold your breath.',
+      'Progress gradually: 30 seconds → 1 minute → 2 minutes → 3 minutes over 2 weeks.',
+      'The norepinephrine spike peaks at about 2–3 minutes of cold exposure.',
+      'For ice baths: 11–15°C water. Target 11 minutes total across the week, split across sessions.'
+    ]
+  },
+  supplements: {
+    steps: [
+      'Take fat-soluble vitamins with your first meal — Vitamin D3 (3,000–5,000 IU) + K2 (100–200 mcg).',
+      'Zinc 15–25mg with food, not on an empty stomach — it causes nausea if taken fasted.',
+      'Magnesium: split the dose — some in the morning, the remainder before bed.',
+      'Omega-3: 2–3g EPA+DHA per day. Check the label — most capsules are 300–500mg actual EPA+DHA.',
+      'Consistency over weeks and months is what moves the needle on blood markers — not day-to-day.'
+    ]
+  },
+  stress: {
+    steps: [
+      'Physiological sigh: double inhale through the nose, then one long slow exhale. Do this 5 times when acutely stressed.',
+      'Box breathing for sustained calm: 4 seconds in, hold 4, out 4, hold 4. 5 minutes minimum.',
+      'NSDR (Non-Sleep Deep Rest): 10–20 minute body scan or Yoga Nidra. Search "10 minute Yoga Nidra" on YouTube.',
+      'Phone-free walk: no podcast, no music, no earphones. Your brain needs unstructured time to reset.',
+      'Cold exposure (habit 5) is also one of the most effective cortisol regulation tools available.'
+    ]
+  },
+  no_phone: {
+    steps: [
+      'The most effective version: phone outside the bedroom entirely. Use a separate alarm clock.',
+      'If you use your phone as an alarm: Do Not Disturb mode on, face down, brightness off.',
+      'Replace phone time with: physical book, light yoga or stretching, breathwork, or just lying still.',
+      'Blue light suppresses melatonin by up to 50% — the effect starts within minutes of exposure.',
+      'Blackout blinds combined with phone-out-of-room is the single most impactful sleep stack available.'
+    ]
+  },
+  no_alcohol: {
+    steps: [
+      'If you are drinking: eat a substantial meal beforehand — it slows alcohol absorption significantly.',
+      'Alternate alcoholic drinks with water. One water per drink at minimum.',
+      'Choose spirits over beer and wine where possible — lower estrogenic load and fewer calories.',
+      'If you know you will drink: NAC 600mg beforehand reduces acetaldehyde damage. B-complex + electrolytes before bed.',
+      'Even 2 standard drinks suppresses testosterone by 6–7% and fragments REM sleep for 2–3 nights.'
+    ]
+  },
+  hydration: {
+    steps: [
+      '500ml of water immediately on waking — before coffee. Add a pinch of sea salt and squeeze of lemon.',
+      'Target 1 litre by 10am, 2 litres by 2pm, 2.5–3 litres by 9pm.',
+      'Coffee is mildly diuretic: add an extra 150ml of water for every coffee you drink.',
+      'Check your urine: pale yellow is hydrated. Dark yellow means you are behind. Clear means over-hydrated.',
+      'Electrolytes matter if you sweat a lot during training — plain water alone is insufficient for heavy training days.'
+    ]
+  }
+};
 
 /* ════════════════════════════════════════
    ONBOARDING SYSTEM
@@ -1145,16 +1512,19 @@ const OB_DEFS = {
 };
 
 function loadOnboardingData() {
-  // Load from user_metadata first, fall back to localStorage
   const meta = USER?.user_metadata?.onboarding || {};
-  const local = JSON.parse(localStorage.getItem('jpt_ob') || '{}');
+  // Only use localStorage if it was written by this exact user
+  const localRaw = JSON.parse(localStorage.getItem('jpt_ob') || '{}');
+  const localUid = localStorage.getItem('jpt_uid');
+  const local = localUid === USER.id ? localRaw : {};
   OB = { ...local, ...meta }; // metadata wins
 }
 
 async function saveOnboardingSection(section, data) {
   OB[section] = data;
   OB[section + '_done'] = true;
-  // Persist to localStorage immediately
+  // Persist to localStorage immediately (stamped with user ID)
+  localStorage.setItem('jpt_uid', USER.id);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
   // Sync to Supabase user_metadata
   try {
@@ -1252,6 +1622,64 @@ async function submitOnboarding() {
   if (section === 'coach')    initCoach();
 }
 
+/* ── HABIT DETAIL ── */
+function showHabitDetail(key){
+  const allH = getHabits();
+  const h = allH.find(x=>x.key===key);
+  const proto = HABIT_PROTOCOLS[key];
+  if(!h||!proto) return;
+  const panel = document.getElementById('hd-panel');
+  panel.innerHTML = `
+    <div class="hd-title">${escHtml(h.name)}</div>
+    <p class="hd-why">${escHtml(h.desc)}</p>
+    <div class="hd-steps-label">How to do it</div>
+    ${proto.steps.map((s,i)=>`<div class="hd-step"><div class="hd-num">${i+1}</div><div class="hd-text">${escHtml(s)}</div></div>`).join('')}
+    <button class="hd-close-btn" onclick="closeHabitDetail()">Close</button>
+  `;
+  document.getElementById('habit-drawer').classList.remove('hidden');
+}
+function closeHabitDetail(){
+  document.getElementById('habit-drawer').classList.add('hidden');
+}
+
+/* ── CUSTOM HABITS ── */
+function addCustomHabit(){
+  const input = document.getElementById('habit-add-input');
+  const name = input.value.trim();
+  if(!name) return;
+  const key = 'ch_' + Date.now();
+  if(!OB.custom_habits) OB.custom_habits = [];
+  OB.custom_habits.push({ key, name, desc: '' });
+  localStorage.setItem('jpt_uid', USER.id);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+  input.value = '';
+  initHabits();
+}
+function removeCustomHabit(fullKey){
+  const key = fullKey.replace('custom_','');
+  OB.custom_habits = (OB.custom_habits||[]).filter(h=>'custom_'+h.key!==fullKey);
+  localStorage.setItem('jpt_uid', USER.id);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+  delete habitState[fullKey];
+  initHabits();
+}
+
+/* ── TRAINING PROGRAMME ── */
+function saveProgramme(){
+  const val = document.getElementById('programme-input')?.value.trim();
+  if(!val) return;
+  if(!OB.train) OB.train = {};
+  OB.train.programme = val;
+  OB.train_done = true;
+  localStorage.setItem('jpt_uid', USER.id);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+  initCoach();
+  showToast('Programme saved');
+}
+
 /* ── MULTICHECK TOGGLE ── */
 function toggleObCheck(label) {
   const cb = label.querySelector('input');
@@ -1292,7 +1720,8 @@ async function generateOverview() {
       const lines = d.reply
         .split('\n')
         .map(l => l.replace(/^[-•*\d.]\s*/, '').trim())
-        .filter(l => l.length > 20 && l.length < 200);
+        .map(l => stripMd(l))
+      .filter(l => l.length > 20 && l.length < 200);
       OB._overview = lines.slice(0, 7);
       localStorage.setItem('jpt_ob', JSON.stringify(OB));
       try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e) {}
@@ -1378,7 +1807,7 @@ async function doIntakeExchange() {
     }
 
     if (d.reply) {
-      addIntakeMsg('ai', d.reply);
+      addIntakeMsg('ai', stripMd(d.reply));
       intakeMessages.push({ role: 'assistant', content: d.reply });
     }
 
@@ -1488,6 +1917,7 @@ async function completeIntake() {
   intakeToOB(intakeProfile);
   OB._intake_done = true;
 
+  localStorage.setItem('jpt_uid', USER.id);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
   try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e) {}
 
