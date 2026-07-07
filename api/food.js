@@ -90,7 +90,7 @@ export default async function handler(req) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
+      max_tokens: 700,
       system: SYSTEM,
       messages: [{ role: 'user', content: prompt }],
     }),

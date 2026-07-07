@@ -1154,8 +1154,9 @@ function renderFoods(){
   };
   document.getElementById('food-list').innerHTML = foods.map((f,i) => {
     const r = foodRatings[f.id];
-    const scoreHtml = r ? `<div class="food-score ${scoreClass(r.score)}">${r.score}</div>` : '';
-    const tipsHtml = r ? `<div class="food-tips-wrap" id="tips-${f.id}">
+    const hasRating = r != null && r.score != null;
+    const scoreHtml = hasRating ? `<div class="food-score ${scoreClass(r.score)}">${r.score}</div>` : '';
+    const tipsHtml = hasRating ? `<div class="food-tips-wrap" id="tips-${f.id}">
       <div class="food-tips-reasons">${escHtml(r.reasons)}</div>
       ${(r.tips||[]).map(t=>`<div class="food-tip-item">${escHtml(t)}</div>`).join('')}
       ${r.micros ? `<div style="font-size:11px;color:var(--dim);padding:4px 0 0">
@@ -1163,13 +1164,13 @@ function renderFoods(){
       </div>` : ''}
     </div>` : '';
     return `<div style="background:var(--s1);border:1px solid var(--border);margin-bottom:8px">
-      <div class="food-row" onclick="${r?`toggleFoodTips('${f.id}')`:''}" style="${r?'cursor:pointer':''}">
+      <div class="food-row" onclick="${hasRating?`toggleFoodTips('${f.id}')`:''}" style="${hasRating?'cursor:pointer':''}">
         <div class="food-name">${escHtml(f.food_name)}${timeStr(f)}</div>
         <div class="food-macros">${Math.round(f.protein_g||0)}P · ${Math.round(f.carbs_g||0)}C · ${Math.round(f.fat_g||0)}F<br>${Math.round(f.calories||0)} kcal</div>
         ${scoreHtml}
         <button class="food-del" onclick="event.stopPropagation();removeFood(${i})">×</button>
       </div>
-      ${r ? `<div style="font-size:11px;color:var(--dim);padding:0 14px 6px;font-style:italic">${escHtml(r.headline)} — tap for detail</div>` : ''}
+      ${hasRating ? `<div style="font-size:11px;color:var(--dim);padding:0 14px 6px;font-style:italic">${escHtml(r.headline)} — tap for detail</div>` : ''}
       ${tipsHtml}
     </div>`;
   }).join('');
@@ -1246,6 +1247,18 @@ async function addFood(){
   try {
     const d = await callFoodAPI(name);
 
+    if(d.error) {
+      console.error('Food API error:', d.error, d.raw || '');
+      // Still save the food — user can retry rating later
+      await logFoodEntry(name, timeVal, {});
+      btn.disabled = false; btn.textContent = 'Add & Rate';
+      nameEl.value = '';
+      const timeEl = document.getElementById('f-time');
+      if(timeEl) timeEl.value = '';
+      showToast('Saved — AI analysis unavailable, try again');
+      return;
+    }
+
     if(d.needsClarification && d.clarificationQuestion) {
       _pendingFood = { name, timeVal };
       document.getElementById('food-clarify-q').textContent = d.clarificationQuestion;
@@ -1258,7 +1271,7 @@ async function addFood(){
 
     await logFoodEntry(name, timeVal, d);
   } catch(e) {
-    // Network / parse error — still save the food with 0 macros
+    console.error('callFoodAPI threw:', e);
     await logFoodEntry(name, timeVal, {});
   }
 
