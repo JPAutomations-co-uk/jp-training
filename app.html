@@ -1061,11 +1061,21 @@ async function initEat(){
   updateEatDateUI();
   const{data}=await sb.from('nutrition_logs').select('*').eq('user_id',USER.id).eq('date',EAT_DATE).order('created_at');
   foods=data||[];
-  // Restore ratings from persisted rating_data column
-  foods.forEach(f => {
-    if(f.rating_data && f.rating_data.score) foodRatings[f.id] = f.rating_data;
-  });
+  // Restore ratings from localStorage cache (ratings are not stored in Supabase — no schema dependency)
+  _loadRatingsCache();
   renderFoods();
+}
+
+function _saveRatingsCache(){
+  if(!USER) return;
+  try{ localStorage.setItem(`jpt_fr_${USER.id}_${EAT_DATE}`, JSON.stringify(foodRatings)); }catch(e){}
+}
+function _loadRatingsCache(){
+  if(!USER) return;
+  try{
+    const raw = localStorage.getItem(`jpt_fr_${USER.id}_${EAT_DATE}`);
+    if(raw) Object.assign(foodRatings, JSON.parse(raw));
+  }catch(e){}
 }
 
 function updateEatDateUI(){
@@ -1173,22 +1183,28 @@ async function callFoodAPI(name, timeVal) {
 async function logFoodEntry(name, timeVal, d) {
   const macros = { cal: d.cal||0, protein_g: d.protein||0, carbs_g: d.carbs||0, fat_g: d.fat||0 };
   const rating = { score: d.score||null, headline: d.headline||null, reasons: d.reasons||null, tips: Array.isArray(d.tips)?d.tips:[], micros: d.micros||null };
+
+  // Only insert columns that actually exist in the nutrition_logs table
   const entry = {
     user_id: USER.id, date: EAT_DATE, food_name: name,
     calories: macros.cal, protein_g: macros.protein_g,
     carbs_g: macros.carbs_g, fat_g: macros.fat_g,
-    meal_time: timeVal || null,
-    rating_data: rating
+    meal_time: timeVal || null
   };
+
   const { data, error } = await sb.from('nutrition_logs').insert(entry).select().single();
   if (data) {
     foods.push(data);
-    if(rating.score) foodRatings[data.id] = rating;
+    // Ratings live in localStorage — no extra Supabase columns needed
+    if(rating.score) {
+      foodRatings[data.id] = rating;
+      _saveRatingsCache();
+    }
     renderFoods();
     showToast('Food logged');
   } else {
-    showToast('Failed to save — check connection');
-    console.error('logFoodEntry insert error:', error);
+    showToast('Save failed — ' + (error?.message || 'check connection'));
+    console.error('logFoodEntry:', error);
   }
 }
 
@@ -1247,6 +1263,7 @@ async function removeFood(i){
   const f=foods[i];
   await sb.from('nutrition_logs').delete().eq('id',f.id);
   delete foodRatings[f.id];
+  _saveRatingsCache();
   foods.splice(i,1);renderFoods();
 }
 

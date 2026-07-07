@@ -1,52 +1,27 @@
 export const config = { runtime: 'edge' }
 
-const SYSTEM = `You are an elite strength and performance coach. Your job is to:
-1. Analyse the training programme submitted by the client
-2. Return a structured weekly plan based on it, optimised for their goals
-3. Give honest coaching feedback — what's working, what needs fixing
+const SYSTEM = `You are an elite strength and performance coach. Analyse the submitted programme and return a structured weekly plan with honest coaching feedback.
 
-Return ONLY valid JSON. No markdown. No explanation outside the JSON.
+Return ONLY valid JSON — no markdown, no text outside the JSON object.
 
+Schema (keep values SHORT to stay within token limits):
 {
-  "analysis": "<2-3 paragraph honest assessment of the programme — structure, volume, intensity, progression, recovery. Name specific exercises. Be direct.>",
-  "improvements": [
-    "<specific, actionable improvement — e.g. 'Your bench frequency is once per week — move to 2x for faster progress'>",
-    "<improvement 2>",
-    "<improvement 3>"
-  ],
+  "analysis": "<2 short paragraphs: structure, volume, intensity, recovery. Name specific exercises. Be direct.>",
+  "improvements": ["<actionable fix 1>","<actionable fix 2>","<actionable fix 3>"],
   "weeklyPlan": [
-    {
-      "day": "Monday",
-      "sessionName": "<e.g. Push A — Chest, Shoulders, Triceps>",
-      "type": "training",
-      "keyLifts": "<1 sentence on the priority of this session>",
-      "exercises": [
-        {
-          "name": "<exercise name>",
-          "sets": <number>,
-          "reps": "<e.g. 5 or 8-10 or AMRAP>",
-          "load": "<e.g. 100kg or RPE 8 or bodyweight>",
-          "rest": "<e.g. 3 min or 90 sec>",
-          "notes": "<coaching cue or progression note — keep under 12 words>"
-        }
-      ]
-    },
-    {
-      "day": "Tuesday",
-      "sessionName": "Rest",
-      "type": "rest",
-      "keyLifts": "Full recovery — sleep, nutrition, walk",
-      "exercises": []
-    }
+    {"day":"Monday","sessionName":"<short name>","type":"training","keyLifts":"<1 sentence>","exercises":[
+      {"name":"<exercise>","sets":4,"reps":"5","load":"100kg","rest":"3min","notes":"<under 8 words>"}
+    ]},
+    {"day":"Tuesday","sessionName":"Rest","type":"rest","keyLifts":"Recovery","exercises":[]}
   ]
 }
 
 Rules:
-- Use every exercise the client listed. Do not invent new ones unless fixing a clear gap.
-- Map sessions to days logically based on their frequency (e.g. PPL = Mon Push, Tue Pull, Wed Legs, Thu Push, Fri Pull, Sat Legs, Sun Rest)
-- Fill in load based on any weights/reps they mentioned. If not given, use RPE targets.
-- Rest days should be complete rest or Zone 2 walk only.
-- British English. No asterisks.`
+- Include all 7 days (Mon–Sun). Rest days have type "rest" and empty exercises array.
+- Use the exercises the client listed. Map to days logically (PPL: Mon Push, Tue Pull, Wed Legs, Thu Push, Fri Pull, Sat Legs, Sun Rest).
+- Use weights/reps from their programme where given. Otherwise use RPE (e.g. "RPE 8").
+- Keep notes under 8 words. Keep analysis concise. This must fit in one JSON response.
+- British English. No asterisks. No markdown.`
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors() })
@@ -79,7 +54,7 @@ export default async function handler(req) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2000,
+      max_tokens: 4000,
       system: SYSTEM,
       messages: [{ role: 'user', content: prompt }],
     }),
