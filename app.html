@@ -281,6 +281,44 @@
       background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;
       flex-shrink:0;transition:color .2s;padding:0}
     .habit-del:hover{color:#ff6b6b}
+    /* ── WEEKLY CALENDAR ── */
+    .week-cal{margin-bottom:16px}
+    .week-day{margin-bottom:8px}
+    .week-day-hdr{display:flex;align-items:center;justify-content:space-between;
+      padding:13px 16px;background:var(--s1);border:1px solid var(--border);cursor:pointer;
+      transition:border-color .2s;user-select:none}
+    .week-day-hdr:hover{border-color:rgba(44,212,196,.3)}
+    .week-day-hdr.today-row{border-color:rgba(44,212,196,.5)}
+    .week-day-name{font-family:var(--D);font-size:15px;font-weight:800;
+      letter-spacing:.06em;text-transform:uppercase}
+    .week-day-session{font-size:11px;color:var(--teal);font-weight:500;letter-spacing:.04em}
+    .week-day-caret{color:var(--dim);font-size:14px;transition:transform .2s}
+    .week-day-body{border:1px solid var(--border);border-top:none;
+      background:rgba(255,255,255,.01);display:none}
+    .week-day-body.open{display:block}
+    .week-key{padding:10px 16px;font-size:12px;color:var(--muted);
+      border-bottom:1px solid var(--border);font-style:italic}
+    .week-ex{display:flex;align-items:baseline;gap:8px;padding:10px 16px;
+      border-bottom:1px solid rgba(255,255,255,.03);font-size:13px}
+    .week-ex:last-child{border-bottom:none}
+    .week-ex-name{flex:1;font-weight:500}
+    .week-ex-spec{color:var(--muted);font-size:12px;text-align:right;flex-shrink:0}
+    .week-ex-note{display:block;font-size:11px;color:var(--dim);margin-top:2px}
+    .week-rest-body{padding:12px 16px;font-size:12px;color:var(--dim);font-style:italic}
+    .analysis-card{background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.18);
+      padding:16px;margin-bottom:16px}
+    .analysis-text{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:12px}
+    .improvement-item{display:flex;gap:10px;padding:6px 0;font-size:12px;color:var(--white);
+      line-height:1.6;border-bottom:1px solid rgba(44,212,196,.08)}
+    .improvement-item:last-child{border-bottom:none}
+    .imp-num{font-family:var(--D);font-size:16px;font-weight:900;color:var(--teal);
+      flex-shrink:0;width:18px}
+    /* ── EAT DATE NAV ── */
+    .eat-date-nav{display:flex;align-items:center;gap:0;margin-bottom:16px;border:1px solid var(--border)}
+    .eat-nav-btn{padding:10px 16px;background:none;border:none;color:var(--muted);
+      cursor:pointer;font-size:18px;transition:color .2s;flex-shrink:0}
+    .eat-nav-btn:hover{color:var(--teal)}
+    .eat-date-lbl{flex:1;text-align:center;font-size:13px;font-weight:500;color:var(--white)}
     /* ── PROGRAMME ── */
     .prog-textarea{width:100%;background:rgba(255,255,255,.04);
       border:1px solid rgba(44,212,196,.2);padding:12px 14px;color:var(--white);
@@ -448,8 +486,9 @@
         <p class="card-sub" style="margin-bottom:10px">Paste your current programme here. The coach reads this and uses it to give you specific advice.</p>
         <textarea class="prog-textarea" id="programme-input"
           placeholder="e.g. PPL 6x/week — Push: bench 4x5, OHP 3x8, incline DB 3x10, lateral raises 4x15..."></textarea>
-        <button class="btn-primary" style="margin-top:10px" onclick="saveProgramme()">Save Programme</button>
+        <button class="btn-primary" style="margin-top:10px" id="prog-save-btn" onclick="saveProgramme()">Save Programme</button>
       </div>
+      <div id="programme-analysis"></div>
       <div id="train-content"></div>
     </div>
 
@@ -466,8 +505,15 @@
         <div class="macro-tile"><div class="macro-name">Fat</div><div class="macro-val" id="m-f">0</div><div class="macro-unit">g</div></div>
       </div>
 
+      <!-- Date nav -->
+      <div class="eat-date-nav">
+        <button class="eat-nav-btn" onclick="shiftEatDate(-1)">‹</button>
+        <div class="eat-date-lbl" id="eat-date-lbl"></div>
+        <button class="eat-nav-btn" id="eat-nav-next" onclick="shiftEatDate(1)">›</button>
+      </div>
+
       <!-- Add food form -->
-      <div class="food-form">
+      <div class="food-form" id="eat-add-form">
         <div class="sh-label" style="margin-bottom:10px">Log food</div>
         <input id="f-name" type="text"
           placeholder="e.g. 200g chicken breast, 2 scrambled eggs, protein shake"
@@ -642,6 +688,7 @@ const sb=supabase.createClient(SUPA_URL,SUPA_KEY,{
 let USER=null, PROFILE=null;
 const TODAY=new Date().toISOString().split('T')[0];
 let OB={};
+let EAT_DATE=TODAY;
 
 function getHabits(){
   const h=OB.habits||{};
@@ -855,6 +902,11 @@ function initTrain(){
   const progEl = document.getElementById('programme-input');
   if(progEl && saved) progEl.value = saved;
 
+  // Restore previously analysed weekly plan
+  if(OB.train?.weeklyPlan?.length) {
+    renderProgrammeAnalysis({ weeklyPlan: OB.train.weeklyPlan, analysis: OB.train.analysis, improvements: OB.train.improvements });
+  }
+
   const day=new Date().getDay(); // 0=Sun, 1=Mon...
   const adjusted=day===0?6:day-1; // Mon=0
   const session=PROGRAMME[DAY_MAP[adjusted]];
@@ -919,9 +971,33 @@ async function saveWorkout(){
 let foods=[];
 
 async function initEat(){
-  const{data}=await sb.from('nutrition_logs').select('*').eq('user_id',USER.id).eq('date',TODAY).order('created_at');
+  updateEatDateUI();
+  const{data}=await sb.from('nutrition_logs').select('*').eq('user_id',USER.id).eq('date',EAT_DATE).order('created_at');
   foods=data||[];
   renderFoods();
+}
+
+function updateEatDateUI(){
+  const lbl = document.getElementById('eat-date-lbl');
+  const nextBtn = document.getElementById('eat-nav-next');
+  const addForm = document.getElementById('eat-add-form');
+  if(lbl){
+    const d = new Date(EAT_DATE+'T00:00:00');
+    const isToday = EAT_DATE === TODAY;
+    const opts = { weekday:'short', month:'short', day:'numeric' };
+    lbl.textContent = isToday ? 'Today · '+d.toLocaleDateString('en-GB',opts) : d.toLocaleDateString('en-GB',opts);
+  }
+  if(nextBtn) nextBtn.disabled = EAT_DATE >= TODAY;
+  if(addForm) addForm.style.display = EAT_DATE === TODAY ? '' : 'none';
+}
+
+function shiftEatDate(delta){
+  const d = new Date(EAT_DATE+'T00:00:00');
+  d.setDate(d.getDate()+delta);
+  const newDate = d.toISOString().split('T')[0];
+  if(newDate > TODAY) return;
+  EAT_DATE = newDate;
+  initEat();
 }
 
 const foodRatings = {}; // id → { score, headline, reasons, tips }
@@ -997,7 +1073,7 @@ async function addFood(){
   } catch(e) { /* use zeros */ }
 
   const entry = {
-    user_id: USER.id, date: TODAY, food_name: name,
+    user_id: USER.id, date: EAT_DATE, food_name: name,
     calories: macros.cal, protein_g: macros.protein_g,
     carbs_g: macros.carbs_g, fat_g: macros.fat_g,
     meal_time: timeVal || null
@@ -1667,7 +1743,7 @@ function removeCustomHabit(fullKey){
 }
 
 /* ── TRAINING PROGRAMME ── */
-function saveProgramme(){
+async function saveProgramme(){
   const val = document.getElementById('programme-input')?.value.trim();
   if(!val) return;
   if(!OB.train) OB.train = {};
@@ -1678,6 +1754,104 @@ function saveProgramme(){
   sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
   initCoach();
   showToast('Programme saved');
+
+  const btn = document.getElementById('prog-save-btn');
+  const analysisEl = document.getElementById('programme-analysis');
+  if(btn) { btn.disabled = true; btn.textContent = 'Analysing…'; }
+  if(analysisEl) analysisEl.innerHTML = '<p style="font-size:12px;color:var(--muted);padding:12px 0">Analysing your programme…</p>';
+
+  try {
+    const t = OB.train || {};
+    const res = await fetch('/api/programme', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        programme: val,
+        goal: t.primary_goal || OB.goals?.primary_goal || '',
+        experience: t.training_experience || '',
+        days: t.training_days || '',
+        injuries: t.injuries || ''
+      })
+    });
+    const d = await res.json();
+    if(d.weeklyPlan) {
+      OB.train.weeklyPlan = d.weeklyPlan;
+      OB.train.analysis = d.analysis;
+      OB.train.improvements = d.improvements;
+      localStorage.setItem('jpt_ob', JSON.stringify(OB));
+      sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+    }
+    renderProgrammeAnalysis(d);
+  } catch(e) {
+    if(analysisEl) analysisEl.innerHTML = '<p style="font-size:12px;color:var(--dim);padding:12px 0">Could not analyse programme — try again.</p>';
+  } finally {
+    if(btn) { btn.disabled = false; btn.textContent = 'Save Programme'; }
+  }
+}
+
+function renderProgrammeAnalysis(d){
+  const el = document.getElementById('programme-analysis');
+  if(!el || !d) return;
+  if(d.error) { el.innerHTML = ''; return; }
+
+  const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+  const plan = d.weeklyPlan || OB.train?.weeklyPlan || [];
+  const analysis = d.analysis || OB.train?.analysis || '';
+  const improvements = d.improvements || OB.train?.improvements || [];
+
+  const calHtml = plan.map(day => {
+    const isToday = day.day === todayName;
+    if(day.type === 'rest') {
+      return `<div class="week-day">
+        <div class="week-day-hdr ${isToday?'today-row':''}" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.week-day-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(180deg)':''">
+          <div>
+            <div class="week-day-name">${escHtml(day.day)}</div>
+            <div class="week-day-session">Rest${isToday?' · Today':''}</div>
+          </div>
+          <span class="week-day-caret">▾</span>
+        </div>
+        <div class="week-day-body">
+          <div class="week-rest-body">${escHtml(day.keyLifts||'Full recovery — sleep, nutrition, walk')}</div>
+        </div>
+      </div>`;
+    }
+    const exHtml = (day.exercises||[]).map(ex => `
+      <div class="week-ex">
+        <div>
+          <span class="week-ex-name">${escHtml(ex.name)}</span>
+          ${ex.notes?`<span class="week-ex-note">${escHtml(ex.notes)}</span>`:''}
+        </div>
+        <div class="week-ex-spec">${ex.sets}×${escHtml(ex.reps)} · ${escHtml(ex.load||'')}<br><span style="color:var(--dim)">${escHtml(ex.rest||'')}</span></div>
+      </div>`).join('');
+    return `<div class="week-day">
+      <div class="week-day-hdr ${isToday?'today-row':''}" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.week-day-caret').style.transform=this.nextElementSibling.classList.contains('open')?'rotate(180deg)':''">
+        <div>
+          <div class="week-day-name">${escHtml(day.day)}</div>
+          <div class="week-day-session">${escHtml(day.sessionName||'')}${isToday?' · Today':''}</div>
+        </div>
+        <span class="week-day-caret">▾</span>
+      </div>
+      <div class="week-day-body ${isToday?'open':''}">
+        <div class="week-key">${escHtml(day.keyLifts||'')}</div>
+        ${exHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  const impHtml = improvements.length ? `
+    <div style="margin-bottom:16px">
+      <div class="sh-label" style="margin-bottom:10px">Key improvements</div>
+      ${improvements.map((imp,i)=>`<div class="improvement-item"><span class="imp-num">${i+1}</span><span>${escHtml(imp)}</span></div>`).join('')}
+    </div>` : '';
+
+  el.innerHTML = `
+    ${analysis ? `<div class="analysis-card">
+      <div class="sh-label" style="margin-bottom:8px">Coach assessment</div>
+      <div class="analysis-text">${escHtml(analysis)}</div>
+    </div>` : ''}
+    ${impHtml}
+    ${plan.length ? `<div class="sh-label" style="margin-bottom:10px">Weekly plan</div><div class="week-cal">${calHtml}</div>` : ''}
+  `;
 }
 
 /* ── MULTICHECK TOGGLE ── */
