@@ -33,9 +33,27 @@
     .tb-logo{font-family:var(--D);font-size:18px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
     .tb-logo em{font-style:normal;color:var(--teal)}
     .tb-user{display:flex;align-items:center;gap:10px}
-    .tb-avatar{width:32px;height:32px;border-radius:50%;background:var(--teal-lo);
-      border:1px solid var(--teal-mid);display:flex;align-items:center;justify-content:center;
-      font-family:var(--D);font-size:14px;font-weight:800;color:var(--teal)}
+    .tb-avatar{width:36px;height:36px;flex-shrink:0;position:relative;cursor:default}
+    .tb-avatar svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+    .xp-ring-bg{fill:none;stroke:var(--border);stroke-width:2.5}
+    .xp-ring-fill{fill:none;stroke:var(--teal);stroke-width:2.5;stroke-linecap:round;
+      transition:stroke-dashoffset .5s ease}
+    .tb-avatar-init{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-family:var(--D);font-size:13px;font-weight:800;color:var(--teal)}
+    /* XP card */
+    .xp-card{background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.12);padding:14px 16px;margin-bottom:16px}
+    .xp-bar-wrap{background:var(--border);height:3px;border-radius:2px;margin-top:10px;overflow:hidden}
+    .xp-bar-fill{background:var(--teal);height:3px;border-radius:2px;transition:width .6s ease}
+    /* XP toast */
+    #xp-toast{position:fixed;top:64px;right:16px;background:rgba(44,212,196,.12);
+      border:1px solid rgba(44,212,196,.3);color:var(--teal);font-family:var(--B);
+      font-size:12px;font-weight:600;padding:6px 12px;letter-spacing:.06em;
+      opacity:0;transform:translateY(-6px);transition:all .25s;pointer-events:none;z-index:200}
+    #xp-toast.show{opacity:1;transform:translateY(0)}
+    /* Level-up overlay */
+    #levelup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;
+      display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    #levelup-overlay.show{display:flex}
     .tb-signout{font-size:11px;color:var(--dim);cursor:pointer;background:none;border:none;
       font-family:var(--B);transition:color .2s;padding:4px}
     .tb-signout:hover{color:var(--muted)}
@@ -426,8 +444,24 @@
   <div id="topbar">
     <span class="tb-logo">JP <em>Training</em></span>
     <div class="tb-user">
-      <div class="tb-avatar" id="tb-avatar">?</div>
+      <div class="tb-avatar" id="tb-avatar">
+        <svg viewBox="0 0 36 36"><circle class="xp-ring-bg" cx="18" cy="18" r="15.9"/><circle class="xp-ring-fill" id="xp-ring" cx="18" cy="18" r="15.9"/></svg>
+        <div class="tb-avatar-init" id="tb-avatar-init">?</div>
+      </div>
       <button class="tb-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- XP TOAST -->
+  <div id="xp-toast"></div>
+
+  <!-- LEVEL-UP OVERLAY -->
+  <div id="levelup-overlay">
+    <div style="padding:32px">
+      <div style="font-size:11px;color:var(--dim);letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px">Level Up</div>
+      <div id="levelup-name" style="font-family:var(--D);font-size:56px;font-weight:900;color:var(--teal);text-transform:uppercase;letter-spacing:.04em;line-height:1"></div>
+      <div id="levelup-num" style="font-size:13px;color:var(--muted);margin-top:8px;margin-bottom:28px"></div>
+      <button onclick="document.getElementById('levelup-overlay').classList.remove('show')" style="padding:14px 40px;background:var(--teal);color:#000;font-family:var(--D);font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer">Continue</button>
     </div>
   </div>
 
@@ -461,6 +495,20 @@
       <div class="tag" id="habits-date"></div>
       <div class="prog-label"><span>Progress</span><span id="habits-count">0 / 10</span></div>
       <div class="prog-bar-wrap"><div class="prog-bar-fill" id="habits-bar" style="width:0%"></div></div>
+      <div id="xp-card" class="xp-card" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px">Level <span id="xp-level-num">1</span></div>
+            <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--teal);text-transform:uppercase;letter-spacing:.04em" id="xp-level-name">Recruit</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-family:var(--D);font-weight:700;color:var(--white)" id="xp-total">0 XP</div>
+            <div style="font-size:11px;color:var(--dim);margin-top:2px" id="xp-to-next"></div>
+            <div style="font-size:11px;color:var(--teal);margin-top:2px" id="xp-streak"></div>
+          </div>
+        </div>
+        <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
+      </div>
       <div id="overview-card-wrap"></div>
       <div style="margin-top:16px" id="habits-list"></div>
       <div class="habit-add-wrap">
@@ -806,13 +854,146 @@ const PROGRAMME={
 
 const DAY_MAP=['B','A','C','B','A','C','B']; // Mon–Sun rotation
 
+/* ════════════════════════════════════════
+   XP SYSTEM
+════════════════════════════════════════ */
+const LEVELS = [
+  { level:1,  name:'Recruit',    min:0 },
+  { level:2,  name:'Contender',  min:500 },
+  { level:3,  name:'Competitor', min:1500 },
+  { level:4,  name:'Performer',  min:3500 },
+  { level:5,  name:'Athlete',    min:7000 },
+  { level:6,  name:'Elite',      min:13000 },
+  { level:7,  name:'Champion',   min:22000 },
+  { level:8,  name:'Pro',        min:36000 },
+  { level:9,  name:'Master',     min:57000 },
+  { level:10, name:'Legend',     min:90000 },
+];
+
+let XP_STATE = { xp:0, level:1, streak_days:0, last_active_date:null };
+
+function getLevelData(xp) {
+  let current = LEVELS[0];
+  for(const l of LEVELS) { if(xp >= l.min) current = l; else break; }
+  const idx = LEVELS.indexOf(current);
+  const next = LEVELS[idx+1] || null;
+  return { current, next };
+}
+
+function getStreakMultiplier(days) {
+  if(days >= 30) return 2;
+  if(days >= 14) return 1.5;
+  if(days >= 7)  return 1.25;
+  return 1;
+}
+
+async function updateStreak() {
+  if(!USER) return;
+  const last = XP_STATE.last_active_date;
+  if(last === TODAY) return;
+  if(last) {
+    const diff = Math.round((new Date(TODAY+'T00:00:00') - new Date(last+'T00:00:00')) / 86400000);
+    XP_STATE.streak_days = diff === 1 ? XP_STATE.streak_days + 1 : 1;
+  } else {
+    XP_STATE.streak_days = 1;
+  }
+  XP_STATE.last_active_date = TODAY;
+  await sb.from('profiles').update({ streak_days: XP_STATE.streak_days, last_active_date: TODAY }).eq('id', USER.id);
+  renderXPUI();
+}
+
+async function earnXP(actionType, actionKey, baseXP) {
+  if(!USER) return 0;
+  // Prevent double-earn
+  const { data: existing } = await sb.from('xp_log')
+    .select('id').eq('user_id', USER.id)
+    .eq('action_type', actionType).eq('action_key', String(actionKey))
+    .eq('earned_at', TODAY).maybeSingle();
+  if(existing) return 0;
+
+  const mult = getStreakMultiplier(XP_STATE.streak_days);
+  const earned = Math.round(baseXP * mult);
+
+  await sb.from('xp_log').insert({
+    user_id: USER.id, action_type: actionType,
+    action_key: String(actionKey), xp_earned: earned, earned_at: TODAY
+  });
+
+  const oldLevel = XP_STATE.level;
+  XP_STATE.xp += earned;
+  const { current } = getLevelData(XP_STATE.xp);
+  XP_STATE.level = current.level;
+
+  await sb.from('profiles').update({ xp: XP_STATE.xp, level: XP_STATE.level }).eq('id', USER.id);
+
+  showXPToast(earned, mult);
+  renderXPUI();
+
+  if(XP_STATE.level > oldLevel) showLevelUp(current);
+
+  return earned;
+}
+
+async function checkPerfectDay() {
+  const { data: logs } = await sb.from('xp_log').select('action_type')
+    .eq('user_id', USER.id).eq('earned_at', TODAY);
+  const types = new Set((logs||[]).map(r => r.action_type));
+  if(types.has('habits_all') && types.has('food_3meals') && types.has('workout_save')) {
+    await earnXP('perfect_day', TODAY, 200);
+  }
+}
+
+function showXPToast(amount, mult) {
+  const el = document.getElementById('xp-toast');
+  const multStr = mult > 1 ? ` · ${mult}× streak` : '';
+  el.textContent = `+${amount} XP${multStr}`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function showLevelUp(levelData) {
+  document.getElementById('levelup-name').textContent = levelData.name;
+  document.getElementById('levelup-num').textContent = `Level ${levelData.level}`;
+  document.getElementById('levelup-overlay').classList.add('show');
+}
+
+function renderXPUI() {
+  const { current, next } = getLevelData(XP_STATE.xp);
+  const progress = next
+    ? Math.round(((XP_STATE.xp - current.min) / (next.min - current.min)) * 100)
+    : 100;
+
+  // Avatar ring (circumference of r=15.9 ≈ 99.9)
+  const ring = document.getElementById('xp-ring');
+  if(ring) {
+    const circ = 99.9;
+    ring.setAttribute('stroke-dasharray', circ);
+    ring.setAttribute('stroke-dashoffset', circ * (1 - progress / 100));
+  }
+
+  // XP card in habits
+  const card = document.getElementById('xp-card');
+  if(card) {
+    card.style.display = '';
+    document.getElementById('xp-level-num').textContent = current.level;
+    document.getElementById('xp-level-name').textContent = current.name;
+    document.getElementById('xp-total').textContent = XP_STATE.xp.toLocaleString() + ' XP';
+    document.getElementById('xp-to-next').textContent = next
+      ? `${(next.min - XP_STATE.xp).toLocaleString()} to ${next.name}` : 'Max level';
+    const streak = XP_STATE.streak_days;
+    document.getElementById('xp-streak').textContent = streak > 1
+      ? `🔥 ${streak} day streak${getStreakMultiplier(streak) > 1 ? ' · '+getStreakMultiplier(streak)+'× XP' : ''}` : '';
+    document.getElementById('xp-bar').style.width = progress + '%';
+  }
+}
+
 /* ── BOOT ── */
 (async()=>{
   const{data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='/';return;}
   USER=session.user;
   const init=USER.user_metadata?.display_name||USER.email.split('@')[0];
-  document.getElementById('tb-avatar').textContent=init[0].toUpperCase();
+  document.getElementById('tb-avatar-init').textContent=init[0].toUpperCase();
 
   // Load profile
   const{data:prof}=await sb.from('profiles').select('*').eq('id',USER.id).single();
@@ -828,6 +1009,11 @@ const DAY_MAP=['B','A','C','B','A','C','B']; // Mon–Sun rotation
 
   // Approved — load onboarding data then init tabs
   loadOnboardingData();
+  XP_STATE.xp = prof.xp || 0;
+  XP_STATE.level = prof.level || 1;
+  XP_STATE.streak_days = prof.streak_days || 0;
+  XP_STATE.last_active_date = prof.last_active_date || null;
+  renderXPUI();
   initAll();
   if (!isIntakeComplete()) showIntake();
 })();
@@ -838,6 +1024,7 @@ function initAll() {
   initEat();
   initProgress();
   initCoach();
+  updateStreak();
 }
 
 /* ── NAV ── */
@@ -919,11 +1106,18 @@ function renderHabits(){
 async function toggleHabit(key){
   habitState[key]=!habitState[key];
   renderHabits();
-  // Upsert to Supabase
   await sb.from('daily_habits').upsert({
     user_id:USER.id, date:TODAY, habit_name:key, completed:habitState[key]
   },{onConflict:'user_id,date,habit_name'});
-  if(habitState[key])showToast('✓ '+HABITS.find(h=>h.key===key)?.name);
+  if(habitState[key]){
+    showToast('✓ '+HABITS.find(h=>h.key===key)?.name);
+    await earnXP('habit', key, 10);
+    // Bonus: all habits done
+    const allH = getHabits();
+    const allDone = allH.every(h => habitState[h.key]);
+    if(allDone) await earnXP('habits_all', TODAY, 75);
+    await checkPerfectDay();
+  }
 }
 
 /* ════════════════════════════════════════
@@ -1129,6 +1323,14 @@ async function saveWorkout(){
   });
   if(sets.length)await sb.from('session_sets').insert(sets);
   showToast('Session saved');
+  await earnXP('workout_save', TODAY, 75);
+  // Bonus: all sets ticked
+  const allDone = document.querySelectorAll('.set-done');
+  const allChecked = document.querySelectorAll('.set-done.checked');
+  if(allDone.length > 0 && allDone.length === allChecked.length) {
+    await earnXP('workout_full_send', TODAY, 50);
+  }
+  await checkPerfectDay();
 }
 
 /* ════════════════════════════════════════
@@ -1295,6 +1497,11 @@ async function logFoodEntry(name, timeVal, d) {
     if(hasData && d.score) showToast(`Logged · ${d.score}/10 — ${d.headline||'rated'}`);
     else if(hasData) showToast('Food logged');
     else showToast('Logged (add more detail for accurate macros)');
+    // XP
+    const foodXP = hasData && d.score ? (d.score >= 8 ? 20 : d.score >= 6 ? 10 : 5) : 5;
+    await earnXP('food_log', data.id, foodXP);
+    if(foods.length >= 3) await earnXP('food_3meals', TODAY, 30);
+    await checkPerfectDay();
   } else {
     showToast('Save failed — ' + (error?.message || 'check connection'));
     console.error('logFoodEntry:', error);
