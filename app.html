@@ -3052,13 +3052,51 @@ function labQBack() {
 
 async function labSubmit() {
   labShowPhase(3);
+
+  // Food quality score average from cached ratings
+  const ratingScores = Object.values(foodRatings).filter(r=>r&&r.score!=null).map(r=>r.score);
+  const avgFoodScore = ratingScores.length ? Math.round(ratingScores.reduce((a,b)=>a+b,0)/ratingScores.length*10)/10 : null;
+
+  // Habits completed today
+  const allHabits = getHabits();
+  const doneHabits = allHabits.filter(h=>habitState[h.key]).map(h=>h.name);
+  const notDoneHabits = allHabits.filter(h=>!habitState[h.key]).map(h=>h.name);
+
+  // Training plan summary
+  const planSummary = OB.train?.weeklyPlan?.length
+    ? OB.train.weeklyPlan.filter(d=>d.type!=='rest').map(d=>`${d.day}: ${d.sessionName}`).join(', ')
+    : null;
+
+  // Profile from OB
+  const ob = OB || {};
+  const profile = {
+    age:                ob.coach?.age || null,
+    body_fat_pct:       ob.eat?.body_fat || null,
+    weight_kg:          ob.eat?.weight_kg || null,
+    sleep_hrs:          ob.habits?.sleep_hrs || null,
+    sleep_quality:      ob.habits?.sleep_quality || null,
+    stress_level:       ob.habits?.stress_level || null,
+    alcohol:            ob.habits?.alcohol || null,
+    job_type:           ob.habits?.job_type || null,
+    training_days:      ob.train?.days || null,
+    training_goal:      ob.train?.goal || null,
+    symptoms:           ob.coach?.symptoms || null,
+    health_conditions:  ob.coach?.health_conditions || null,
+  };
+  // Strip nulls
+  Object.keys(profile).forEach(k => { if(profile[k]==null) delete profile[k]; });
+
   const payload = {
     painPoints: HL_STATE.selectedPains,
     answers: HL_STATE.answers,
     appData: {
-      recentFoods: foods.slice(-10).map(f=>f.food_name).join(', ') || null,
-      completedHabits: Object.keys(habitState).filter(k=>habitState[k]).join(', ') || null,
-      weeklyPlan: OB.train?.weeklyPlan?.length ? OB.train.weeklyPlan.map(d=>d.day+':'+d.sessionName).join(', ') : null,
+      recentFoods: foods.slice(-15).map(f=>f.food_name).join(', ') || null,
+      avgFoodScore: avgFoodScore,
+      habitsToday: doneHabits.length ? doneHabits.join(', ') : null,
+      habitsMissed: notDoneHabits.length ? notDoneHabits.join(', ') : null,
+      habitStreak: XP_STATE.streak_days > 0 ? XP_STATE.streak_days : null,
+      weeklyPlan: planSummary,
+      profile: Object.keys(profile).length ? profile : null,
     }
   };
   try {
