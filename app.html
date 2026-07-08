@@ -3085,7 +3085,7 @@ async function labRefreshAnalysis() {
   };
   try {
     const res = await fetch('/api/hormone-lab', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(payload) });
-    if(!res.ok) { showToast('Update failed ('+res.status+') — try again'); labShowPhase(4); return; }
+    if(!res.ok) { showToast(res.status===504?'Timed out — try again':'Update failed ('+res.status+')'); labShowPhase(4); return; }
     const data = await res.json();
     if(data.error || !data.estimates) { showToast('Update failed — try again'); labShowPhase(4); return; }
     HL_STATE.results = data;
@@ -3256,8 +3256,9 @@ async function labSubmit() {
     if(!res.ok) {
       const errText = await res.text().catch(()=>'');
       console.error('hormone-lab API error', res.status, errText);
-      showToast('Analysis failed ('+res.status+') — try again');
-      labShowPhase(2);
+      const msg = res.status === 504 ? 'Timed out — try again in a moment' : 'Analysis failed ('+res.status+') — try again';
+      showToast(msg);
+      labShowPhase(HL_STATE.currentQ > 0 ? 2 : 1);
       return;
     }
     const data = await res.json();
