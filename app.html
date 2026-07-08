@@ -504,9 +504,10 @@
     .lab-cta-sec{width:100%;padding:13px;background:transparent;color:var(--teal);
       font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.08em;
       text-transform:uppercase;border:1px solid rgba(44,212,196,.3);cursor:pointer;margin-top:8px}
-    /* Lab question nav — sticky at bottom of scroll area */
-    .lab-q-nav{position:sticky;bottom:0;display:flex;gap:8px;
-      background:var(--black);padding:12px 0 4px;margin:20px -20px 0;padding-left:20px;padding-right:20px;
+    /* Lab question nav — fixed above bottom nav bar */
+    .lab-q-nav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:8px;
+      background:rgba(0,0,0,.97);backdrop-filter:blur(16px);
+      padding:10px 20px calc(10px + 54px + env(safe-area-inset-bottom,0px));
       border-top:1px solid var(--border)}
     /* 6-tab nav adjustment */
     .bn-tab{gap:3px;padding:8px 2px}
@@ -760,7 +761,7 @@
       </div>
 
       <!-- Phase 2: Questions -->
-      <div id="lab-phase-2" class="lab-phase" style="padding-bottom:80px">
+      <div id="lab-phase-2" class="lab-phase" style="padding-bottom:160px">
         <div class="lab-progress"><div class="lab-progress-fill" id="lab-progress-fill" style="width:0%"></div></div>
         <div class="lab-q-label" id="lab-q-category"></div>
         <div class="lab-q-text" id="lab-q-text"></div>
