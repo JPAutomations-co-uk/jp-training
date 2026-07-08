@@ -581,6 +581,10 @@
     .wyg-body{font-size:14px;color:var(--muted);line-height:1.85}
     .wyg-body strong{color:var(--white);font-weight:500}
     .wyg-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);border:1px solid rgba(44,212,196,.25);padding:4px 10px;margin-top:20px}
+    .wyg-card.vip{background:linear-gradient(160deg,#0A1210,#060D0C)}
+    .wyg-card.vip::before{transform:scaleX(1)}
+    .wyg-card.vip:hover{background:linear-gradient(160deg,#0D1715,#081210)}
+    .wyg-vip-badge{display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--black);background:var(--teal);padding:3px 10px;margin-bottom:16px}
 
     /* ── APP PREVIEW ── */
     .app-prev-wrap{background:#000;border-top:1px solid var(--border);padding:80px 10%;position:relative;overflow:hidden}
@@ -618,27 +622,6 @@
     .sop-step p{font-size:13px;color:var(--muted);line-height:1.8}
     .sop-step p strong{color:rgba(255,255,255,.75);font-weight:500}
 
-    /* ── PRICING ── */
-    .pricing-wrap{background:var(--black);border-top:1px solid var(--border);padding:80px 10%;position:relative;overflow:hidden}
-    .pricing-inner{max-width:1400px;margin:0 auto}
-    .pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-top:48px}
-    .price-card{background:#0A0A0A;padding:36px 28px;position:relative;cursor:default;transition:background .25s;border-top:2px solid transparent}
-    .price-card:hover{background:#111}
-    .price-card.featured{background:linear-gradient(160deg,#0D1A18,#081210);border-top-color:var(--teal)}
-    .price-tier{font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
-    .price-name{font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--white);margin-bottom:16px;line-height:1.1}
-    .price-amount{font-family:var(--D);font-size:38px;font-weight:900;color:var(--white);line-height:1;margin-bottom:4px}
-    .price-amount em{font-style:normal;font-size:15px;color:var(--muted);font-family:var(--B);font-weight:300}
-    .price-commit{font-size:11px;color:var(--dim);margin-bottom:24px;letter-spacing:.04em}
-    .price-divider{height:1px;background:var(--border);margin-bottom:20px}
-    .price-items{display:flex;flex-direction:column;gap:8px}
-    .price-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,.55);line-height:1.55}
-    .price-item::before{content:'';width:12px;height:12px;border-radius:50%;border:1px solid rgba(44,212,196,.35);flex-shrink:0;margin-top:3px}
-    .price-item.hi{color:var(--white)}
-    .price-item.hi::before{background:rgba(44,212,196,.25);border-color:var(--teal)}
-    .pricing-cta-wrap{text-align:center;margin-top:48px}
-    .pricing-note{font-size:13px;color:var(--dim);margin-top:14px}
-
     /* ── SOCIAL PROOF ── */
     .proof-wrap{background:var(--s1);border-top:1px solid var(--border);padding:80px 10%;position:relative;overflow:hidden}
     .proof-inner{max-width:1200px;margin:0 auto}
@@ -656,13 +639,12 @@
     /* ── RESPONSIVE NEW SECTIONS ── */
     @media(max-width:1024px){
       .sop-steps{grid-template-columns:repeat(3,1fr)}
-      .pricing-grid{grid-template-columns:repeat(2,1fr)}
     }
     @media(max-width:768px){
       .ham-btn{display:flex}
-      .wyg-wrap,.app-prev-wrap,.sop-wrap,.pricing-wrap,.proof-wrap{padding:56px 6%}
+      .wyg-wrap,.app-prev-wrap,.sop-wrap,.proof-wrap{padding:56px 6%}
       .wyg-grid,.proof-grid{grid-template-columns:1fr}
-      .sop-steps,.pricing-grid{grid-template-columns:1fr}
+      .sop-steps{grid-template-columns:1fr}
       .app-prev-inner{grid-template-columns:1fr;gap:40px}
       .app-phone-wrap{display:none}
       .hero-btns{flex-direction:column;align-items:center;gap:14px}
@@ -1085,7 +1067,7 @@
     <div class="up">
       <p class="label">What You Actually Get</p>
       <h2>THE FULL<br><span class="t">SYSTEM</span></h2>
-      <p class="body-s" style="max-width:58ch;margin-top:16px">Most coaching gives you a plan. This gives you a plan, the diagnostic data behind it, an app to run it from, and a coach in your corner the entire time. Three things working together.</p>
+      <p class="body-s" style="max-width:58ch;margin-top:16px">Most coaching gives you a plan. This gives you a plan, an app to run it from, and a coach in your corner the entire time. The VIP package adds the full diagnostic layer — blood work, scans, and testing that tell you exactly what's going on and why.</p>
     </div>
     <div class="wyg-grid stag">
       <div class="wyg-card">
@@ -1100,11 +1082,12 @@
         <p class="wyg-body">Direct WhatsApp access. <strong>Weekly structured check-ins with a 9-point scoring system</strong> that tracks energy, sleep, stress, libido, training quality, and more. Monthly 90-minute protocol reviews. Every protocol updated as your body and life change. Not a chatbot — JP, throughout, for the entire duration.</p>
         <span class="wyg-tag">WhatsApp + weekly calls</span>
       </div>
-      <div class="wyg-card">
+      <div class="wyg-card vip">
+        <span class="wyg-vip-badge">VIP Package</span>
         <svg class="wyg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
         <div class="wyg-title">Diagnostic Data</div>
-        <p class="wyg-body"><strong>30+ blood markers, DEXA body composition scan, VO2 Max with lactate threshold, DUTCH full hormone panel, continuous glucose monitoring, biological age testing, and genetic analysis</strong> — depending on your tier. Every protocol built from measurement, not assumption. You find out exactly why your body performs the way it does.</p>
-        <span class="wyg-tag">Everything measured</span>
+        <p class="wyg-body">The full picture, measured. <strong>30+ blood markers, DEXA body composition scan, VO2 Max with lactate threshold, DUTCH full hormone panel, continuous glucose monitoring, biological age (DunedinPACE), and genetic analysis.</strong> Not available anywhere else in the programme — this is what separates the VIP package. Every protocol is built from your actual data, not educated guesswork.</p>
+        <span class="wyg-tag">VIP package only</span>
       </div>
     </div>
   </div>
