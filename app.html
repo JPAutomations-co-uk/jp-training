@@ -475,39 +475,32 @@
     <div id="pane-train" class="pane">
       <div class="sh" style="display:flex;align-items:flex-start;justify-content:space-between">
         <div>
-          <div class="sh-label">Today's Session</div>
+          <div class="sh-label">Weekly Plan</div>
           <div class="sh-title">Train</div>
-          <p class="sh-sub" id="train-sub">Loading your programme...</p>
+          <p class="sh-sub" id="train-sub"></p>
         </div>
         <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('train')">Edit profile</button>
       </div>
 
-      <!-- Today's workout — primary view -->
-      <div id="train-content"></div>
+      <!-- Section 1: Weekly calendar -->
+      <div id="train-day-tabs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:none"></div>
+      <div id="train-day-detail"></div>
 
-      <!-- Coach chat — always visible -->
-      <div style="margin-top:20px">
-        <div class="card-title" style="margin-bottom:10px">Adjust your plan</div>
-        <div class="coach-messages" id="train-chat-msgs" style="min-height:60px;max-height:300px;overflow-y:auto"></div>
-        <div class="coach-input-wrap" style="margin-top:8px">
-          <input id="train-chat-input" class="coach-input" placeholder="e.g. make bench 5×5, swap Wednesday to legs, add face pulls…">
-          <button id="train-chat-send" class="coach-send" onclick="sendTrainChat()">→</button>
-        </div>
+      <!-- Section 2: Coach (clearly separated) -->
+      <div style="position:relative;margin:28px 0 16px">
+        <div style="border-top:1px solid var(--border)"></div>
+        <span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--bg);padding:0 14px;font-size:10px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;font-family:var(--B)">Coach your plan</span>
+      </div>
+      <div class="coach-messages" id="train-chat-msgs" style="min-height:60px;max-height:300px;overflow-y:auto"></div>
+      <div class="coach-input-wrap" style="margin-top:8px">
+        <input id="train-chat-input" class="coach-input" placeholder="e.g. make bench 5×5, swap to PPL 6 days, add face pulls Wednesday…">
+        <button id="train-chat-send" class="coach-send" onclick="sendTrainChat()">→</button>
       </div>
 
-      <!-- Protocol setup — secondary collapsible -->
-      <details style="margin-top:16px">
-        <summary style="font-size:12px;color:var(--dim);cursor:pointer;padding:8px 0;list-style:none">
-          <span>Set up from protocol text ▾</span>
-        </summary>
-        <div style="margin-top:8px">
-          <button onclick="importCoachPlan()" style="width:100%;padding:11px;background:rgba(44,212,196,.06);border:1px dashed rgba(44,212,196,.3);color:var(--teal);font-family:var(--B);font-size:12px;cursor:pointer;margin-bottom:10px">↓ Pull from coach conversation</button>
-          <textarea class="prog-textarea" id="programme-input"
-            placeholder="e.g.&#10;PPL ×6/week&#10;Push A: Bench 4×5 @100kg, OHP 3×8 @60kg…&#10;Pull A: Weighted pull-up 4×6, BB row 4×8 @80kg…&#10;Legs: Back squat 4×5 @120kg, RDL 4×8 @100kg…"></textarea>
-          <button class="btn-primary" style="margin-top:10px" id="prog-save-btn" onclick="saveProgramme()">Analyse &amp; Build Plan</button>
-        </div>
-      </details>
-      <div id="programme-analysis"></div>
+      <!-- Hidden — kept for saveProgramme compat -->
+      <textarea id="programme-input" style="display:none"></textarea>
+      <div id="programme-analysis" style="display:none"></div>
+      <div id="train-content" style="display:none"></div>
     </div>
 
     <!-- EAT -->
@@ -937,57 +930,130 @@ async function toggleHabit(key){
    TRAIN
 ════════════════════════════════════════ */
 function initTrain(){
-  // Pre-fill saved programme
-  const saved = OB.train?.programme;
-  const progEl = document.getElementById('programme-input');
-  if(progEl && saved) progEl.value = saved;
-
-  // Seed training chat on init
   initTrainChat(OB.train?.analysis || null, OB.train?.improvements || null);
   document.getElementById('train-chat-input')?.addEventListener('keydown', e => { if(e.key==='Enter') sendTrainChat(); });
 
-  // Restore previously analysed weekly plan
   if(OB.train?.weeklyPlan?.length) {
-    renderTodaySession(OB.train.weeklyPlan);
+    renderWeeklyCalendar(OB.train.weeklyPlan);
+  } else {
+    document.getElementById('train-day-detail').innerHTML = `
+      <div class="card" style="text-align:center;padding:24px 16px">
+        <p style="color:var(--muted);font-size:13px;margin:0">No plan set up yet.<br>Tell your coach below what you want to train.</p>
+      </div>`;
+    document.getElementById('train-sub').textContent = 'Set up your plan below';
+  }
+}
+
+let _activeSession = null; // {name, exercises: [{name, sets, reps, load}]}
+let _weeklyPlan = [];
+const _DAY_SHORT = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri', Saturday:'Sat', Sunday:'Sun' };
+
+function renderWeeklyCalendar(plan) {
+  _weeklyPlan = plan || [];
+  if(!_weeklyPlan.length) {
+    document.getElementById('train-day-tabs').innerHTML = '';
+    document.getElementById('train-day-detail').innerHTML = `
+      <div class="card" style="text-align:center;padding:24px 16px">
+        <p style="color:var(--muted);font-size:13px;margin:0">No plan yet — tell your coach below.</p>
+      </div>`;
     return;
   }
+  const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
 
-  // Fallback to hardcoded default programme
-  const day=new Date().getDay(); // 0=Sun, 1=Mon...
-  const adjusted=day===0?6:day-1; // Mon=0
-  const session=PROGRAMME[DAY_MAP[adjusted]];
+  document.getElementById('train-day-tabs').innerHTML = _weeklyPlan.map(d => {
+    const isToday = d.day === todayName;
+    const isRest = d.type === 'rest';
+    return `<button id="day-tab-${d.day}" onclick="selectDay('${d.day}')"
+      style="flex-shrink:0;min-width:48px;padding:8px 10px;font-size:11px;font-family:var(--B);letter-spacing:.06em;cursor:pointer;transition:all .15s;border:1px solid ${isToday?'var(--teal)':'var(--border)'};background:${isToday?'var(--teal)':'var(--s1)'};color:${isToday?'#000':'var(--muted)'};${isRest?'opacity:.55':''}">
+      ${_DAY_SHORT[d.day]||d.day.slice(0,3)}${isToday?'<br><span style="font-size:8px;letter-spacing:.1em">TODAY</span>':''}
+    </button>`;
+  }).join('');
 
-  document.getElementById('train-sub').textContent=session.name;
-  document.getElementById('train-content').innerHTML=`
-    ${session.exercises.map((ex,ei)=>`
-      <div class="workout-ex">
-        <div class="ex-name">${ex.name}</div>
+  selectDay(todayName);
+}
+
+function selectDay(dayName) {
+  if(!_weeklyPlan.length) return;
+  const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+  const day = _weeklyPlan.find(d => d.day === dayName);
+  if(!day) return;
+
+  _weeklyPlan.forEach(d => {
+    const tab = document.getElementById('day-tab-'+d.day);
+    if(!tab) return;
+    const isSelected = d.day === dayName;
+    const isToday = d.day === todayName;
+    const active = isSelected || isToday;
+    tab.style.background = active ? 'var(--teal)' : 'var(--s1)';
+    tab.style.color = active ? '#000' : 'var(--muted)';
+    tab.style.border = `1px solid ${active?'var(--teal)':'var(--border)'}`;
+  });
+
+  const isToday = dayName === todayName;
+  if(isToday) {
+    _activeSession = day.type === 'rest' ? null : { name: day.sessionName, exercises: day.exercises || [] };
+    document.getElementById('train-sub').textContent = day.type === 'rest' ? 'Rest Day' : day.sessionName;
+  }
+
+  document.getElementById('train-day-detail').innerHTML = renderDayDetail(day, isToday);
+}
+
+function renderDayDetail(day, isToday) {
+  if(day.type === 'rest') {
+    return `<div class="card">
+      <div class="card-title" style="margin-bottom:6px">Rest Day</div>
+      <p style="font-size:13px;color:var(--muted);margin:0">${escHtml(day.keyLifts||'Full recovery — sleep, nutrition, walk.')}</p>
+    </div>`;
+  }
+
+  const exercises = day.exercises || [];
+  const exHtml = exercises.map((ex, ei) => {
+    if(isToday) {
+      const targetRep = String(ex.reps||ex.rep||'').split('–')[0].split('-')[0].replace(/[^0-9]/g,'') || '';
+      const targetKg  = String(ex.load||'').replace(/[^0-9.]/g,'') || '';
+      return `<div class="workout-ex">
+        <div class="ex-name">${escHtml(ex.name)}</div>
+        ${ex.notes?`<div style="font-size:11px;color:var(--dim);margin:-4px 0 6px">${escHtml(ex.notes)}</div>`:''}
         <div class="ex-sets">
           <div class="set-row" style="margin-bottom:4px">
             <span class="set-num"></span>
-            <span style="flex:1;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:center">Reps (target: ${ex.rep})</span>
+            <span style="flex:1;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:center">Reps (target: ${escHtml(ex.reps||ex.rep||'—')})</span>
             <span class="set-unit" style="text-align:center">kg</span>
             <span class="set-unit"></span>
           </div>
-          ${Array.from({length:ex.sets},(_,si)=>`
+          ${Array.from({length:+ex.sets||3},(_,si)=>`
             <div class="set-row">
               <span class="set-num">${si+1}</span>
-              <input class="set-field" type="number" min="0" placeholder="${ex.rep.split('–')[0]}" id="reps-${ei}-${si}">
-              <input class="set-field" type="number" min="0" step="2.5" placeholder="0" id="wt-${ei}-${si}">
+              <input class="set-field" type="number" min="0" placeholder="${targetRep||'—'}" id="reps-${ei}-${si}">
+              <input class="set-field" type="number" min="0" step="2.5" placeholder="${targetKg||'0'}" id="wt-${ei}-${si}">
               <button class="set-done" id="sd-${ei}-${si}" onclick="checkSet('${ei}-${si}')">
                 <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
               </button>
             </div>
           `).join('')}
         </div>
-      </div>
-    `).join('')}
-    <button class="btn-primary" onclick="saveWorkout()">Save Session</button>
-    <p style="font-size:11px;color:var(--dim);text-align:center;margin-top:8px">Rest 2–3 min between sets on main compounds.</p>
-  `;
-}
+      </div>`;
+    } else {
+      return `<div class="workout-ex" style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div class="ex-name" style="margin:0">${escHtml(ex.name)}</div>
+          <div style="font-size:11px;color:var(--dim);white-space:nowrap;margin-left:8px">${escHtml(ex.sets)}×${escHtml(ex.reps||ex.rep||'—')} · ${escHtml(ex.load||'RPE 8')}</div>
+        </div>
+        ${ex.notes?`<div style="font-size:11px;color:var(--dim);margin-top:2px">${escHtml(ex.notes)}</div>`:''}
+      </div>`;
+    }
+  }).join('');
 
-let _activeSession = null; // {name, exercises: [{name, sets, reps, load}]}
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+      <div class="card-title" style="margin:0">${escHtml(day.sessionName)}</div>
+      ${isToday?'<span style="font-size:10px;color:var(--teal);font-family:var(--B);letter-spacing:.1em">TODAY</span>':''}
+    </div>
+    ${day.keyLifts?`<p style="font-size:12px;color:var(--dim);margin:0 0 12px">${escHtml(day.keyLifts)}</p>`:''}
+    ${exHtml}
+    ${isToday?`<button class="btn-primary" onclick="saveWorkout()" style="margin-top:14px">Save Session</button>`:''}
+  </div>`;
+}
 
 function renderTodaySession(weeklyPlan) {
   const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
@@ -1997,9 +2063,9 @@ async function saveProgramme(){
       OB.train.improvements = d.improvements;
       localStorage.setItem('jpt_ob', JSON.stringify(OB));
       sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
-      renderTodaySession(d.weeklyPlan);
+      renderWeeklyCalendar(d.weeklyPlan);
     }
-    renderProgrammeAnalysis(d);
+    // renderProgrammeAnalysis kept for compat but hidden in UI
   } catch(e) {
     if(analysisEl) analysisEl.innerHTML = '<p style="font-size:12px;color:var(--dim);padding:12px 0">Could not analyse programme — try again.</p>';
   } finally {
@@ -2202,8 +2268,8 @@ async function applyTrainChatPlan(btn) {
       OB.train.improvements = d.improvements;
       localStorage.setItem('jpt_ob', JSON.stringify(OB));
       sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
-      renderTodaySession(d.weeklyPlan);
-      showToast("Plan updated — today's session refreshed");
+      renderWeeklyCalendar(d.weeklyPlan);
+      showToast("Plan updated — calendar refreshed");
     } else {
       showToast(d.error || 'Could not extract plan — describe it more clearly');
     }
