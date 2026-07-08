@@ -783,8 +783,16 @@
 
       <!-- Phase 4: Results -->
       <div id="lab-phase-4" class="lab-phase">
+        <!-- Stale data banner -->
+        <div id="lab-stale-banner" style="display:none;background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.25);padding:13px 16px;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fbbf24;margin-bottom:5px">Your data has changed</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5">Habits, nutrition or training has been updated since your last analysis. Run an update for a current read.</div>
+          <button onclick="labRefreshAnalysis()" style="font-size:11px;color:#fbbf24;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);padding:7px 14px;cursor:pointer;font-family:var(--B);font-weight:600">Update Analysis →</button>
+        </div>
+        <!-- Last analysed timestamp -->
+        <div id="lab-results-meta" style="font-size:10px;color:var(--dim);margin-bottom:12px"></div>
         <div id="lab-results-content"></div>
-        <button class="lab-cta-sec" onclick="labReset()">Run Assessment Again</button>
+        <button class="lab-cta-sec" onclick="labReset()">Start New Assessment</button>
         <div style="font-size:10px;color:var(--dim);text-align:center;margin-top:12px;line-height:1.5">Evidence-based estimate — not a medical test. For confirmed results use Medichecks Advanced Male Hormone panel (£149).</div>
       </div>
     </div>
@@ -2947,12 +2955,152 @@ const LAB_QUESTIONS = {
   ],
 };
 
-let HL_STATE = { phase:1, selectedPains:[], questions:[], currentQ:0, answers:{}, results:null };
+let HL_STATE = { phase:1, selectedPains:[], questions:[], currentQ:0, answers:{}, results:null, savedAt:null, dataSnapshot:null };
+
+/* ── Lab persistence ── */
+function labStorageKey() { return `jpt_hormone_lab_${USER?.id||'guest'}`; }
+
+function labDataSnapshot() {
+  const rScores = Object.values(foodRatings).filter(r=>r&&r.score!=null).map(r=>r.score);
+  const avgScore = rScores.length ? Math.round(rScores.reduce((a,b)=>a+b,0)/rScores.length*10)/10 : 0;
+  return {
+    foodCount:      foods.length,
+    avgFoodScore:   avgScore,
+    habitsCompleted: Object.keys(habitState).filter(k=>habitState[k]).sort().join(','),
+    planDays:       (OB.train?.weeklyPlan||[]).filter(d=>d.type!=='rest').map(d=>d.day+d.sessionName).join(','),
+    bodyFat:        OB.eat?.body_fat || '',
+    sleepHrs:       OB.habits?.sleep_hrs || '',
+    alcohol:        OB.habits?.alcohol || '',
+    stressLevel:    OB.habits?.stress_level || '',
+  };
+}
+
+function labSave(results) {
+  const saved = {
+    results,
+    answers:       HL_STATE.answers,
+    selectedPains: HL_STATE.selectedPains,
+    savedAt:       new Date().toISOString(),
+    dataSnapshot:  labDataSnapshot(),
+  };
+  try { localStorage.setItem(labStorageKey(), JSON.stringify(saved)); } catch(e) {}
+  // Also persist to Supabase profile metadata
+  if(OB) {
+    OB.hormone_lab = { savedAt: saved.savedAt, dataSnapshot: saved.dataSnapshot, selectedPains: saved.selectedPains, answers: saved.answers };
+    localStorage.setItem('jpt_ob', JSON.stringify(OB));
+    sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+  }
+}
+
+function labLoad() {
+  try {
+    const raw = localStorage.getItem(labStorageKey());
+    if(!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function labClearSaved() {
+  try { localStorage.removeItem(labStorageKey()); } catch(e) {}
+  if(OB) { delete OB.hormone_lab; localStorage.setItem('jpt_ob', JSON.stringify(OB)); sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{}); }
+}
+
+function checkLabStale() {
+  const banner = document.getElementById('lab-stale-banner');
+  if(!banner || !HL_STATE.dataSnapshot) return;
+  const current = labDataSnapshot();
+  const isStale = JSON.stringify(current) !== JSON.stringify(HL_STATE.dataSnapshot);
+  banner.style.display = isStale ? 'block' : 'none';
+}
+
+function labTimeAgo(isoStr) {
+  if(!isoStr) return '';
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const mins = Math.floor(diff/60000);
+  if(mins < 2)  return 'Just now';
+  if(mins < 60) return `${mins} minutes ago`;
+  const hrs = Math.floor(mins/60);
+  if(hrs < 24)  return `${hrs} hour${hrs>1?'s':''} ago`;
+  const days = Math.floor(hrs/24);
+  return `${days} day${days>1?'s':''} ago`;
+}
 
 function initLab() {
-  if(HL_STATE.results) { labShowPhase(4); return; }
+  // Restore saved results if available
+  if(!HL_STATE.results) {
+    const saved = labLoad();
+    if(saved?.results) {
+      HL_STATE.results       = saved.results;
+      HL_STATE.answers       = saved.answers       || {};
+      HL_STATE.selectedPains = saved.selectedPains || [];
+      HL_STATE.savedAt       = saved.savedAt;
+      HL_STATE.dataSnapshot  = saved.dataSnapshot;
+    }
+  }
+  if(HL_STATE.results) {
+    renderLabResults(HL_STATE.results);
+    // Show last-analysed timestamp
+    const meta = document.getElementById('lab-results-meta');
+    if(meta && HL_STATE.savedAt) meta.textContent = 'Last analysed: ' + labTimeAgo(HL_STATE.savedAt);
+    labShowPhase(4);
+    checkLabStale();
+    return;
+  }
   renderLabPainGrid();
   labShowPhase(1);
+}
+
+async function labRefreshAnalysis() {
+  // Re-run with saved answers — skip questionnaire
+  if(!HL_STATE.answers || !Object.keys(HL_STATE.answers).length) { labReset(); return; }
+  document.getElementById('lab-stale-banner').style.display = 'none';
+  labShowPhase(3);
+  // Re-build appData (same logic as labSubmit)
+  const rScores = Object.values(foodRatings).filter(r=>r&&r.score!=null).map(r=>r.score);
+  const avgFoodScore = rScores.length ? Math.round(rScores.reduce((a,b)=>a+b,0)/rScores.length*10)/10 : null;
+  const allHabits = getHabits();
+  const doneHabits   = allHabits.filter(h=>habitState[h.key]).map(h=>h.name);
+  const notDoneHabits= allHabits.filter(h=>!habitState[h.key]).map(h=>h.name);
+  const planSummary  = OB.train?.weeklyPlan?.length ? OB.train.weeklyPlan.filter(d=>d.type!=='rest').map(d=>`${d.day}: ${d.sessionName}`).join(', ') : null;
+  const ob = OB||{};
+  const profile = {};
+  [['age',ob.coach?.age],['body_fat_pct',ob.eat?.body_fat],['weight_kg',ob.eat?.weight_kg],
+   ['sleep_hrs',ob.habits?.sleep_hrs],['sleep_quality',ob.habits?.sleep_quality],
+   ['stress_level',ob.habits?.stress_level],['alcohol',ob.habits?.alcohol],
+   ['job_type',ob.habits?.job_type],['training_days',ob.train?.days],
+   ['training_goal',ob.train?.goal],['symptoms',ob.coach?.symptoms],
+   ['health_conditions',ob.coach?.health_conditions]].forEach(([k,v])=>{ if(v!=null) profile[k]=v; });
+  const payload = {
+    painPoints: HL_STATE.selectedPains,
+    answers: HL_STATE.answers,
+    appData: {
+      recentFoods:   foods.slice(-15).map(f=>f.food_name).join(', ')||null,
+      avgFoodScore,
+      habitsToday:   doneHabits.length   ? doneHabits.join(', ')    : null,
+      habitsMissed:  notDoneHabits.length? notDoneHabits.join(', ') : null,
+      habitStreak:   XP_STATE.streak_days > 0 ? XP_STATE.streak_days : null,
+      weeklyPlan:    planSummary,
+      profile:       Object.keys(profile).length ? profile : null,
+    }
+  };
+  try {
+    const res = await fetch('/api/hormone-lab', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(payload) });
+    if(!res.ok) { showToast('Update failed ('+res.status+') — try again'); labShowPhase(4); return; }
+    const data = await res.json();
+    if(data.error || !data.estimates) { showToast('Update failed — try again'); labShowPhase(4); return; }
+    HL_STATE.results = data;
+    HL_STATE.savedAt = new Date().toISOString();
+    HL_STATE.dataSnapshot = labDataSnapshot();
+    labSave(data);
+    renderLabResults(data);
+    const meta = document.getElementById('lab-results-meta');
+    if(meta) meta.textContent = 'Last analysed: Just now';
+    document.getElementById('lab-stale-banner').style.display = 'none';
+    labShowPhase(4);
+  } catch(e) {
+    showToast('Update timed out — try again');
+    labShowPhase(4);
+  }
 }
 
 function renderLabPainGrid() {
@@ -3116,7 +3264,12 @@ async function labSubmit() {
     if(data.error) { showToast('Analysis failed — try again'); labShowPhase(2); return; }
     if(!data.estimates) { showToast('Bad response — try again'); labShowPhase(2); return; }
     HL_STATE.results = data;
+    HL_STATE.savedAt = new Date().toISOString();
+    HL_STATE.dataSnapshot = labDataSnapshot();
+    labSave(data);
     renderLabResults(data);
+    const meta = document.getElementById('lab-results-meta');
+    if(meta) meta.textContent = 'Last analysed: Just now';
     labShowPhase(4);
     await earnXP('hormone_lab', TODAY, 100);
   } catch(e) {
@@ -3127,7 +3280,8 @@ async function labSubmit() {
 }
 
 function labReset() {
-  HL_STATE = { phase:1, selectedPains:[], questions:[], currentQ:0, answers:{}, results:null };
+  labClearSaved();
+  HL_STATE = { phase:1, selectedPains:[], questions:[], currentQ:0, answers:{}, results:null, savedAt:null, dataSnapshot:null };
   renderLabPainGrid();
   labShowPhase(1);
 }
