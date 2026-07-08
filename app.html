@@ -1066,18 +1066,26 @@ let habitState={};
 
 async function initHabits(){
   renderOverviewCard();
-  // Refresh personalised habits
   const fresh=getHabits();
   fresh.forEach((h,i)=>{ if(HABITS[i]) Object.assign(HABITS[i],h); });
   document.getElementById('habits-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
 
-  // Load today's habits from Supabase
-  const{data}=await sb.from('daily_habits')
-    .select('*').eq('user_id',USER.id).eq('date',TODAY);
-
+  // Restore from localStorage immediately (instant UI while DB loads)
   habitState={};
-  (data||[]).forEach(r=>{if(r.completed)habitState[r.habit_name]=true;});
+  const cached = localStorage.getItem(`jpt_habits_${USER.id}_${TODAY}`);
+  if(cached){ try{ Object.assign(habitState, JSON.parse(cached)); }catch(e){} }
   renderHabits();
+
+  // Load from Supabase and merge
+  const{data, error}=await sb.from('daily_habits')
+    .select('*').eq('user_id',USER.id).eq('date',TODAY);
+  if(error){ console.error('initHabits load error:', error); return; }
+  if(data?.length){
+    habitState={};
+    data.forEach(r=>{ habitState[r.habit_name] = !!r.completed; });
+    localStorage.setItem(`jpt_habits_${USER.id}_${TODAY}`, JSON.stringify(habitState));
+    renderHabits();
+  }
 }
 
 function renderHabits(){
@@ -1106,13 +1114,18 @@ function renderHabits(){
 async function toggleHabit(key){
   habitState[key]=!habitState[key];
   renderHabits();
-  await sb.from('daily_habits').upsert({
-    user_id:USER.id, date:TODAY, habit_name:key, completed:habitState[key]
-  },{onConflict:'user_id,date,habit_name'});
+  // Persist to localStorage immediately so reloads survive DB failure
+  try{ localStorage.setItem(`jpt_habits_${USER.id}_${TODAY}`, JSON.stringify(habitState)); }catch(e){}
+
+  const { error } = await sb.from('daily_habits').upsert({
+    user_id: USER.id, date: TODAY, habit_name: key, completed: habitState[key]
+  }, { onConflict: 'user_id,date,habit_name' });
+  if(error) console.error('Habit save failed:', error.message, error);
+
   if(habitState[key]){
-    showToast('✓ '+HABITS.find(h=>h.key===key)?.name);
+    const h = getHabits().find(h=>h.key===key);
+    showToast('✓ '+(h?.name||key));
     await earnXP('habit', key, 10);
-    // Bonus: all habits done
     const allH = getHabits();
     const allDone = allH.every(h => habitState[h.key]);
     if(allDone) await earnXP('habits_all', TODAY, 75);
