@@ -434,6 +434,79 @@
     .ob-check input[type=checkbox]{display:none}
     .ob-check.checked{border-color:rgba(44,212,196,.4);color:var(--white);
       background:rgba(44,212,196,.07)}
+
+    /* ── HORMONE LAB ── */
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .lab-phase{display:none}
+    .lab-phase.active{display:block}
+    .lab-pain-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+    .lab-pain-chip{background:var(--s1);border:1px solid var(--border);padding:14px 12px;
+      cursor:pointer;text-align:left;transition:all .2s;position:relative;width:100%}
+    .lab-pain-chip.selected{border-color:rgba(44,212,196,.5);background:rgba(44,212,196,.06)}
+    .lab-pain-chip-icon{font-size:20px;margin-bottom:6px;display:block}
+    .lab-pain-chip-name{font-size:12px;font-weight:600;color:var(--white);display:block}
+    .lab-pain-chip-desc{font-size:10px;color:var(--muted);margin-top:3px;display:block;line-height:1.4}
+    .lab-pain-chip.selected::after{content:'✓';position:absolute;top:8px;right:10px;
+      color:var(--teal);font-size:11px;font-weight:700}
+    .lab-progress{height:2px;background:var(--border);margin-bottom:24px}
+    .lab-progress-fill{height:2px;background:var(--teal);transition:width .4s ease}
+    .lab-q-label{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+      color:var(--teal);margin-bottom:8px}
+    .lab-q-text{font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;
+      line-height:1.2;margin-bottom:20px}
+    .lab-q-opts{display:grid;gap:8px}
+    .lab-q-opt{background:var(--s1);border:1px solid var(--border);padding:13px 16px;
+      cursor:pointer;text-align:left;font-size:13px;color:var(--muted);transition:all .2s;
+      font-family:var(--B);width:100%}
+    .lab-q-opt.sel{border-color:rgba(44,212,196,.5);background:rgba(44,212,196,.06);color:var(--white)}
+    .lab-q-opt:hover{border-color:var(--dim);color:var(--white)}
+    .lab-slider{width:100%;margin:12px 0;accent-color:var(--teal)}
+    .lab-slider-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:-4px}
+    .lab-slider-val{text-align:center;font-family:var(--D);font-size:32px;font-weight:900;
+      color:var(--teal);margin:8px 0 16px}
+    .lab-processing{text-align:center;padding:60px 0}
+    .lab-spinner{width:48px;height:48px;border:2px solid var(--border);border-top-color:var(--teal);
+      border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
+    .hormone-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+    .hormone-card{background:var(--s1);border:1px solid var(--border);padding:14px;position:relative}
+    .hormone-name{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+    .hormone-val{font-family:var(--D);font-size:20px;font-weight:900;line-height:1;margin-bottom:3px}
+    .hormone-val.optimal,.hormone-status.optimal{color:var(--teal)}
+    .hormone-val.suppressed,.hormone-status.suppressed,.hormone-val.low,.hormone-status.low{color:#f87171}
+    .hormone-val.elevated,.hormone-status.elevated{color:#fb923c}
+    .hormone-val.sub-optimal,.hormone-status.sub-optimal,.hormone-val.sluggish,.hormone-status.sluggish{color:#fbbf24}
+    .hormone-val.overactive,.hormone-status.overactive{color:#fb923c}
+    .hormone-status{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+    .hormone-conf{position:absolute;top:10px;right:10px;font-size:9px;color:var(--dim)}
+    .hormone-bar{height:2px;background:var(--border);margin-top:10px}
+    .hormone-bar-fill{height:2px;transition:width .8s ease}
+    .hormone-bar-fill.optimal{background:var(--teal)}
+    .hormone-bar-fill.suppressed,.hormone-bar-fill.low{background:#f87171}
+    .hormone-bar-fill.elevated,.hormone-bar-fill.overactive{background:#fb923c}
+    .hormone-bar-fill.sub-optimal,.hormone-bar-fill.sluggish{background:#fbbf24}
+    .protocol-section{border:1px solid var(--border);margin-bottom:8px}
+    .protocol-hdr{display:flex;justify-content:space-between;align-items:center;
+      padding:13px 16px;cursor:pointer;user-select:none}
+    .protocol-hdr-title{font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+    .protocol-hdr-caret{color:var(--dim);transition:transform .2s;font-size:12px}
+    .protocol-body{display:none;padding:4px 16px 14px;border-top:1px solid var(--border)}
+    .protocol-body.open{display:block}
+    .protocol-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;
+      color:var(--muted);line-height:1.55;display:flex;gap:10px}
+    .protocol-item:last-child{border-bottom:none;padding-bottom:0}
+    .protocol-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:8px}
+    .lab-summary{background:rgba(44,212,196,.03);border:1px solid rgba(44,212,196,.12);
+      padding:16px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.65}
+    .lab-cta{width:100%;padding:15px;background:var(--teal);color:var(--black);
+      font-family:var(--D);font-size:14px;font-weight:900;letter-spacing:.1em;
+      text-transform:uppercase;border:none;cursor:pointer;margin-top:8px}
+    .lab-cta:disabled{opacity:.5;cursor:default}
+    .lab-cta-sec{width:100%;padding:13px;background:transparent;color:var(--teal);
+      font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.08em;
+      text-transform:uppercase;border:1px solid rgba(44,212,196,.3);cursor:pointer;margin-top:8px}
+    /* 6-tab nav adjustment */
+    .bn-tab{gap:3px;padding:8px 2px}
+    .bn-tab span{font-size:9px}
   </style>
 </head>
 <body>
@@ -666,6 +739,51 @@
       </div>
     </div>
 
+    <!-- HORMONE LAB -->
+    <div id="pane-lab" class="pane">
+      <div class="sh">
+        <div class="sh-label">Hormone Lab</div>
+        <div class="sh-title">Hormone<br><span style="color:var(--teal)">Optimiser</span></div>
+        <p class="sh-sub">Multi-point assessment to estimate your hormonal status and build a personalised protocol.</p>
+      </div>
+
+      <!-- Phase 1: Pain point selection -->
+      <div id="lab-phase-1" class="lab-phase active">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:4px;line-height:1.6">What are you currently struggling with? Select everything that applies.</p>
+        <div class="lab-pain-grid" id="lab-pain-grid"></div>
+        <div id="lab-p1-error" style="font-size:12px;color:#f87171;display:none;margin-bottom:8px">Select at least one to continue.</div>
+        <button class="lab-cta" onclick="labPhase1Next()">Start Assessment →</button>
+      </div>
+
+      <!-- Phase 2: Questions -->
+      <div id="lab-phase-2" class="lab-phase">
+        <div class="lab-progress"><div class="lab-progress-fill" id="lab-progress-fill" style="width:0%"></div></div>
+        <div class="lab-q-label" id="lab-q-category"></div>
+        <div class="lab-q-text" id="lab-q-text"></div>
+        <div id="lab-q-body"></div>
+        <div style="display:flex;gap:8px;margin-top:20px">
+          <button class="lab-cta-sec" style="flex:0 0 auto;padding:13px 20px;margin-top:0" onclick="labQBack()">←</button>
+          <button class="lab-cta" style="flex:1;margin-top:0" id="lab-q-next-btn" onclick="labQNext()">Next →</button>
+        </div>
+      </div>
+
+      <!-- Phase 3: Processing -->
+      <div id="lab-phase-3" class="lab-phase">
+        <div class="lab-processing">
+          <div class="lab-spinner"></div>
+          <div style="font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:8px">Analysing</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.6">Cross-referencing your symptoms with your lifestyle, nutrition, training and sleep data...</div>
+        </div>
+      </div>
+
+      <!-- Phase 4: Results -->
+      <div id="lab-phase-4" class="lab-phase">
+        <div id="lab-results-content"></div>
+        <button class="lab-cta-sec" onclick="labReset()">Run Assessment Again</button>
+        <div style="font-size:10px;color:var(--dim);text-align:center;margin-top:12px;line-height:1.5">Evidence-based estimate — not a medical test. For confirmed results use Medichecks Advanced Male Hormone panel (£149).</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- BOTTOM NAV -->
@@ -689,6 +807,10 @@
     <button class="bn-tab" data-tab="coach" onclick="switchTab('coach')">
       <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       <span>Coach</span>
+    </button>
+    <button class="bn-tab" data-tab="lab" onclick="switchTab('lab')">
+      <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+      <span>Lab</span>
     </button>
   </nav>
 
@@ -1032,6 +1154,7 @@ function switchTab(tab){
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+tab));
   document.getElementById('content').scrollTop=0;
+  if(tab==='lab'){ setTimeout(()=>initLab(),50); return; }
   // Show onboarding on first visit if not yet done
   const obTabs=['habits','train','eat','progress','coach'];
   if(obTabs.includes(tab) && !isOnboarded(tab)){
@@ -2745,6 +2868,287 @@ async function completeIntake() {
   generateOverview(); // async, non-blocking
 
   showToast('Profile built — your protocol is live.');
+}
+
+/* ════════════════════════════════════════
+   HORMONE LAB
+════════════════════════════════════════ */
+const LAB_PAIN_POINTS = [
+  { key:'low_energy',   icon:'⚡', name:'Low Energy',        desc:'Fatigue, afternoon crashes, waking tired' },
+  { key:'low_libido',   icon:'🔥', name:'Low Libido',         desc:'Reduced drive, poor morning erections' },
+  { key:'poor_muscle',  icon:'💪', name:'Poor Muscle Growth', desc:'Gains stalled, losing muscle despite training' },
+  { key:'excess_fat',   icon:'🎯', name:'Excess Body Fat',    desc:'Belly/chest fat, struggling to lose weight' },
+  { key:'poor_sleep',   icon:'🌙', name:'Poor Sleep',         desc:'Not rested, waking in the night, insomnia' },
+  { key:'brain_fog',    icon:'🧠', name:'Brain Fog',          desc:'Poor focus, memory, cognitive sharpness' },
+  { key:'slow_recovery',icon:'🔄', name:'Slow Recovery',      desc:'Always sore, high DOMS, poor HRV trend' },
+  { key:'hair_loss',    icon:'💈', name:'Hair Loss',          desc:'Thinning, receding hairline or diffuse loss' },
+];
+
+const LAB_QUESTIONS = {
+  core: [
+    { id:'age',           cat:'About You',  q:'How old are you?',                   type:'slider', min:14, max:65, dflt:30, unit:'yrs',  low:'14', high:'65' },
+    { id:'body_fat',      cat:'About You',  q:'Estimated body fat percentage?',      type:'slider', min:8,  max:40, dflt:18, unit:'%',    low:'Lean', high:'Obese',
+      hint:'Not sure? 10-12% = visible abs. 15-17% = some definition. 20-25% = soft. 30%+ = significant excess.' },
+    { id:'sleep_hrs',     cat:'About You',  q:'Average hours of sleep per night?',   type:'slider', min:4,  max:10, dflt:7,  unit:'hrs',  low:'4hrs', high:'10hrs' },
+    { id:'training_days', cat:'Training',   q:'Training days per week?',             type:'opts', opts:['0 — not training currently','1–2 days','3–4 days','5–6 days','Every day'] },
+    { id:'red_meat',      cat:'Nutrition',  q:'Fatty red meat servings per week?',   type:'opts', opts:['0 — rarely eat red meat','1–2 servings','3–5 servings','6–10 servings','Daily, multiple times'] },
+    { id:'eggs',          cat:'Nutrition',  q:'Whole eggs per day?',                 type:'opts', opts:['0 — do not eat eggs','1–2','3–5','6–10','10+'] },
+    { id:'cooking_oils',  cat:'Nutrition',  q:'Primary cooking fat?',                type:'opts', opts:['Butter / ghee / beef tallow','Olive oil','Vegetable / sunflower / rapeseed oil','Mixed — various oils'] },
+    { id:'alcohol',       cat:'Lifestyle',  q:'Weekly alcohol consumption?',         type:'opts', opts:['Never','Rarely — 1–2 units/week','Regularly — 3–7 units/week','Heavily — 8+ units/week'] },
+    { id:'plastics',      cat:'Lifestyle',  q:'Daily exposure to plastics / chemicals?', type:'opts', opts:['Low — glass or steel, clean products','Moderate — some plastic use','High — daily plastic bottles, processed food packaging'] },
+    { id:'stress_level',  cat:'Lifestyle',  q:'Overall stress level right now?',     type:'slider', min:1, max:10, dflt:5, unit:'', low:'Calm', high:'Overwhelmed' },
+    { id:'sunlight',      cat:'Lifestyle',  q:'Morning sunlight exposure?',          type:'opts', opts:['Daily — outside within 1hr of waking','Sometimes — 3–4x per week','Rarely — mostly indoors in the morning'] },
+  ],
+  low_energy: [
+    { id:'morning_energy',  cat:'Energy', q:'Energy level on waking?',             type:'slider', min:1, max:10, dflt:5, unit:'', low:'Exhausted', high:'Energised' },
+    { id:'afternoon_crash', cat:'Energy', q:'Do you crash in the afternoon?',      type:'opts', opts:['Yes — every day without fail','Yes — often','Sometimes','Rarely or never'] },
+    { id:'caffeine_dep',    cat:'Energy', q:'Need caffeine just to function?',     type:'opts', opts:['Yes — essential just to feel normal','Yes — but could manage without','Sometimes','No — fine without it'] },
+  ],
+  low_libido: [
+    { id:'morning_erections', cat:'Libido', q:'Morning erection frequency?',       type:'opts', opts:['Daily / almost daily','4–6 days/week','2–3 days/week','Rarely — 0–1/week','Never'] },
+    { id:'libido_score',      cat:'Libido', q:'Rate your current libido:',         type:'slider', min:1, max:10, dflt:5, unit:'', low:'Non-existent', high:'High' },
+    { id:'drive_motivation',  cat:'Libido', q:'Overall drive and motivation level?', type:'slider', min:1, max:10, dflt:5, unit:'', low:'None', high:'High' },
+    { id:'mood',              cat:'Libido', q:'Current mood and emotional state?', type:'opts', opts:['Stable and positive','Flat / emotionally blunted','Irritable and short-tempered','Anxious or low'] },
+  ],
+  poor_muscle: [
+    { id:'training_intensity', cat:'Training', q:'How hard are you actually training?', type:'opts', opts:['High — working near failure most sets','Moderate — challenging but not maximal','Low — comfortable, not really pushing'] },
+    { id:'strength_trend',     cat:'Training', q:'Strength trend over the last 3 months?', type:'opts', opts:['Improving — hitting new numbers','Flat — no change','Declining — getting weaker'] },
+    { id:'recovery_between',   cat:'Training', q:'Recovery between sessions?', type:'slider', min:1, max:10, dflt:6, unit:'', low:'Still sore', high:'Fully fresh' },
+  ],
+  excess_fat: [
+    { id:'fat_location',  cat:'Body Comp', q:'Where is excess fat mainly accumulating?', type:'opts', opts:['Belly / lower abdomen','Chest — puffy or gyno-like','Everywhere generally','Belly plus chest combined'] },
+    { id:'weight_trend',  cat:'Body Comp', q:'Weight trend despite diet efforts?',       type:'opts', opts:['Gaining despite eating reasonably well','Stuck — cannot shift it','Slowly losing','Not actively tracking'] },
+  ],
+  poor_sleep: [
+    { id:'sleep_onset',  cat:'Sleep', q:'Time to fall asleep after getting into bed?', type:'opts', opts:['Under 15 minutes','15–30 minutes','30–60 minutes','Over an hour'] },
+    { id:'wake_night',   cat:'Sleep', q:'Waking in the night?',                        type:'opts', opts:['Never','Once or twice','Three or more times','Often wake between 3–4am specifically'] },
+    { id:'rested',       cat:'Sleep', q:'Wake feeling rested?',                        type:'opts', opts:['Yes — feel good on waking','Somewhat rested','No — feel groggy','No — exhausted straight away'] },
+    { id:'snoring',      cat:'Sleep', q:'Do you snore or has breathing stopping been mentioned?', type:'opts', opts:['No snoring','Mild snoring','Heavy snoring','Yes — possible sleep apnoea'] },
+  ],
+  brain_fog: [
+    { id:'cognitive_score', cat:'Cognition', q:'Rate your mental sharpness right now:', type:'slider', min:1, max:10, dflt:6, unit:'', low:'Foggy / slow', high:'Sharp / clear' },
+    { id:'word_retrieval',  cat:'Cognition', q:'Difficulty recalling words or names?',  type:'opts', opts:['Often — this is very noticeable','Sometimes — it happens','Rarely'] },
+    { id:'work_focus',      cat:'Cognition', q:'Ability to focus during deep work?',    type:'opts', opts:['Strong — easy to concentrate','Moderate — takes deliberate effort','Poor — constant distraction','Very poor — cannot sustain focus at all'] },
+  ],
+  slow_recovery: [
+    { id:'doms_duration', cat:'Recovery', q:'How long does muscle soreness (DOMS) last after hard sessions?', type:'opts', opts:['Under 24 hours','24–48 hours','48–72 hours','Over 72 hours — still sore after 3 days'] },
+    { id:'hrv_trend',     cat:'Recovery', q:'HRV trend (if you track it)?',            type:'opts', opts:['Good and improving','Stable','Declining — trending down','Do not track HRV'] },
+    { id:'joint_pain',    cat:'Recovery', q:'Joint or tendon soreness?',               type:'opts', opts:['None at all','Mild — occasional','Moderate — persistent','Severe — limiting my training'] },
+  ],
+  hair_loss: [
+    { id:'hair_pattern',  cat:'Hair', q:'Hair loss pattern?',                     type:'opts', opts:['Temples / hairline receding','Crown or top thinning','Diffuse — spread across the whole head','Combination — temples and crown'] },
+    { id:'hair_duration', cat:'Hair', q:'How long has this been noticeable?',     type:'opts', opts:['Just started — under 6 months','6–12 months','1–3 years','Over 3 years'] },
+    { id:'hair_family',   cat:'Hair', q:'Family history of male pattern baldness?',type:'opts', opts:['Yes — father or brothers','Yes — maternal grandfather','Both sides of the family','No family history'] },
+  ],
+};
+
+let HL_STATE = { phase:1, selectedPains:[], questions:[], currentQ:0, answers:{}, results:null };
+
+function initLab() {
+  if(HL_STATE.results) { labShowPhase(4); return; }
+  renderLabPainGrid();
+  labShowPhase(1);
+}
+
+function renderLabPainGrid() {
+  const grid = document.getElementById('lab-pain-grid');
+  if(!grid) return;
+  grid.innerHTML = LAB_PAIN_POINTS.map((p,i) => `
+    <button class="lab-pain-chip${HL_STATE.selectedPains.includes(p.key)?' selected':''}" data-pidx="${i}" onclick="labTogglePain(this)">
+      <span class="lab-pain-chip-icon">${p.icon}</span>
+      <span class="lab-pain-chip-name">${p.name}</span>
+      <span class="lab-pain-chip-desc">${p.desc}</span>
+    </button>`).join('');
+}
+
+function labTogglePain(btn) {
+  const key = LAB_PAIN_POINTS[+btn.dataset.pidx].key;
+  const idx = HL_STATE.selectedPains.indexOf(key);
+  if(idx === -1) HL_STATE.selectedPains.push(key);
+  else HL_STATE.selectedPains.splice(idx, 1);
+  btn.classList.toggle('selected', HL_STATE.selectedPains.includes(key));
+  document.getElementById('lab-p1-error').style.display = 'none';
+}
+
+function labPhase1Next() {
+  if(!HL_STATE.selectedPains.length) {
+    document.getElementById('lab-p1-error').style.display = 'block';
+    return;
+  }
+  const qs = [...LAB_QUESTIONS.core];
+  HL_STATE.selectedPains.forEach(p => { if(LAB_QUESTIONS[p]) qs.push(...LAB_QUESTIONS[p]); });
+  HL_STATE.questions = qs;
+  HL_STATE.currentQ = 0;
+  // Pre-fill from OB data
+  const h = OB.habits||{}, e = OB.eat||{}, c = OB.coach||{};
+  const pre = { age: c.age||null, body_fat: e.body_fat||null, sleep_hrs: h.sleep_hrs||null,
+    alcohol: h.alcohol && h.alcohol!=='Never' ? (h.alcohol.includes('Daily')||h.alcohol.includes('Most')
+      ? 'Heavily — 8+ units/week' : 'Regularly — 3–7 units/week') : null };
+  Object.keys(pre).forEach(k => { if(pre[k]!==null && !HL_STATE.answers[k]) HL_STATE.answers[k] = pre[k]; });
+  labShowPhase(2);
+  renderLabQuestion();
+}
+
+function labShowPhase(n) {
+  HL_STATE.phase = n;
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById('lab-phase-'+i);
+    if(el) el.classList.toggle('active', i===n);
+  });
+}
+
+function renderLabQuestion() {
+  const q = HL_STATE.questions[HL_STATE.currentQ];
+  if(!q) { labSubmit(); return; }
+  const pct = Math.round((HL_STATE.currentQ / HL_STATE.questions.length) * 100);
+  document.getElementById('lab-progress-fill').style.width = pct + '%';
+  document.getElementById('lab-q-category').textContent = q.cat || '';
+  document.getElementById('lab-q-text').textContent = q.q;
+  const existing = HL_STATE.answers[q.id];
+  const body = document.getElementById('lab-q-body');
+
+  if(q.type === 'slider') {
+    const val = (existing !== undefined && existing !== null) ? +existing : q.dflt;
+    HL_STATE.answers[q.id] = val;
+    body.innerHTML = `
+      <div class="lab-slider-val" id="lab-sv">${val}${q.unit ? ' '+q.unit : ''}</div>
+      <input type="range" class="lab-slider" min="${q.min}" max="${q.max}" value="${val}" data-qid="${q.id}" data-unit="${q.unit||''}"
+        oninput="document.getElementById('lab-sv').textContent=this.value+(this.dataset.unit?' '+this.dataset.unit:'');HL_STATE.answers[this.dataset.qid]=+this.value">
+      <div class="lab-slider-labels"><span>${escHtml(q.low||'')}</span><span>${escHtml(q.high||'')}</span></div>
+      ${q.hint ? `<div style="font-size:11px;color:var(--dim);margin-top:12px;line-height:1.5">${escHtml(q.hint)}</div>` : ''}`;
+  } else {
+    body.innerHTML = `<div class="lab-q-opts">${
+      q.opts.map((opt,i) => `<button class="lab-q-opt${existing===opt?' sel':''}" data-qid="${q.id}" data-idx="${i}" onclick="labSelectOpt(this)">${escHtml(opt)}</button>`).join('')
+    }</div>`;
+  }
+  const nextBtn = document.getElementById('lab-q-next-btn');
+  if(nextBtn) nextBtn.textContent = HL_STATE.currentQ === HL_STATE.questions.length-1 ? 'Analyse →' : 'Next →';
+}
+
+function labSelectOpt(btn) {
+  btn.closest('.lab-q-opts').querySelectorAll('.lab-q-opt').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  const q = HL_STATE.questions.find(q => q.id === btn.dataset.qid);
+  if(q) HL_STATE.answers[q.id] = q.opts[+btn.dataset.idx];
+}
+
+function labQNext() {
+  const q = HL_STATE.questions[HL_STATE.currentQ];
+  if(q.type !== 'slider' && !HL_STATE.answers[q.id]) { showToast('Select an answer to continue'); return; }
+  HL_STATE.currentQ++;
+  if(HL_STATE.currentQ >= HL_STATE.questions.length) labSubmit();
+  else renderLabQuestion();
+}
+
+function labQBack() {
+  if(HL_STATE.currentQ > 0) { HL_STATE.currentQ--; renderLabQuestion(); }
+  else labShowPhase(1);
+}
+
+async function labSubmit() {
+  labShowPhase(3);
+  const payload = {
+    painPoints: HL_STATE.selectedPains,
+    answers: HL_STATE.answers,
+    appData: {
+      recentFoods: foods.slice(-10).map(f=>f.food_name).join(', ') || null,
+      completedHabits: Object.keys(habitState).filter(k=>habitState[k]).join(', ') || null,
+      weeklyPlan: OB.train?.weeklyPlan?.length ? OB.train.weeklyPlan.map(d=>d.day+':'+d.sessionName).join(', ') : null,
+    }
+  };
+  try {
+    const res = await fetch('/api/hormone-lab', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if(data.error) { showToast('Analysis failed — try again'); labShowPhase(2); return; }
+    HL_STATE.results = data;
+    renderLabResults(data);
+    labShowPhase(4);
+    await earnXP('hormone_lab', TODAY, 100);
+  } catch(e) {
+    showToast('Connection error — try again');
+    labShowPhase(2);
+  }
+}
+
+function labReset() {
+  HL_STATE = { phase:1, selectedPains:[], questions:[], currentQ:0, answers:{}, results:null };
+  renderLabPainGrid();
+  labShowPhase(1);
+}
+
+function labToggleProtocol(el) {
+  const body = el.nextElementSibling;
+  body.classList.toggle('open');
+  el.querySelector('.protocol-hdr-caret').style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+
+function renderLabResults(data) {
+  const el = document.getElementById('lab-results-content');
+  if(!el || !data) return;
+  const { estimates={}, root_causes=[], protocol={}, summary='' } = data;
+
+  const statusCls = s => {
+    const m = { optimal:'optimal', suppressed:'suppressed', low:'suppressed', elevated:'elevated',
+      sub_optimal:'sub-optimal', 'sub-optimal':'sub-optimal', sluggish:'sluggish', overactive:'overactive' };
+    return m[(s||'').replace(/ /g,'_').toLowerCase()] || 'sub-optimal';
+  };
+  const barW = s => ({ suppressed:18, low:18, 'sub-optimal':42, sub_optimal:42, optimal:72, elevated:88, sluggish:35, overactive:92 }[(s||'').replace(/ /g,'_').toLowerCase()] || 50);
+
+  const HNAMES = { total_t:'Total T', free_t:'Free T', cortisol:'Cortisol', estradiol:'Estradiol', dht:'DHT', thyroid:'Thyroid' };
+
+  const gaugesHtml = Object.entries(estimates).map(([key, h]) => {
+    const c = statusCls(h.status);
+    const displayVal = h.value ? `${h.value}${h.unit ? ' '+h.unit : ''}` : (h.status||'').replace(/_/g,' ');
+    return `<div class="hormone-card">
+      <div class="hormone-name">${HNAMES[key]||key}</div>
+      <div class="hormone-val ${c}">${escHtml(displayVal||'–')}</div>
+      <div class="hormone-status ${c}">${escHtml((h.status||'').replace(/_/g,' '))}</div>
+      ${h.confidence ? `<div class="hormone-conf">${h.confidence}%</div>` : ''}
+      <div class="hormone-bar"><div class="hormone-bar-fill ${c}" style="width:${barW(h.status)}%"></div></div>
+    </div>`;
+  }).join('');
+
+  const causesHtml = root_causes.map(c => `<div class="protocol-item"><div class="protocol-dot"></div><div>${escHtml(c)}</div></div>`).join('');
+
+  const PROTO_SECTIONS = [
+    { key:'immediate',   label:'🚨 Immediate Actions',  open:true,  color:'#f87171' },
+    { key:'nutrition',   label:'🥩 Nutrition Protocol',  open:false, color:'' },
+    { key:'training',    label:'💪 Training Protocol',   open:false, color:'' },
+    { key:'sleep',       label:'🌙 Sleep Protocol',      open:false, color:'' },
+    { key:'supplements', label:'💊 Supplements',         open:false, color:'' },
+    { key:'testing',     label:'🔬 Lab Testing',         open:false, color:'' },
+  ];
+
+  const protoHtml = PROTO_SECTIONS.map(s => {
+    const items = protocol[s.key] || [];
+    if(!items.length) return '';
+    return `<div class="protocol-section">
+      <div class="protocol-hdr" onclick="labToggleProtocol(this)">
+        <div class="protocol-hdr-title"${s.color ? ' style="color:'+s.color+'"' : ''}>${s.label}</div>
+        <span class="protocol-hdr-caret" style="${s.open?'transform:rotate(180deg)':''}">▾</span>
+      </div>
+      <div class="protocol-body${s.open?' open':''}">
+        ${items.map(item=>`<div class="protocol-item"><div class="protocol-dot"></div><div>${escHtml(item)}</div></div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="sh-label" style="margin-bottom:6px">Your Hormone Status Estimate</div>
+    ${summary ? `<div class="lab-summary">${escHtml(summary)}</div>` : ''}
+    <div class="hormone-grid">${gaugesHtml}</div>
+    ${causesHtml ? `<div style="margin:20px 0 12px">
+      <div class="sh-label" style="margin-bottom:10px">Root Cause Analysis</div>
+      ${causesHtml}
+    </div>` : ''}
+    <div style="margin-top:20px">
+      <div class="sh-label" style="margin-bottom:10px">Optimisation Protocol</div>
+      ${protoHtml}
+    </div>`;
 }
 
 /* ── ADMIN SELF-APPROVE ── */
