@@ -3262,8 +3262,8 @@ async function labSubmit() {
       return;
     }
     const data = await res.json();
-    if(data.error) { showToast('Analysis failed — try again'); labShowPhase(2); return; }
-    if(!data.estimates) { showToast('Bad response — try again'); labShowPhase(2); return; }
+    if(data.error) { console.error('hormone-lab error response:', data); showToast('Analysis failed — try again'); labShowPhase(HL_STATE.currentQ>0?2:1); return; }
+    if(!data.estimates) { console.error('hormone-lab bad response:', data); showToast('Bad response — try again'); labShowPhase(HL_STATE.currentQ>0?2:1); return; }
     HL_STATE.results = data;
     HL_STATE.savedAt = new Date().toISOString();
     HL_STATE.dataSnapshot = labDataSnapshot();

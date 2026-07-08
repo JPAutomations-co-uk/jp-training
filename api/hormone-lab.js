@@ -70,25 +70,39 @@ Estimate hormonal status and return protocol JSON.`
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 900,
+        max_tokens: 1100,
         system: SYSTEM,
-        messages: [{ role: 'user', content: prompt }],
+        // Prefill forces the model to continue the JSON directly — no preamble, guaranteed format
+        messages: [
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: '{' },
+        ],
       }),
     })
 
-    const data = await res.json()
-    const text = data.content?.[0]?.text ?? '{}'
+    const apiData = await res.json()
+
+    // Check for Anthropic API-level errors
+    if (apiData.error) {
+      return json({ error: 'API error', detail: apiData.error.message }, 500)
+    }
+
+    // Prepend the prefilled '{' since Anthropic strips it from the response
+    const raw = '{' + (apiData.content?.[0]?.text ?? '{}')
 
     let result
     try {
-      const clean = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
+      const clean = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
       result = JSON.parse(clean)
     } catch {
-      return json({ error: 'Parse error', raw: text.slice(0, 200) }, 500)
+      // Log the raw output so we can debug in Vercel logs
+      console.error('hormone-lab parse error. Raw output:', raw.slice(0, 500))
+      return json({ error: 'Parse error', raw: raw.slice(0, 300) }, 500)
     }
 
     return json(result)
   } catch (err) {
+    console.error('hormone-lab handler error:', String(err))
     return json({ error: 'Unavailable', detail: String(err) }, 500)
   }
 }
