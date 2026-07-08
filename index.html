@@ -554,6 +554,124 @@
       *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
       .up,.left,.right,.stag>*,.slide-r>*,.char{opacity:1!important;transform:none!important}
     }
+
+    /* ── HAMBURGER ── */
+    .ham-btn{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:8px;z-index:300;margin-left:8px}
+    .ham-btn span{display:block;width:22px;height:2px;background:var(--white);border-radius:1px;transition:transform .3s var(--ease),opacity .3s}
+    .ham-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .ham-btn.open span:nth-child(2){opacity:0}
+    .ham-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    .mob-nav{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}
+    .mob-nav.open{opacity:1;pointer-events:auto}
+    .mob-nav a{font-family:var(--D);font-size:30px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--white);text-decoration:none;transition:color .2s}
+    .mob-nav a:hover{color:var(--teal)}
+    .mob-nav .mob-cta{font-size:20px;background:var(--teal);color:var(--black);padding:16px 40px;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);margin-top:8px}
+
+    /* ── WHAT YOU GET ── */
+    .wyg-wrap{background:var(--s1);border-top:1px solid var(--border);padding:80px 10% 80px;position:relative;overflow:hidden}
+    .wyg-inner{max-width:1200px;margin:0 auto}
+    .wyg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:48px}
+    .wyg-card{background:#090F0F;padding:44px 36px;position:relative;overflow:hidden;cursor:default;transition:background .25s}
+    .wyg-card:hover{background:#0D1515}
+    .wyg-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--teal);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease)}
+    .wyg-card:hover::before{transform:scaleX(1)}
+    .wyg-icon{width:36px;height:36px;color:var(--teal);margin-bottom:20px;transition:transform .25s}
+    .wyg-card:hover .wyg-icon{transform:scale(1.1)}
+    .wyg-title{font-family:var(--D);font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--white);margin-bottom:12px}
+    .wyg-body{font-size:14px;color:var(--muted);line-height:1.85}
+    .wyg-body strong{color:var(--white);font-weight:500}
+    .wyg-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);border:1px solid rgba(44,212,196,.25);padding:4px 10px;margin-top:20px}
+
+    /* ── APP PREVIEW ── */
+    .app-prev-wrap{background:#000;border-top:1px solid var(--border);padding:80px 10%;position:relative;overflow:hidden}
+    .app-prev-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+    .app-prev-tabs{display:flex;flex-direction:column;gap:8px;margin-top:32px}
+    .apt{display:flex;align-items:flex-start;gap:16px;padding:14px 18px;border:1px solid transparent;cursor:default;transition:border-color .2s,background .2s}
+    .apt:hover{border-color:rgba(44,212,196,.2);background:rgba(44,212,196,.04)}
+    .apt-icon{width:22px;height:22px;color:var(--teal);flex-shrink:0;margin-top:2px}
+    .apt-name{font-family:var(--D);font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--white);margin-bottom:3px}
+    .apt-desc{font-size:13px;color:var(--muted);line-height:1.6}
+    .app-phone-wrap{display:flex;justify-content:center;align-items:center}
+    .app-phone{width:100%;max-width:300px;background:#0C0C0C;border:1px solid rgba(44,212,196,.22);padding:24px 20px;box-shadow:0 0 100px rgba(44,212,196,.07);position:relative}
+    .app-phone::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(44,212,196,.04) 0%,transparent 55%);pointer-events:none}
+    .atp-row{display:flex;gap:6px;margin-bottom:10px}
+    .atp-chip{flex:1;height:34px;background:rgba(44,212,196,.06);border:1px solid rgba(44,212,196,.12);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+    .atp-chip.active{background:rgba(44,212,196,.16);border-color:rgba(44,212,196,.45);color:var(--teal)}
+    .atp-block{height:64px;background:rgba(255,255,255,.03);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+    .atp-label{font-size:10px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+    .atp-bar-wrap{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+    .atp-bar-row{display:flex;align-items:center;gap:8px}
+    .atp-bar-label{font-size:9px;color:var(--dim);width:44px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
+    .atp-bar{flex:1;height:5px;background:rgba(255,255,255,.05)}
+    .atp-bar-fill{height:100%;background:var(--teal);opacity:.55}
+    .app-phone-label{text-align:center;font-size:10px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;margin-top:14px}
+
+    /* ── 5-STEP SOP ── */
+    .sop-wrap{background:var(--s2);border-top:1px solid var(--border);padding:80px 10%;position:relative;overflow:hidden}
+    .sop-inner{max-width:1400px;margin:0 auto}
+    .sop-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);margin-top:48px}
+    .sop-step{background:var(--s2);padding:40px 28px;position:relative;cursor:default;transition:background .25s}
+    .sop-step:hover{background:#0D1515}
+    .sop-step::after{content:attr(data-n);position:absolute;right:10px;bottom:6px;font-family:var(--D);font-size:80px;font-weight:900;color:var(--teal);opacity:.06;line-height:1;pointer-events:none}
+    .sop-num{width:44px;height:44px;border-radius:50%;border:1px solid var(--teal);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:16px;font-weight:900;color:var(--teal);margin-bottom:20px;box-shadow:0 0 16px rgba(44,212,196,.15)}
+    .sop-step h3{font-family:var(--D);font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--white);margin-bottom:10px;line-height:1.2}
+    .sop-step p{font-size:13px;color:var(--muted);line-height:1.8}
+    .sop-step p strong{color:rgba(255,255,255,.75);font-weight:500}
+
+    /* ── PRICING ── */
+    .pricing-wrap{background:var(--black);border-top:1px solid var(--border);padding:80px 10%;position:relative;overflow:hidden}
+    .pricing-inner{max-width:1400px;margin:0 auto}
+    .pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-top:48px}
+    .price-card{background:#0A0A0A;padding:36px 28px;position:relative;cursor:default;transition:background .25s;border-top:2px solid transparent}
+    .price-card:hover{background:#111}
+    .price-card.featured{background:linear-gradient(160deg,#0D1A18,#081210);border-top-color:var(--teal)}
+    .price-tier{font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+    .price-name{font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--white);margin-bottom:16px;line-height:1.1}
+    .price-amount{font-family:var(--D);font-size:38px;font-weight:900;color:var(--white);line-height:1;margin-bottom:4px}
+    .price-amount em{font-style:normal;font-size:15px;color:var(--muted);font-family:var(--B);font-weight:300}
+    .price-commit{font-size:11px;color:var(--dim);margin-bottom:24px;letter-spacing:.04em}
+    .price-divider{height:1px;background:var(--border);margin-bottom:20px}
+    .price-items{display:flex;flex-direction:column;gap:8px}
+    .price-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,.55);line-height:1.55}
+    .price-item::before{content:'';width:12px;height:12px;border-radius:50%;border:1px solid rgba(44,212,196,.35);flex-shrink:0;margin-top:3px}
+    .price-item.hi{color:var(--white)}
+    .price-item.hi::before{background:rgba(44,212,196,.25);border-color:var(--teal)}
+    .pricing-cta-wrap{text-align:center;margin-top:48px}
+    .pricing-note{font-size:13px;color:var(--dim);margin-top:14px}
+
+    /* ── SOCIAL PROOF ── */
+    .proof-wrap{background:var(--s1);border-top:1px solid var(--border);padding:80px 10%;position:relative;overflow:hidden}
+    .proof-inner{max-width:1200px;margin:0 auto}
+    .proof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:48px}
+    .proof-card{background:#090F0F;padding:40px 32px;cursor:default}
+    .proof-card-ph{opacity:.4}
+    .proof-ph-box{height:72px;background:rgba(44,212,196,.03);border:1px dashed rgba(44,212,196,.12);display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+    .proof-ph-label{font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
+    .proof-author{display:flex;align-items:center;gap:12px}
+    .proof-avatar{width:40px;height:40px;border-radius:50%;background:rgba(44,212,196,.1);border:1px solid rgba(44,212,196,.25);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:16px;font-weight:800;color:var(--teal)}
+    .proof-name{font-family:var(--D);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:2px}
+    .proof-role{font-size:12px;color:var(--dim)}
+    .proof-result{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);border:1px solid rgba(255,255,255,.06);padding:4px 10px;margin-top:16px}
+
+    /* ── RESPONSIVE NEW SECTIONS ── */
+    @media(max-width:1024px){
+      .sop-steps{grid-template-columns:repeat(3,1fr)}
+      .pricing-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:768px){
+      .ham-btn{display:flex}
+      .wyg-wrap,.app-prev-wrap,.sop-wrap,.pricing-wrap,.proof-wrap{padding:56px 6%}
+      .wyg-grid,.proof-grid{grid-template-columns:1fr}
+      .sop-steps,.pricing-grid{grid-template-columns:1fr}
+      .app-prev-inner{grid-template-columns:1fr;gap:40px}
+      .app-phone-wrap{display:none}
+      .hero-btns{flex-direction:column;align-items:center;gap:14px}
+      .btn-main{width:100%;text-align:center}
+    }
+    @media(max-width:480px){
+      nav{padding:0 16px}
+      .nav-cta{font-size:11px;padding:9px 14px}
+    }
   </style>
 </head>
 <body>
@@ -568,14 +686,18 @@
     <span class="nav-brand">JP <em>Training</em></span>
   </a>
   <ul class="nav-links">
-    <li><a href="#foundations">Foundations</a></li>
-    <li><a href="#boosters">Boosters</a></li>
-    <li><a href="#optimisation">Optimisation</a></li>
+    <li><a href="#what-you-get">What You Get</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#process">How It Works</a></li>
+    <li><a href="#foundations">The Protocol</a></li>
   </ul>
   <div class="nav-actions">
     <button class="nav-signin" id="nav-signin-btn" onclick="openAuth('login')">Sign In</button>
     <a href="/app.html" id="nav-app-btn">Open App</a>
     <a href="book.html" class="nav-cta" onclick="gtag('event','cta_click',{cta_location:'nav'})">Free 30-Min Call</a>
+    <button class="ham-btn" id="ham-btn" aria-label="Menu" onclick="toggleMob()">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
 
@@ -595,10 +717,10 @@
       <span class="teal">START OPTIMISING.</span>
     </h1>
     <p class="hero-sub">
-      No two people share the same biology, which means there's a version of you that a generic programme will never reach. We find out how your body really functions and build every protocol around it — so you can reach your maximum potential in every aspect of life.
+      No two people share the same biology. We measure how yours actually functions — blood work, hormones, body composition, VO2 max — then build your training, nutrition, and recovery protocol around the data. Delivered through a premium app and <strong>1:1 coaching throughout.</strong>
     </p>
     <div class="hero-btns">
-      <a href="#" class="btn-main" onclick="openAuth('signup');return false;" id="hero-cta">Get Started Free</a>
+      <a href="book.html" class="btn-main" id="hero-cta" onclick="gtag('event','cta_click',{cta_location:'hero'})">Book Your Free Call</a>
       <a href="#journey" class="btn-ghost">
         See how it works
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -955,31 +1077,251 @@
   </div>
 </div>
 
-<!-- THE PROCESS -->
-<div class="process-wrap" id="process" style="position:relative;overflow:hidden">
+<!-- WHAT YOU GET -->
+<div class="wyg-wrap" id="what-you-get">
+  <div class="s-orb so-tl"></div>
+  <div class="s-orb so-br"></div>
+  <div class="wyg-inner">
+    <div class="up">
+      <p class="label">What You Actually Get</p>
+      <h2>THE FULL<br><span class="t">SYSTEM</span></h2>
+      <p class="body-s" style="max-width:58ch;margin-top:16px">Most coaching gives you a plan. This gives you a plan, the diagnostic data behind it, an app to run it from, and a coach in your corner the entire time. Three things working together.</p>
+    </div>
+    <div class="wyg-grid stag">
+      <div class="wyg-card">
+        <svg class="wyg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <div class="wyg-title">The JP Training App</div>
+        <p class="wyg-body">Your protocol lives here. <strong>Training calendar with full exercise logs, AI food scoring against the protocol, daily habit tracking, hormone lab assessment, weekly XP system, daily steps, and an AI coach</strong> that knows your nutrition, training, sleep, and activity. Not a generic app — your data, your protocol, your progress.</p>
+        <span class="wyg-tag">Live from day one</span>
+      </div>
+      <div class="wyg-card">
+        <svg class="wyg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-5l-5 5v-5z"/></svg>
+        <div class="wyg-title">1:1 Coaching</div>
+        <p class="wyg-body">Direct WhatsApp access. <strong>Weekly structured check-ins with a 9-point scoring system</strong> that tracks energy, sleep, stress, libido, training quality, and more. Monthly 90-minute protocol reviews. Every protocol updated as your body and life change. Not a chatbot — JP, throughout, for the entire duration.</p>
+        <span class="wyg-tag">WhatsApp + weekly calls</span>
+      </div>
+      <div class="wyg-card">
+        <svg class="wyg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        <div class="wyg-title">Diagnostic Data</div>
+        <p class="wyg-body"><strong>30+ blood markers, DEXA body composition scan, VO2 Max with lactate threshold, DUTCH full hormone panel, continuous glucose monitoring, biological age testing, and genetic analysis</strong> — depending on your tier. Every protocol built from measurement, not assumption. You find out exactly why your body performs the way it does.</p>
+        <span class="wyg-tag">Everything measured</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP PREVIEW -->
+<div class="app-prev-wrap" id="app-preview">
   <div class="s-orb so-tr"></div>
   <div class="s-orb so-bl"></div>
-  <div class="process-inner">
-    <div class="up" style="margin-bottom:0">
-      <p class="label">Getting Started</p>
-      <h2>THREE STEPS.<br><span class="t">ONE CALL.</span></h2>
-      <p class="body-s" style="max-width:55ch;margin-top:16px">Every client starts the same way — a free 30-minute call. Not a sales call. An honest conversation about where you are, what you've tried, and whether what I do is genuinely the right fit for you right now.</p>
+  <div class="app-prev-inner">
+    <div class="app-prev-copy up">
+      <p class="label">The JP Training App</p>
+      <h2>YOUR PROTOCOL.<br><span class="t">IN YOUR</span><br>POCKET.</h2>
+      <p class="body-s" style="margin-top:16px;max-width:44ch">Built alongside the coaching — not bolted on after. Every session, meal, habit, and hormone estimate in one place. This is what goes live the day your protocol is ready.</p>
+      <div class="app-prev-tabs stag">
+        <div class="apt">
+          <svg class="apt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          <div><div class="apt-name">Training</div><div class="apt-desc">Full weekly programme with every exercise, set, rep, and load. Log sessions, track personal bests, view the complete calendar.</div></div>
+        </div>
+        <div class="apt">
+          <svg class="apt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+          <div><div class="apt-name">Nutrition</div><div class="apt-desc">Log food and get AI scoring against the protocol — with macro tracking and key micronutrient analysis. Every meal rated and explained.</div></div>
+        </div>
+        <div class="apt">
+          <svg class="apt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+          <div><div class="apt-name">Hormone Lab</div><div class="apt-desc">Multi-phase hormonal assessment estimating testosterone, cortisol, estradiol, DHT, free T, and thyroid — with personalised protocol output.</div></div>
+        </div>
+        <div class="apt">
+          <svg class="apt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
+          <div><div class="apt-name">AI Coach</div><div class="apt-desc">Knows your food logs, training plan, habits, steps, and hormone estimates. Advice that's actually specific to you — not generic answers.</div></div>
+        </div>
+      </div>
     </div>
-    <div class="process-steps stag">
-      <div class="p-step" data-n="01">
-        <div class="p-num">01</div>
-        <h3>Free Consultation</h3>
-        <p>You tell me where you are — energy levels, training history, body composition, what you've already tried and why it didn't stick. I'll be straight with you about what stage makes sense, what that looks like, and whether I'm the right person to help.</p>
+    <div class="app-phone-wrap right">
+      <div style="width:100%;max-width:300px">
+        <div class="app-phone">
+          <div class="atp-row">
+            <div class="atp-chip active">Habits</div>
+            <div class="atp-chip">Train</div>
+            <div class="atp-chip">Eat</div>
+          </div>
+          <div class="atp-block"><span class="atp-label">Today's Protocol</span></div>
+          <div class="atp-bar-wrap">
+            <div class="atp-bar-row"><span class="atp-bar-label">Training</span><div class="atp-bar"><div class="atp-bar-fill" style="width:85%"></div></div></div>
+            <div class="atp-bar-row"><span class="atp-bar-label">Nutrition</span><div class="atp-bar"><div class="atp-bar-fill" style="width:72%"></div></div></div>
+            <div class="atp-bar-row"><span class="atp-bar-label">Sleep</span><div class="atp-bar"><div class="atp-bar-fill" style="width:91%"></div></div></div>
+            <div class="atp-bar-row"><span class="atp-bar-label">Steps</span><div class="atp-bar"><div class="atp-bar-fill" style="width:63%"></div></div></div>
+          </div>
+          <div class="atp-row">
+            <div class="atp-chip">Coach</div>
+            <div class="atp-chip">Lab</div>
+            <div class="atp-chip active">Progress</div>
+          </div>
+        </div>
+        <p class="app-phone-label">JP Training App · iOS &amp; Android</p>
       </div>
-      <div class="p-step" data-n="02">
-        <div class="p-num">02</div>
-        <h3>Your Protocol Built</h3>
-        <p>Within 14 days, your protocol is live. Training, nutrition, sleep — built around your body, your schedule, and the psychological foundation we've put in place. Nothing from a template. Nothing your mate could get from the same programme.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 5-STEP ONBOARDING -->
+<div class="sop-wrap" id="process">
+  <div class="s-orb so-tl"></div>
+  <div class="s-orb so-br"></div>
+  <div class="sop-inner">
+    <div class="up">
+      <p class="label">How It Works</p>
+      <h2>YOUR FIRST<br><span class="t">30 DAYS</span></h2>
+      <p class="body-s" style="max-width:58ch;margin-top:16px">From the moment you book a call to the moment your protocol goes live — this is exactly what happens, in order.</p>
+    </div>
+    <div class="sop-steps stag">
+      <div class="sop-step" data-n="01">
+        <div class="sop-num">01</div>
+        <h3>Book Your Free Call</h3>
+        <p>30 minutes. No pitch. An honest conversation about where you are, what you've already tried, and whether this is genuinely the right fit. <strong>If it isn't, I'll say so.</strong></p>
       </div>
-      <div class="p-step" data-n="03">
-        <div class="p-num">03</div>
-        <h3>Results That Last</h3>
-        <p>Weekly check-ins. Monthly recalibration. A coach who gives a damn — not about your next 12 weeks, but about where you are in 10 years. Life changes, your body changes, the protocol changes with it. This isn't a one-off plan. It's a system that evolves because you do.</p>
+      <div class="sop-step" data-n="02">
+        <div class="sop-num">02</div>
+        <h3>Complete the Intake Form</h3>
+        <p>Health history, goals, training background, lifestyle, blockers. Sent immediately after the call. Gives JP everything needed to <strong>build the protocol around your specific situation.</strong></p>
+      </div>
+      <div class="sop-step" data-n="03">
+        <div class="sop-num">03</div>
+        <h3>Diagnostics Ordered</h3>
+        <p>Blood panel, DEXA scan, VO2 Max test — arranged within days. The data that every protocol decision gets built around. <strong>No guesswork from this point forward.</strong></p>
+      </div>
+      <div class="sop-step" data-n="04">
+        <div class="sop-num">04</div>
+        <h3>Protocol Goes Live</h3>
+        <p>Within 14 days: your full training programme, nutrition framework, sleep protocol, and supplement stack — <strong>live in the JP Training app.</strong> Built for you. Not from a template.</p>
+      </div>
+      <div class="sop-step" data-n="05">
+        <div class="sop-num">05</div>
+        <h3>1:1 Coaching Begins</h3>
+        <p>Weekly check-ins. WhatsApp access. Monthly 90-min protocol reviews. Your data evolves — the protocol evolves with it. <strong>This is what the rest of your programme looks like.</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="pricing-wrap" id="pricing">
+  <div class="s-orb so-tr"></div>
+  <div class="s-orb so-bl"></div>
+  <div class="pricing-inner">
+    <div class="up">
+      <p class="label">Investment</p>
+      <h2>FOUR<br><span class="t">TIERS</span></h2>
+      <p class="body-s" style="max-width:58ch;margin-top:16px">The right tier depends on where you are, what data you need, and how much depth you want. Book a call and we'll work that out together — no pressure to commit to any tier before we've spoken.</p>
+    </div>
+    <div class="pricing-grid stag">
+      <div class="price-card">
+        <div class="price-tier">Tier 01</div>
+        <div class="price-name">The Protocol</div>
+        <div class="price-amount">£1,500<em>/month</em></div>
+        <div class="price-commit">3-month minimum</div>
+        <div class="price-divider"></div>
+        <div class="price-items">
+          <div class="price-item hi">Comprehensive blood panel (30+ markers)</div>
+          <div class="price-item">DEXA body composition scan</div>
+          <div class="price-item">Cognitive baseline + 12-week retest</div>
+          <div class="price-item">Full written protocol — training, nutrition, sleep, supplements</div>
+          <div class="price-item">2 in-person sessions/week</div>
+          <div class="price-item">Weekly 30-min structured check-in</div>
+          <div class="price-item">WhatsApp access (business hours)</div>
+          <div class="price-item hi">JP Training App access included</div>
+        </div>
+      </div>
+      <div class="price-card featured">
+        <div class="price-tier">Tier 02 — Most Chosen</div>
+        <div class="price-name">The Performance Protocol</div>
+        <div class="price-amount">£2,500<em>/month</em></div>
+        <div class="price-commit">3-month minimum</div>
+        <div class="price-divider"></div>
+        <div class="price-items">
+          <div class="price-item hi">Everything in Tier 1</div>
+          <div class="price-item">DUTCH complete hormone panel — full diurnal cortisol, sex hormone metabolites</div>
+          <div class="price-item">VO2 Max + lactate threshold test — exact zone prescription</div>
+          <div class="price-item">Genetic testing — MTHFR, APOE, COMT, FADS1</div>
+          <div class="price-item">4-week continuous glucose monitoring</div>
+          <div class="price-item">Biological age — DunedinPACE epigenetic baseline</div>
+          <div class="price-item">3 in-person sessions/week</div>
+          <div class="price-item hi">24/7 WhatsApp access — priority response</div>
+        </div>
+      </div>
+      <div class="price-card">
+        <div class="price-tier">Tier 03</div>
+        <div class="price-name">The Elite Protocol</div>
+        <div class="price-amount">£5,000<em>/month</em></div>
+        <div class="price-commit">3-month minimum</div>
+        <div class="price-divider"></div>
+        <div class="price-items">
+          <div class="price-item hi">Everything in Tier 2</div>
+          <div class="price-item">Daily access — all hours, not just business hours</div>
+          <div class="price-item">Travel coverage — protocol adapts when you're abroad or off-schedule</div>
+          <div class="price-item">Partner health consultation included</div>
+          <div class="price-item">Quarterly off-site assessment days</div>
+          <div class="price-item hi">Protocol rebuilds with every significant life change</div>
+        </div>
+      </div>
+      <div class="price-card">
+        <div class="price-tier">Tier 04</div>
+        <div class="price-name">The Pinnacle Protocol</div>
+        <div class="price-amount">£7,000<em>/month</em></div>
+        <div class="price-commit">6-month minimum</div>
+        <div class="price-divider"></div>
+        <div class="price-items">
+          <div class="price-item hi">Everything in Tier 3</div>
+          <div class="price-item">Unlimited access — all hours, every day</div>
+          <div class="price-item">Full concierge health management</div>
+          <div class="price-item">Specialist referral network coordinated on your behalf</div>
+          <div class="price-item">Quarterly full-body advanced assessment</div>
+          <div class="price-item hi">JP manages the complete health picture</div>
+        </div>
+      </div>
+    </div>
+    <div class="pricing-cta-wrap up">
+      <a href="book.html" class="btn-cta" onclick="gtag('event','cta_click',{cta_location:'pricing'})">Book a Call to Find Your Tier</a>
+      <p class="pricing-note">30 minutes · No commitment · We'll work out exactly what makes sense for you</p>
+    </div>
+  </div>
+</div>
+
+<!-- SOCIAL PROOF -->
+<div class="proof-wrap" id="results">
+  <div class="s-orb so-tl"></div>
+  <div class="s-orb so-c"></div>
+  <div class="proof-inner">
+    <div class="up">
+      <p class="label">Client Results</p>
+      <h2>WHAT<br><span class="t">CHANGES</span></h2>
+      <p class="body-s" style="max-width:56ch;margin-top:16px">This practice is new. Client stories will be added here as they come in — real data, real results, no fabrication. In the meantime, book a call and find out what the data says about you.</p>
+    </div>
+    <div class="proof-grid stag">
+      <div class="proof-card proof-card-ph">
+        <div class="proof-ph-box"><span class="proof-ph-label">Client story coming soon</span></div>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--dim)">?</div>
+          <div><div class="proof-name">Name, Age</div><div class="proof-role">Role · Location</div></div>
+        </div>
+        <span class="proof-result">Result · Result · Result</span>
+      </div>
+      <div class="proof-card proof-card-ph">
+        <div class="proof-ph-box"><span class="proof-ph-label">Client story coming soon</span></div>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--dim)">?</div>
+          <div><div class="proof-name">Name, Age</div><div class="proof-role">Role · Location</div></div>
+        </div>
+        <span class="proof-result">Result · Result · Result</span>
+      </div>
+      <div class="proof-card proof-card-ph">
+        <div class="proof-ph-box"><span class="proof-ph-label">Client story coming soon</span></div>
+        <div class="proof-author">
+          <div class="proof-avatar" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--dim)">?</div>
+          <div><div class="proof-name">Name, Age</div><div class="proof-role">Role · Location</div></div>
+        </div>
+        <span class="proof-result">Result · Result · Result</span>
       </div>
     </div>
   </div>
@@ -1015,15 +1357,36 @@
     <img src="logo.jpg" alt="JP Training">
     <span class="foot-brand">JP <em>Training</em></span>
   </div>
-  <span class="foot-copy">Birmingham · Performance Coaching for Men · jp@jptraining.fit</span>
+  <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <a href="#what-you-get" style="font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:color .2s" onmouseover="this.style.color='#2CD4C4'" onmouseout="this.style.color='#444'">What You Get</a>
+    <a href="#pricing" style="font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:color .2s" onmouseover="this.style.color='#2CD4C4'" onmouseout="this.style.color='#444'">Pricing</a>
+    <a href="#process" style="font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:color .2s" onmouseover="this.style.color='#2CD4C4'" onmouseout="this.style.color='#444'">How It Works</a>
+    <a href="book.html" style="font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:color .2s" onmouseover="this.style.color='#2CD4C4'" onmouseout="this.style.color='#444'">Book a Call</a>
+    <span style="font-size:11px;color:var(--dim)">jp@jptraining.fit</span>
+  </div>
+  <span class="foot-copy">Birmingham · Performance Coaching for Men</span>
 </footer>
 
 <script>
-/* CURSOR */
+/* CURSOR — skip on touch devices */
 const cur=document.getElementById('cur'),ring=document.getElementById('cur-ring');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
-(function loop(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop)})();
+if(window.matchMedia('(hover:hover)').matches){
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+  (function loop(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop)})();
+}
+
+/* HAMBURGER */
+function toggleMob(){
+  const btn=document.getElementById('ham-btn'),nav=document.getElementById('mob-nav');
+  btn.classList.toggle('open');nav.classList.toggle('open');
+  document.body.style.overflow=nav.classList.contains('open')?'hidden':'';
+}
+function closeMob(){
+  document.getElementById('ham-btn').classList.remove('open');
+  document.getElementById('mob-nav').classList.remove('open');
+  document.body.style.overflow='';
+}
 
 /* hero canvas removed — replaced by video */
 
@@ -1435,7 +1798,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAuth();});
 /* INTERSECTION OBSERVER */
 const io=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}});
-},{threshold:.08,rootMargin:'0px 0px -16px 0px'});
+},{threshold:.06,rootMargin:'0px 0px -16px 0px'});
 document.querySelectorAll('.up,.left,.right,.stag,.slide-r').forEach(el=>io.observe(el));
 
 /* NAV scroll */
@@ -1462,6 +1825,17 @@ window.addEventListener('scroll',()=>{nav.style.borderBottomColor=window.scrollY
 })();
 
 </script>
+
+<!-- MOBILE NAV -->
+<div class="mob-nav" id="mob-nav">
+  <a href="#what-you-get" onclick="closeMob()">What You Get</a>
+  <a href="#pricing" onclick="closeMob()">Pricing</a>
+  <a href="#process" onclick="closeMob()">How It Works</a>
+  <a href="#foundations" onclick="closeMob()">The Protocol</a>
+  <a href="#results" onclick="closeMob()">Results</a>
+  <a href="book.html" class="mob-cta">Book Free Call</a>
+  <button onclick="closeMob()" style="background:none;border:none;color:var(--dim);font-size:13px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-top:8px">Close</button>
+</div>
 
 <!-- AUTH MODAL -->
 <div id="auth-overlay" onclick="if(event.target===this)closeAuth()">
