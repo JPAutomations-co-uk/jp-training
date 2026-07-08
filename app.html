@@ -504,6 +504,10 @@
     .lab-cta-sec{width:100%;padding:13px;background:transparent;color:var(--teal);
       font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.08em;
       text-transform:uppercase;border:1px solid rgba(44,212,196,.3);cursor:pointer;margin-top:8px}
+    /* Lab question nav — sticky at bottom of scroll area */
+    .lab-q-nav{position:sticky;bottom:0;display:flex;gap:8px;
+      background:var(--black);padding:12px 0 4px;margin:20px -20px 0;padding-left:20px;padding-right:20px;
+      border-top:1px solid var(--border)}
     /* 6-tab nav adjustment */
     .bn-tab{gap:3px;padding:8px 2px}
     .bn-tab span{font-size:9px}
@@ -756,12 +760,12 @@
       </div>
 
       <!-- Phase 2: Questions -->
-      <div id="lab-phase-2" class="lab-phase">
+      <div id="lab-phase-2" class="lab-phase" style="padding-bottom:80px">
         <div class="lab-progress"><div class="lab-progress-fill" id="lab-progress-fill" style="width:0%"></div></div>
         <div class="lab-q-label" id="lab-q-category"></div>
         <div class="lab-q-text" id="lab-q-text"></div>
         <div id="lab-q-body"></div>
-        <div style="display:flex;gap:8px;margin-top:20px">
+        <div class="lab-q-nav">
           <button class="lab-cta-sec" style="flex:0 0 auto;padding:13px 20px;margin-top:0" onclick="labQBack()">←</button>
           <button class="lab-cta" style="flex:1;margin-top:0" id="lab-q-next-btn" onclick="labQNext()">Next →</button>
         </div>
@@ -3062,14 +3066,23 @@ async function labSubmit() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    if(!res.ok) {
+      const errText = await res.text().catch(()=>'');
+      console.error('hormone-lab API error', res.status, errText);
+      showToast('Analysis failed ('+res.status+') — try again');
+      labShowPhase(2);
+      return;
+    }
     const data = await res.json();
     if(data.error) { showToast('Analysis failed — try again'); labShowPhase(2); return; }
+    if(!data.estimates) { showToast('Bad response — try again'); labShowPhase(2); return; }
     HL_STATE.results = data;
     renderLabResults(data);
     labShowPhase(4);
     await earnXP('hormone_lab', TODAY, 100);
   } catch(e) {
-    showToast('Connection error — try again');
+    console.error('hormone-lab fetch error', e);
+    showToast('Analysis timed out — try again');
     labShowPhase(2);
   }
 }

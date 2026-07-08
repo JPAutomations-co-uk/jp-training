@@ -59,7 +59,8 @@ PROTOCOL RULES:
 - Training: specific to their stated level.
 - Supplements: evidence-based only. Vitamin D3 (5000 IU daily), K2 MK7 (200mcg daily), Magnesium glycinate (400mg before bed), Zinc picolinate (25mg with food — not if dietary zinc already high), Tongkat Ali LJ100 (400mg daily), Ashwagandha KSM-66 (600mg before bed), Shilajit (500mg daily). Only recommend what is genuinely relevant.
 - Testing: name Medichecks Advanced Male Hormone panel (£149, home finger prick), GP testosterone test (free, total T only), or DUTCH urine hormone panel for cortisol pattern.
-- British English. No filler. No hedging. No disclaimers in the protocol items themselves.`
+- British English. No filler. No hedging. No disclaimers in the protocol items themselves.
+- Keep each protocol array to 2–3 items maximum. Keep summary under 60 words. Keep root_causes to 3 items. Be concise — this must fit in 1600 tokens.`
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors() })
@@ -101,7 +102,7 @@ Based on this data, estimate the user's hormonal status and produce a personalis
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2500,
+        max_tokens: 1600,
         system: SYSTEM,
         messages: [{ role: 'user', content: prompt }],
       }),
