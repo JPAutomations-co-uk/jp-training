@@ -47,6 +47,8 @@ export default async function handler(req) {
     appData.habitsMissed   ? `Habits missed: ${appData.habitsMissed}` : null,
     appData.habitStreak    ? `Habit streak: ${appData.habitStreak} days` : null,
     appData.weeklyPlan     ? `Training plan: ${appData.weeklyPlan}` : null,
+    appData.stepsToday     ? `Steps today: ${appData.stepsToday.toLocaleString?.() ?? appData.stepsToday}` : null,
+    appData.stepsWeeklyAvg ? `7-day step avg: ${appData.stepsWeeklyAvg}` : null,
     appData.profile        ? `Profile: ${Object.entries(appData.profile).filter(([,v])=>v!=null).map(([k,v])=>`${k}=${v}`).join(', ')}` : null,
   ].filter(Boolean).join('\n')
 

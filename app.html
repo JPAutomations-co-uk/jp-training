@@ -509,6 +509,14 @@
       background:rgba(0,0,0,.97);backdrop-filter:blur(16px);
       padding:10px 20px calc(10px + 54px + env(safe-area-inset-bottom,0px));
       border-top:1px solid var(--border)}
+    /* ── STEPS CARD ── */
+    .steps-card{background:var(--s1);border:1px solid var(--border);padding:16px;margin-bottom:12px}
+    .steps-bar{background:var(--border);height:3px;margin-bottom:12px;overflow:hidden}
+    .steps-bar-fill{height:3px;background:var(--teal);transition:width .5s ease}
+    .steps-bar-fill.reached{background:var(--teal)}
+    .steps-btn{flex:1;padding:9px 4px;background:var(--s2);border:1px solid var(--border);
+      color:var(--muted);font-size:11px;font-weight:600;font-family:var(--B);cursor:pointer;transition:all .15s}
+    .steps-btn:active,.steps-btn:hover{background:rgba(44,212,196,.08);border-color:rgba(44,212,196,.3);color:var(--teal)}
     /* 6-tab nav adjustment */
     .bn-tab{gap:3px;padding:8px 2px}
     .bn-tab span{font-size:9px}
@@ -587,6 +595,38 @@
         </div>
         <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
       </div>
+      <!-- Steps tracker -->
+      <div class="steps-card" id="steps-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div class="sh-label" style="margin-bottom:3px">Steps Today</div>
+            <div style="font-size:11px;color:var(--dim)">Goal: <span id="steps-goal-display">10,000</span></div>
+            <div id="steps-week-avg" style="font-size:10px;color:var(--dim);margin-top:2px"></div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:var(--D);font-size:36px;font-weight:900;line-height:1" id="steps-count-display">0</div>
+            <div style="font-size:10px;color:var(--dim);margin-top:2px" id="steps-pct">0% of goal</div>
+          </div>
+        </div>
+        <div class="steps-bar"><div class="steps-bar-fill" id="steps-bar-fill" style="width:0%"></div></div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button class="steps-btn" onclick="addSteps(1000)">+1k</button>
+          <button class="steps-btn" onclick="addSteps(2500)">+2.5k</button>
+          <button class="steps-btn" onclick="addSteps(5000)">+5k</button>
+          <button class="steps-btn" onclick="editSteps()" style="color:var(--dim)">Enter</button>
+        </div>
+        <div id="steps-edit-wrap" style="display:none;gap:6px">
+          <input id="steps-input-field" type="number" min="0" max="99999" placeholder="Enter total steps"
+            style="flex:1;background:var(--s2);border:1px solid var(--border);color:var(--white);
+            padding:10px 12px;font-family:var(--B);font-size:15px;outline:none;width:100%"
+            onkeydown="if(event.key==='Enter')confirmSteps()">
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button onclick="confirmSteps()" style="flex:1;background:var(--teal);color:var(--black);border:none;padding:10px;font-family:var(--D);font-size:13px;font-weight:900;cursor:pointer">Save</button>
+            <button onclick="document.getElementById('steps-edit-wrap').style.display='none'" style="flex:0 0 auto;background:transparent;color:var(--dim);border:1px solid var(--border);padding:10px 14px;font-family:var(--B);font-size:12px;cursor:pointer">Cancel</button>
+          </div>
+        </div>
+      </div>
+
       <div id="overview-card-wrap"></div>
       <div style="margin-top:16px" id="habits-list"></div>
       <div class="habit-add-wrap">
@@ -1006,6 +1046,8 @@ const LEVELS = [
 ];
 
 let XP_STATE = { xp:0, level:1, streak_days:0, last_active_date:null };
+let stepsHistory = {};
+let todaySteps = 0;
 
 function getLevelData(xp) {
   let current = LEVELS[0];
@@ -1154,12 +1196,98 @@ function renderXPUI() {
 })();
 
 function initAll() {
+  loadStepsHistory();
   initHabits();
   initTrain();
   initEat();
   initProgress();
   initCoach();
   updateStreak();
+}
+
+/* ════════════════════════════════════════
+   STEPS TRACKING
+════════════════════════════════════════ */
+function stepsKey() { return `jpt_steps_${USER?.id||'guest'}`; }
+
+function loadStepsHistory() {
+  try { stepsHistory = JSON.parse(localStorage.getItem(stepsKey()) || '{}'); } catch(e) { stepsHistory = {}; }
+  todaySteps = stepsHistory[TODAY] || 0;
+  renderStepsCard();
+}
+
+function stepsWeeklyAvg() {
+  const vals = [];
+  for(let i=1; i<=7; i++) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const k = d.toISOString().split('T')[0];
+    if(stepsHistory[k] !== undefined) vals.push(stepsHistory[k]);
+  }
+  return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+}
+
+function renderStepsCard() {
+  const goal = +(OB.habits?.steps_goal || 10000);
+  const pct  = Math.min(100, Math.round((todaySteps / goal) * 100));
+  const reached = todaySteps >= goal;
+  const countEl = document.getElementById('steps-count-display');
+  const goalEl  = document.getElementById('steps-goal-display');
+  const barEl   = document.getElementById('steps-bar-fill');
+  const pctEl   = document.getElementById('steps-pct');
+  const avgEl   = document.getElementById('steps-week-avg');
+  if(!countEl) return;
+  countEl.textContent = todaySteps.toLocaleString();
+  countEl.style.color = reached ? 'var(--teal)' : 'var(--white)';
+  if(goalEl)  goalEl.textContent  = goal.toLocaleString();
+  if(barEl)   { barEl.style.width = pct+'%'; barEl.style.background = reached ? 'var(--teal)' : 'rgba(44,212,196,.5)'; }
+  if(pctEl)   pctEl.textContent   = pct+'% of goal';
+  const avg = stepsWeeklyAvg();
+  if(avgEl)   avgEl.textContent   = avg ? avg.toLocaleString()+' avg / day (7 days)' : '';
+}
+
+function saveStepsToday(count) {
+  count = Math.max(0, Math.round(+count || 0));
+  todaySteps = count;
+  stepsHistory[TODAY] = count;
+  // Trim to 90 days
+  const trimmed = {};
+  Object.keys(stepsHistory).sort().slice(-90).forEach(k => trimmed[k] = stepsHistory[k]);
+  stepsHistory = trimmed;
+  localStorage.setItem(stepsKey(), JSON.stringify(stepsHistory));
+  renderStepsCard();
+  // Auto-complete steps habit if goal is reached
+  const goal = +(OB.habits?.steps_goal || 10000);
+  if(count >= goal && !habitState['steps']) {
+    habitState['steps'] = true;
+    renderHabits();
+    try { localStorage.setItem(`jpt_habits_${USER.id}_${TODAY}`, JSON.stringify(habitState)); } catch(e){}
+    sb.from('daily_habits').upsert({ user_id:USER.id, date:TODAY, habit_name:'steps', completed:true }, { onConflict:'user_id,date,habit_name' }).catch(()=>{});
+    earnXP('habit','steps',10);
+    checkPerfectDay();
+    showToast('✓ Step goal hit');
+  }
+  // Refresh coach context so steps appear immediately
+  initCoach();
+}
+
+function editSteps() {
+  const wrap = document.getElementById('steps-edit-wrap');
+  const inp  = document.getElementById('steps-input-field');
+  wrap.style.display = 'flex';
+  wrap.style.flexDirection = 'column';
+  inp.value = todaySteps || '';
+  inp.focus();
+  inp.select();
+}
+
+function confirmSteps() {
+  const val = parseInt(document.getElementById('steps-input-field').value, 10);
+  if(!isNaN(val)) saveStepsToday(val);
+  document.getElementById('steps-edit-wrap').style.display = 'none';
+}
+
+function addSteps(delta) {
+  saveStepsToday(todaySteps + delta);
 }
 
 /* ── NAV ── */
@@ -1971,6 +2099,11 @@ function initCoach(){
   if(c.health_conditions) parts.push(`Health conditions / medications: ${c.health_conditions}`);
   if(c.previous_attempts&&c.previous_attempts!=='Nothing — first time doing this properly') parts.push(`Previous attempts: ${c.previous_attempts}`);
   if(c.about) parts.push(`Goals in their own words: ${c.about}`);
+
+  // Steps data
+  if(todaySteps > 0) parts.push(`Steps today: ${todaySteps.toLocaleString()}`);
+  const sAvg = stepsWeeklyAvg();
+  if(sAvg) parts.push(`7-day step average: ${sAvg.toLocaleString()} steps/day`);
 
   window._coachContext=parts.length
     ? `This client's full profile:\n${parts.map(p=>`- ${p}`).join('\n')}`
@@ -2972,6 +3105,8 @@ function labDataSnapshot() {
     sleepHrs:       OB.habits?.sleep_hrs || '',
     alcohol:        OB.habits?.alcohol || '',
     stressLevel:    OB.habits?.stress_level || '',
+    stepsToday:     todaySteps || 0,
+    stepsWeeklyAvg: stepsWeeklyAvg() || 0,
   };
 }
 
@@ -3244,6 +3379,8 @@ async function labSubmit() {
       habitsMissed: notDoneHabits.length ? notDoneHabits.join(', ') : null,
       habitStreak: XP_STATE.streak_days > 0 ? XP_STATE.streak_days : null,
       weeklyPlan: planSummary,
+      stepsToday: todaySteps || null,
+      stepsWeeklyAvg: stepsWeeklyAvg() || null,
       profile: Object.keys(profile).length ? profile : null,
     }
   };
