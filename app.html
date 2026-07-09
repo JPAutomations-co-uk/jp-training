@@ -4109,9 +4109,13 @@ async function alSubmit() {
         appContext,
       }),
     });
-    if(!res.ok) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
+    if(!res.ok) {
+      const msg = res.status === 504 ? 'Request timed out — try again' : 'Analysis failed ('+res.status+') — try again';
+      showToast(msg); alShowPhase(2); return;
+    }
     const data = await res.json();
-    if(data.error || !data.training) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
+    if(data.error) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
+    if(!data.sport_profile && !data.training) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
     AL_STATE.results = data;
     AL_STATE.savedAt = new Date().toISOString();
     alSave(AL_STATE);
