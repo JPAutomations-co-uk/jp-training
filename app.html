@@ -354,6 +354,20 @@
     .food-tips-reasons{color:var(--muted);margin-bottom:6px}
     .food-tip-item{color:rgba(44,212,196,.8);padding-left:10px;position:relative}
     .food-tip-item::before{content:'→';position:absolute;left:0;color:var(--teal)}
+    /* ── MILESTONES ── */
+    .ms-tier{margin-bottom:20px}
+    .ms-tier-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .ms-tier-label{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dim)}
+    .ms-tier-count{color:var(--teal);margin-left:6px}
+    .ms-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+    .ms-row::-webkit-scrollbar{display:none}
+    .ms-node{flex:0 0 72px;text-align:center;padding:12px 6px;background:var(--s1);border:1px solid var(--border);position:relative;cursor:default;transition:border-color .2s}
+    .ms-node.done{border-color:rgba(44,212,196,.4);background:rgba(44,212,196,.04)}
+    .ms-node.locked{opacity:.3}
+    .ms-icon{font-size:20px;margin-bottom:5px;display:block}
+    .ms-name{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--white);line-height:1.3}
+    .ms-tick{position:absolute;top:4px;right:6px;font-size:9px;color:var(--teal);font-weight:700}
+
     /* ── PROGRESS CHARTS ── */
     .chart-card{background:var(--s1);border:1px solid var(--border);
       padding:16px;margin-bottom:16px}
@@ -434,6 +448,32 @@
     .ob-check input[type=checkbox]{display:none}
     .ob-check.checked{border-color:rgba(44,212,196,.4);color:var(--white);
       background:rgba(44,212,196,.07)}
+
+    /* ── LAB SWITCHER ── */
+    .lab-switcher{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-bottom:20px}
+    .lab-sw-btn{background:var(--s1);padding:12px;text-align:center;font-family:var(--D);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border:none;color:var(--dim);transition:all .2s}
+    .lab-sw-btn.active{background:rgba(44,212,196,.06);color:var(--teal)}
+
+    /* ── ATHLETE LAB ── */
+    .al-phase{display:none}
+    .al-phase.active{display:block}
+    .al-sport-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+    .al-sport-chip{background:var(--s1);border:1px solid var(--border);padding:14px 8px;cursor:pointer;text-align:center;transition:all .2s;width:100%}
+    .al-sport-chip.selected{border-color:rgba(44,212,196,.5);background:rgba(44,212,196,.06)}
+    .al-sport-chip-icon{font-size:22px;margin-bottom:5px;display:block}
+    .al-sport-chip-name{font-size:11px;font-weight:600;color:var(--white)}
+    .al-config-row{margin-bottom:16px}
+    .al-config-label{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+    .al-config-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .al-config-opt{background:var(--s1);border:1px solid var(--border);padding:11px 12px;cursor:pointer;font-size:12px;color:var(--muted);text-align:left;transition:all .15s}
+    .al-config-opt.sel{border-color:rgba(44,212,196,.5);background:rgba(44,212,196,.06);color:var(--white)}
+    .al-protocol-section{margin-bottom:16px}
+    .al-protocol-label{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+    .al-protocol-items{display:flex;flex-direction:column;gap:6px}
+    .al-protocol-item{font-size:13px;color:var(--muted);padding:10px 12px;background:var(--s1);border-left:2px solid rgba(44,212,196,.25);line-height:1.55}
+    .al-risk-box{background:rgba(251,191,36,.03);border:1px solid rgba(251,191,36,.2);padding:14px;margin-bottom:16px}
+    .al-risk-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#fbbf24;margin-bottom:6px}
+    .al-risk-text{font-size:12px;color:rgba(255,191,36,.65);line-height:1.6}
 
     /* ── HORMONE LAB ── */
     @keyframes spin{to{transform:rotate(360deg)}}
@@ -739,6 +779,11 @@
         <p class="sh-sub">Auto-tracked from your habits, training, and nutrition logs.</p>
       </div>
 
+      <!-- MILESTONES ROADMAP -->
+      <div class="sh-label" style="margin-bottom:12px">Milestones</div>
+      <div id="milestones-wrap"></div>
+      <div class="divider"></div>
+
       <div class="chart-card">
         <div class="chart-lbl">Habit Completion — Last 7 Days</div>
         <canvas id="chart-habits" height="110"></canvas>
@@ -784,13 +829,22 @@
       </div>
     </div>
 
-    <!-- HORMONE LAB -->
+    <!-- LAB -->
     <div id="pane-lab" class="pane">
       <div class="sh">
-        <div class="sh-label">Hormone Lab</div>
-        <div class="sh-title">Hormone<br><span style="color:var(--teal)">Optimiser</span></div>
-        <p class="sh-sub">Multi-point assessment to estimate your hormonal status and build a personalised protocol.</p>
+        <div class="sh-label">Lab</div>
+        <div class="sh-title">Your<br><span style="color:var(--teal)">Labs</span></div>
+        <p class="sh-sub">Hormone assessments and sport-specific protocol optimisation.</p>
       </div>
+
+      <!-- Lab type switcher -->
+      <div class="lab-switcher">
+        <button class="lab-sw-btn active" data-type="hormone" onclick="switchLabType('hormone')">🧬 Hormone Lab</button>
+        <button class="lab-sw-btn" data-type="athlete" onclick="switchLabType('athlete')">🏆 Athlete Lab</button>
+      </div>
+
+      <!-- ══ HORMONE LAB ══ -->
+      <div id="hormone-lab-content">
 
       <!-- Phase 1: Pain point selection -->
       <div id="lab-phase-1" class="lab-phase active">
@@ -835,6 +889,65 @@
         <button class="lab-cta-sec" onclick="labReset()">Start New Assessment</button>
         <div style="font-size:10px;color:var(--dim);text-align:center;margin-top:12px;line-height:1.5">Evidence-based estimate — not a medical test. For confirmed results use Medichecks Advanced Male Hormone panel (£149).</div>
       </div>
+
+      </div><!-- /hormone-lab-content -->
+
+      <!-- ══ ATHLETE LAB ══ -->
+      <div id="athlete-lab-content" style="display:none">
+
+        <!-- AL Phase 1: Sport selection -->
+        <div id="al-phase-1" class="al-phase active">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:4px;line-height:1.6">Select your primary sport to optimise your training, nutrition, recovery, and lifestyle protocols around it.</p>
+          <div class="al-sport-grid" id="al-sport-grid"></div>
+          <div id="al-p1-err" style="font-size:12px;color:#f87171;display:none;margin-bottom:8px">Select a sport to continue.</div>
+          <button class="lab-cta" onclick="alPhase1Next()">Next →</button>
+        </div>
+
+        <!-- AL Phase 2: Configure -->
+        <div id="al-phase-2" class="al-phase" style="padding-bottom:140px">
+          <div id="al-sport-confirm" style="font-size:13px;color:var(--teal);font-weight:600;margin-bottom:20px"></div>
+          <div class="al-config-row">
+            <div class="al-config-label">Competition Level</div>
+            <div class="al-config-opts">
+              <button class="al-config-opt" data-group="level" onclick="alSelectOpt(this,'level','Recreational')">Recreational</button>
+              <button class="al-config-opt" data-group="level" onclick="alSelectOpt(this,'level','Club')">Club</button>
+              <button class="al-config-opt" data-group="level" onclick="alSelectOpt(this,'level','Semi-Professional')">Semi-Professional</button>
+              <button class="al-config-opt" data-group="level" onclick="alSelectOpt(this,'level','Elite / Professional')">Elite / Professional</button>
+            </div>
+          </div>
+          <div class="al-config-row">
+            <div class="al-config-label">Season Phase</div>
+            <div class="al-config-opts">
+              <button class="al-config-opt" data-group="season" onclick="alSelectOpt(this,'season','Off-season')">Off-Season</button>
+              <button class="al-config-opt" data-group="season" onclick="alSelectOpt(this,'season','Pre-season')">Pre-Season</button>
+              <button class="al-config-opt" data-group="season" onclick="alSelectOpt(this,'season','In-season')">In-Season</button>
+              <button class="al-config-opt" data-group="season" onclick="alSelectOpt(this,'season','Post-season')">Post-Season</button>
+            </div>
+          </div>
+          <div id="al-p2-err" style="font-size:12px;color:#f87171;display:none;margin-bottom:8px">Select level and season phase.</div>
+          <div class="lab-q-nav">
+            <button class="lab-cta-sec" style="flex:0 0 auto;padding:13px 20px;margin-top:0" onclick="alShowPhase(1)">←</button>
+            <button class="lab-cta" style="flex:1;margin-top:0" onclick="alPhase2Submit()">Build Protocol →</button>
+          </div>
+        </div>
+
+        <!-- AL Phase 3: Processing -->
+        <div id="al-phase-3" class="al-phase">
+          <div class="lab-processing">
+            <div class="lab-spinner"></div>
+            <div style="font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:8px">Building Protocol</div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.6">Optimising your training, nutrition, recovery, and lifestyle for your sport and season phase...</div>
+          </div>
+        </div>
+
+        <!-- AL Phase 4: Results -->
+        <div id="al-phase-4" class="al-phase">
+          <div id="al-results-content"></div>
+          <button class="lab-cta-sec" style="margin-top:8px" onclick="alReset()">Change Sport</button>
+        </div>
+
+      </div><!-- /athlete-lab-content -->
+
     </div>
 
   </div>
@@ -1295,7 +1408,14 @@ function switchTab(tab){
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+tab));
   document.getElementById('content').scrollTop=0;
-  if(tab==='lab'){ setTimeout(()=>initLab(),50); return; }
+  if(tab==='lab'){
+    setTimeout(()=>{
+      const activeType = document.querySelector('.lab-sw-btn.active')?.dataset.type || 'hormone';
+      switchLabType(activeType);
+    }, 50);
+    return;
+  }
+  if(tab==='progress') { setTimeout(()=>renderMilestones(), 50); }
   // Show onboarding on first visit if not yet done
   const obTabs=['habits','train','eat','progress','coach'];
   if(obTabs.includes(tab) && !isOnboarded(tab)){
@@ -3258,14 +3378,53 @@ function labTogglePain(btn) {
   document.getElementById('lab-p1-error').style.display = 'none';
 }
 
+// Top 1-2 most diagnostically valuable questions per symptom
+const LAB_PRIORITY_QS = {
+  low_energy:    ['morning_energy','afternoon_crash'],
+  low_libido:    ['morning_erections','libido_score'],
+  poor_muscle:   ['strength_trend'],
+  excess_fat:    ['fat_location'],
+  poor_sleep:    ['wake_night','snoring'],
+  brain_fog:     ['cognitive_score'],
+  slow_recovery: ['doms_duration'],
+  hair_loss:     ['hair_pattern'],
+};
+
+function buildAdaptiveQuestions(selectedPains) {
+  // Always include these core essentials (min needed for hormone model)
+  const CORE_ALWAYS = ['age','body_fat','stress_level','red_meat','alcohol'];
+  // Only include sleep_hrs if poor_sleep NOT selected (wake_night/snoring are more specific)
+  if(!selectedPains.includes('poor_sleep')) CORE_ALWAYS.push('sleep_hrs');
+
+  const qs = [];
+  const addedIds = new Set();
+  CORE_ALWAYS.forEach(id => {
+    const q = LAB_QUESTIONS.core.find(q=>q.id===id);
+    if(q && !addedIds.has(id)) { qs.push(q); addedIds.add(id); }
+  });
+
+  // Add highest-priority question(s) per symptom, deduplicated
+  selectedPains.forEach(pain => {
+    const priorityIds = LAB_PRIORITY_QS[pain] || [];
+    const painQs = LAB_QUESTIONS[pain] || [];
+    priorityIds.forEach(pid => {
+      if(!addedIds.has(pid)) {
+        const q = painQs.find(q=>q.id===pid);
+        if(q) { qs.push(q); addedIds.add(pid); }
+      }
+    });
+  });
+
+  // Hard cap: max 8 questions regardless of symptoms selected
+  return qs.slice(0, 8);
+}
+
 function labPhase1Next() {
   if(!HL_STATE.selectedPains.length) {
     document.getElementById('lab-p1-error').style.display = 'block';
     return;
   }
-  const qs = [...LAB_QUESTIONS.core];
-  HL_STATE.selectedPains.forEach(p => { if(LAB_QUESTIONS[p]) qs.push(...LAB_QUESTIONS[p]); });
-  HL_STATE.questions = qs;
+  HL_STATE.questions = buildAdaptiveQuestions(HL_STATE.selectedPains);
   HL_STATE.currentQ = 0;
   // Pre-fill from OB data
   const h = OB.habits||{}, e = OB.eat||{}, c = OB.coach||{};
@@ -3493,6 +3652,240 @@ function renderLabResults(data) {
       <div class="sh-label" style="margin-bottom:10px">Optimisation Protocol</div>
       ${protoHtml}
     </div>`;
+}
+
+/* ══════════════════════════════════════════
+   LAB SWITCHER
+══════════════════════════════════════════ */
+function switchLabType(type) {
+  document.querySelectorAll('.lab-sw-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
+  const hc = document.getElementById('hormone-lab-content');
+  const ac = document.getElementById('athlete-lab-content');
+  if(hc) hc.style.display = type === 'hormone' ? '' : 'none';
+  if(ac) ac.style.display = type === 'athlete' ? '' : 'none';
+  if(type === 'hormone') initLab();
+  if(type === 'athlete') initAthleteLab();
+}
+
+/* ══════════════════════════════════════════
+   MILESTONES
+══════════════════════════════════════════ */
+const MILESTONES = [
+  // Tier 1 — Foundation
+  { id:'m_first_xp',   tier:1, name:'First Step',    desc:'Complete your first habit',              icon:'⚡', check:s=>s.xp>=10 },
+  { id:'m_first_meal', tier:1, name:'First Meal',     desc:'Log your first meal',                    icon:'🥩', check:s=>s.foodLogs>=1 },
+  { id:'m_lab_done',   tier:1, name:'Know Yourself',  desc:'Complete a Hormone Lab assessment',      icon:'🧬', check:s=>s.labDone },
+  { id:'m_3_streak',   tier:1, name:'3-Day Streak',   desc:'3 consecutive days of habits',           icon:'🔥', check:s=>s.streak>=3 },
+  // Tier 2 — Protocol
+  { id:'m_7_streak',   tier:2, name:'Week Locked In', desc:'7-day habit streak',                     icon:'📅', check:s=>s.streak>=7 },
+  { id:'m_food_7',     tier:2, name:'Standard Met',   desc:'Average food score 7+',                  icon:'🎯', check:s=>s.avgFood>=7 },
+  { id:'m_15_meals',   tier:2, name:'Consistent',     desc:'15 meals logged',                        icon:'📝', check:s=>s.foodLogs>=15 },
+  { id:'m_xp_100',     tier:2, name:'100 XP',         desc:'Earn 100 XP',                            icon:'⭐', check:s=>s.xp>=100 },
+  // Tier 3 — Optimised
+  { id:'m_30_streak',  tier:3, name:'30-Day Streak',  desc:'30 consecutive days of habits',          icon:'🌙', check:s=>s.streak>=30 },
+  { id:'m_food_8',     tier:3, name:'Dialled In',     desc:'Average food score 8+',                  icon:'⚗️', check:s=>s.avgFood>=8 },
+  { id:'m_xp_500',     tier:3, name:'500 XP',         desc:'Earn 500 XP',                            icon:'💪', check:s=>s.xp>=500 },
+  { id:'m_50_meals',   tier:3, name:'50 Meals',       desc:'50 meals logged',                        icon:'🏋️', check:s=>s.foodLogs>=50 },
+  // Tier 4 — Elite
+  { id:'m_90_streak',  tier:4, name:'90-Day Streak',  desc:'90 consecutive days of habits',          icon:'💎', check:s=>s.streak>=90 },
+  { id:'m_food_85',    tier:4, name:'Protocol Pure',  desc:'Average food score 8.5+',                icon:'🔬', check:s=>s.avgFood>=8.5 },
+  { id:'m_xp_2000',    tier:4, name:'2000 XP',        desc:'Earn 2000 XP',                           icon:'👑', check:s=>s.xp>=2000 },
+  { id:'m_200_meals',  tier:4, name:'Lifestyle Lock', desc:'200 meals logged',                       icon:'🌟', check:s=>s.foodLogs>=200 },
+];
+const MS_TIER_NAMES = { 1:'Foundation', 2:'Protocol', 3:'Optimised', 4:'Elite' };
+
+function getMilestoneStats() {
+  const rScores = Object.values(foodRatings).filter(r=>r&&r.score!=null).map(r=>r.score);
+  return {
+    xp:       XP_STATE.xp || 0,
+    streak:   XP_STATE.streak_days || 0,
+    foodLogs: foods.length || 0,
+    avgFood:  rScores.length ? rScores.reduce((a,b)=>a+b,0)/rScores.length : 0,
+    labDone:  !!HL_STATE.results,
+  };
+}
+
+function renderMilestones() {
+  const wrap = document.getElementById('milestones-wrap');
+  if(!wrap) return;
+  const stats = getMilestoneStats();
+  const tierComplete = {};
+  [1,2,3,4].forEach(t => {
+    tierComplete[t] = MILESTONES.filter(m=>m.tier===t).every(m=>m.check(stats));
+  });
+  let html = '';
+  [1,2,3,4].forEach(t => {
+    const tierMs = MILESTONES.filter(m=>m.tier===t);
+    const prevUnlocked = t===1 || tierComplete[t-1];
+    const tDone = tierMs.filter(m=>m.check(stats)).length;
+    html += `<div class="ms-tier">
+      <div class="ms-tier-header">
+        <div class="ms-tier-label">${MS_TIER_NAMES[t]}<span class="ms-tier-count">${tDone}/${tierMs.length}</span></div>
+      </div>
+      <div class="ms-row">${tierMs.map(m => {
+        const done = m.check(stats);
+        const locked = !prevUnlocked && !done;
+        return `<div class="ms-node${done?' done':''}${locked?' locked':''}" title="${m.desc}">
+          <span class="ms-icon">${m.icon}</span>
+          <div class="ms-name">${m.name}</div>
+          ${done?'<div class="ms-tick">✓</div>':''}
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════
+   ATHLETE LAB
+══════════════════════════════════════════ */
+let AL_STATE = { sport:null, level:null, season:null, results:null, savedAt:null };
+
+const AL_SPORTS = [
+  { key:'rugby',      icon:'🏉', name:'Rugby' },
+  { key:'football',   icon:'⚽', name:'Football' },
+  { key:'basketball', icon:'🏀', name:'Basketball' },
+  { key:'tennis',     icon:'🎾', name:'Tennis' },
+  { key:'mma',        icon:'🥊', name:'MMA / Boxing' },
+  { key:'cycling',    icon:'🚴', name:'Cycling' },
+  { key:'running',    icon:'🏃', name:'Running' },
+  { key:'swimming',   icon:'🏊', name:'Swimming' },
+  { key:'cricket',    icon:'🏏', name:'Cricket' },
+  { key:'crossfit',   icon:'🏋️', name:'CrossFit' },
+  { key:'triathlon',  icon:'⚡', name:'Triathlon' },
+  { key:'other',      icon:'🎯', name:'Other Sport' },
+];
+
+function alStorageKey() { return 'jpt_athlete_lab_'+(USER?.id||'guest'); }
+
+function alLoadSaved() {
+  try { const r = localStorage.getItem(alStorageKey()); return r ? JSON.parse(r) : null; } catch(e) { return null; }
+}
+
+function alSave(state) {
+  try { localStorage.setItem(alStorageKey(), JSON.stringify(state)); } catch(e) {}
+}
+
+function initAthleteLab() {
+  const saved = alLoadSaved();
+  if(saved?.results) {
+    AL_STATE = { ...AL_STATE, ...saved };
+    alRenderResults(AL_STATE.results);
+    alShowPhase(4);
+    return;
+  }
+  alRenderSportGrid();
+  // Restore selections if any
+  if(AL_STATE.level) {
+    document.querySelectorAll(`.al-config-opt[data-group="level"]`).forEach(b => {
+      b.classList.toggle('sel', b.onclick?.toString().includes(AL_STATE.level));
+    });
+  }
+  alShowPhase(1);
+}
+
+function alShowPhase(n) {
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById('al-phase-'+i);
+    if(el) el.classList.toggle('active', i===n);
+  });
+}
+
+function alRenderSportGrid() {
+  const grid = document.getElementById('al-sport-grid');
+  if(!grid) return;
+  grid.innerHTML = AL_SPORTS.map(s => `
+    <button class="al-sport-chip${AL_STATE.sport===s.key?' selected':''}" onclick="alSelectSport('${s.key}',this)">
+      <span class="al-sport-chip-icon">${s.icon}</span>
+      <span class="al-sport-chip-name">${s.name}</span>
+    </button>`).join('');
+}
+
+function alSelectSport(key, btn) {
+  AL_STATE.sport = key;
+  document.querySelectorAll('.al-sport-chip').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('al-p1-err').style.display = 'none';
+}
+
+function alPhase1Next() {
+  if(!AL_STATE.sport) { document.getElementById('al-p1-err').style.display='block'; return; }
+  const sport = AL_SPORTS.find(s=>s.key===AL_STATE.sport);
+  const conf = document.getElementById('al-sport-confirm');
+  if(conf) conf.textContent = sport ? sport.icon+' '+sport.name+' selected' : '';
+  alShowPhase(2);
+}
+
+function alSelectOpt(el, group, val) {
+  document.querySelectorAll(`.al-config-opt[data-group="${group}"]`).forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  if(group==='level') AL_STATE.level = val;
+  if(group==='season') AL_STATE.season = val;
+  document.getElementById('al-p2-err').style.display = 'none';
+}
+
+async function alPhase2Submit() {
+  if(!AL_STATE.level || !AL_STATE.season) {
+    document.getElementById('al-p2-err').style.display='block'; return;
+  }
+  alShowPhase(3);
+  const sport = AL_SPORTS.find(s=>s.key===AL_STATE.sport);
+  try {
+    const res = await fetch('/api/athlete-lab', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ sport: sport?.name||AL_STATE.sport, level: AL_STATE.level, season: AL_STATE.season }),
+    });
+    if(!res.ok) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
+    const data = await res.json();
+    if(data.error || !data.training) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
+    AL_STATE.results = data;
+    AL_STATE.savedAt = new Date().toISOString();
+    alSave(AL_STATE);
+    alRenderResults(data);
+    alShowPhase(4);
+  } catch(e) {
+    showToast('Timed out — try again');
+    alShowPhase(2);
+  }
+}
+
+function alRenderResults(data) {
+  const el = document.getElementById('al-results-content');
+  if(!el || !data) return;
+  const sport = AL_SPORTS.find(s=>s.key===AL_STATE.sport);
+  const sections = [
+    { label:'Training Adjustments', key:'training' },
+    { label:'Nutrition Protocol',   key:'nutrition' },
+    { label:'Recovery Methods',     key:'recovery' },
+    { label:'Supplements',          key:'supplements' },
+    { label:'Lifestyle',            key:'lifestyle' },
+  ];
+  el.innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:4px">Sport Profile</div>
+      <div style="font-size:13px;color:var(--white);line-height:1.5">${sport?.icon||''} ${escHtml(data.sport_profile||'')}</div>
+    </div>
+    ${data.focus ? `<div style="font-size:13px;color:var(--muted);line-height:1.65;background:rgba(44,212,196,.03);border:1px solid rgba(44,212,196,.12);padding:13px 16px;margin-bottom:16px"><strong style="color:var(--white)">Current focus:</strong> ${escHtml(data.focus)}</div>` : ''}
+    ${data.key_risk ? `<div class="al-risk-box"><div class="al-risk-label">⚠ Key Risk</div><div class="al-risk-text">${escHtml(data.key_risk)}</div></div>` : ''}
+    ${sections.map(s => {
+      const items = data[s.key];
+      if(!items?.length) return '';
+      return `<div class="al-protocol-section">
+        <div class="al-protocol-label">${s.label}</div>
+        <div class="al-protocol-items">${items.map(item=>`<div class="al-protocol-item">${escHtml(item)}</div>`).join('')}</div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function alReset() {
+  AL_STATE = { sport:null, level:null, season:null, results:null, savedAt:null };
+  try { localStorage.removeItem(alStorageKey()); } catch(e) {}
+  alRenderSportGrid();
+  document.querySelectorAll('.al-config-opt').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('al-sport-confirm').textContent = '';
+  alShowPhase(1);
 }
 
 /* ── ADMIN SELF-APPROVE ── */
