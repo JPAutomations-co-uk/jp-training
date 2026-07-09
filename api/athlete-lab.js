@@ -20,8 +20,8 @@ const PHASE_LABELS = {
 
 const SYSTEM = `You are a sports performance coach. Return ONLY valid JSON — no preamble, no explanation.
 
-SCHEMA (required, all fields, British English, be specific and concise):
-{"sport_profile":"<1 sentence: athlete context>","focus":"<1 sentence: #1 lever right now>","key_risk":"<1 sentence: main risk>","training":["<actionable point>","<actionable point>","<actionable point>"],"nutrition":["<specific guidance>","<specific guidance>"],"recovery":["<method>","<method>"],"supplements":["<name dose timing>","<name dose timing>"],"lifestyle":["<habit>"]}
+SCHEMA — keep each string under 25 words, British English:
+{"sport_profile":"<athlete context, max 20 words>","focus":"<#1 performance lever now, max 20 words>","key_risk":"<main risk, max 15 words>","training":["<point, max 25 words>","<point, max 25 words>","<point, max 25 words>"],"nutrition":["<guidance, max 20 words>","<guidance, max 20 words>"],"recovery":["<method, max 20 words>","<method, max 20 words>"],"supplements":["<name dose timing>","<name dose timing>"],"lifestyle":["<habit, max 15 words>"]}
 
 RULES — never break these:
 - Nutrition base: fatty red meat, 10 eggs/day, ghee/butter, sweet potatoes, white rice, fruit
@@ -75,7 +75,7 @@ export default async function handler(req) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 900,
+        max_tokens: 1200,
         system: SYSTEM,
         messages: [
           { role: 'user', content: lines },
