@@ -1,99 +1,72 @@
 export const config = { runtime: 'edge' }
 
 const GOAL_LABELS = {
-  speed_pbs:        'Hit speed / sprint personal bests',
-  explosive_power:  'Build explosive power and athleticism',
-  strength_pbs:     'Hit new lift personal bests',
-  sport_performance:'Improve sport-specific performance',
-  lean_muscle:      'Build lean muscle without losing speed',
-  endurance:        'Build endurance base',
-  fat_loss:         'Reduce body fat while maintaining performance',
-  vertical_jump:    'Increase vertical jump height',
-};
+  speed_pbs:        'hit speed/sprint personal bests',
+  explosive_power:  'build explosive power and athleticism',
+  strength_pbs:     'hit new lift personal bests',
+  sport_performance:'improve sport-specific performance',
+  lean_muscle:      'build lean muscle without losing speed',
+  endurance:        'build endurance base',
+  fat_loss:         'reduce body fat while maintaining performance',
+  vertical_jump:    'increase vertical jump height',
+}
 
 const PHASE_LABELS = {
   base_building:   'base-building phase',
   pre_competition: 'pre-competition phase',
   in_season:       'in-season / competing',
-  off_season:      'off-season recovery',
-};
+  off_season:      'off-season / recovery',
+}
 
-const SYSTEM = `You are an elite sports science and performance coach. You have been given structured data about an athlete — their sport, specific goals, training phase, and personal app data. Generate a fully personalised performance protocol. Return ONLY valid JSON.
+const SYSTEM = `You are an elite sports science and performance coach. Analyse the athlete's sport, goals, training phase, experience level, and existing training plan. Return a fully personalised protocol as ONLY valid JSON — no other text.
 
-Schema (all fields required):
-{"sport_profile":"<1-2 sentence summary of their athletic context, specific to their sport and goals>","focus":"<single-sentence primary focus for this specific athlete right now>","key_risk":"<main training, hormonal, or recovery risk specific to their situation>","training":["<protocol 1>","<protocol 2>","<protocol 3>"],"nutrition":["<protocol 1>","<protocol 2>","<protocol 3>"],"recovery":["<method 1>","<method 2>","<method 3>"],"supplements":["<supplement with dose 1>","<supplement with dose 2>"],"lifestyle":["<habit 1>","<habit 2>"]}
+CRITICAL: Return ONLY the JSON object below. No preamble, no explanation. Start with { and end with }.
 
-SPORT SCIENCE PRINCIPLES:
+Schema:
+{
+  "sport_profile": "<1-2 sentences: their specific athletic context and what stage they're at>",
+  "focus": "<single sentence: the primary performance lever for this athlete right now>",
+  "plan_analysis": "<if a current training plan was provided: 1-2 sentences on what it's missing or doing wrong for the stated goals. If no plan provided: null>",
+  "plan_optimisations": ["<specific change to make to existing plan, e.g. 'Replace Friday Upper B pull session with a dedicated sprint session: 6×40m at 95% effort with 4-min rest'>", "<another specific change>", "<third change>"],
+  "key_risk": "<main risk specific to their sport and current approach>",
+  "training": ["<protocol point 1>", "<protocol point 2>", "<protocol point 3>"],
+  "nutrition": ["<protocol 1>", "<protocol 2>", "<protocol 3>"],
+  "recovery": ["<method 1>", "<method 2>"],
+  "supplements": ["<supplement with dose 1>", "<supplement 2>"],
+  "lifestyle": ["<habit 1>", "<habit 2>"]
+}
 
-SPRINTING / TRACK:
-- CNS recovery is rate-limiting: max 3 true speed sessions per week, never on back-to-back days
-- Acceleration work (0-30m) and max velocity (30m+) require separate sessions for quality
-- Short hill sprints (6-8 sec) build force production without excess CNS stress
-- Speed athletes: protein 2.2-2.4g/kg, pre-session carbs 60-90min before (not a heavy meal)
-- Post-session within 30min: 40-50g protein + fast carbs for CNS recovery
-- Cold water immersion POST-sprint sessions for acute inflammation — but never within 4hrs of a strength session if hypertrophy is also a goal
+If no current training plan is provided, set plan_analysis to null and plan_optimisations to an empty array.
+plan_optimisations must be specific and actionable — reference exact session names, days, or exercises from the plan if provided.
 
-PLYOMETRICS / JUMP:
-- Reactive strength index (RSI) is the key metric — ground contact quality over jump height
-- Bilateral before unilateral: two-leg jumps → split jumps → single-leg work
-- Max 3 plyometric sessions per week; total ankle contacts under 150/session for beginners, 200 for intermediate
-- Loaded jump squats and hex bar deadlifts build the elastic strength foundation
-- Pre-bed protein (casein/red meat) supports the overnight GH spike critical for tendon collagen synthesis
+SPORT SCIENCE RULES:
 
-GYM / STRENGTH:
-- Progressive overload via double progression: reps first (e.g. 3x6-8), then weight
-- Big four (squat, deadlift, press, row) 2-3x/week with compound priority
-- Creatine monohydrate 5g/day: non-negotiable for strength athletes
-- Protein 2.2-2.4g/kg spread across 4+ meals; no meal under 35g protein
-- De-load every 4-6 weeks: reduce volume 40%, maintain intensity
+SPRINTING/TRACK — CNS recovery is rate-limiting. Max 3 speed sessions/week, never consecutive days. Separate acceleration (0-30m) from max velocity (30m+). Short hill sprints 6-8s build force. Post-sprint: 40-50g protein + fast carbs within 30min. Cold water 10-15min post-sprint for inflammation.
 
-TEAM SPORTS (football, rugby, basketball):
-- In-season: 2x/week strength maintenance minimum; reduce volume 25-35% from pre-season
-- Match day: accessible carbs 2-3hrs pre, protein + carbs within 30min post
-- Fixture density: HRV monitoring to manage overtraining; back-to-back matches = priority recovery
-- Rugby/contact: post-match inflammatory cascade suppresses testosterone 24-72hrs — prioritise sleep and protein
+PLYOMETRICS — RSI (reactive strength index) over raw jump height. Bilateral before unilateral. Max 150-200 ankle contacts/session. Loaded jump squats and hex bar deadlifts build elastic strength base. Pre-bed protein (red meat) for overnight tendon collagen synthesis.
 
-ENDURANCE (cycling, distance running, swimming):
-- Zone 2 (conversational pace, nasal breathing) 2-3x/week for cardiac efficiency
-- RED-S (Relative Energy Deficiency in Sport) risk at high mileage — never cut calories below maintenance
-- Carbs 5-8g/kg on high-volume days; electrolytes (sodium, potassium, magnesium) for sweat replacement
-- Avoid cold exposure within 4hrs of a long session (blunts mitochondrial adaptation)
+GYM/STRENGTH — Double progression (reps first, then weight). Compound lifts 2-3x/week minimum. Creatine 5g/day non-negotiable. Protein 2.2-2.4g/kg across 4+ meals, minimum 35g/meal. Deload every 4-6 weeks.
 
-MMA / BOXING:
-- Weight cuts cause hormonal disruption — avoid cutting more than 5% body weight
-- High training frequency = cortisol chronically elevated — scheduled deload weeks are mandatory
-- Beta-alanine 3.2g/day for high-intensity interval capacity
+TEAM SPORTS — In-season: strength 2x/week minimum, volume 25-35% lower than pre-season. Match day: carbs 2-3hrs pre, protein+carbs within 30min post. HRV monitoring for fixture density management.
 
-NUTRITION (all athletes — animal-first protocol):
-- Foundation: fatty red meat, 6-10 whole eggs daily, ghee/butter, sweet potatoes, white rice
-- Pre-session (60-90min): digestible carbs + moderate protein — NO heavy meal
+ENDURANCE — Zone 2 (nasal breathing pace) 2-3x/week. RED-S risk at high mileage — never cut below maintenance calories. Carbs 5-8g/kg on high-volume days. Electrolytes for sweat losses.
+
+NUTRITION (all athletes):
+- Base: fatty red meat, 6-10 whole eggs/day, ghee/butter, sweet potatoes, white rice, fruit
+- Pre-session (60-90min): light digestible carbs + moderate protein
 - Post-session (within 30min): 40-50g protein + fast carbs
 - NEVER recommend: seed oils, chicken breast, whey, oats, pasteurised dairy, soy
-- DO recommend: ribeye, 80/20 mince, lamb, eggs, butter, ghee, oysters, white rice, sweet potato, fruit
 
-RECOVERY:
-- Sleep 8-9hrs is the single highest-leverage recovery tool — non-negotiable
-- HRV 5+ beats above resting HR = skip speed/power work that day
-- Overtraining signs specific to power/speed athletes: declining jump height, slower reactions, irritability
-
-SUPPLEMENTS — STRICT RULES:
-- Creatine monohydrate 5g/day: all power, sprint, and strength athletes — always
-- Beta-alanine 3.2g/day: only high-intensity intervals >60s; NOT needed for pure sprint/power
-- Caffeine 3-5mg/kg, 45-60min pre-session: all athletes
+SUPPLEMENTS — only recommend what applies:
+- Creatine 5g/day: all power/speed/strength athletes — always
+- Caffeine 3-5mg/kg, 45-60min pre: all athletes
 - Vitamin D3 5000IU + K2 200mcg: all athletes year-round
-- Omega-3 2-4g EPA/DHA: reduces inflammation load
-- Magnesium glycinate 400mg before bed: CNS recovery, sleep quality
-- NEVER recommend ashwagandha or HPA adaptogens
+- Omega-3 2-4g EPA/DHA: all athletes
+- Magnesium glycinate 400mg pre-bed: CNS recovery and sleep
+- Beta-alanine 3.2g: only high-intensity intervals >60s
+- NEVER recommend ashwagandha or any HPA adaptogens
 
-PERSONALISATION RULES:
-- If app data shows poor food scores: name what's wrong specifically
-- If habit streak is low: give one immediate anchor habit to start with
-- If sleep < 8hrs: prioritise sleep above all else
-- If hormone lab shows issues: reference them
-- Age 40+: factor in longer recovery windows, connective tissue care
-- High body fat (>18%): address through nutrition and conditioning before chasing pure performance numbers
-
-Write in British English. Be direct and specific to their actual situation — never generic sport science platitudes.`
+Write in British English. Be specific, direct, and reference actual data provided.`
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors() })
@@ -105,39 +78,43 @@ export default async function handler(req) {
   let body
   try { body = await req.json() } catch { return new Response('Bad request', { status: 400 }) }
 
-  const { sport, goals = [], phase, notes, appContext } = body
+  const { sport, goals = [], phase, frequency, experience, notes, appContext } = body
   if (!sport) return json({ error: 'Missing sport' }, 400)
 
-  const goalLines = goals.map(g => GOAL_LABELS[g] || g).join(', ') || 'General performance'
-  const phaseLabel = PHASE_LABELS[phase] || phase || 'unspecified phase'
+  const goalLines   = goals.map(g => GOAL_LABELS[g] || g).join(', ') || 'general performance'
+  const phaseLabel  = PHASE_LABELS[phase] || phase || 'unspecified phase'
+  const ctx         = appContext || {}
+  const profile     = ctx.profile || {}
 
-  const ctx = appContext || {}
-  const profile = ctx.profile || {}
   const profileLines = [
     profile.age           ? `Age: ${profile.age}` : null,
     profile.body_fat_pct  ? `Body fat: ${profile.body_fat_pct}%` : null,
     profile.weight_kg     ? `Weight: ${profile.weight_kg}kg` : null,
-    profile.sleep_hrs     ? `Sleep: ${profile.sleep_hrs} hrs/night` : null,
-    profile.training_goal ? `Stated goal: ${profile.training_goal}` : null,
+    profile.sleep_hrs     ? `Sleep: ${profile.sleep_hrs}hrs/night` : null,
+    profile.training_goal ? `App training goal: ${profile.training_goal}` : null,
     profile.symptoms?.length ? `Reported symptoms: ${profile.symptoms.join(', ')}` : null,
-    ctx.recentFoods       ? `Recent foods: ${ctx.recentFoods}` : null,
-    ctx.avgFoodScore      ? `Avg food score: ${ctx.avgFoodScore}/10` : null,
+    ctx.recentFoods       ? `Recent foods logged: ${ctx.recentFoods}` : null,
+    ctx.avgFoodScore      ? `Avg food quality score: ${ctx.avgFoodScore}/10` : null,
     ctx.habitStreak       ? `Habit streak: ${ctx.habitStreak} days` : null,
-    ctx.xp                ? `XP earned: ${ctx.xp}` : null,
-    ctx.stepsToday        ? `Steps today: ${typeof ctx.stepsToday === 'number' ? ctx.stepsToday.toLocaleString() : ctx.stepsToday}` : null,
-    ctx.weeklyPlan        ? `Training plan: ${ctx.weeklyPlan}` : null,
-    ctx.labResults?.summary ? `Hormone lab summary: ${ctx.labResults.summary}` : null,
+    ctx.stepsToday        ? `Steps today: ${ctx.stepsToday}` : null,
+    ctx.labResults?.summary ? `Hormone lab: ${ctx.labResults.summary}` : null,
+    ctx.labResults?.estimates?.total_t ? `Estimated total T: ${ctx.labResults.estimates.total_t.value} ${ctx.labResults.estimates.total_t.unit} (${ctx.labResults.estimates.total_t.status})` : null,
   ].filter(Boolean).join('\n')
 
-  const prompt = `Sport / Activity: ${sport}
+  const prompt = `Sport/Activity: ${sport}
 Goals: ${goalLines}
 Training phase: ${phaseLabel}
+${frequency ? `Training frequency: ${frequency} days/week` : ''}
+${experience ? `Experience level: ${experience}` : ''}
 ${notes ? `Additional context: ${notes}` : ''}
 
-App data:
+Profile data:
 ${profileLines || 'none available'}
 
-Generate their personalised athletic performance protocol.`
+Current training plan:
+${ctx.currentTrainingPlan || 'not provided'}
+
+Analyse this athlete and return the JSON protocol.`
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -148,8 +125,8 @@ Generate their personalised athletic performance protocol.`
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1000,
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1500,
         system: SYSTEM,
         messages: [
           { role: 'user', content: prompt },
@@ -159,15 +136,18 @@ Generate their personalised athletic performance protocol.`
     })
 
     const apiData = await res.json()
-    if (apiData.error) return json({ error: 'API error', detail: apiData.error.message }, 500)
+    if (apiData.error) {
+      console.error('athlete-lab anthropic error:', JSON.stringify(apiData.error))
+      return json({ error: 'API error', detail: apiData.error.message }, 500)
+    }
 
     const raw = '{' + (apiData.content?.[0]?.text ?? '{}')
     let result
     try {
       result = JSON.parse(raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim())
-    } catch {
-      console.error('athlete-lab parse error:', raw.slice(0, 300))
-      return json({ error: 'Parse error', raw: raw.slice(0, 200) }, 500)
+    } catch (parseErr) {
+      console.error('athlete-lab parse error. stop_reason:', apiData.stop_reason, 'raw:', raw.slice(0, 400))
+      return json({ error: 'Parse error', stop_reason: apiData.stop_reason, raw: raw.slice(0, 300) }, 500)
     }
 
     return json(result)

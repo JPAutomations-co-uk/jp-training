@@ -1033,6 +1033,20 @@
             <button class="al-chip" data-val="in_season" onclick="alPickSeason(this)"><span class="al-chip-icon">🏟</span>In-Season</button>
             <button class="al-chip" data-val="off_season" onclick="alPickSeason(this)"><span class="al-chip-icon">🛌</span>Off-Season</button>
           </div>
+          <div class="al-section-label">Days per week you train</div>
+          <div class="al-chips" id="al-freq-chips">
+            <button class="al-chip" data-val="1-2" onclick="alPickFreq(this)">1–2 days</button>
+            <button class="al-chip" data-val="3-4" onclick="alPickFreq(this)">3–4 days</button>
+            <button class="al-chip" data-val="5-6" onclick="alPickFreq(this)">5–6 days</button>
+            <button class="al-chip" data-val="7" onclick="alPickFreq(this)">Every day</button>
+          </div>
+          <div class="al-section-label">Training experience</div>
+          <div class="al-chips" id="al-exp-chips">
+            <button class="al-chip" data-val="beginner" onclick="alPickExp(this)">Beginner &lt;1yr</button>
+            <button class="al-chip" data-val="intermediate" onclick="alPickExp(this)">Intermediate 1–3yrs</button>
+            <button class="al-chip" data-val="experienced" onclick="alPickExp(this)">Experienced 3–5yrs</button>
+            <button class="al-chip" data-val="advanced" onclick="alPickExp(this)">Advanced 5+yrs</button>
+          </div>
           <div class="al-notes-wrap">
             <button class="al-notes-toggle" onclick="alToggleNotes(this)">＋ Add a specific note (optional)</button>
             <textarea class="al-textarea" id="al-notes" placeholder="E.g. I'm targeting a 10.8s 100m by summer…" style="display:none"></textarea>
@@ -3957,7 +3971,7 @@ function renderMilestones() {
 /* ══════════════════════════════════════════
    ATHLETE LAB
 ══════════════════════════════════════════ */
-let AL_STATE = { sports:[], goals:[], phase:null, notes:'', results:null, savedAt:null };
+let AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null };
 
 function alStorageKey() { return 'jpt_athlete_lab_'+(USER?.id||'guest'); }
 function alLoadSaved() { try { const r=localStorage.getItem(alStorageKey()); return r?JSON.parse(r):null; } catch(e){return null;} }
@@ -4017,6 +4031,18 @@ function alPickSeason(btn) {
   AL_STATE.phase = btn.dataset.val;
 }
 
+function alPickFreq(btn) {
+  document.querySelectorAll('#al-freq-chips .al-chip').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  AL_STATE.frequency = btn.dataset.val;
+}
+
+function alPickExp(btn) {
+  document.querySelectorAll('#al-exp-chips .al-chip').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  AL_STATE.experience = btn.dataset.val;
+}
+
 function alToggleNotes(btn) {
   const ta = document.getElementById('al-notes');
   if(!ta) return;
@@ -4040,6 +4066,14 @@ async function alSubmit() {
   AL_STATE.notes = notes;
 
   const rScores = Object.values(foodRatings).filter(r=>r&&r.score!=null).map(r=>r.score);
+
+  // Build full training plan including exercises
+  const fullPlan = OB?.train?.weeklyPlan?.map(d => {
+    if(d.type === 'rest') return `${d.day}: Rest`;
+    const exList = (d.exercises||[]).map(e=>`${e.name} ${e.sets}×${e.rep||e.reps||'?'}`).join(', ');
+    return `${d.day}: ${d.sessionName}${exList ? ' ['+exList+']' : ''}`;
+  }).join(' | ') || null;
+
   const appContext = {
     profile: {
       age:           OB?.coach?.age || null,
@@ -4049,13 +4083,16 @@ async function alSubmit() {
       training_goal: OB?.train?.goal || null,
       symptoms:      OB?.coach?.symptoms || [],
     },
-    recentFoods:  foods.slice(-5).map(f=>f.name).join(', ') || null,
-    avgFoodScore: rScores.length ? (rScores.reduce((a,b)=>a+b,0)/rScores.length).toFixed(1) : null,
-    habitStreak:  XP_STATE.streak_days || 0,
-    xp:           XP_STATE.xp || 0,
-    stepsToday:   todaySteps || null,
-    weeklyPlan:   OB?.train?.weeklyPlan?.filter(d=>d.type!=='rest').map(d=>`${d.day}: ${d.sessionName}`).join(', ') || null,
-    labResults:   HL_STATE.results ? { summary: HL_STATE.results.summary || null } : null,
+    recentFoods:   foods.slice(-5).map(f=>f.name).join(', ') || null,
+    avgFoodScore:  rScores.length ? (rScores.reduce((a,b)=>a+b,0)/rScores.length).toFixed(1) : null,
+    habitStreak:   XP_STATE.streak_days || 0,
+    xp:            XP_STATE.xp || 0,
+    stepsToday:    todaySteps || null,
+    currentTrainingPlan: fullPlan,
+    labResults:    HL_STATE.results ? {
+      summary:   HL_STATE.results.summary || null,
+      estimates: HL_STATE.results.estimates || null,
+    } : null,
   };
   alShowPhase(3);
   try {
@@ -4063,9 +4100,11 @@ async function alSubmit() {
       method:'POST',
       headers:{'content-type':'application/json'},
       body: JSON.stringify({
-        sport:   AL_STATE.sports.map(s=>AL_SPORT_LABELS[s]||s).join(' + '),
-        goals:   AL_STATE.goals,
-        phase:   AL_STATE.phase,
+        sport:      AL_STATE.sports.map(s=>AL_SPORT_LABELS[s]||s).join(' + '),
+        goals:      AL_STATE.goals,
+        phase:      AL_STATE.phase,
+        frequency:  AL_STATE.frequency,
+        experience: AL_STATE.experience,
         notes,
         appContext,
       }),
@@ -4099,7 +4138,12 @@ function alRenderResults(data) {
       <div style="font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:4px">Athlete Profile</div>
       <div style="font-size:13px;color:var(--white);line-height:1.5">${escHtml(data.sport_profile)}</div>
     </div>` : ''}
-    ${data.focus ? `<div style="font-size:13px;color:var(--muted);line-height:1.65;background:rgba(44,212,196,.03);border:1px solid rgba(44,212,196,.12);padding:13px 16px;margin-bottom:16px"><strong style="color:var(--white)">Current focus:</strong> ${escHtml(data.focus)}</div>` : ''}
+    ${data.focus ? `<div style="font-size:13px;color:var(--muted);line-height:1.65;background:rgba(44,212,196,.03);border:1px solid rgba(44,212,196,.12);padding:13px 16px;margin-bottom:16px"><strong style="color:var(--white)">Priority focus:</strong> ${escHtml(data.focus)}</div>` : ''}
+    ${data.plan_analysis ? `<div style="font-size:13px;color:var(--muted);line-height:1.65;background:rgba(251,191,36,.02);border:1px solid rgba(251,191,36,.15);padding:13px 16px;margin-bottom:16px"><strong style="color:rgba(251,191,36,.9)">Current plan assessment:</strong> ${escHtml(data.plan_analysis)}</div>` : ''}
+    ${data.plan_optimisations?.length ? `<div class="al-protocol-section">
+      <div class="al-protocol-label" style="color:#fbbf24">Plan Optimisations</div>
+      <div class="al-protocol-items">${data.plan_optimisations.map(item=>`<div class="al-protocol-item" style="border-left-color:rgba(251,191,36,.4)">${escHtml(item)}</div>`).join('')}</div>
+    </div>` : ''}
     ${data.key_risk ? `<div class="al-risk-box"><div class="al-risk-label">⚠ Key Risk</div><div class="al-risk-text">${escHtml(data.key_risk)}</div></div>` : ''}
     ${sections.map(s => {
       const items = data[s.key];
@@ -4113,9 +4157,9 @@ function alRenderResults(data) {
 }
 
 function alReset() {
-  AL_STATE = { sports:[], goals:[], phase:null, notes:'', results:null, savedAt:null };
+  AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null };
   try { localStorage.removeItem(alStorageKey()); } catch(e) {}
-  document.querySelectorAll('#al-sport-chips .al-chip, #al-goal-chips .al-chip, #al-season-chips .al-chip').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('#al-sport-chips .al-chip, #al-goal-chips .al-chip, #al-season-chips .al-chip, #al-freq-chips .al-chip, #al-exp-chips .al-chip').forEach(b=>b.classList.remove('sel'));
   const ta = document.getElementById('al-notes');
   if(ta) { ta.value=''; ta.style.display='none'; }
   alShowPhase(1);
