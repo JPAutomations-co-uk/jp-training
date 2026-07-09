@@ -1003,7 +1003,7 @@
             <button class="al-chip" data-val="athletics" onclick="alPickSport(this)"><span class="al-chip-icon">🎯</span>General Athleticism</button>
             <button class="al-chip" data-val="other" onclick="alPickSport(this)"><span class="al-chip-icon">➕</span>Other</button>
           </div>
-          <div id="al-p1-err" style="font-size:12px;color:#f87171;display:none;margin:-8px 0 10px">Select your sport to continue.</div>
+          <div id="al-p1-err" style="font-size:12px;color:#f87171;display:none;margin:-8px 0 10px">Select at least one to continue.</div>
           <button class="lab-cta" onclick="alNext(1)">Next →</button>
         </div>
 
@@ -3811,16 +3811,16 @@ function generatePersonalisedMilestones(stats) {
   const age       = parseInt(OB?.coach?.age) || 0;
   const sleep     = parseFloat(OB?.habits?.sleep_hrs) || 0;
   const syms      = OB?.coach?.symptoms || [];
-  const alSport   = AL_STATE.sport || '';
+  const alSports  = AL_STATE.sports || [];
   const alGoals   = AL_STATE.goals || [];
-  const sportLabel = AL_SPORT_LABELS[alSport] || 'Sport';
+  const sportLabel = alSports.map(s=>AL_SPORT_LABELS[s]||s).join(' + ') || 'Sport';
 
   // Classify athlete type from AL_STATE
-  const isSprinter  = alSport === 'sprinting' || alGoals.includes('speed_pbs');
-  const isPlyos     = alSport === 'plyometrics' || alGoals.includes('vertical_jump') || alGoals.includes('explosive_power');
-  const isLifter    = alSport === 'gym_strength' || alGoals.includes('strength_pbs');
-  const isTeamSport = ['football','rugby','basketball','mma'].includes(alSport);
-  const isEndurance = ['cycling','distance_running','swimming'].includes(alSport) || alGoals.includes('endurance');
+  const isSprinter  = alSports.includes('sprinting') || alGoals.includes('speed_pbs');
+  const isPlyos     = alSports.includes('plyometrics') || alGoals.includes('vertical_jump') || alGoals.includes('explosive_power');
+  const isLifter    = alSports.includes('gym_strength') || alGoals.includes('strength_pbs');
+  const isTeamSport = ['football','rugby','basketball','mma'].some(s=>alSports.includes(s));
+  const isEndurance = ['cycling','distance_running','swimming'].some(s=>alSports.includes(s)) || alGoals.includes('endurance');
   const wantsFat    = alGoals.includes('fat_loss') || bf > 18 || goal.includes('fat');
   const wantsMuscle = alGoals.includes('lean_muscle') || goal.includes('muscle') || goal.includes('strength');
   const hasAthleteLab = !!AL_STATE.results;
@@ -3957,7 +3957,7 @@ function renderMilestones() {
 /* ══════════════════════════════════════════
    ATHLETE LAB
 ══════════════════════════════════════════ */
-let AL_STATE = { sport:null, goals:[], phase:null, notes:'', results:null, savedAt:null };
+let AL_STATE = { sports:[], goals:[], phase:null, notes:'', results:null, savedAt:null };
 
 function alStorageKey() { return 'jpt_athlete_lab_'+(USER?.id||'guest'); }
 function alLoadSaved() { try { const r=localStorage.getItem(alStorageKey()); return r?JSON.parse(r):null; } catch(e){return null;} }
@@ -3972,12 +3972,12 @@ function initAthleteLab() {
     return;
   }
   // Restore chip state if returning to form
-  if(AL_STATE.sport) {
+  if(AL_STATE.sports?.length) {
     document.querySelectorAll('#al-sport-chips .al-chip').forEach(b => {
-      b.classList.toggle('sel', b.dataset.val === AL_STATE.sport);
+      b.classList.toggle('sel', AL_STATE.sports.includes(b.dataset.val));
     });
   }
-  alShowPhase(AL_STATE.sport ? 2 : 1);
+  alShowPhase(AL_STATE.sports?.length ? 2 : 1);
 }
 
 function alShowPhase(n) {
@@ -3988,9 +3988,14 @@ function alShowPhase(n) {
 }
 
 function alPickSport(btn) {
-  document.querySelectorAll('#al-sport-chips .al-chip').forEach(b=>b.classList.remove('sel'));
-  btn.classList.add('sel');
-  AL_STATE.sport = btn.dataset.val;
+  const val = btn.dataset.val;
+  if(btn.classList.contains('sel')) {
+    btn.classList.remove('sel');
+    AL_STATE.sports = AL_STATE.sports.filter(s=>s!==val);
+  } else {
+    btn.classList.add('sel');
+    if(!AL_STATE.sports.includes(val)) AL_STATE.sports.push(val);
+  }
   document.getElementById('al-p1-err').style.display = 'none';
 }
 
@@ -4023,7 +4028,7 @@ function alToggleNotes(btn) {
 function alNext(from, back) {
   if(back) { alShowPhase(from); return; }
   if(from === 1) {
-    if(!AL_STATE.sport) { document.getElementById('al-p1-err').style.display='block'; return; }
+    if(!AL_STATE.sports.length) { document.getElementById('al-p1-err').style.display='block'; return; }
     alShowPhase(2);
   }
 }
@@ -4058,7 +4063,7 @@ async function alSubmit() {
       method:'POST',
       headers:{'content-type':'application/json'},
       body: JSON.stringify({
-        sport:   AL_SPORT_LABELS[AL_STATE.sport] || AL_STATE.sport,
+        sport:   AL_STATE.sports.map(s=>AL_SPORT_LABELS[s]||s).join(' + '),
         goals:   AL_STATE.goals,
         phase:   AL_STATE.phase,
         notes,
@@ -4108,7 +4113,7 @@ function alRenderResults(data) {
 }
 
 function alReset() {
-  AL_STATE = { sport:null, goals:[], phase:null, notes:'', results:null, savedAt:null };
+  AL_STATE = { sports:[], goals:[], phase:null, notes:'', results:null, savedAt:null };
   try { localStorage.removeItem(alStorageKey()); } catch(e) {}
   document.querySelectorAll('#al-sport-chips .al-chip, #al-goal-chips .al-chip, #al-season-chips .al-chip').forEach(b=>b.classList.remove('sel'));
   const ta = document.getElementById('al-notes');
