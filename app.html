@@ -467,9 +467,27 @@
     /* ── ATHLETE LAB ── */
     .al-phase{display:none}
     .al-phase.active{display:block}
-    .al-textarea{width:100%;background:var(--s1);border:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;font-weight:300;padding:14px 16px;resize:vertical;min-height:150px;line-height:1.7;box-sizing:border-box;transition:border-color .2s}
-    .al-textarea:focus{outline:none;border-color:rgba(44,212,196,.4);background:rgba(44,212,196,.02)}
-    .al-textarea::placeholder{color:rgba(255,255,255,.2)}
+    .al-step-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px}
+    .al-step-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:background .25s}
+    .al-step-dot.done{background:rgba(44,212,196,.5)}
+    .al-step-dot.active{background:var(--teal);width:18px;border-radius:3px}
+    .al-step-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-left:6px}
+    .al-q{font-size:14px;font-weight:600;color:var(--white);margin-bottom:14px;line-height:1.4}
+    .al-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+    .al-chip{background:var(--s1);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:9px 14px;cursor:pointer;border-radius:2px;transition:all .2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .al-chip:active{transform:scale(.97)}
+    .al-chip.sel{background:rgba(44,212,196,.08);border-color:var(--teal);color:var(--teal)}
+    .al-chip-icon{font-size:16px;line-height:1}
+    .al-section-label{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;margin-top:20px}
+    .al-notes-wrap{margin-top:16px}
+    .al-notes-toggle{font-size:11px;color:var(--dim);cursor:pointer;display:flex;align-items:center;gap:5px;margin-bottom:8px;padding:0;background:none;border:none}
+    .al-notes-toggle:hover{color:var(--muted)}
+    .al-textarea{width:100%;background:var(--s1);border:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:13px;font-weight:300;padding:12px 14px;resize:none;height:80px;line-height:1.6;box-sizing:border-box;transition:border-color .2s}
+    .al-textarea:focus{outline:none;border-color:rgba(44,212,196,.4)}
+    .al-textarea::placeholder{color:rgba(255,255,255,.18)}
+    .al-nav{display:flex;align-items:center;gap:10px;margin-top:20px}
+    .al-back{background:none;border:1px solid var(--border);color:var(--dim);font-family:var(--B);font-size:12px;padding:10px 16px;cursor:pointer;transition:all .2s}
+    .al-back:hover{border-color:var(--muted);color:var(--muted)}
     .al-protocol-section{margin-bottom:16px}
     .al-protocol-label{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
     .al-protocol-items{display:flex;flex-direction:column;gap:6px}
@@ -484,21 +502,46 @@
     .lb-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
     .lb-title{font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
     .lb-close{background:none;border:none;color:var(--dim);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1}
-    .lb-body{flex:1;overflow-y:auto;padding:20px}
-    .lb-user-rank{background:rgba(44,212,196,.05);border:1px solid rgba(44,212,196,.2);padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:14px}
-    .lb-rank-num{font-family:var(--D);font-size:36px;font-weight:900;color:var(--teal);line-height:1;min-width:44px}
-    .lb-rank-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
-    .lb-rank-name{font-size:14px;font-weight:600;color:var(--white)}
-    .lb-list{display:flex;flex-direction:column;gap:8px}
-    .lb-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s1);border:1px solid var(--border)}
+    .lb-body{flex:1;overflow-y:auto;padding:0 0 32px}
+    /* podium */
+    .lb-podium{display:flex;align-items:flex-end;justify-content:center;gap:4px;padding:28px 16px 0;background:linear-gradient(to bottom,rgba(44,212,196,.03),transparent)}
+    .lb-pod-col{display:flex;flex-direction:column;align-items:center;flex:1;max-width:110px}
+    .lb-pod-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);background:var(--s1);display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:13px;font-weight:900;color:var(--dim);margin-bottom:6px;flex-shrink:0}
+    .lb-pod-col.p1 .lb-pod-avatar{width:44px;height:44px;font-size:16px;border-color:rgba(255,215,0,.5);color:rgba(255,215,0,.9)}
+    .lb-pod-col.p1.is-me .lb-pod-avatar{border-color:var(--teal);color:var(--teal)}
+    .lb-pod-col.p2 .lb-pod-avatar{border-color:rgba(192,192,192,.4);color:rgba(192,192,192,.8)}
+    .lb-pod-col.p3 .lb-pod-avatar{border-color:rgba(205,127,50,.4);color:rgba(205,127,50,.8)}
+    .lb-pod-name{font-size:10px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;padding:0 4px;letter-spacing:.02em}
+    .lb-pod-score-val{font-family:var(--D);font-size:11px;font-weight:900;color:var(--dim);text-align:center;margin-bottom:6px}
+    .lb-pod-block{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 10px}
+    .lb-pod-col.p1 .lb-pod-block{height:80px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.18);border-bottom:none}
+    .lb-pod-col.p2 .lb-pod-block{height:60px;background:rgba(192,192,192,.04);border:1px solid rgba(192,192,192,.14);border-bottom:none}
+    .lb-pod-col.p3 .lb-pod-block{height:44px;background:rgba(205,127,50,.04);border:1px solid rgba(205,127,50,.14);border-bottom:none}
+    .lb-pod-medal{font-size:20px;line-height:1}
+    /* my rank banner */
+    .lb-my-rank{margin:16px 20px 0;background:rgba(44,212,196,.05);border:1px solid rgba(44,212,196,.2);padding:12px 16px;display:flex;align-items:center;gap:12px}
+    .lb-my-rank-num{font-family:var(--D);font-size:28px;font-weight:900;color:var(--teal);min-width:40px;line-height:1}
+    .lb-my-rank-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+    .lb-my-rank-name{font-size:13px;font-weight:600;color:var(--white)}
+    /* list */
+    .lb-list-wrap{padding:16px 20px 0}
+    .lb-list-title{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+    .lb-list{display:flex;flex-direction:column;gap:6px}
+    .lb-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s1);border:1px solid var(--border)}
     .lb-row.lb-you{border-color:rgba(44,212,196,.3);background:rgba(44,212,196,.04)}
-    .lb-row-pos{font-family:var(--D);font-size:15px;font-weight:900;min-width:30px;color:var(--dim);text-align:center}
-    .lb-row-pos.top3{color:var(--teal)}
+    .lb-row-pos{font-family:var(--D);font-size:13px;font-weight:900;min-width:26px;color:var(--dim);text-align:center}
     .lb-row-info{flex:1;min-width:0}
-    .lb-row-name{font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .lb-row-level{font-size:10px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
-    .lb-row-score{font-family:var(--D);font-size:18px;font-weight:900;color:var(--white);text-align:right}
-    .lb-row-score-label{font-size:9px;color:var(--dim);text-align:right;letter-spacing:.06em;text-transform:uppercase}
+    .lb-row-name{font-size:12px;font-weight:600;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .lb-row-level{font-size:10px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin-top:1px}
+    .lb-row-score{font-family:var(--D);font-size:16px;font-weight:900;color:var(--white)}
+    .lb-row-score-label{font-size:8px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;text-align:right;margin-top:1px}
+    /* boost guide */
+    .lb-boost{margin:20px 20px 0}
+    .lb-boost-title{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+    .lb-boost-tip{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;background:var(--s1);border:1px solid var(--border);margin-bottom:6px}
+    .lb-boost-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+    .lb-boost-text{font-size:12px;color:var(--muted);line-height:1.55}
+    .lb-boost-value{font-family:var(--D);font-size:12px;font-weight:900;color:var(--teal)}
     .lb-empty{text-align:center;padding:48px 20px;color:var(--dim);font-size:13px;line-height:1.8}
 
     /* ── HORMONE LAB ── */
@@ -935,25 +978,83 @@
       <!-- ══ ATHLETE LAB ══ -->
       <div id="athlete-lab-content" style="display:none">
 
-        <!-- AL Phase 1: Describe -->
+        <!-- AL Phase 1: Sport -->
         <div id="al-phase-1" class="al-phase active">
-          <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.65">Describe exactly what you do, what you're trying to achieve, and how you currently train. The more specific you are, the more precise the protocol. The app will combine your description with your nutrition, habit, hormone, and training data.</p>
-          <textarea class="al-textarea" id="al-description" placeholder="E.g. I do sprinting and plyometrics to build explosivity and athleticism. Training 4 days a week — sprint sessions twice, plyos twice. Goal is to improve my 40m time, increase vertical jump height, and build lean muscle without losing speed. I'm 18, around 13% body fat, sleep 9 hours. Want to know the exact training structure, nutrition timing, and recovery protocol to peak my performance..."></textarea>
-          <div id="al-p1-err" style="font-size:12px;color:#f87171;display:none;margin:8px 0">Add some detail about your training and goals to continue.</div>
-          <button class="lab-cta" style="margin-top:12px" onclick="alSubmit()">Build My Protocol →</button>
+          <div class="al-step-bar">
+            <div class="al-step-dot active" id="al-dot-1"></div>
+            <div class="al-step-dot" id="al-dot-2"></div>
+            <div class="al-step-dot" id="al-dot-3"></div>
+            <span class="al-step-label">Sport &amp; Activity</span>
+          </div>
+          <div class="al-q">What's your main sport or training style?</div>
+          <div class="al-chips" id="al-sport-chips">
+            <button class="al-chip" data-val="sprinting" onclick="alPickSport(this)"><span class="al-chip-icon">⚡</span>Sprinting</button>
+            <button class="al-chip" data-val="plyometrics" onclick="alPickSport(this)"><span class="al-chip-icon">🦘</span>Plyometrics / Jump</button>
+            <button class="al-chip" data-val="gym_strength" onclick="alPickSport(this)"><span class="al-chip-icon">🏋️</span>Gym / Strength</button>
+            <button class="al-chip" data-val="football" onclick="alPickSport(this)"><span class="al-chip-icon">⚽</span>Football</button>
+            <button class="al-chip" data-val="rugby" onclick="alPickSport(this)"><span class="al-chip-icon">🏉</span>Rugby</button>
+            <button class="al-chip" data-val="basketball" onclick="alPickSport(this)"><span class="al-chip-icon">🏀</span>Basketball</button>
+            <button class="al-chip" data-val="cycling" onclick="alPickSport(this)"><span class="al-chip-icon">🚴</span>Cycling</button>
+            <button class="al-chip" data-val="distance_running" onclick="alPickSport(this)"><span class="al-chip-icon">🏃</span>Distance Running</button>
+            <button class="al-chip" data-val="swimming" onclick="alPickSport(this)"><span class="al-chip-icon">🏊</span>Swimming</button>
+            <button class="al-chip" data-val="mma" onclick="alPickSport(this)"><span class="al-chip-icon">🥊</span>MMA / Boxing</button>
+            <button class="al-chip" data-val="crossfit" onclick="alPickSport(this)"><span class="al-chip-icon">🔥</span>CrossFit</button>
+            <button class="al-chip" data-val="tennis" onclick="alPickSport(this)"><span class="al-chip-icon">🎾</span>Tennis</button>
+            <button class="al-chip" data-val="athletics" onclick="alPickSport(this)"><span class="al-chip-icon">🎯</span>General Athleticism</button>
+            <button class="al-chip" data-val="other" onclick="alPickSport(this)"><span class="al-chip-icon">➕</span>Other</button>
+          </div>
+          <div id="al-p1-err" style="font-size:12px;color:#f87171;display:none;margin:-8px 0 10px">Select your sport to continue.</div>
+          <button class="lab-cta" onclick="alNext(1)">Next →</button>
         </div>
 
-        <!-- AL Phase 2: Processing -->
+        <!-- AL Phase 2: Goals + Season -->
         <div id="al-phase-2" class="al-phase">
-          <div class="lab-processing">
-            <div class="lab-spinner"></div>
-            <div style="font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:8px">Building Protocol</div>
-            <div style="font-size:13px;color:var(--muted);line-height:1.6">Cross-referencing your goals, training approach, nutrition, habits, and hormone data to build your optimal protocol...</div>
+          <div class="al-step-bar">
+            <div class="al-step-dot done" id="al-dot-1b"></div>
+            <div class="al-step-dot active" id="al-dot-2b"></div>
+            <div class="al-step-dot" id="al-dot-3b"></div>
+            <span class="al-step-label">Goals &amp; Phase</span>
+          </div>
+          <div class="al-q">What are you working towards? <span style="font-size:11px;color:var(--dim);font-weight:400">(pick all that apply)</span></div>
+          <div class="al-chips" id="al-goal-chips">
+            <button class="al-chip" data-val="speed_pbs" onclick="alToggleGoal(this)"><span class="al-chip-icon">⚡</span>Speed / Sprint PBs</button>
+            <button class="al-chip" data-val="explosive_power" onclick="alToggleGoal(this)"><span class="al-chip-icon">💥</span>Explosive Power</button>
+            <button class="al-chip" data-val="strength_pbs" onclick="alToggleGoal(this)"><span class="al-chip-icon">🏋️</span>Lift PBs</button>
+            <button class="al-chip" data-val="sport_performance" onclick="alToggleGoal(this)"><span class="al-chip-icon">🏆</span>Sport Performance</button>
+            <button class="al-chip" data-val="lean_muscle" onclick="alToggleGoal(this)"><span class="al-chip-icon">💪</span>Lean Muscle</button>
+            <button class="al-chip" data-val="endurance" onclick="alToggleGoal(this)"><span class="al-chip-icon">🫀</span>Endurance Base</button>
+            <button class="al-chip" data-val="fat_loss" onclick="alToggleGoal(this)"><span class="al-chip-icon">🔥</span>Fat Loss</button>
+            <button class="al-chip" data-val="vertical_jump" onclick="alToggleGoal(this)"><span class="al-chip-icon">🦘</span>Vertical Jump</button>
+          </div>
+          <div class="al-section-label">Training phase right now</div>
+          <div class="al-chips" id="al-season-chips">
+            <button class="al-chip" data-val="base_building" onclick="alPickSeason(this)"><span class="al-chip-icon">🏗</span>Building Base</button>
+            <button class="al-chip" data-val="pre_competition" onclick="alPickSeason(this)"><span class="al-chip-icon">🎯</span>Pre-Competition</button>
+            <button class="al-chip" data-val="in_season" onclick="alPickSeason(this)"><span class="al-chip-icon">🏟</span>In-Season</button>
+            <button class="al-chip" data-val="off_season" onclick="alPickSeason(this)"><span class="al-chip-icon">🛌</span>Off-Season</button>
+          </div>
+          <div class="al-notes-wrap">
+            <button class="al-notes-toggle" onclick="alToggleNotes(this)">＋ Add a specific note (optional)</button>
+            <textarea class="al-textarea" id="al-notes" placeholder="E.g. I'm targeting a 10.8s 100m by summer…" style="display:none"></textarea>
+          </div>
+          <div id="al-p2-err" style="font-size:12px;color:#f87171;display:none;margin:8px 0 0">Pick at least one goal to continue.</div>
+          <div class="al-nav">
+            <button class="al-back" onclick="alNext(1, true)">← Back</button>
+            <button class="lab-cta" style="flex:1" onclick="alSubmit()">Build My Protocol →</button>
           </div>
         </div>
 
-        <!-- AL Phase 3: Results -->
+        <!-- AL Phase 3: Processing -->
         <div id="al-phase-3" class="al-phase">
+          <div class="lab-processing">
+            <div class="lab-spinner"></div>
+            <div style="font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:8px">Building Protocol</div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.6">Cross-referencing sport, goals, nutrition, habits, and hormone data...</div>
+          </div>
+        </div>
+
+        <!-- AL Phase 4: Results -->
+        <div id="al-phase-4" class="al-phase">
           <div id="al-results-content"></div>
           <button class="lab-cta-sec" style="margin-top:8px" onclick="alReset()">New Protocol</button>
         </div>
@@ -3686,6 +3787,14 @@ function switchLabType(type) {
    MILESTONES — PERSONALISED ROADMAP
 ══════════════════════════════════════════ */
 
+// AL_SPORT_LABELS — readable names for AL_STATE.sport values
+const AL_SPORT_LABELS = {
+  sprinting:'Sprinting', plyometrics:'Plyometrics', gym_strength:'Gym / Strength',
+  football:'Football', rugby:'Rugby', basketball:'Basketball', cycling:'Cycling',
+  distance_running:'Distance Running', swimming:'Swimming', mma:'MMA / Boxing',
+  crossfit:'CrossFit', tennis:'Tennis', athletics:'General Athleticism', other:'Sport',
+};
+
 const ROADMAP_STAGES = [
   { name:'Raw',             xp:0    },
   { name:'Activated',       xp:50   },
@@ -3697,63 +3806,107 @@ const ROADMAP_STAGES = [
 ];
 
 function generatePersonalisedMilestones(stats) {
-  const goal  = (OB?.train?.goal || '').toLowerCase();
-  const bf    = parseFloat(OB?.eat?.body_fat) || 0;
-  const age   = parseInt(OB?.coach?.age) || 0;
-  const sleep = parseFloat(OB?.habits?.sleep_hrs) || 0;
-  const syms  = OB?.coach?.symptoms || [];
-  const ms    = [];
+  const goal      = (OB?.train?.goal || '').toLowerCase();
+  const bf        = parseFloat(OB?.eat?.body_fat) || 0;
+  const age       = parseInt(OB?.coach?.age) || 0;
+  const sleep     = parseFloat(OB?.habits?.sleep_hrs) || 0;
+  const syms      = OB?.coach?.symptoms || [];
+  const alSport   = AL_STATE.sport || '';
+  const alGoals   = AL_STATE.goals || [];
+  const sportLabel = AL_SPORT_LABELS[alSport] || 'Sport';
 
-  // Foundation — always shown
-  ms.push({ id:'first_xp',   xp:10,  name:'First Move',        desc:'Log your first action in the app',       check:s=>s.xp>=10 });
-  ms.push({ id:'first_meal', xp:20,  name:'First Meal Logged',  desc:'Track what you ate for the first time',  check:s=>s.foodLogs>=1 });
-  ms.push({ id:'first_lab',  xp:30,  name:'Know Your Numbers',  desc:'Run a Hormone Lab assessment',           check:s=>s.labDone });
-  ms.push({ id:'streak_3',   xp:40,  name:'3-Day Streak',       desc:'Three consecutive days of habits hit',   check:s=>s.streak>=3 });
+  // Classify athlete type from AL_STATE
+  const isSprinter  = alSport === 'sprinting' || alGoals.includes('speed_pbs');
+  const isPlyos     = alSport === 'plyometrics' || alGoals.includes('vertical_jump') || alGoals.includes('explosive_power');
+  const isLifter    = alSport === 'gym_strength' || alGoals.includes('strength_pbs');
+  const isTeamSport = ['football','rugby','basketball','mma'].includes(alSport);
+  const isEndurance = ['cycling','distance_running','swimming'].includes(alSport) || alGoals.includes('endurance');
+  const wantsFat    = alGoals.includes('fat_loss') || bf > 18 || goal.includes('fat');
+  const wantsMuscle = alGoals.includes('lean_muscle') || goal.includes('muscle') || goal.includes('strength');
+  const hasAthleteLab = !!AL_STATE.results;
 
-  // Goal-specific milestones
-  if(goal.includes('fat') || bf > 18) {
-    ms.push({ id:'food_7a',   xp:100, name:'Clean Slate',        desc:'Average food score above 7.0',          check:s=>s.avgFood>=7 });
-    ms.push({ id:'food_8a',   xp:500, name:'Dialled Protocol',   desc:'Average food score above 8.0',          check:s=>s.avgFood>=8 });
-  } else if(goal.includes('muscle') || goal.includes('strength')) {
-    ms.push({ id:'meals_20',  xp:100, name:'Consistent Fueller', desc:'20 meals logged',                       check:s=>s.foodLogs>=20 });
-    ms.push({ id:'meals_60',  xp:500, name:'Protocol Feeder',    desc:'60 meals logged',                       check:s=>s.foodLogs>=60 });
+  const ms = [];
+
+  // Foundation — always
+  ms.push({ id:'first_xp',   xp:10, name:'First Move',       desc:'Log your first action in the app',           check:s=>s.xp>=10 });
+  ms.push({ id:'first_meal', xp:20, name:'First Meal',        desc:'Track what you ate for the first time',      check:s=>s.foodLogs>=1 });
+  ms.push({ id:'first_lab',  xp:30, name:'Hormone Baseline',  desc:'Complete a Hormone Lab — know what you\'re working with', check:s=>s.labDone });
+  ms.push({ id:'al_done',    xp:35, name:hasAthleteLab ? sportLabel+' Protocol Built' : 'Build Athlete Protocol',
+    desc: hasAthleteLab ? 'Sport-specific protocol generated and ready' : 'Open the Athlete Lab to unlock sport-specific milestones',
+    check:s=>s.athleteLabDone });
+  ms.push({ id:'streak_3',   xp:40, name:'3-Day Lock',        desc:'3 consecutive days of habits hit',           check:s=>s.streak>=3 });
+
+  // Sport-specific milestones
+  if(isSprinter) {
+    ms.push({ id:'s1', xp:100, name:'Sprint Fuel Dialled',    desc:'Avg food score 7.5+ — speed is built in the kitchen first',   check:s=>s.avgFood>=7.5 });
+    ms.push({ id:'s2', xp:120, name:'CNS Consistency',        desc:'7 straight days — CNS adaptation requires no gaps',           check:s=>s.streak>=7 });
+    ms.push({ id:'s3', xp:500, name:'Elite Sprint Nutrition', desc:'Avg food score 8+ — carb timing and protein fully dialled',   check:s=>s.avgFood>=8 });
+  } else if(isPlyos && !isSprinter) {
+    ms.push({ id:'p1', xp:100, name:'Power Fuel Protocol',    desc:'Avg food score 7.5+ — force production starts with food',     check:s=>s.avgFood>=7.5 });
+    ms.push({ id:'p2', xp:120, name:'Reactive Consistency',   desc:'7-day streak — reactive strength needs daily stimulus',       check:s=>s.streak>=7 });
+    ms.push({ id:'p3', xp:500, name:'Vertical Nutrition',     desc:'Avg food score 8+ — power athletes need flawless nutrition',  check:s=>s.avgFood>=8 });
+  } else if(isLifter) {
+    ms.push({ id:'l1', xp:100, name:'Lifting Fuel Protocol',  desc:'Avg food score 7.5+ — strength is built in the kitchen',     check:s=>s.avgFood>=7.5 });
+    ms.push({ id:'l2', xp:120, name:'20 Meals Logged',        desc:'Track 20 meals — nutrition consistency drives new PBs',      check:s=>s.foodLogs>=20 });
+    ms.push({ id:'l3', xp:500, name:'PB Nutrition Protocol',  desc:'Avg food score 8+ — fuel calibrated for new personal bests', check:s=>s.avgFood>=8 });
+  } else if(isTeamSport) {
+    ms.push({ id:'t1', xp:100, name:'Match-Ready Nutrition',  desc:'Avg food score 7.5+ — perform when it counts',               check:s=>s.avgFood>=7.5 });
+    ms.push({ id:'t2', xp:120, name:'Match Week Consistency', desc:'7-day streak — match day performance starts 7 days before',  check:s=>s.streak>=7 });
+    ms.push({ id:'t3', xp:500, name:'Squad Nutrition Level',  desc:'Avg food score 8+ — eat like a professional athlete',        check:s=>s.avgFood>=8 });
+  } else if(isEndurance) {
+    ms.push({ id:'e1', xp:100, name:'Endurance Fuel Base',    desc:'Avg food score 7.5+ — aerobic efficiency starts with food',  check:s=>s.avgFood>=7.5 });
+    ms.push({ id:'e2', xp:120, name:'Zone 2 Consistency',     desc:'7-day streak — aerobic adaptation needs consistent stimulus', check:s=>s.streak>=7 });
+    ms.push({ id:'e3', xp:500, name:'Endurance Nutrition',    desc:'Avg food score 8+ — fuelling precision at endurance volume', check:s=>s.avgFood>=8 });
   } else {
-    ms.push({ id:'food_75',   xp:100, name:'Standard Reached',   desc:'Average food score above 7.5',          check:s=>s.avgFood>=7.5 });
-    ms.push({ id:'xp_250',    xp:400, name:'250 XP Banked',      desc:'Earn 250 XP',                           check:s=>s.xp>=250 });
+    ms.push({ id:'g1', xp:100, name:'Nutrition Standard',     desc:'Avg food score 7.5+',                                        check:s=>s.avgFood>=7.5 });
+    ms.push({ id:'g2', xp:120, name:'7-Day Streak',           desc:'7 consecutive days of habits hit',                           check:s=>s.streak>=7 });
+    ms.push({ id:'g3', xp:500, name:'Protocol Nutrition',     desc:'Avg food score 8+ — food quality at protocol level',         check:s=>s.avgFood>=8 });
   }
 
-  // Sleep-personalised streak milestone
-  const streakDesc = (sleep < 7 || syms.includes('poor_sleep'))
-    ? '7-day streak — track while fixing your sleep'
-    : '7 consecutive days of habits hit';
-  ms.push({ id:'streak_7', xp:120, name:'7-Day Streak', desc:streakDesc, check:s=>s.streak>=7 });
+  // Fat loss milestone
+  if(wantsFat) {
+    ms.push({ id:'fat1', xp:400, name:'Recomp Threshold',     desc:'Avg food score 8+ — inflection point for body composition',  check:s=>s.avgFood>=8 });
+  }
+
+  // Muscle milestone
+  if(wantsMuscle && !isLifter) {
+    ms.push({ id:'mus1', xp:350, name:'50 Meals Logged',      desc:'50 meals tracked — fuelling consistency for muscle growth',  check:s=>s.foodLogs>=50 });
+  }
 
   // Age-specific
   if(age >= 40) {
-    ms.push({ id:'lab_2nd', xp:300, name:'Re-assess', desc:'Run a second Hormone Lab after 30 days', check:s=>s.labCount>=2 });
+    ms.push({ id:'retest', xp:300, name:'Re-Test Hormones',   desc:'Run a second Hormone Lab after 30+ days of protocol',        check:s=>s.labCount>=2 });
   }
 
-  // Universal milestones
-  ms.push({ id:'xp_500',    xp:600,  name:'500 XP',            desc:'Earn 500 XP total',                           check:s=>s.xp>=500 });
-  ms.push({ id:'streak_30', xp:800,  name:'30-Day Lock',        desc:'30 consecutive days of habits',               check:s=>s.streak>=30 });
-  ms.push({ id:'meals_100', xp:1200, name:'100 Meals Tracked',  desc:'100 meals logged',                            check:s=>s.foodLogs>=100 });
-  ms.push({ id:'food_85',   xp:1500, name:'Protocol Pure',      desc:'Average food score above 8.5',                check:s=>s.avgFood>=8.5 });
-  ms.push({ id:'xp_2000',   xp:2000, name:'2000 XP',            desc:'Earn 2000 XP total',                          check:s=>s.xp>=2000 });
-  ms.push({ id:'streak_90', xp:2500, name:'90-Day Streak',      desc:'90 days straight — habit becomes identity',   check:s=>s.streak>=90 });
-  ms.push({ id:'forged',    xp:3000, name:'Protocol Forged',    desc:'Highest stage reached — the system is yours', check:s=>s.xp>=3000 });
+  // Sleep milestone (personalised description)
+  const sleepDesc = (sleep < 7.5 || syms.includes('poor_sleep'))
+    ? '30-day streak — lock in the sleep protocol alongside your habits'
+    : '30 consecutive days — protocol is becoming identity';
+  ms.push({ id:'streak_30', xp:800,  name:'30-Day Lock',       desc:sleepDesc,                                                   check:s=>s.streak>=30 });
 
-  return ms.sort((a,b)=>a.xp-b.xp);
+  // Universal milestones
+  ms.push({ id:'xp_500',    xp:600,  name:'500 XP',            desc:'Earn 500 XP total',                                         check:s=>s.xp>=500 });
+  ms.push({ id:'meals_100', xp:1200, name:'100 Meals Tracked',  desc:'100 meals logged — tracking at an elite level',             check:s=>s.foodLogs>=100 });
+  ms.push({ id:'food_85',   xp:1500, name:'Protocol Pure',      desc:'Avg food score 8.5+ — the top of the nutrition standard',   check:s=>s.avgFood>=8.5 });
+  ms.push({ id:'xp_2000',   xp:2000, name:'2000 XP',            desc:'Earn 2000 XP total',                                        check:s=>s.xp>=2000 });
+  ms.push({ id:'streak_90', xp:2500, name:'90-Day Streak',      desc:'90 days straight — habit has become permanent identity',    check:s=>s.streak>=90 });
+  ms.push({ id:'forged',    xp:3000, name:'Protocol Forged',    desc:'Highest stage reached — the system belongs to you now',    check:s=>s.xp>=3000 });
+
+  // De-duplicate by id, sort by XP threshold
+  const seen = new Set();
+  return ms.filter(m => seen.has(m.id) ? false : seen.add(m.id)).sort((a,b)=>a.xp-b.xp);
 }
 
 function getMilestoneStats() {
   const rScores = Object.values(foodRatings).filter(r=>r&&r.score!=null).map(r=>r.score);
   return {
-    xp:       XP_STATE.xp || 0,
-    streak:   XP_STATE.streak_days || 0,
-    foodLogs: foods.length || 0,
-    avgFood:  rScores.length ? rScores.reduce((a,b)=>a+b,0)/rScores.length : 0,
-    labDone:  !!HL_STATE.results,
-    labCount: HL_STATE.results ? 1 : 0,
+    xp:            XP_STATE.xp || 0,
+    streak:        XP_STATE.streak_days || 0,
+    foodLogs:      foods.length || 0,
+    avgFood:       rScores.length ? rScores.reduce((a,b)=>a+b,0)/rScores.length : 0,
+    labDone:       !!HL_STATE.results,
+    labCount:      HL_STATE.results ? 1 : 0,
+    athleteLabDone: !!AL_STATE.results,
   };
 }
 
@@ -3804,43 +3957,83 @@ function renderMilestones() {
 /* ══════════════════════════════════════════
    ATHLETE LAB
 ══════════════════════════════════════════ */
-let AL_STATE = { description:null, results:null, savedAt:null };
+let AL_STATE = { sport:null, goals:[], phase:null, notes:'', results:null, savedAt:null };
 
 function alStorageKey() { return 'jpt_athlete_lab_'+(USER?.id||'guest'); }
-
-function alLoadSaved() {
-  try { const r = localStorage.getItem(alStorageKey()); return r ? JSON.parse(r) : null; } catch(e) { return null; }
-}
-
-function alSave(state) {
-  try { localStorage.setItem(alStorageKey(), JSON.stringify(state)); } catch(e) {}
-}
+function alLoadSaved() { try { const r=localStorage.getItem(alStorageKey()); return r?JSON.parse(r):null; } catch(e){return null;} }
+function alSave(state)  { try { localStorage.setItem(alStorageKey(),JSON.stringify(state)); } catch(e){} }
 
 function initAthleteLab() {
   const saved = alLoadSaved();
   if(saved?.results) {
     AL_STATE = { ...AL_STATE, ...saved };
     alRenderResults(AL_STATE.results);
-    alShowPhase(3);
+    alShowPhase(4);
     return;
   }
-  alShowPhase(1);
+  // Restore chip state if returning to form
+  if(AL_STATE.sport) {
+    document.querySelectorAll('#al-sport-chips .al-chip').forEach(b => {
+      b.classList.toggle('sel', b.dataset.val === AL_STATE.sport);
+    });
+  }
+  alShowPhase(AL_STATE.sport ? 2 : 1);
 }
 
 function alShowPhase(n) {
-  [1,2,3].forEach(i => {
+  [1,2,3,4].forEach(i => {
     const el = document.getElementById('al-phase-'+i);
     if(el) el.classList.toggle('active', i===n);
   });
 }
 
-async function alSubmit() {
-  const desc = document.getElementById('al-description')?.value?.trim();
-  if(!desc || desc.length < 20) {
-    document.getElementById('al-p1-err').style.display = 'block';
-    return;
-  }
+function alPickSport(btn) {
+  document.querySelectorAll('#al-sport-chips .al-chip').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  AL_STATE.sport = btn.dataset.val;
   document.getElementById('al-p1-err').style.display = 'none';
+}
+
+function alToggleGoal(btn) {
+  const val = btn.dataset.val;
+  if(btn.classList.contains('sel')) {
+    btn.classList.remove('sel');
+    AL_STATE.goals = AL_STATE.goals.filter(g=>g!==val);
+  } else {
+    btn.classList.add('sel');
+    if(!AL_STATE.goals.includes(val)) AL_STATE.goals.push(val);
+  }
+  document.getElementById('al-p2-err').style.display = 'none';
+}
+
+function alPickSeason(btn) {
+  document.querySelectorAll('#al-season-chips .al-chip').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  AL_STATE.phase = btn.dataset.val;
+}
+
+function alToggleNotes(btn) {
+  const ta = document.getElementById('al-notes');
+  if(!ta) return;
+  const show = ta.style.display === 'none';
+  ta.style.display = show ? 'block' : 'none';
+  btn.textContent = show ? '− Remove note' : '＋ Add a specific note (optional)';
+}
+
+function alNext(from, back) {
+  if(back) { alShowPhase(from); return; }
+  if(from === 1) {
+    if(!AL_STATE.sport) { document.getElementById('al-p1-err').style.display='block'; return; }
+    alShowPhase(2);
+  }
+}
+
+async function alSubmit() {
+  if(!AL_STATE.goals.length) { document.getElementById('al-p2-err').style.display='block'; return; }
+  document.getElementById('al-p2-err').style.display = 'none';
+  const notes = document.getElementById('al-notes')?.value?.trim() || '';
+  AL_STATE.notes = notes;
+
   const rScores = Object.values(foodRatings).filter(r=>r&&r.score!=null).map(r=>r.score);
   const appContext = {
     profile: {
@@ -3859,25 +4052,30 @@ async function alSubmit() {
     weeklyPlan:   OB?.train?.weeklyPlan?.filter(d=>d.type!=='rest').map(d=>`${d.day}: ${d.sessionName}`).join(', ') || null,
     labResults:   HL_STATE.results ? { summary: HL_STATE.results.summary || null } : null,
   };
-  AL_STATE.description = desc;
-  alShowPhase(2);
+  alShowPhase(3);
   try {
     const res = await fetch('/api/athlete-lab', {
       method:'POST',
       headers:{'content-type':'application/json'},
-      body: JSON.stringify({ description: desc, appContext }),
+      body: JSON.stringify({
+        sport:   AL_SPORT_LABELS[AL_STATE.sport] || AL_STATE.sport,
+        goals:   AL_STATE.goals,
+        phase:   AL_STATE.phase,
+        notes,
+        appContext,
+      }),
     });
-    if(!res.ok) { showToast('Analysis failed — try again'); alShowPhase(1); return; }
+    if(!res.ok) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
     const data = await res.json();
-    if(data.error || !data.training) { showToast('Analysis failed — try again'); alShowPhase(1); return; }
+    if(data.error || !data.training) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
     AL_STATE.results = data;
     AL_STATE.savedAt = new Date().toISOString();
     alSave(AL_STATE);
     alRenderResults(data);
-    alShowPhase(3);
+    alShowPhase(4);
   } catch(e) {
     showToast('Timed out — try again');
-    alShowPhase(1);
+    alShowPhase(2);
   }
 }
 
@@ -3906,22 +4104,72 @@ function alRenderResults(data) {
         <div class="al-protocol-items">${items.map(item=>`<div class="al-protocol-item">${escHtml(item)}</div>`).join('')}</div>
       </div>`;
     }).join('')}
-    <button class="lab-cta" style="margin-top:20px;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--dim)" onclick="alReset()">← Start Over</button>
   `;
 }
 
 function alReset() {
-  AL_STATE = { description:null, results:null, savedAt:null };
+  AL_STATE = { sport:null, goals:[], phase:null, notes:'', results:null, savedAt:null };
   try { localStorage.removeItem(alStorageKey()); } catch(e) {}
-  const ta = document.getElementById('al-description');
-  if(ta) ta.value = '';
-  document.getElementById('al-p1-err').style.display = 'none';
+  document.querySelectorAll('#al-sport-chips .al-chip, #al-goal-chips .al-chip, #al-season-chips .al-chip').forEach(b=>b.classList.remove('sel'));
+  const ta = document.getElementById('al-notes');
+  if(ta) { ta.value=''; ta.style.display='none'; }
   alShowPhase(1);
 }
 
 /* ══════════════════════════════════════════
    LEADERBOARD
 ══════════════════════════════════════════ */
+function lbHandle(p, myName) {
+  return p.isMe ? myName : 'Athlete '+p.id.slice(0,5).toUpperCase();
+}
+
+function lbInitial(name) {
+  return (name||'?')[0].toUpperCase();
+}
+
+function buildBoostGuide(me, myRank, scored) {
+  if(!me) return '';
+  const streak  = me.streak_days || 0;
+  const xp      = me.xp || 0;
+  const tips    = [];
+  const above   = scored[myRank - 2];
+
+  if(above) {
+    const gap = above.score - me.score;
+    tips.push({ icon:'⬆', text:`<span class="lb-boost-value">${gap.toLocaleString()} points</span> behind rank #${myRank-1}` });
+  }
+
+  if(streak < 7) {
+    const gain = Math.round(xp * 0.07);
+    tips.push({ icon:'🔥', text:`Hit a 7-day streak for a <span class="lb-boost-value">+${gain.toLocaleString()} point</span> boost (7% bonus)` });
+  } else if(streak < 30) {
+    const gain = Math.round(xp * ((30-streak)/100));
+    tips.push({ icon:'🔥', text:`${30-streak} days to a 30-day streak — <span class="lb-boost-value">+${gain.toLocaleString()} points</span> waiting` });
+  } else if(streak < 90) {
+    const gain = Math.round(xp * ((90-streak)/100));
+    tips.push({ icon:'🔥', text:`${90-streak} days to max streak bonus — <span class="lb-boost-value">+${gain.toLocaleString()} points</span>` });
+  } else {
+    tips.push({ icon:'🔥', text:'Max streak bonus active — every new XP is multiplied by <span class="lb-boost-value">1.9×</span>' });
+  }
+
+  tips.push({ icon:'⚡', text:'Log habits every day — each action earns XP that compounds with your streak multiplier' });
+
+  const stats = getMilestoneStats();
+  if(!stats.labDone) {
+    tips.push({ icon:'🧬', text:'Complete the Hormone Lab for a quick <span class="lb-boost-value">+30 XP</span> boost' });
+  } else if(!stats.athleteLabDone) {
+    tips.push({ icon:'🏃', text:'Complete the Athlete Lab for <span class="lb-boost-value">+35 XP</span> and a personalised protocol' });
+  }
+
+  if(stats.avgFood < 7.5) {
+    tips.push({ icon:'🥩', text:'Improve food quality score above 7.5 — earns more XP per log and unlocks milestones' });
+  }
+
+  return tips.slice(0, 4).map(t =>
+    `<div class="lb-boost-tip"><span class="lb-boost-icon">${t.icon}</span><span class="lb-boost-text">${t.text}</span></div>`
+  ).join('');
+}
+
 async function openLeaderboard() {
   const modal = document.getElementById('lb-modal');
   if(!modal) return;
@@ -3930,44 +4178,80 @@ async function openLeaderboard() {
   body.innerHTML = '<div class="lb-empty">Loading...</div>';
   try {
     const { data, error } = await sb.from('profiles').select('id,xp,level,streak_days').order('xp', { ascending: false }).limit(50);
-    if(error || !data?.length) { body.innerHTML = '<div class="lb-empty">No data yet</div>'; return; }
+    if(error || !data?.length) { body.innerHTML = '<div class="lb-empty">No one\'s here yet — you could be first</div>'; return; }
+
+    const myName = USER?.user_metadata?.display_name?.split(' ')[0] || 'You';
     const scored = data.map(p => ({
       ...p,
       score: Math.round((p.xp||0) * (1 + Math.min(p.streak_days||0, 90) / 100)),
       isMe:  p.id === USER?.id,
     })).sort((a,b)=>b.score-a.score);
+
     const myRank = scored.findIndex(p=>p.isMe) + 1;
     const me     = scored.find(p=>p.isMe);
-    const myName = USER?.user_metadata?.display_name?.split(' ')[0] || 'You';
-    let html = '';
-    if(me) {
-      html += `<div class="lb-user-rank">
-        <div class="lb-rank-num">#${myRank}</div>
-        <div><div class="lb-rank-label">Your rank</div><div class="lb-rank-name">${escHtml(myName)}</div></div>
-        <div style="margin-left:auto;text-align:right"><div class="lb-row-score-label">Score</div><div class="lb-row-score">${me.score.toLocaleString()}</div></div>
-      </div>`;
-    }
-    html += '<div class="lb-list">';
-    scored.forEach((p, i) => {
-      const isTop3 = i < 3;
-      const medal  = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-      const name   = p.isMe ? myName : 'Athlete '+p.id.slice(0,5).toUpperCase();
-      html += `<div class="lb-row${p.isMe?' lb-you':''}">
-        <div class="lb-row-pos${isTop3?' top3':''}">${medal||'#'+(i+1)}</div>
-        <div class="lb-row-info">
-          <div class="lb-row-name">${escHtml(name)}${p.isMe?' ★':''}</div>
-          <div class="lb-row-level">Level ${p.level||1}</div>
-        </div>
-        <div>
-          <div class="lb-row-score">${p.score.toLocaleString()}</div>
-          <div class="lb-row-score-label">Score</div>
-        </div>
+    const top3   = scored.slice(0, 3);
+    const rest   = scored.slice(3);
+
+    // Build podium — order: 2nd, 1st, 3rd
+    const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
+    const podiumPos   = [2, 1, 3];
+    let html = '<div class="lb-podium">';
+    podiumOrder.forEach((p, idx) => {
+      const pos     = podiumPos[idx];
+      const medal   = pos===1?'🥇':pos===2?'🥈':'🥉';
+      const name    = lbHandle(p, myName);
+      const initial = lbInitial(name);
+      const isMe    = p.isMe;
+      html += `<div class="lb-pod-col p${pos}${isMe?' is-me':''}">
+        <div class="lb-pod-avatar">${initial}</div>
+        <div class="lb-pod-name">${escHtml(name)}${isMe?' ★':''}</div>
+        <div class="lb-pod-score-val">${p.score.toLocaleString()}</div>
+        <div class="lb-pod-block"><div class="lb-pod-medal">${medal}</div></div>
       </div>`;
     });
     html += '</div>';
+
+    // My rank banner (if not in top 3)
+    if(me && myRank > 3) {
+      html += `<div class="lb-my-rank">
+        <div class="lb-my-rank-num">#${myRank}</div>
+        <div><div class="lb-my-rank-label">Your rank</div><div class="lb-my-rank-name">${escHtml(myName)}</div></div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="lb-row-score">${me.score.toLocaleString()}</div>
+          <div class="lb-row-score-label">Score</div>
+        </div>
+      </div>`;
+    }
+
+    // Rest of list (4th+)
+    if(rest.length) {
+      html += '<div class="lb-list-wrap"><div class="lb-list-title">Full Rankings</div><div class="lb-list">';
+      rest.forEach((p, i) => {
+        const name = lbHandle(p, myName);
+        html += `<div class="lb-row${p.isMe?' lb-you':''}">
+          <div class="lb-row-pos">#${i+4}</div>
+          <div class="lb-row-info">
+            <div class="lb-row-name">${escHtml(name)}${p.isMe?' ★':''}</div>
+            <div class="lb-row-level">Level ${p.level||1}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="lb-row-score">${p.score.toLocaleString()}</div>
+            <div class="lb-row-score-label">Score</div>
+          </div>
+        </div>`;
+      });
+      html += '</div></div>';
+    }
+
+    // Boost guide
+    const boostHtml = buildBoostGuide(me, myRank, scored);
+    if(boostHtml) {
+      html += `<div class="lb-boost"><div class="lb-boost-title">How to climb the board</div>${boostHtml}</div>`;
+    }
+
     body.innerHTML = html;
   } catch(e) {
-    body.innerHTML = '<div class="lb-empty">Could not load</div>';
+    body.innerHTML = '<div class="lb-empty">Could not load rankings</div>';
   }
 }
 
