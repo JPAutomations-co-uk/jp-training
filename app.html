@@ -4067,12 +4067,13 @@ async function alSubmit() {
 
   const rScores = Object.values(foodRatings).filter(r=>r&&r.score!=null).map(r=>r.score);
 
-  // Build full training plan including exercises
-  const fullPlan = OB?.train?.weeklyPlan?.map(d => {
+  // Build training plan — cap at 600 chars to avoid bloating the prompt
+  const rawPlan = OB?.train?.weeklyPlan?.map(d => {
     if(d.type === 'rest') return `${d.day}: Rest`;
     const exList = (d.exercises||[]).map(e=>`${e.name} ${e.sets}×${e.rep||e.reps||'?'}`).join(', ');
     return `${d.day}: ${d.sessionName}${exList ? ' ['+exList+']' : ''}`;
   }).join(' | ') || null;
+  const fullPlan = rawPlan ? rawPlan.slice(0, 600) + (rawPlan.length > 600 ? '...' : '') : null;
 
   const appContext = {
     profile: {
@@ -4109,12 +4110,14 @@ async function alSubmit() {
         appContext,
       }),
     });
+    let data;
+    try { data = await res.json(); } catch { showToast('Bad response — try again'); alShowPhase(2); return; }
     if(!res.ok) {
-      const msg = res.status === 504 ? 'Request timed out — try again' : 'Analysis failed ('+res.status+') — try again';
+      const detail = data?.stop_reason || data?.detail || data?.error || '';
+      const msg = res.status === 504 ? 'Request timed out — try again' : ('Analysis failed: ' + (detail || res.status));
       showToast(msg); alShowPhase(2); return;
     }
-    const data = await res.json();
-    if(data.error) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
+    if(data.error) { showToast('Analysis error: ' + (data.detail || data.error)); alShowPhase(2); return; }
     if(!data.sport_profile && !data.training) { showToast('Analysis failed — try again'); alShowPhase(2); return; }
     AL_STATE.results = data;
     AL_STATE.savedAt = new Date().toISOString();
