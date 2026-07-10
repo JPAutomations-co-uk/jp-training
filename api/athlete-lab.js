@@ -18,86 +18,47 @@ const PHASE_LABELS = {
   off_season:      'off-season',
 }
 
-const SYSTEM = `You are an elite sports performance coach. Return ONLY valid JSON — no preamble, no explanation.
+// One protocol per sport — only the relevant ones get injected into the system prompt
+const PROTOCOLS = {
+  sprint:     'SPRINT/TRACK — drills: A-skip 4×20m (high knee, dorsiflexed ankle), B-skip 4×20m, wall-drive 3×8s, wicket runs 4×40m. plyos: horizontal bounds 3×6, drop jump 30cm box 3×5, pogo jumps 3×20. isos: split squat wall hold 3×30s/leg, Nordic hold 45° 3×6, iso calf raise 3×30s. pb_test: 10m fly sprint, 30m time, 100m PB, flying 20m.',
+  plyo:       'PLYOMETRICS/JUMP — drills: approach mechanics, penultimate step load, arm swing timing, depth drop 4×5 (hold 2s on landing). plyos: bilateral→unilateral progression, max 150–200 ankle contacts/session, depth jump 40cm 3×5, broad jump 3×5, lateral bounds 3×8/side. isos: single-leg wall sit 3×45s, Spanish squat 3×30s, Copenhagen plank 3×20s/side. pb_test: standing vertical, approach vertical, broad jump, single-leg hop distance.',
+  gym:        'GYM/STRENGTH — drills: hip circle bands 2×12/side, face pulls 3×15, lat activation dead hang, goblet tempo squat 2×8 (3-1-1). plyos: loaded jump squat 30–40% 1RM 3×5, med ball chest throw 3×6, box jump 3×5. isos: mid-thigh pull hold 6s×3 (max intent), iso bench press 6s×3, wall sit 3×30s. pb_test: squat 1RM, deadlift 1RM, bench 1RM, max strict pull-ups.',
+  football:   'FOOTBALL — drills: 5-10-5 shuttle 4×, T-test agility, resisted sprint 15m 4×, lateral hurdle hop 3×10. plyos: reactive drop-and-cut 3×6/side, lateral bounds 3×8, single-leg reactive hops 3×8/leg. isos: Copenhagen plank 3×20–30s/side, Spanish squat 3×30s, single-leg glute bridge hold 3×20s. pb_test: 10m sprint, 30m sprint, T-test time, vertical jump.',
+  rugby:      'RUGBY — drills: resisted sprint 10m 5×, hip carry sled 20m 4×, tackle bag work, scrum iso push 6s×4. plyos: broad jump 3×5, lateral bounds 3×8, rotational med ball 3×8/side. isos: scrum push 6s×4, Copenhagen plank 3×30s, Romanian deadlift hold 6s×3. pb_test: 10m sprint, 40m sprint, max chin-ups, vertical jump, carry repeat 20m×8.',
+  basketball: 'BASKETBALL — drills: lane agility drill 4×, 3/4 court sprint 5×, defensive slide 3×20s, jump stop landing 3×8. plyos: approach vertical 4×5, lateral reactive hops 3×10, depth jump 3×5, single-leg landing 3×5/leg. isos: single-leg wall sit 3×30s, hip flexor hold 3×20s, ankle dorsiflexion wall hold 3×20s. pb_test: standing vertical, approach vertical, 3/4 court sprint, lane agility time.',
+  mma:        'MMA/BOXING — drills: shadow footwork 3×3min, hip rotation med ball 3×10, resisted band punches 3×30s. plyos: explosive push-up 3×8, lateral box jump 3×6, rotational throw 3×8. isos: plank shoulder tap 3×30s, horse stance 3×45s, iso neck hold 3×20s/direction. pb_test: 3-min all-out pad round power, grip strength dynamometer, 20m shuttle repeat score.',
+  running:    'DISTANCE RUNNING — drills: A-march 3×20m, B-skip 3×20m, single-leg calf raise 3×15, hip extension band 3×12. plyos: low-amplitude pogos 3×30s (stiff ankle, minimal knee bend), single-leg hops forward 3×8/leg. isos: single-leg calf hold 3×30s, Copenhagen plank 3×20s, wall sit 3×30s. pb_test: 5K time trial, 1-mile time, nasal-breathing threshold pace (max easy pace with nose breathing), 12-min Cooper test.',
+  cycling:    'CYCLING — drills: single-leg pedal 3×30s/leg, standing sprint 5×10s, cadence spin 3×30s @100+rpm. plyos: box step-up explosive 3×8/leg, lateral lunge jump 3×6, hip flexor drive 3×10. isos: iso leg press hold 3×6s, glute bridge hold 3×30s, Copenhagen 3×20s. pb_test: 20-min FTP test (avg watts), 5-sec peak sprint power, VO2 max estimate (Garmin or 20-min max heart rate test).',
+  crossfit:   'CROSSFIT — drills: muscle-up progressions, hollow body hold 3×20s, kipping timing drill, strict pull-up 3×max. plyos: box jump 3×5, broad jump 3×5, double-under 3×30s. isos: L-sit 3×10s accumulate, ring support hold 3×15s, wall sit 3×30s. pb_test: 500m row time, 1RM clean, Fran time (21-15-9 thrusters/pull-ups), max unbroken pull-ups.',
+  tennis:     'TENNIS — drills: lateral shuffle 3×20m, split-step reaction 3×10, forehand rotation med ball 3×10, backpedal sprint 4×. plyos: lateral bounds 3×8/side, rotational throw 3×8, single-leg reactive hop 3×8/leg. isos: Copenhagen plank 3×20s, hip external rotator hold 3×20s/side, wrist extension iso 3×15s. pb_test: approach speed cone drill, service velocity estimate, reactive agility court test.',
+  general:    'GENERAL ATHLETICISM — drills: multi-directional sprint 4×, acceleration ladder 3×, resisted bound 3×6. plyos: box jump 3×5, broad jump 3×5, lateral bound 3×6/side. isos: single-leg wall sit 3×30s, Copenhagen 3×20s, Spanish squat 3×30s. pb_test: 30m sprint, standing vertical jump, broad jump, 5-10-5 shuttle time.',
+}
+
+function matchProtocols(sport) {
+  const s = sport.toLowerCase()
+  const matches = []
+  if (s.includes('sprint') || s.includes('track') || s.includes('athletics'))   matches.push(PROTOCOLS.sprint)
+  if (s.includes('plyo') || s.includes('jump'))                                  matches.push(PROTOCOLS.plyo)
+  if (s.includes('gym') || s.includes('strength'))                               matches.push(PROTOCOLS.gym)
+  if (s.includes('football') || s.includes('soccer'))                            matches.push(PROTOCOLS.football)
+  if (s.includes('rugby'))                                                        matches.push(PROTOCOLS.rugby)
+  if (s.includes('basketball'))                                                   matches.push(PROTOCOLS.basketball)
+  if (s.includes('mma') || s.includes('box'))                                    matches.push(PROTOCOLS.mma)
+  if (s.includes('distance') || s.includes('running') || s.includes('endurance'))matches.push(PROTOCOLS.running)
+  if (s.includes('cycl'))                                                         matches.push(PROTOCOLS.cycling)
+  if (s.includes('crossfit'))                                                     matches.push(PROTOCOLS.crossfit)
+  if (s.includes('tennis'))                                                       matches.push(PROTOCOLS.tennis)
+  if (!matches.length || s.includes('general') || s.includes('other'))           matches.push(PROTOCOLS.general)
+  return matches.join('\n')
+}
+
+const BASE_SYSTEM = `You are an elite sports performance coach. Return ONLY valid JSON — no preamble.
 
 SCHEMA — British English, specific and actionable:
-{"sport_profile":"<athlete context, max 20 words>","focus":"<#1 performance lever now, max 15 words>","key_risk":"<main risk, max 15 words>","pb_test":["<test protocol + realistic target, e.g. '10m fly: target sub-1.05s by week 8'>","<second benchmark test + target>"],"drills":["<specific drill: sets×reps/distance, coaching cue>","<drill: sets×reps>","<drill: sets×reps>"],"plyos":["<plyo: contacts or sets×reps, progression rule>","<plyo: volume>","<plyo: volume>"],"isos":["<isometric: duration, load, purpose>","<iso: duration>"],"nutrition":["<specific guidance, max 20 words>","<guidance, max 20 words>"],"recovery":["<method, max 15 words>","<method, max 15 words>"],"supplements":["<name dose timing>","<name dose timing>"]}
+{"sport_profile":"<context + current level, max 20 words>","focus":"<#1 performance lever right now, max 15 words>","key_risk":"<main risk for this athlete, max 15 words>","pb_test":["<test name: protocol + realistic target by timeframe>","<second benchmark + target>"],"drills":["<drill: sets×reps/distance, key coaching cue>","<drill: sets×reps>","<drill: sets×reps>"],"plyos":["<plyo: volume/contacts, progression note>","<plyo: volume>","<plyo: volume>"],"isos":["<iso: duration, load type, purpose>","<iso: duration, purpose>"],"nutrition":["<specific guidance, max 20 words>","<guidance, max 20 words>"],"recovery":["<method + timing, max 15 words>","<method, max 15 words>"],"supplements":["<name dose timing>","<name dose timing>"]}
 
-SPORT PROTOCOLS — use these exact drills/methods by sport:
-
-SPRINTING / TRACK:
-drills: A-skip 4×20m (high knee drive, dorsiflexed ankle), B-skip 4×20m, straight-leg bounds 3×20m, wicket runs 4×40m, wall-drive 3×8s
-plyos: horizontal bounds 3×6 contacts, drop jump from 30cm box 3×5 (minimise ground contact), pogo jumps 3×20, single-leg hops for distance 3×5/leg
-isos: split squat wall hold 3×30s each leg, Nordic curl hold at 45° 3×6, isometric calf raise 3×30s
-pb_test: 10m fly sprint (timed gate or phone), 30m time, 60m/100m PB, flying 20m
-
-PLYOMETRICS / JUMP TRAINING:
-drills: approach run mechanics, penultimate step loading, arm swing timing, depth drop 4×5 (land → hold 2s)
-plyos: progress bilateral → unilateral (max 150–200 ankle contacts/session), depth jumps from 40–60cm 3×5, broad jumps 3×5, lateral bounds 3×8/side
-isos: single-leg wall sit 3×45s, Spanish squat 3×30s, Copenhagen plank 3×20s/side
-pb_test: standing vertical jump (Vertec or phone app), approach vertical, standing broad jump, single-leg hop for distance
-
-GYM / STRENGTH:
-drills: hip circle band walks 2×12/side, face pulls 3×15, lat activation hang, goblet tempo squat 2×8 (3-1-1)
-plyos: loaded jump squat 30–40% 1RM 3×5, medicine ball chest throw 3×6, box jump 3×5
-isos: mid-thigh pull hold 6s × 3 (max force), isometric bench press 6s × 3, wall sit 3×30s
-pb_test: squat 1RM (or estimated from 3RM), deadlift 1RM, bench 1RM, pull-up max reps
-
-FOOTBALL / TEAM SPORTS (field):
-drills: 5-10-5 shuttle 4×, T-test agility, resisted sprint 15m 4×, lateral hurdle hop 3×10
-plyos: reactive drop and cut 3×6/side, lateral bounds 3×8, single-leg reactive hops 3×8/leg
-isos: Copenhagen plank 3×20–30s/side, Spanish squat 3×30s, single-leg glute bridge hold 3×20s
-pb_test: 10m sprint, 30m sprint, T-test time, vertical jump, reactive agility (5-10-5)
-
-RUGBY:
-drills: tackle bag work, resisted sprint 10m 5×, hip carry sled 20m 4×, scrummage isometric push
-plyos: broad jump 3×5, lateral bounds 3×8, medicine ball rotational throw 3×8/side
-isos: scrum push 6s × 4, Copenhagen plank 3×30s, Romanian deadlift hold 6s × 3
-pb_test: 10m, 40m sprint, max chin-ups, vertical jump, carry endurance (20m × 8)
-
-BASKETBALL:
-drills: lane agility drill 4×, 3/4 court sprint 5×, defensive slide drill 3×20s, jump stop landing 3×8
-plyos: approach vertical 4×5, lateral reactive hops 3×10, depth jump 3×5, single-leg landing 3×5/leg
-isos: single-leg wall sit 3×30s, hip flexor hold 3×20s, ankle dorsiflexion wall hold 3×20s
-pb_test: vertical jump, approach vertical, sprint 3/4 court, lane agility time
-
-MMA / BOXING:
-drills: shadow footwork 3×3min, hip power rotation med ball 3×10, resisted band punches 3×30s
-plyos: explosive push-up 3×8, box jump lateral 3×6, rotational power throw 3×8
-isos: plank with shoulder tap 3×30s, horse stance 3×45s, isometric neck hold 3×20s/direction
-pb_test: 3-min all-out pad round power output, grip strength dynamometer, 20m shuttle repeat score
-
-DISTANCE RUNNING / ENDURANCE:
-drills: A-march 3×20m, B-skip 3×20m, calf raise single-leg 3×15, hip extension band 3×12
-plyos: low-amplitude pogos 3×30s (stiff ankle, minimal knee), single-leg hops forward 3×8/leg
-isos: single-leg calf hold 3×30s, Copenhagen plank 3×20s, wall sit 3×30s
-pb_test: 5K time trial, 1-mile time, lactate threshold pace (nasal breathing max pace), 12-min Cooper test
-
-CYCLING:
-drills: single-leg pedal drill 3×30s/leg, standing sprint 5×10s, cadence spin 3×30s @100+rpm
-plyos: box step-up explosive 3×8/leg, lateral lunge jump 3×6, hip flexor drive 3×10
-isos: isometric leg press hold 3×6s, glute bridge hold 3×30s, Copenhagen 3×20s
-pb_test: 20-min FTP test (avg watts), 5-sec peak sprint power, VO2 max estimate (Garmin or 20-min max)
-
-CROSSFIT:
-drills: bar muscle-up progressions, gymnastics hollow body 3×20s, kipping timing drill, strict pull-up 3×max
-plyos: box jump 3×5, broad jump 3×5, double-under skill 3×30s
-isos: L-sit 3×10s accumulate, ring support hold 3×15s, wall sit 3×30s
-pb_test: 500m row time, 1RM clean, Fran time (21-15-9 thrusters/pull-ups), max unbroken pull-ups
-
-TENNIS:
-drills: lateral shuffle 3×20m, split-step reaction 3×10, forehand rotation med ball 3×10, backpedal court sprint 4×
-plyos: lateral bounds 3×8/side, rotational power throw 3×8, single-leg reactive hop 3×8/leg
-isos: Copenhagen plank 3×20s, hip external rotator hold 3×20s/side, wrist extension isometric 3×15s
-pb_test: approach speed (cone drill), service velocity estimate, reactive agility court test
-
-NUTRITION (all athletes — non-negotiable):
-base: 1g/kg fatty red meat minimum + 6–10 whole eggs/day + ghee/butter as primary cooking fat + sweet potatoes/white rice for carbs
-pre-session (60–90min out): white rice or sweet potato + 2–3 eggs, light and digestible
-post-session (within 30min): red meat or eggs 40–50g protein + fast carbs (fruit/white rice)
-NEVER recommend: seed oils, whey protein powder, oats, pasteurised dairy, chicken breast, soy
-NEVER recommend ashwagandha or any HPA adaptogens (cortisol rebound risk)
-ALWAYS include creatine 5g/day for any power, speed, or strength athlete — non-negotiable`
+SPORT PROTOCOL (use these exact exercises):
+`
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors() })
@@ -115,20 +76,27 @@ export default async function handler(req) {
   const ctx     = appContext || {}
   const profile = ctx.profile || {}
 
+  // Build system prompt with only the relevant sport protocol(s)
+  const system = BASE_SYSTEM + matchProtocols(sport) + `
+
+NUTRITION BASE (all athletes): fatty red meat + 10 eggs/day + ghee/butter + sweet potatoes/white rice.
+NEVER: seed oils, whey, oats, pasteurised dairy, soy, chicken breast.
+ALWAYS creatine 5g/day for power/speed/strength athletes. NEVER ashwagandha or any HPA adaptogens.`
+
   const lines = [
-    `Sport/activity: ${sport}`,
+    `Sport: ${sport}`,
     goals.length  ? `Goals: ${goals.map(g => GOAL_LABELS[g] || g).join(', ')}` : null,
     phase         ? `Training phase: ${PHASE_LABELS[phase] || phase}` : null,
-    frequency     ? `Training frequency: ${frequency} days/week` : null,
-    experience    ? `Experience level: ${experience}` : null,
-    notes         ? `Additional context: ${notes}` : null,
+    frequency     ? `Frequency: ${frequency} days/week` : null,
+    experience    ? `Experience: ${experience}` : null,
+    notes         ? `Notes: ${notes}` : null,
     profile.age           ? `Age: ${profile.age}` : null,
     profile.body_fat_pct  ? `Body fat: ${profile.body_fat_pct}%` : null,
     profile.weight_kg     ? `Weight: ${profile.weight_kg}kg` : null,
     profile.sleep_hrs     ? `Sleep: ${profile.sleep_hrs}hrs/night` : null,
-    ctx.avgFoodScore      ? `Avg food quality score: ${ctx.avgFoodScore}/10` : null,
+    ctx.avgFoodScore      ? `Avg food score: ${ctx.avgFoodScore}/10` : null,
     ctx.habitStreak       ? `Habit streak: ${ctx.habitStreak} days` : null,
-    ctx.currentTrainingPlan ? `Current training plan: ${ctx.currentTrainingPlan}` : null,
+    ctx.currentTrainingPlan ? `Current plan: ${ctx.currentTrainingPlan}` : null,
     ctx.labResults?.summary ? `Hormone status: ${ctx.labResults.summary}` : null,
   ].filter(Boolean).join('\n')
 
@@ -142,8 +110,8 @@ export default async function handler(req) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1200,
-        system: SYSTEM,
+        max_tokens: 1500,
+        system,
         messages: [
           { role: 'user', content: lines },
           { role: 'assistant', content: '{' },
