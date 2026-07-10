@@ -79,7 +79,7 @@ export default async function handler(req) {
   let body
   try { body = await req.json() } catch { return new Response('Bad request', { status: 400 }) }
 
-  const { sport, goals = [], phase, frequency, experience, notes, appContext } = body
+  const { sport, goals = [], phase, frequency, experience, position, level, weaknesses = [], notes, appContext } = body
   if (!sport) return json({ error: 'Missing sport' }, 400)
 
   const ctx     = appContext || {}
@@ -94,6 +94,9 @@ ALWAYS creatine 5g/day for power/speed/strength athletes. NEVER ashwagandha or a
 
   const lines = [
     `Sport: ${sport}`,
+    position      ? `Position / event: ${position}` : null,
+    level         ? `Competition level: ${level}` : null,
+    weaknesses.length ? `Performance gaps to prioritise: ${weaknesses.join(', ')}` : null,
     goals.length  ? `Goals: ${goals.map(g => GOAL_LABELS[g] || g).join(', ')}` : null,
     phase         ? `Training phase: ${PHASE_LABELS[phase] || phase}` : null,
     frequency     ? `Frequency: ${frequency} days/week` : null,

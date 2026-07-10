@@ -1041,10 +1041,50 @@
           </div>
         </div>
 
+        <!-- AL Phase SP: Sport-specific details (competitive sports only) -->
+        <div id="al-phase-sp" class="al-phase">
+          <div class="al-step-bar">
+            <div class="al-step-dot done"></div>
+            <div class="al-step-dot active"></div>
+            <div class="al-step-dot"></div>
+            <div class="al-step-dot"></div>
+            <span class="al-step-label">Sport Details</span>
+          </div>
+          <div id="al-sp-position-wrap">
+            <div class="al-q" id="al-sp-position-q">What position do you play?</div>
+            <div class="al-chips" id="al-position-chips"></div>
+          </div>
+          <div class="al-section-label">Competition level</div>
+          <div class="al-chips" id="al-level-chips">
+            <button class="al-chip" data-val="recreational" onclick="alPickLevel(this)">Recreational</button>
+            <button class="al-chip" data-val="amateur" onclick="alPickLevel(this)">Amateur / club</button>
+            <button class="al-chip" data-val="county" onclick="alPickLevel(this)">County / regional</button>
+            <button class="al-chip" data-val="semi_pro" onclick="alPickLevel(this)">Semi-professional</button>
+            <button class="al-chip" data-val="professional" onclick="alPickLevel(this)">Professional / elite</button>
+          </div>
+          <div class="al-section-label">Biggest performance gaps <span style="font-size:11px;color:var(--dim);font-weight:400">(pick all that apply)</span></div>
+          <div class="al-chips" id="al-weakness-chips">
+            <button class="al-chip" data-val="first_step" onclick="alToggleWeakness(this)">⚡ First step / acceleration</button>
+            <button class="al-chip" data-val="top_speed" onclick="alToggleWeakness(this)">🏃 Top end speed</button>
+            <button class="al-chip" data-val="endurance" onclick="alToggleWeakness(this)">🫀 Gas tank / stamina</button>
+            <button class="al-chip" data-val="power" onclick="alToggleWeakness(this)">💥 Strength &amp; power</button>
+            <button class="al-chip" data-val="vertical" onclick="alToggleWeakness(this)">🦘 Vertical jump / aerial</button>
+            <button class="al-chip" data-val="agility" onclick="alToggleWeakness(this)">🔄 Agility / change of direction</button>
+            <button class="al-chip" data-val="upper_body" onclick="alToggleWeakness(this)">💪 Upper body strength</button>
+            <button class="al-chip" data-val="durability" onclick="alToggleWeakness(this)">🛡 Injury prevention / durability</button>
+            <button class="al-chip" data-val="recovery_speed" onclick="alToggleWeakness(this)">⚡ Recovery between sessions</button>
+          </div>
+          <div class="al-nav">
+            <button class="al-back" onclick="alNext('sp', true)">← Back</button>
+            <button class="lab-cta" style="flex:1" onclick="alNext('sp')">Next →</button>
+          </div>
+        </div>
+
         <!-- AL Phase 2: Goals + Season -->
         <div id="al-phase-2" class="al-phase">
           <div class="al-step-bar">
             <div class="al-step-dot done" id="al-dot-1b"></div>
+            <div class="al-step-dot done" id="al-dot-spb"></div>
             <div class="al-step-dot active" id="al-dot-2b"></div>
             <div class="al-step-dot" id="al-dot-3b"></div>
             <span class="al-step-label">Goals &amp; Phase</span>
@@ -1087,7 +1127,7 @@
           </div>
           <div id="al-p2-err" style="font-size:12px;color:#f87171;display:none;margin:8px 0 0">Pick at least one goal to continue.</div>
           <div class="al-nav">
-            <button class="al-back" onclick="alNext(1, true)">← Back</button>
+            <button class="al-back" onclick="alNext(2, true)">← Back</button>
             <button class="lab-cta" style="flex:1" onclick="alSubmit()">Build My Protocol →</button>
           </div>
         </div>
@@ -4027,7 +4067,7 @@ function renderMilestones() {
 /* ══════════════════════════════════════════
    ATHLETE LAB
 ══════════════════════════════════════════ */
-let AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null };
+let AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null, position:null, level:null, weaknesses:[] };
 
 function alStorageKey() { return 'jpt_athlete_lab_'+(USER?.id||'guest'); }
 function alLoadSaved() { try { const r=localStorage.getItem(alStorageKey()); return r?JSON.parse(r):null; } catch(e){return null;} }
@@ -4051,10 +4091,59 @@ function initAthleteLab() {
 }
 
 function alShowPhase(n) {
-  [1,2,3,4].forEach(i => {
-    const el = document.getElementById('al-phase-'+i);
-    if(el) el.classList.toggle('active', i===n);
+  ['1','sp','2','3','4'].forEach(i => {
+    const el = document.getElementById('al-phase-' + i);
+    if(el) el.classList.toggle('active', i === String(n));
   });
+}
+
+// Sports that unlock the detailed profile phase
+const AL_COMPETITIVE = new Set(['football','rugby','basketball','mma','tennis','sprinting','distance_running','cycling','crossfit','swimming','athletics']);
+
+function alHasDetailPhase() {
+  return AL_STATE.sports.some(s => AL_COMPETITIVE.has(s));
+}
+
+// Position / event options per sport
+const AL_POSITIONS = {
+  football:         ['Goalkeeper','Right Back / Left Back','Centre Back','Defensive Midfielder','Central Midfielder','Attacking Midfielder','Winger','Striker'],
+  rugby:            ['Prop','Hooker','Lock','Blindside Flanker','Openside Flanker','Number 8','Scrum Half','Fly Half','Inside Centre','Outside Centre','Winger','Fullback'],
+  basketball:       ['Point Guard','Shooting Guard','Small Forward','Power Forward','Centre'],
+  mma:              ['Boxer / Striker','Muay Thai fighter','BJJ / Grappler','Wrestler','All-round MMA'],
+  tennis:           ['Aggressive baseliner','Counter-puncher','Serve & volleyer','All-court player'],
+  sprinting:        ['60m / 100m','200m','400m','Long Jump / Triple Jump','Hurdles','Decathlon / Heptathlon'],
+  athletics:        ['60m / 100m','200m','400m','Long Jump / Triple Jump','Hurdles','Decathlon / Heptathlon'],
+  distance_running: ['5K / 10K','Half Marathon','Marathon','Trail / Cross Country'],
+  cycling:          ['Road racing / Gran Fondo','Time Trial','Track Sprint','Track Endurance','Mountain Bike'],
+  crossfit:         ['Open division','Masters 35–44','Masters 45+'],
+  swimming:         ['Sprint (50m / 100m)','Middle distance (200m–400m)','Long distance (800m+)','Open water'],
+};
+
+function alBuildDetailPhase() {
+  // Find the first competitive sport that has position options
+  const sport = AL_STATE.sports.find(s => AL_POSITIONS[s]);
+  const posWrap  = document.getElementById('al-sp-position-wrap');
+  const posQ     = document.getElementById('al-sp-position-q');
+  const posChips = document.getElementById('al-position-chips');
+
+  if(sport && AL_POSITIONS[sport]) {
+    const isEvent = ['sprinting','athletics','distance_running','cycling','crossfit','swimming'].includes(sport);
+    if(posQ) posQ.textContent = isEvent ? "What's your main event or distance?" : 'What position do you play?';
+    if(posChips) posChips.innerHTML = AL_POSITIONS[sport].map(p =>
+      `<button class="al-chip${AL_STATE.position === p ? ' sel' : ''}" data-val="${escHtml(p)}" onclick="alPickPosition(this)">${escHtml(p)}</button>`
+    ).join('');
+    if(posWrap) posWrap.style.display = 'block';
+  } else {
+    if(posWrap) posWrap.style.display = 'none';
+  }
+
+  // Restore level + weakness selections
+  document.querySelectorAll('#al-level-chips .al-chip').forEach(b =>
+    b.classList.toggle('sel', b.dataset.val === AL_STATE.level)
+  );
+  document.querySelectorAll('#al-weakness-chips .al-chip').forEach(b =>
+    b.classList.toggle('sel', (AL_STATE.weaknesses||[]).includes(b.dataset.val))
+  );
 }
 
 function alPickSport(btn) {
@@ -4107,11 +4196,42 @@ function alToggleNotes(btn) {
   btn.textContent = show ? '− Remove note' : '＋ Add a specific note (optional)';
 }
 
-function alNext(from, back) {
-  if(back) { alShowPhase(from); return; }
+function alNext(from, back = false) {
+  if(back) {
+    if(from === 'sp') { alShowPhase(1); return; }
+    if(from === 2)    { alShowPhase(alHasDetailPhase() ? 'sp' : 1); return; }
+    alShowPhase(from); return;
+  }
   if(from === 1) {
     if(!AL_STATE.sports.length) { document.getElementById('al-p1-err').style.display='block'; return; }
+    if(alHasDetailPhase()) { alBuildDetailPhase(); alShowPhase('sp'); }
+    else alShowPhase(2);
+  } else if(from === 'sp') {
     alShowPhase(2);
+  }
+}
+
+function alPickPosition(btn) {
+  document.querySelectorAll('#al-position-chips .al-chip').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  AL_STATE.position = btn.dataset.val;
+}
+
+function alPickLevel(btn) {
+  document.querySelectorAll('#al-level-chips .al-chip').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  AL_STATE.level = btn.dataset.val;
+}
+
+function alToggleWeakness(btn) {
+  const val = btn.dataset.val;
+  if(!AL_STATE.weaknesses) AL_STATE.weaknesses = [];
+  if(btn.classList.contains('sel')) {
+    btn.classList.remove('sel');
+    AL_STATE.weaknesses = AL_STATE.weaknesses.filter(w=>w!==val);
+  } else {
+    btn.classList.add('sel');
+    AL_STATE.weaknesses.push(val);
   }
 }
 
@@ -4162,6 +4282,9 @@ async function alSubmit() {
         phase:      AL_STATE.phase,
         frequency:  AL_STATE.frequency,
         experience: AL_STATE.experience,
+        position:   AL_STATE.position,
+        level:      AL_STATE.level,
+        weaknesses: AL_STATE.weaknesses||[],
         notes,
         appContext,
       }),
@@ -4239,9 +4362,9 @@ function alRenderResults(data) {
 }
 
 function alReset() {
-  AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null };
+  AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null, position:null, level:null, weaknesses:[] };
   try { localStorage.removeItem(alStorageKey()); } catch(e) {}
-  document.querySelectorAll('#al-sport-chips .al-chip, #al-goal-chips .al-chip, #al-season-chips .al-chip, #al-freq-chips .al-chip, #al-exp-chips .al-chip').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('#al-sport-chips .al-chip, #al-goal-chips .al-chip, #al-season-chips .al-chip, #al-freq-chips .al-chip, #al-exp-chips .al-chip, #al-position-chips .al-chip, #al-level-chips .al-chip, #al-weakness-chips .al-chip').forEach(b=>b.classList.remove('sel'));
   const ta = document.getElementById('al-notes');
   if(ta) { ta.value=''; ta.style.display='none'; }
   alShowPhase(1);
