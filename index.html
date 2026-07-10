@@ -509,10 +509,14 @@
     }
     @media(max-width:768px){
       body{cursor:auto}#cur,#cur-ring{display:none}
-      nav{padding:0 16px}.nav-links{display:none}
+      nav{padding:0 16px;width:100%;box-sizing:border-box}
+      .nav-logo{flex:1;min-width:0;overflow:hidden}
+      .nav-brand{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .nav-links{display:none}
       .nav-cta{display:none}.nav-signin{display:none}
       #nav-app-btn{display:none !important}
-      .nav-actions{gap:8px}
+      .nav-actions{flex-shrink:0;gap:0}
+      .ham-btn{margin-left:0}
       .hero{padding:68px 6% 40px;height:100svh;justify-content:center}
       .hero-h1{font-size:clamp(42px,11vw,80px)}
       .hero-loc{margin-bottom:16px}
@@ -651,9 +655,6 @@
       .app-phone-wrap{display:none}
       .hero-btns{flex-direction:column;align-items:center;gap:14px}
       .btn-main{width:100%;text-align:center}
-    }
-    @media(max-width:480px){
-      .nav-brand{display:none}
     }
   </style>
 </head>
