@@ -509,9 +509,10 @@
     }
     @media(max-width:768px){
       body{cursor:auto}#cur,#cur-ring{display:none}
-      nav{padding:0 20px 0 20px}.nav-links{display:none}
-      .nav-cta{display:none}
-      .nav-actions{gap:12px}
+      nav{padding:0 16px}.nav-links{display:none}
+      .nav-cta{display:none}.nav-signin{display:none}
+      #nav-app-btn{display:none !important}
+      .nav-actions{gap:8px}
       .hero{padding:68px 6% 40px;height:100svh;justify-content:center}
       .hero-h1{font-size:clamp(42px,11vw,80px)}
       .hero-loc{margin-bottom:16px}
@@ -652,8 +653,7 @@
       .btn-main{width:100%;text-align:center}
     }
     @media(max-width:480px){
-      nav{padding:0 16px}
-      .nav-cta{font-size:11px;padding:9px 14px}
+      .nav-brand{display:none}
     }
   </style>
 </head>
@@ -1612,6 +1612,10 @@ const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
   if(session){
     document.getElementById('nav-signin-btn').style.display='none';
     document.getElementById('nav-app-btn').style.display='flex';
+    const ms=document.getElementById('mob-signin-link');
+    const ma=document.getElementById('mob-app-link');
+    if(ms) ms.style.display='none';
+    if(ma) ma.style.display='block';
   }
 })();
 
@@ -1734,6 +1738,8 @@ window.addEventListener('scroll',()=>{nav.style.borderBottomColor=window.scrollY
   <a href="#foundations" onclick="closeMob()">The Protocol</a>
   <a href="#results" onclick="closeMob()">Results</a>
   <a href="book.html" class="mob-cta">Book Free Call</a>
+  <a href="#" id="mob-signin-link" onclick="closeMob();openAuth('login');return false;" style="font-size:18px;color:rgba(255,255,255,.5)">Sign In</a>
+  <a href="/app.html" id="mob-app-link" style="display:none;font-size:18px;color:rgba(255,255,255,.5)">Open App</a>
   <button onclick="closeMob()" style="background:none;border:none;color:var(--dim);font-size:13px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-top:8px">Close</button>
 </div>
 
