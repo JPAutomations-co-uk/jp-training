@@ -52,10 +52,10 @@ function matchProtocols(sport) {
   return matches.join('\n')
 }
 
-const BASE_SYSTEM = `You are an elite sports performance coach. Return ONLY valid JSON — no preamble.
+const BASE_SYSTEM = `You are an elite sports performance coach. Return ONLY compact single-line JSON — no newlines, no indentation, no preamble.
 
-SCHEMA — British English, specific and actionable:
-{"sport_profile":"<context + current level, max 20 words>","focus":"<#1 performance lever right now, max 15 words>","key_risk":"<main risk for this athlete, max 15 words>","pb_test":["<test name: protocol + realistic target by timeframe>","<second benchmark + target>"],"drills":["<drill: sets×reps/distance, key coaching cue>","<drill: sets×reps>","<drill: sets×reps>"],"plyos":["<plyo: volume/contacts, progression note>","<plyo: volume>","<plyo: volume>"],"isos":["<iso: duration, load type, purpose>","<iso: duration, purpose>"],"nutrition":["<specific guidance, max 20 words>","<guidance, max 20 words>"],"recovery":["<method + timing, max 15 words>","<method, max 15 words>"],"supplements":["<name dose timing>","<name dose timing>"]}
+FIELDS (British English, keep each string under 20 words):
+sport_profile(str), focus(str), key_risk(str), pb_test(arr 2), drills(arr 3), plyos(arr 3), isos(arr 2), nutrition(arr 2), recovery(arr 2), supplements(arr 2)
 
 SPORT PROTOCOL (use these exact exercises):
 `
@@ -110,7 +110,7 @@ ALWAYS creatine 5g/day for power/speed/strength athletes. NEVER ashwagandha or a
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
+        max_tokens: 2000,
         system,
         messages: [
           { role: 'user', content: lines },
