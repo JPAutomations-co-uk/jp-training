@@ -490,7 +490,28 @@
     .al-protocol-section{margin-bottom:16px}
     .al-protocol-label{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
     .al-protocol-items{display:flex;flex-direction:column;gap:6px}
-    .al-protocol-item{font-size:13px;color:var(--muted);padding:10px 12px;background:var(--s1);border-left:2px solid rgba(44,212,196,.25);line-height:1.55}
+    .al-protocol-item{font-size:13px;color:var(--muted);padding:10px 12px 10px 12px;background:var(--s1);border-left:2px solid rgba(44,212,196,.25);line-height:1.55;position:relative}
+    .al-why{display:block;font-size:11px;color:rgba(44,212,196,.6);margin-top:4px;font-style:italic}
+    .al-add-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--teal);background:rgba(44,212,196,.08);border:1px solid rgba(44,212,196,.2);padding:3px 8px;cursor:pointer;white-space:nowrap;line-height:1.4}
+    /* Day picker overlay */
+    #al-day-picker{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.8);display:none;align-items:flex-end}
+    .al-picker-sheet{background:var(--s1);border-top:1px solid var(--border);width:100%;padding:20px 20px 32px;max-height:70vh;overflow-y:auto}
+    .al-picker-ex{font-size:12px;color:var(--teal);margin-bottom:14px;line-height:1.4;font-style:italic}
+    .al-picker-title{font-family:var(--D);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--white);margin-bottom:12px}
+    .al-picker-day{width:100%;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--border);text-align:left;color:var(--white);font-family:var(--B);font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;transition:all .15s}
+    .al-picker-day:hover,.al-picker-day:active{border-color:rgba(44,212,196,.4);background:rgba(44,212,196,.06)}
+    .al-picker-day-sub{font-size:11px;color:var(--dim)}
+    .al-picker-cancel{margin-top:8px;width:100%;padding:12px;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:13px;cursor:pointer}
+    /* Exercise controls in train tab */
+    .ex-controls{display:flex;gap:3px;align-items:center;flex-shrink:0;margin-left:8px}
+    .ex-ctrl-btn{width:26px;height:26px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--dim);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;transition:all .15s}
+    .ex-ctrl-btn:hover{border-color:rgba(44,212,196,.3);color:var(--teal)}
+    .ex-ctrl-btn.del:hover{border-color:rgba(248,113,113,.3);color:#f87171}
+    .ex-ctrl-btn:disabled{opacity:.2;cursor:default;pointer-events:none}
+    /* Add exercise row */
+    .ex-add-row{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.06)}
+    .ex-add-input{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.15);padding:8px 10px;color:#fff;font-family:var(--B);font-size:12px}
+    .ex-add-go{padding:8px 12px;background:var(--teal);color:#000;font-family:var(--D);font-weight:800;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:none;flex-shrink:0}
     .al-risk-box{background:rgba(251,191,36,.03);border:1px solid rgba(251,191,36,.2);padding:14px;margin-bottom:16px}
     .al-risk-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#fbbf24;margin-bottom:6px}
     .al-risk-text{font-size:12px;color:rgba(255,191,36,.65);line-height:1.6}
@@ -1090,6 +1111,16 @@
 
     </div>
 
+  </div>
+
+  <!-- ATHLETE LAB — ADD TO TRAINING DAY PICKER -->
+  <div id="al-day-picker" onclick="if(event.target===this)alCancelPicker()">
+    <div class="al-picker-sheet">
+      <div class="al-picker-ex" id="al-picker-ex-label"></div>
+      <div class="al-picker-title">Add to which day?</div>
+      <div id="al-picker-days"></div>
+      <button class="al-picker-cancel" onclick="alCancelPicker()">Cancel</button>
+    </div>
   </div>
 
   <!-- BOTTOM NAV -->
@@ -1765,12 +1796,20 @@ function renderDayDetail(day, isToday) {
         </div>
       </div>`;
     } else {
-      return `<div class="workout-ex" style="padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;justify-content:space-between;align-items:baseline">
-          <div class="ex-name" style="margin:0">${escHtml(ex.name)}</div>
-          <div style="font-size:11px;color:var(--dim);white-space:nowrap;margin-left:8px">${escHtml(ex.sets)}×${escHtml(ex.reps||ex.rep||'—')} · ${escHtml(ex.load||'RPE 8')}</div>
+      const total = exercises.length;
+      return `<div class="workout-ex" style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="display:flex;align-items:center">
+          <div style="flex:1;min-width:0">
+            <div class="ex-name" style="margin:0">${escHtml(ex.name)}</div>
+            <div style="font-size:11px;color:var(--dim);margin-top:1px">${escHtml(ex.sets)}×${escHtml(ex.reps||ex.rep||'—')} · ${escHtml(ex.load||'RPE 8')}</div>
+            ${ex.notes?`<div style="font-size:11px;color:rgba(44,212,196,.5);margin-top:2px;font-style:italic">${escHtml(ex.notes)}</div>`:''}
+          </div>
+          <div class="ex-controls">
+            <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},-1)"${ei===0?' disabled':''}>↑</button>
+            <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},1)"${ei===total-1?' disabled':''}>↓</button>
+            <button class="ex-ctrl-btn del" onclick="removeExercise('${escHtml(day.day)}',${ei})">✕</button>
+          </div>
         </div>
-        ${ex.notes?`<div style="font-size:11px;color:var(--dim);margin-top:2px">${escHtml(ex.notes)}</div>`:''}
       </div>`;
     }
   }).join('');
@@ -1782,6 +1821,10 @@ function renderDayDetail(day, isToday) {
     </div>
     ${day.keyLifts?`<p style="font-size:12px;color:var(--dim);margin:0 0 12px">${escHtml(day.keyLifts)}</p>`:''}
     ${exHtml}
+    <div class="ex-add-row">
+      <input class="ex-add-input" id="ex-add-${escHtml(day.day)}" placeholder="Add exercise — e.g. Nordic curl 3×6" onkeydown="if(event.key==='Enter')addExToDay('${escHtml(day.day)}')">
+      <button class="ex-add-go" onclick="addExToDay('${escHtml(day.day)}')">+ Add</button>
+    </div>
     ${isToday?`<button class="btn-primary" onclick="saveWorkout()" style="margin-top:14px">Save Session</button>`:''}
   </div>`;
 }
@@ -4146,36 +4189,50 @@ async function alSubmit() {
 function alRenderResults(data) {
   const el = document.getElementById('al-results-content');
   if(!el || !data) return;
+
+  // Sections where items can be added to training plan
+  const addable = new Set(['drills','plyos','isos']);
+
   const sections = [
-    { label:'PB Benchmarks & Tests', key:'pb_test',   color:'rgba(251,191,36,.35)' },
-    { label:'Drills & Speed Work',   key:'drills',    color:'rgba(44,212,196,.25)' },
-    { label:'Plyometrics',           key:'plyos',     color:'rgba(44,212,196,.25)' },
-    { label:'Isometrics',            key:'isos',      color:'rgba(44,212,196,.25)' },
-    { label:'Training Protocol',     key:'training',  color:'rgba(44,212,196,.25)' },
-    { label:'Nutrition Strategy',    key:'nutrition', color:'rgba(44,212,196,.25)' },
-    { label:'Recovery Methods',      key:'recovery',  color:'rgba(44,212,196,.25)' },
-    { label:'Supplements',           key:'supplements',color:'rgba(44,212,196,.25)' },
-    { label:'Lifestyle',             key:'lifestyle', color:'rgba(44,212,196,.25)' },
+    { label:'PB Benchmarks & Tests', key:'pb_test',    color:'rgba(251,191,36,.35)',  icon:'🎯' },
+    { label:'Drills & Speed Work',   key:'drills',     color:'rgba(44,212,196,.4)',   icon:'⚡' },
+    { label:'Plyometrics',           key:'plyos',      color:'rgba(44,212,196,.4)',   icon:'🦘' },
+    { label:'Isometrics',            key:'isos',       color:'rgba(44,212,196,.4)',   icon:'💪' },
+    { label:'Training Protocol',     key:'training',   color:'rgba(44,212,196,.25)',  icon:'🏋️' },
+    { label:'Nutrition Strategy',    key:'nutrition',  color:'rgba(44,212,196,.25)',  icon:'🥩' },
+    { label:'Recovery Methods',      key:'recovery',   color:'rgba(44,212,196,.25)',  icon:'🛌' },
+    { label:'Supplements',           key:'supplements',color:'rgba(44,212,196,.25)',  icon:'💊' },
+    { label:'Lifestyle',             key:'lifestyle',  color:'rgba(44,212,196,.25)',  icon:'⚙️' },
   ];
+
+  function renderItem(item, bdr, canAdd, key) {
+    // Split "Exercise description — WHY: reason" into two visual parts
+    const parts = item.split(/ — WHY: | — /);
+    const main  = parts[0];
+    const why   = parts.slice(1).join(' — ');
+    const safeItem = JSON.stringify(item).replace(/'/g, "\\'");
+    return `<div class="al-protocol-item" style="border-left-color:${bdr};${canAdd?'padding-right:68px':''}">
+      <span>${escHtml(main)}</span>
+      ${why ? `<span class="al-why">${escHtml(why)}</span>` : ''}
+      ${canAdd ? `<button class="al-add-btn" onclick="alShowAddPicker(${safeItem})">+ Add</button>` : ''}
+    </div>`;
+  }
+
   el.innerHTML = `
-    ${data.sport_profile ? `<div style="margin-bottom:16px">
+    ${data.sport_profile ? `<div style="margin-bottom:14px">
       <div style="font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:4px">Athlete Profile</div>
       <div style="font-size:13px;color:var(--white);line-height:1.5">${escHtml(data.sport_profile)}</div>
     </div>` : ''}
-    ${data.focus ? `<div style="font-size:13px;color:var(--muted);line-height:1.65;background:rgba(44,212,196,.03);border:1px solid rgba(44,212,196,.12);padding:13px 16px;margin-bottom:16px"><strong style="color:var(--white)">Priority focus:</strong> ${escHtml(data.focus)}</div>` : ''}
-    ${data.plan_analysis ? `<div style="font-size:13px;color:var(--muted);line-height:1.65;background:rgba(251,191,36,.02);border:1px solid rgba(251,191,36,.15);padding:13px 16px;margin-bottom:16px"><strong style="color:rgba(251,191,36,.9)">Current plan assessment:</strong> ${escHtml(data.plan_analysis)}</div>` : ''}
-    ${data.plan_optimisations?.length ? `<div class="al-protocol-section">
-      <div class="al-protocol-label" style="color:#fbbf24">Plan Optimisations</div>
-      <div class="al-protocol-items">${data.plan_optimisations.map(item=>`<div class="al-protocol-item" style="border-left-color:rgba(251,191,36,.4)">${escHtml(item)}</div>`).join('')}</div>
-    </div>` : ''}
+    ${data.focus ? `<div style="font-size:13px;color:var(--muted);line-height:1.65;background:rgba(44,212,196,.03);border:1px solid rgba(44,212,196,.12);padding:12px 14px;margin-bottom:14px"><strong style="color:var(--white)">Priority focus:</strong> ${escHtml(data.focus)}</div>` : ''}
     ${data.key_risk ? `<div class="al-risk-box"><div class="al-risk-label">⚠ Key Risk</div><div class="al-risk-text">${escHtml(data.key_risk)}</div></div>` : ''}
     ${sections.map(s => {
       const items = data[s.key];
       if(!items?.length) return '';
       const bdr = s.color || 'rgba(44,212,196,.25)';
+      const canAdd = addable.has(s.key);
       return `<div class="al-protocol-section">
-        <div class="al-protocol-label">${s.label}</div>
-        <div class="al-protocol-items">${items.map(item=>`<div class="al-protocol-item" style="border-left-color:${bdr}">${escHtml(item)}</div>`).join('')}</div>
+        <div class="al-protocol-label">${s.icon} ${s.label}${canAdd ? ' <span style="color:rgba(44,212,196,.4);font-weight:400;font-size:8px;letter-spacing:.05em;text-transform:none">tap + to add to your plan</span>' : ''}</div>
+        <div class="al-protocol-items">${items.map(item => renderItem(item, bdr, canAdd, s.key)).join('')}</div>
       </div>`;
     }).join('')}
   `;
@@ -4188,6 +4245,127 @@ function alReset() {
   const ta = document.getElementById('al-notes');
   if(ta) { ta.value=''; ta.style.display='none'; }
   alShowPhase(1);
+}
+
+/* ── ADD ATHLETE LAB EXERCISE TO TRAINING ── */
+let _alAddPending = null;
+
+function alShowAddPicker(exercise) {
+  const plan = _weeklyPlan.filter(d => d.type !== 'rest');
+  if(!plan.length) {
+    showToast('Set up a training plan first in the Train tab');
+    return;
+  }
+  _alAddPending = exercise;
+  const label = document.getElementById('al-picker-ex-label');
+  // Show just the exercise name (before the — WHY part)
+  const exName = exercise.split(' — ')[0].split(' - ')[0].trim();
+  if(label) label.textContent = '"' + exName + '"';
+  document.getElementById('al-picker-days').innerHTML = plan.map(d =>
+    `<button class="al-picker-day" onclick="alAddToDay('${escHtml(d.day)}')">
+      <span>${escHtml(d.day)}</span>
+      <span class="al-picker-day-sub">${escHtml(d.sessionName)}</span>
+    </button>`
+  ).join('');
+  document.getElementById('al-day-picker').style.display = 'flex';
+}
+
+function alAddToDay(dayName) {
+  const exercise = _alAddPending;
+  _alAddPending = null;
+  document.getElementById('al-day-picker').style.display = 'none';
+  if(!exercise || !dayName) return;
+
+  // Split "Exercise sets×reps — WHY: reason" into name + notes
+  const dashIdx = exercise.indexOf(' — ');
+  const rawName = dashIdx > -1 ? exercise.slice(0, dashIdx) : exercise;
+  const why     = dashIdx > -1 ? exercise.slice(dashIdx + 3) : '';
+
+  // Strip sets/reps from name for a clean exercise name
+  const setsMatch = rawName.match(/^(.+?)\s+(\d+)[×x]/);
+  const name  = setsMatch ? setsMatch[1].trim() : rawName;
+  const sets  = rawName.match(/(\d+)[×x]/)?.[1] || '3';
+  const reps  = rawName.match(/[×x]([^\s,—]+)/)?.[1] || '8-10';
+
+  const day = _weeklyPlan.find(d => d.day === dayName);
+  if(!day) return;
+  if(!day.exercises) day.exercises = [];
+  day.exercises.push({ name, sets, reps, load: 'As prescribed', notes: why ? why.replace(/^WHY:\s*/i,'') : '' });
+  OB.train = OB.train || {};
+  OB.train.weeklyPlan = _weeklyPlan;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+
+  renderWeeklyCalendar(_weeklyPlan);
+  showToast(`Added "${name}" to ${dayName}`);
+
+  // Switch to Train tab and pre-load a coach message
+  switchTab('train');
+  const input = document.getElementById('train-chat-input');
+  if(input) {
+    input.value = `I just added "${name}" to ${dayName} from my athlete lab protocol. How should I optimally slot it into that session?`;
+  }
+}
+
+function alCancelPicker() {
+  document.getElementById('al-day-picker').style.display = 'none';
+  _alAddPending = null;
+}
+
+/* ── EXERCISE REORDER / REMOVE / ADD IN TRAIN TAB ── */
+
+function moveExercise(dayName, idx, dir) {
+  const day = _weeklyPlan.find(d => d.day === dayName);
+  if(!day?.exercises) return;
+  const exs = day.exercises;
+  const to  = idx + dir;
+  if(to < 0 || to >= exs.length) return;
+  [exs[idx], exs[to]] = [exs[to], exs[idx]];
+  OB.train = OB.train || {};
+  OB.train.weeklyPlan = _weeklyPlan;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  selectDay(dayName);
+}
+
+function removeExercise(dayName, idx) {
+  const day = _weeklyPlan.find(d => d.day === dayName);
+  if(!day?.exercises) return;
+  const removed = day.exercises.splice(idx, 1)[0];
+  OB.train = OB.train || {};
+  OB.train.weeklyPlan = _weeklyPlan;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  selectDay(dayName);
+  if(removed?.name) showToast(`Removed "${removed.name}"`);
+}
+
+function addExToDay(dayName) {
+  const input = document.getElementById('ex-add-' + dayName);
+  if(!input) return;
+  const val = input.value.trim();
+  if(!val) return;
+  const day = _weeklyPlan.find(d => d.day === dayName);
+  if(!day) return;
+  if(!day.exercises) day.exercises = [];
+
+  // Parse "Nordic curl 3×6" or "Nordic curl 3x6" pattern
+  const match = val.match(/^(.+?)\s+(\d+)[×x]([^\s]+)\s*$/);
+  const name  = match ? match[1].trim() : val;
+  const sets  = match ? match[2] : '3';
+  const reps  = match ? match[3] : '—';
+
+  day.exercises.push({ name, sets, reps, load: '', notes: '' });
+  OB.train = OB.train || {};
+  OB.train.weeklyPlan = _weeklyPlan;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  input.value = '';
+  selectDay(dayName);
+
+  // Offer coach consultation
+  const chatInput = document.getElementById('train-chat-input');
+  if(chatInput && !chatInput.value) {
+    chatInput.placeholder = `Ask: how does "${name}" fit into ${dayName}?`;
+    setTimeout(() => { if(!chatInput.value) chatInput.placeholder = 'e.g. make bench 5×5, swap to PPL 6 days, add face pulls Wednesday…'; }, 5000);
+  }
 }
 
 /* ══════════════════════════════════════════

@@ -54,8 +54,17 @@ function matchProtocols(sport) {
 
 const BASE_SYSTEM = `You are an elite sports performance coach. Return ONLY compact single-line JSON — no newlines, no indentation, no preamble.
 
-FIELDS (British English, keep each string under 20 words):
-sport_profile(str), focus(str), key_risk(str), pb_test(arr 2), drills(arr 3), plyos(arr 3), isos(arr 2), nutrition(arr 2), recovery(arr 2), supplements(arr 2)
+FIELDS (British English):
+- sport_profile: 1 sentence, their context + level
+- focus: the #1 priority lever right now, 1 sentence
+- key_risk: biggest injury/performance risk, 1 sentence
+- pb_test: ARRAY of 3 — format each as "Test name: exact protocol (how to measure) — target by timeframe"
+- drills: ARRAY of 5 — format each as "Exercise sets×reps/dist — WHY: what athletic quality it builds for their sport/position"
+- plyos: ARRAY of 5 — format each as "Exercise volume — WHY: what it develops (vertical jump / sprint speed / reactive strength etc)"
+- isos: ARRAY of 3 — format each as "Exercise duration/sets — WHY: injury prevention or stability function"
+- nutrition: ARRAY of 2, max 20 words each
+- recovery: ARRAY of 2, max 15 words each
+- supplements: ARRAY of 2, format "name dose timing"
 
 SPORT PROTOCOL (use these exact exercises):
 `
