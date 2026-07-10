@@ -485,7 +485,6 @@
     .al-textarea{width:100%;background:var(--s1);border:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:13px;font-weight:300;padding:12px 14px;resize:none;height:80px;line-height:1.6;box-sizing:border-box;transition:border-color .2s}
     .al-textarea:focus{outline:none;border-color:rgba(44,212,196,.4)}
     .al-textarea::placeholder{color:rgba(255,255,255,.18)}
-    .al-nav{display:flex;align-items:center;gap:10px;margin-top:20px}
     .al-back{background:none;border:1px solid var(--border);color:var(--dim);font-family:var(--B);font-size:12px;padding:10px 16px;cursor:pointer;transition:all .2s}
     .al-back:hover{border-color:var(--muted);color:var(--muted)}
     .al-protocol-section{margin-bottom:16px}
@@ -613,11 +612,21 @@
     .lab-cta-sec{width:100%;padding:13px;background:transparent;color:var(--teal);
       font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.08em;
       text-transform:uppercase;border:1px solid rgba(44,212,196,.3);cursor:pointer;margin-top:8px}
-    /* Lab question nav — fixed above bottom nav bar */
-    .lab-q-nav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:8px;
+    /* Lab sticky footer — sticks to bottom of #content scroll area, above bottom nav */
+    .lab-sticky-foot{position:sticky;bottom:0;z-index:10;
       background:rgba(0,0,0,.97);backdrop-filter:blur(16px);
-      padding:10px 20px calc(10px + 54px + env(safe-area-inset-bottom,0px));
-      border-top:1px solid var(--border)}
+      border-top:1px solid var(--border);margin:8px -20px 0;padding:10px 20px 14px}
+    .lab-sticky-foot .lab-cta{margin-top:0}
+    /* Hormone lab phase-2 question nav */
+    .lab-q-nav{position:sticky;bottom:0;z-index:10;display:flex;gap:8px;
+      background:rgba(0,0,0,.97);backdrop-filter:blur(16px);
+      padding:10px 0 14px;border-top:1px solid var(--border);margin:16px -20px 0;padding-left:20px;padding-right:20px}
+    /* Athlete lab phase nav (back + submit) */
+    .al-nav{display:flex;align-items:center;gap:10px;
+      position:sticky;bottom:0;z-index:10;
+      background:rgba(0,0,0,.97);backdrop-filter:blur(16px);
+      border-top:1px solid var(--border);margin:8px -20px 0;padding:10px 20px 14px}
+    .al-nav .lab-cta,.al-nav .al-back{margin-top:0}
     /* ── STEPS CARD ── */
     .steps-card{background:var(--s1);border:1px solid var(--border);padding:16px;margin-bottom:12px}
     .steps-bar{background:var(--border);height:3px;margin-bottom:12px;overflow:hidden}
@@ -934,11 +943,13 @@
         <p style="font-size:13px;color:var(--muted);margin-bottom:4px;line-height:1.6">What are you currently struggling with? Select everything that applies.</p>
         <div class="lab-pain-grid" id="lab-pain-grid"></div>
         <div id="lab-p1-error" style="font-size:12px;color:#f87171;display:none;margin-bottom:8px">Select at least one to continue.</div>
-        <button class="lab-cta" onclick="labPhase1Next()">Start Assessment →</button>
+        <div class="lab-sticky-foot">
+          <button class="lab-cta" onclick="labPhase1Next()">Start Assessment →</button>
+        </div>
       </div>
 
       <!-- Phase 2: Questions -->
-      <div id="lab-phase-2" class="lab-phase" style="padding-bottom:160px">
+      <div id="lab-phase-2" class="lab-phase">
         <div class="lab-progress"><div class="lab-progress-fill" id="lab-progress-fill" style="width:0%"></div></div>
         <div class="lab-q-label" id="lab-q-category"></div>
         <div class="lab-q-text" id="lab-q-text"></div>
@@ -1004,7 +1015,9 @@
             <button class="al-chip" data-val="other" onclick="alPickSport(this)"><span class="al-chip-icon">➕</span>Other</button>
           </div>
           <div id="al-p1-err" style="font-size:12px;color:#f87171;display:none;margin:-8px 0 10px">Select at least one to continue.</div>
-          <button class="lab-cta" onclick="alNext(1)">Next →</button>
+          <div class="lab-sticky-foot">
+            <button class="lab-cta" onclick="alNext(1)">Next →</button>
+          </div>
         </div>
 
         <!-- AL Phase 2: Goals + Season -->
@@ -4134,11 +4147,15 @@ function alRenderResults(data) {
   const el = document.getElementById('al-results-content');
   if(!el || !data) return;
   const sections = [
-    { label:'Training Protocol',  key:'training' },
-    { label:'Nutrition Strategy', key:'nutrition' },
-    { label:'Recovery Methods',   key:'recovery' },
-    { label:'Supplements',        key:'supplements' },
-    { label:'Lifestyle',          key:'lifestyle' },
+    { label:'PB Benchmarks & Tests', key:'pb_test',   color:'rgba(251,191,36,.35)' },
+    { label:'Drills & Speed Work',   key:'drills',    color:'rgba(44,212,196,.25)' },
+    { label:'Plyometrics',           key:'plyos',     color:'rgba(44,212,196,.25)' },
+    { label:'Isometrics',            key:'isos',      color:'rgba(44,212,196,.25)' },
+    { label:'Training Protocol',     key:'training',  color:'rgba(44,212,196,.25)' },
+    { label:'Nutrition Strategy',    key:'nutrition', color:'rgba(44,212,196,.25)' },
+    { label:'Recovery Methods',      key:'recovery',  color:'rgba(44,212,196,.25)' },
+    { label:'Supplements',           key:'supplements',color:'rgba(44,212,196,.25)' },
+    { label:'Lifestyle',             key:'lifestyle', color:'rgba(44,212,196,.25)' },
   ];
   el.innerHTML = `
     ${data.sport_profile ? `<div style="margin-bottom:16px">
@@ -4155,9 +4172,10 @@ function alRenderResults(data) {
     ${sections.map(s => {
       const items = data[s.key];
       if(!items?.length) return '';
+      const bdr = s.color || 'rgba(44,212,196,.25)';
       return `<div class="al-protocol-section">
         <div class="al-protocol-label">${s.label}</div>
-        <div class="al-protocol-items">${items.map(item=>`<div class="al-protocol-item">${escHtml(item)}</div>`).join('')}</div>
+        <div class="al-protocol-items">${items.map(item=>`<div class="al-protocol-item" style="border-left-color:${bdr}">${escHtml(item)}</div>`).join('')}</div>
       </div>`;
     }).join('')}
   `;
