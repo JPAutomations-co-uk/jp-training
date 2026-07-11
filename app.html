@@ -152,6 +152,108 @@
       stroke-linecap:round;stroke-linejoin:round;opacity:0}
     .set-done.checked svg{opacity:1}
 
+    /* ── TRAINING OS — NEW COMPONENTS ── */
+    .pb-badge{display:inline-flex;align-items:center;padding:2px 7px;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.35);color:#ffd700;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-left:6px;flex-shrink:0}
+    .overload-hint{display:inline-flex;align-items:center;padding:2px 7px;background:rgba(44,212,196,.08);border:1px solid rgba(44,212,196,.25);color:var(--teal);font-size:9px;font-weight:700;letter-spacing:.06em;flex-shrink:0;cursor:default}
+    .last-session-label{font-size:10px;color:var(--dim);margin-top:2px;margin-bottom:8px;font-style:italic}
+    .progress-btn{width:26px;height:26px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--dim);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;padding:0;line-height:1}
+    .progress-btn:hover{border-color:rgba(44,212,196,.4);color:var(--teal)}
+    .ex-lib-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--s1);border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+    .ex-lib-row:hover{background:rgba(44,212,196,.04)}
+    .ex-lib-row:last-child{border-bottom:none}
+    .ex-lib-name{flex:1;font-size:13px;font-weight:500;color:var(--white)}
+    .ex-lib-muscles{font-size:10px;color:var(--dim);margin-top:1px}
+    .ex-lib-add{width:28px;height:28px;background:none;border:1px solid rgba(44,212,196,.3);color:var(--teal);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;padding:0;line-height:1}
+    .ex-lib-add:hover{background:rgba(44,212,196,.12)}
+    .drag-handle{color:var(--dim);cursor:grab;font-size:14px;padding:0 4px;flex-shrink:0;user-select:none;display:flex;align-items:center}
+    .drag-handle:active{cursor:grabbing}
+    .pb-split-card{background:var(--s1);border:2px solid var(--border);padding:16px;cursor:pointer;transition:all .2s;position:relative}
+    .pb-split-card:hover{border-color:rgba(44,212,196,.35)}
+    .pb-split-card.recommended{border-color:rgba(255,215,0,.4);background:rgba(255,215,0,.03)}
+    .pb-split-card.selected{border-color:var(--teal);background:rgba(44,212,196,.06)}
+    .pb-split-name{font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+    .pb-split-freq{font-size:11px;color:var(--muted);margin-bottom:4px}
+    .pb-split-tag{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
+    .pb-split-rec{position:absolute;top:10px;right:10px;font-size:9px;font-weight:700;letter-spacing:.08em;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);color:#ffd700;padding:2px 6px}
+    .pb-day-card{background:var(--s1);border:1px solid var(--border);margin-bottom:10px}
+    .pb-day-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+    .pb-day-name{font-family:var(--D);font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;outline:none;background:transparent;color:var(--white);border:none;min-width:0;flex:1}
+    .pb-day-name:focus{border-bottom:1px solid rgba(44,212,196,.4)}
+    .pb-day-rest-toggle{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;transition:all .15s;flex-shrink:0}
+    .pb-day-rest-toggle.rest-active{border-color:rgba(255,107,107,.3);color:#f87171;background:rgba(255,107,107,.06)}
+    .pb-ex-row{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04)}
+    .pb-ex-row:last-child{border-bottom:none}
+    .pb-ex-name{flex:1;font-size:13px;font-weight:500;color:var(--white)}
+    .pb-ex-spec{font-size:11px;color:var(--dim);white-space:nowrap}
+    .pb-ex-del{width:22px;height:22px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:color .15s}
+    .pb-ex-del:hover{color:#f87171}
+    .pb-add-ex-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;background:none;border:none;color:var(--teal);font-size:12px;font-weight:600;cursor:pointer;width:100%;text-align:left;border-top:1px dashed rgba(44,212,196,.15);transition:background .15s;font-family:var(--B)}
+    .pb-add-ex-btn:hover{background:rgba(44,212,196,.04)}
+    .pb-lab-hint-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:none;border:none;color:var(--dim);font-size:11px;cursor:pointer;font-family:var(--B);transition:color .15s}
+    .pb-lab-hint-btn:hover{color:var(--teal)}
+    .pb-lab-panel{background:rgba(44,212,196,.03);border:1px solid rgba(44,212,196,.12);padding:12px 14px;margin:0 14px 10px}
+    .pb-lab-panel-title{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+    .pb-lab-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(44,212,196,.08);font-size:12px;color:var(--muted)}
+    .pb-lab-item:last-child{border-bottom:none}
+    .pb-lab-item-add{background:none;border:1px solid rgba(44,212,196,.25);color:var(--teal);font-size:10px;font-weight:700;padding:2px 8px;cursor:pointer;letter-spacing:.06em;transition:all .15s}
+    .pb-lab-item-add:hover{background:rgba(44,212,196,.1)}
+    /* Plan builder overlay */
+    #plan-builder{display:none;position:fixed;inset:0;z-index:400;background:var(--black);flex-direction:column;overflow:hidden}
+    #plan-builder.open{display:flex}
+    .pb-topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:56px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .pb-title{font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+    .pb-close-btn{background:none;border:none;color:var(--dim);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;transition:color .2s}
+    .pb-close-btn:hover{color:var(--white)}
+    .pb-body{flex:1;overflow-y:auto;padding:20px}
+    .pb-footer{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--border);background:rgba(0,0,0,.97);backdrop-filter:blur(16px);flex-shrink:0}
+    .pb-step-label{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:16px}
+    .pb-split-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    /* Exercise library bottom sheet */
+    #ex-library{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);display:none;flex-direction:column;justify-content:flex-end}
+    #ex-library.open{display:flex}
+    .ex-lib-sheet{background:var(--s1);border-top:1px solid var(--border);max-height:80vh;display:flex;flex-direction:column}
+    .ex-lib-header{padding:16px 20px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .ex-lib-title{font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+    .ex-lib-search{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);padding:10px 12px;color:var(--white);font-family:var(--B);font-size:13px;outline:none;transition:border-color .2s}
+    .ex-lib-search:focus{border-color:rgba(44,212,196,.5)}
+    .ex-lib-search::placeholder{color:var(--dim)}
+    .ex-lib-filters{display:flex;gap:6px;overflow-x:auto;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;scrollbar-width:none}
+    .ex-lib-chip{padding:5px 12px;background:var(--s2);border:1px solid var(--border);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;font-family:var(--B)}
+    .ex-lib-chip.active{border-color:rgba(44,212,196,.4);background:rgba(44,212,196,.08);color:var(--teal)}
+    #ex-list{flex:1;overflow-y:auto}
+    .ex-lib-group{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);padding:10px 16px 4px;position:sticky;top:0;background:var(--s1)}
+    .ex-lib-empty{text-align:center;padding:32px 16px;color:var(--dim);font-size:13px}
+    /* Exercise progress sheet */
+    #ex-progress-sheet{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);display:none;flex-direction:column;justify-content:flex-end}
+    #ex-progress-sheet.open{display:flex}
+    .ep-sheet{background:var(--s1);border-top:1px solid var(--border);max-height:85vh;display:flex;flex-direction:column}
+    .ep-header{padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .ep-name{font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+    .ep-pb-line{font-size:12px;color:var(--teal)}
+    .ep-body{flex:1;overflow-y:auto;padding:16px 20px}
+    .ep-sparkline{margin-bottom:16px}
+    .ep-hist-hdr{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4px;padding:6px 0;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+    .ep-hist-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;color:var(--muted)}
+    .ep-hist-row:last-child{border-bottom:none}
+    .ep-hist-row span:first-child{color:var(--white)}
+    .ep-close{width:100%;padding:14px;background:none;border:none;border-top:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:13px;cursor:pointer;flex-shrink:0}
+    /* Empty state for train pane */
+    #train-empty-state{text-align:center;padding:32px 16px}
+    .train-empty-cta{display:inline-block;margin-top:12px;padding:14px 32px;background:var(--teal);color:#000;font-family:var(--D);font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer}
+    /* Edit plan button */
+    .edit-plan-btn{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:6px 12px;background:transparent;border:1px solid rgba(44,212,196,.3);color:var(--teal);cursor:pointer;font-family:var(--B);transition:all .2s;flex-shrink:0}
+    .edit-plan-btn:hover{background:rgba(44,212,196,.08)}
+    /* Exercise library items */
+    .ex-lib-item{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s;gap:10px}
+    .ex-lib-item:hover,.ex-lib-item:active{background:rgba(255,255,255,.03)}
+    .ex-lib-item-name{font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px}
+    .ex-lib-item-muscles{font-size:11px;color:var(--dim)}
+    .ex-lib-item-add{font-size:11px;font-weight:700;color:var(--teal);white-space:nowrap;flex-shrink:0;padding:3px 8px;border:1px solid rgba(44,212,196,.25);transition:background .15s}
+    /* Plan builder day block */
+    .pb-day-block{border:1px solid var(--border);background:var(--s1);margin-bottom:10px}
+    .pb-ex-item{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+    .pb-ex-item:last-child{border-bottom:none}
+
     /* ── EAT ── */
     .macro-bar-wrap{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:20px}
     .macro-tile{background:var(--s1);border:1px solid var(--border);padding:14px;text-align:center}
@@ -798,7 +900,15 @@
           <div class="sh-title">Train</div>
           <p class="sh-sub" id="train-sub"></p>
         </div>
-        <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('train')">Edit profile</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:8px">
+          <button class="edit-plan-btn" onclick="showPlanBuilder()">Edit Plan</button>
+          <button class="ob-edit-btn" onclick="showOnboarding('train')">Edit profile</button>
+        </div>
+      </div>
+      <div id="train-empty-state" style="display:none">
+        <div class="sh-sub" style="margin-bottom:4px">No training plan set up yet.</div>
+        <p style="font-size:12px;color:var(--dim);margin-bottom:12px">Build your weekly plan with exercises, sets, and reps in under 2 minutes.</p>
+        <button class="train-empty-cta" onclick="showPlanBuilder()">Build Your Plan →</button>
       </div>
 
       <!-- Section 1: Weekly calendar -->
@@ -1160,6 +1270,55 @@
       <div class="al-picker-title">Add to which day?</div>
       <div id="al-picker-days"></div>
       <button class="al-picker-cancel" onclick="alCancelPicker()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ══ PLAN BUILDER OVERLAY ══ -->
+  <div id="plan-builder">
+    <div class="pb-topbar">
+      <span class="pb-title" id="pb-topbar-title">Build Your Plan</span>
+      <button class="pb-close-btn" onclick="hidePlanBuilder()">✕</button>
+    </div>
+    <div class="pb-body" id="pb-body"></div>
+    <div class="pb-footer" id="pb-footer">
+      <button id="pb-back-btn" style="padding:14px 20px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:none" onclick="renderPlanBuilderStep1()">← Back</button>
+      <button id="pb-save-btn" style="flex:1;padding:14px;background:var(--teal);border:none;font-family:var(--D);font-size:15px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#000;cursor:pointer;display:none" onclick="savePlanBuilderPlan()">Save Plan →</button>
+    </div>
+  </div>
+
+  <!-- ══ EXERCISE LIBRARY SHEET ══ -->
+  <div id="ex-library" onclick="if(event.target===this)hideExLibrary()">
+    <div class="ex-lib-sheet">
+      <div class="ex-lib-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="ex-lib-title">Exercise Library</div>
+          <button style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:2px 6px;line-height:1" onclick="hideExLibrary()">✕</button>
+        </div>
+        <input class="ex-lib-search" id="ex-search" placeholder="Search exercises..." oninput="filterExLibrary()">
+      </div>
+      <div class="ex-lib-filters" id="ex-lib-filters">
+        <button class="ex-lib-chip active" data-cat="all" onclick="setExLibCat(this,'all')">All</button>
+        <button class="ex-lib-chip" data-cat="strength" onclick="setExLibCat(this,'strength')">Strength</button>
+        <button class="ex-lib-chip" data-cat="hypertrophy" onclick="setExLibCat(this,'hypertrophy')">Hypertrophy</button>
+        <button class="ex-lib-chip" data-cat="power" onclick="setExLibCat(this,'power')">Power</button>
+        <button class="ex-lib-chip" data-cat="speed" onclick="setExLibCat(this,'speed')">Speed</button>
+        <button class="ex-lib-chip" data-cat="iso" onclick="setExLibCat(this,'iso')">Isometric</button>
+        <button class="ex-lib-chip" data-cat="conditioning" onclick="setExLibCat(this,'conditioning')">Conditioning</button>
+      </div>
+      <div id="ex-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ EXERCISE PROGRESS SHEET ══ -->
+  <div id="ex-progress-sheet" onclick="if(event.target===this)hideExProgress()">
+    <div class="ep-sheet">
+      <div class="ep-header" style="position:relative">
+        <div class="ep-name" id="ep-name"></div>
+        <div class="ep-pb-line" id="ep-pb-line"></div>
+        <button style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:2px 6px;line-height:1" onclick="hideExProgress()">✕</button>
+      </div>
+      <div class="ep-body" id="ep-body"></div>
+      <button class="ep-close" onclick="hideExProgress()">Close</button>
     </div>
   </div>
 
@@ -1737,13 +1896,15 @@ function initTrain(){
 
   if(OB.train?.weeklyPlan?.length) {
     renderWeeklyCalendar(OB.train.weeklyPlan);
+    const es = document.getElementById('train-empty-state');
+    if(es) es.style.display = 'none';
   } else {
-    document.getElementById('train-day-detail').innerHTML = `
-      <div class="card" style="text-align:center;padding:24px 16px">
-        <p style="color:var(--muted);font-size:13px;margin:0">No plan set up yet.<br>Tell your coach below what you want to train.</p>
-      </div>`;
+    const es = document.getElementById('train-empty-state');
+    if(es) es.style.display = '';
     document.getElementById('train-sub').textContent = 'Set up your plan below';
   }
+  // Fire and forget — loads history into _lastSessionData and _pbData
+  loadTrainingHistory();
 }
 
 let _activeSession = null; // {name, exercises: [{name, sets, reps, load}]}
@@ -1813,9 +1974,19 @@ function renderDayDetail(day, isToday) {
     if(isToday) {
       const targetRep = String(ex.reps||ex.rep||'').split('–')[0].split('-')[0].replace(/[^0-9]/g,'') || '';
       const targetKg  = String(ex.load||'').replace(/[^0-9.]/g,'') || '';
+      const lastData = _lastSessionData[ex.name];
+      const pbInfo = _pbData[ex.name];
+      const overload = _overloadEx.has(ex.name);
+      const lastLabel = lastData
+        ? `Last: ${lastData.sets.length}×${lastData.sets.map(s=>s.reps).join('/')} @ ${Math.max(...lastData.sets.map(s=>s.weight_kg))}kg`
+        : '';
       return `<div class="workout-ex">
-        <div class="ex-name">${escHtml(ex.name)}</div>
-        ${ex.notes?`<div style="font-size:11px;color:var(--dim);margin:-4px 0 6px">${escHtml(ex.notes)}</div>`:''}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div class="ex-name" style="margin:0;flex:1;min-width:0">${escHtml(ex.name)}</div>
+          <button class="progress-btn" onclick="showExProgress('${escHtml(ex.name)}')" title="View progress">↗</button>
+        </div>
+        ${lastLabel ? `<div class="last-session-label">${escHtml(lastLabel)}${overload ? ' <span class="overload-hint">+2.5kg ↑</span>' : ''}</div>` : ''}
+        ${ex.notes?`<div style="font-size:11px;color:var(--dim);margin-bottom:6px">${escHtml(ex.notes)}</div>`:''}
         <div class="ex-sets">
           <div class="set-row" style="margin-bottom:4px">
             <span class="set-num"></span>
@@ -1823,16 +1994,22 @@ function renderDayDetail(day, isToday) {
             <span class="set-unit" style="text-align:center">kg</span>
             <span class="set-unit"></span>
           </div>
-          ${Array.from({length:+ex.sets||3},(_,si)=>`
-            <div class="set-row">
+          ${Array.from({length:+ex.sets||3},(_,si)=>{
+            const ls = lastData?.sets[si];
+            const prefillReps = ls?.reps || targetRep || '';
+            const suggestKg = overload && ls ? (ls.weight_kg + 2.5) : (ls?.weight_kg || +targetKg || 0);
+            const prefillKg = suggestKg || '';
+            return `
+            <div class="set-row" id="set-row-${ei}-${si}">
               <span class="set-num">${si+1}</span>
-              <input class="set-field" type="number" min="0" placeholder="${targetRep||'—'}" id="reps-${ei}-${si}">
-              <input class="set-field" type="number" min="0" step="2.5" placeholder="${targetKg||'0'}" id="wt-${ei}-${si}">
+              <input class="set-field" type="number" min="0" placeholder="${prefillReps||'—'}" id="reps-${ei}-${si}">
+              <input class="set-field" type="number" min="0" step="2.5" placeholder="${prefillKg||'0'}" id="wt-${ei}-${si}"
+                onblur="checkPbOnInput(this,'${escHtml(ex.name)}','${ei}-${si}')">
               <button class="set-done" id="sd-${ei}-${si}" onclick="checkSet('${ei}-${si}')">
                 <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
               </button>
             </div>
-          `).join('')}
+          `;}).join('')}
         </div>
       </div>`;
     } else {
@@ -1942,6 +2119,30 @@ async function saveWorkout(){
     }
   });
   if(sets.length)await sb.from('session_sets').insert(sets);
+  // PB detection & overload tracking
+  const newPBs = [];
+  if(_activeSession) {
+    _activeSession.exercises.forEach((ex, ei) => {
+      const exName = ex.name;
+      const numSets = +ex.sets || 3;
+      const targetRep = parseInt(String(ex.reps||ex.rep||'').split('–')[0].split('-')[0]) || 0;
+      let topWt = 0;
+      let allHitTarget = true;
+      for(let si=0; si<numSets; si++) {
+        const wt = +(document.getElementById(`wt-${ei}-${si}`)?.value) || 0;
+        const reps = +(document.getElementById(`reps-${ei}-${si}`)?.value) || 0;
+        if(wt > topWt) topWt = wt;
+        if(targetRep && reps < targetRep) allHitTarget = false;
+      }
+      const existing = _pbData[exName];
+      if(topWt > 0 && (!existing || topWt > existing.maxWeight)) {
+        newPBs.push(exName);
+        _pbData[exName] = { ...(existing||{}), maxWeight: topWt };
+      }
+      if(allHitTarget && targetRep) _overloadEx.add(exName);
+    });
+  }
+  newPBs.forEach(n => showToast(`🏅 New PB on ${n}!`));
   showToast('Session saved');
   await earnXP('workout_save', TODAY, 75);
   // Bonus: all sets ticked
@@ -4632,6 +4833,629 @@ async function openLeaderboard() {
 
 function closeLeaderboard() {
   document.getElementById('lb-modal')?.classList.remove('open');
+}
+
+/* ════════════════════════════════════════
+   TRAINING OS — STATE
+════════════════════════════════════════ */
+let _lastSessionData = {};   // { [exName]: { date, sets:[{reps,weight_kg}] } }
+let _pbData = {};            // { [exName]: { maxWeight, date } }
+const _overloadEx = new Set(); // exercises flagged for +2.5kg next session
+let _exerciseHistory = {};   // { [exName]: [{date,sets,topWt,totalVol,est1rm}] }
+
+/* ── Exercise Library ── */
+const EX_LIB = [
+  // SQUAT / QUAD
+  {id:'back_squat',      name:'Back Squat',               cat:'strength',    type:'squat',   muscles:['quads','glutes','hamstrings'],       eq:'barbell'},
+  {id:'front_squat',     name:'Front Squat',              cat:'strength',    type:'squat',   muscles:['quads','glutes','core'],             eq:'barbell'},
+  {id:'bulgarian_split', name:'Bulgarian Split Squat',    cat:'hypertrophy', type:'squat',   muscles:['quads','glutes','hip flexors'],      eq:'dumbbells'},
+  {id:'box_squat',       name:'Box Squat',                cat:'strength',    type:'squat',   muscles:['quads','glutes','hamstrings'],       eq:'barbell'},
+  {id:'hack_squat',      name:'Hack Squat',               cat:'hypertrophy', type:'squat',   muscles:['quads'],                            eq:'machine'},
+  {id:'leg_press',       name:'Leg Press',                cat:'hypertrophy', type:'squat',   muscles:['quads','glutes'],                   eq:'machine'},
+  {id:'step_up',         name:'Step Up',                  cat:'hypertrophy', type:'squat',   muscles:['quads','glutes'],                   eq:'dumbbells'},
+  // HINGE / POSTERIOR
+  {id:'deadlift',        name:'Deadlift',                 cat:'strength',    type:'hinge',   muscles:['hamstrings','glutes','back'],        eq:'barbell'},
+  {id:'rdl',             name:'Romanian Deadlift',        cat:'hypertrophy', type:'hinge',   muscles:['hamstrings','glutes'],               eq:'barbell'},
+  {id:'trap_bar_dl',     name:'Trap Bar Deadlift',        cat:'strength',    type:'hinge',   muscles:['quads','hamstrings','glutes','back'],eq:'trap bar'},
+  {id:'single_leg_rdl',  name:'Single Leg RDL',           cat:'hypertrophy', type:'hinge',   muscles:['hamstrings','glutes'],               eq:'dumbbells'},
+  {id:'hip_thrust',      name:'Hip Thrust',               cat:'hypertrophy', type:'hinge',   muscles:['glutes'],                           eq:'barbell'},
+  {id:'good_morning',    name:'Good Morning',             cat:'strength',    type:'hinge',   muscles:['hamstrings','glutes','lower back'],  eq:'barbell'},
+  {id:'nordic_curl',     name:'Nordic Curl',              cat:'strength',    type:'hinge',   muscles:['hamstrings'],                       eq:'bodyweight'},
+  // HORIZONTAL PUSH
+  {id:'bench_press',     name:'Bench Press',              cat:'strength',    type:'push_h',  muscles:['chest','triceps','front delt'],      eq:'barbell'},
+  {id:'incline_press',   name:'Incline Bench Press',      cat:'hypertrophy', type:'push_h',  muscles:['upper chest','triceps','front delt'],eq:'barbell'},
+  {id:'db_bench',        name:'Dumbbell Bench Press',     cat:'hypertrophy', type:'push_h',  muscles:['chest','triceps','front delt'],      eq:'dumbbells'},
+  {id:'push_up',         name:'Push Up',                  cat:'hypertrophy', type:'push_h',  muscles:['chest','triceps','front delt'],      eq:'bodyweight'},
+  {id:'cable_fly',       name:'Cable Fly',                cat:'hypertrophy', type:'push_h',  muscles:['chest'],                            eq:'cable'},
+  // VERTICAL PUSH / SHOULDER
+  {id:'ohp',             name:'Overhead Press',           cat:'strength',    type:'push_v',  muscles:['delts','triceps','upper traps'],     eq:'barbell'},
+  {id:'db_ohp',          name:'Dumbbell Shoulder Press',  cat:'hypertrophy', type:'push_v',  muscles:['delts','triceps'],                  eq:'dumbbells'},
+  {id:'lateral_raise',   name:'Lateral Raise',            cat:'hypertrophy', type:'push_v',  muscles:['lateral delt'],                     eq:'dumbbells'},
+  {id:'face_pull',       name:'Face Pull',                cat:'hypertrophy', type:'push_v',  muscles:['rear delt','external rotators'],    eq:'cable'},
+  {id:'arnold_press',    name:'Arnold Press',             cat:'hypertrophy', type:'push_v',  muscles:['all delts'],                        eq:'dumbbells'},
+  {id:'push_press',      name:'Push Press',               cat:'power',       type:'push_v',  muscles:['delts','triceps','glutes'],          eq:'barbell'},
+  // HORIZONTAL PULL
+  {id:'barbell_row',     name:'Barbell Row',              cat:'strength',    type:'pull_h',  muscles:['lats','rhomboids','biceps'],         eq:'barbell'},
+  {id:'db_row',          name:'Dumbbell Row',             cat:'hypertrophy', type:'pull_h',  muscles:['lats','rhomboids','biceps'],         eq:'dumbbells'},
+  {id:'cable_row',       name:'Cable Row',                cat:'hypertrophy', type:'pull_h',  muscles:['lats','rhomboids','biceps'],         eq:'cable'},
+  {id:'chest_supported', name:'Chest Supported Row',      cat:'hypertrophy', type:'pull_h',  muscles:['upper back','rear delts','biceps'],  eq:'dumbbells'},
+  {id:'t_bar_row',       name:'T-Bar Row',                cat:'hypertrophy', type:'pull_h',  muscles:['lats','rhomboids'],                  eq:'barbell'},
+  // VERTICAL PULL
+  {id:'pull_up',         name:'Pull Up',                  cat:'strength',    type:'pull_v',  muscles:['lats','biceps','rear delt'],         eq:'bodyweight'},
+  {id:'chin_up',         name:'Chin Up',                  cat:'hypertrophy', type:'pull_v',  muscles:['lats','biceps'],                    eq:'bodyweight'},
+  {id:'lat_pulldown',    name:'Lat Pulldown',             cat:'hypertrophy', type:'pull_v',  muscles:['lats','biceps'],                    eq:'machine'},
+  {id:'straight_arm_pd', name:'Straight Arm Pulldown',    cat:'hypertrophy', type:'pull_v',  muscles:['lats'],                             eq:'cable'},
+  // BICEPS
+  {id:'barbell_curl',    name:'Barbell Curl',             cat:'hypertrophy', type:'biceps',  muscles:['biceps','brachialis'],              eq:'barbell'},
+  {id:'incline_db_curl', name:'Incline Dumbbell Curl',    cat:'hypertrophy', type:'biceps',  muscles:['biceps long head'],                 eq:'dumbbells'},
+  {id:'hammer_curl',     name:'Hammer Curl',              cat:'hypertrophy', type:'biceps',  muscles:['brachialis','brachioradialis'],      eq:'dumbbells'},
+  {id:'cable_curl',      name:'Cable Curl',               cat:'hypertrophy', type:'biceps',  muscles:['biceps'],                           eq:'cable'},
+  // TRICEPS
+  {id:'cgbp',            name:'Close Grip Bench Press',   cat:'strength',    type:'triceps', muscles:['triceps','chest'],                  eq:'barbell'},
+  {id:'skull_crusher',   name:'Skull Crusher',            cat:'hypertrophy', type:'triceps', muscles:['triceps long head'],                eq:'barbell'},
+  {id:'tricep_dip',      name:'Tricep Dip',               cat:'hypertrophy', type:'triceps', muscles:['triceps','chest'],                  eq:'bodyweight'},
+  {id:'pushdown',        name:'Tricep Pushdown',          cat:'hypertrophy', type:'triceps', muscles:['triceps'],                          eq:'cable'},
+  {id:'overhead_ext',    name:'Overhead Tricep Extension',cat:'hypertrophy', type:'triceps', muscles:['triceps long head'],                eq:'dumbbells'},
+  // CORE
+  {id:'plank',           name:'Plank',                    cat:'iso',         type:'core',    muscles:['core'],                             eq:'bodyweight'},
+  {id:'ab_wheel',        name:'Ab Wheel Rollout',         cat:'strength',    type:'core',    muscles:['rectus abdominis','serratus'],      eq:'ab wheel'},
+  {id:'hanging_leg',     name:'Hanging Leg Raise',        cat:'hypertrophy', type:'core',    muscles:['rectus abdominis','hip flexors'],   eq:'bar'},
+  {id:'side_plank',      name:'Side Plank',               cat:'iso',         type:'core',    muscles:['obliques','glute med'],             eq:'bodyweight'},
+  {id:'dead_bug',        name:'Dead Bug',                 cat:'hypertrophy', type:'core',    muscles:['deep core','hip flexors'],          eq:'bodyweight'},
+  {id:'pallof_press',    name:'Pallof Press',             cat:'iso',         type:'core',    muscles:['obliques','deep core'],             eq:'cable'},
+  // CALVES
+  {id:'standing_calf',   name:'Standing Calf Raise',      cat:'hypertrophy', type:'calves',  muscles:['gastrocnemius'],                    eq:'machine'},
+  {id:'seated_calf',     name:'Seated Calf Raise',        cat:'hypertrophy', type:'calves',  muscles:['soleus'],                           eq:'machine'},
+  {id:'single_calf',     name:'Single Leg Calf Raise',    cat:'hypertrophy', type:'calves',  muscles:['gastrocnemius','soleus'],           eq:'bodyweight'},
+  // POWER / OLYMPIC
+  {id:'power_clean',     name:'Power Clean',              cat:'power',       type:'power',   muscles:['full body','traps','glutes'],       eq:'barbell'},
+  {id:'hang_clean',      name:'Hang Power Clean',         cat:'power',       type:'power',   muscles:['full body','traps','glutes'],       eq:'barbell'},
+  {id:'box_jump',        name:'Box Jump',                 cat:'power',       type:'plyo',    muscles:['quads','glutes','calves'],          eq:'box'},
+  {id:'broad_jump',      name:'Broad Jump',               cat:'power',       type:'plyo',    muscles:['quads','glutes','hamstrings'],      eq:'bodyweight'},
+  {id:'depth_jump',      name:'Depth Jump',               cat:'power',       type:'plyo',    muscles:['quads','calves','glutes'],          eq:'box'},
+  {id:'jump_squat',      name:'Jump Squat',               cat:'power',       type:'plyo',    muscles:['quads','glutes'],                   eq:'bodyweight'},
+  {id:'lateral_bound',   name:'Lateral Bound',            cat:'power',       type:'plyo',    muscles:['glutes','quads','adductors'],       eq:'bodyweight'},
+  {id:'pogo_jump',       name:'Pogo Jump',                cat:'power',       type:'plyo',    muscles:['calves','achilles'],                eq:'bodyweight'},
+  {id:'med_ball_throw',  name:'Med Ball Chest Throw',     cat:'power',       type:'power',   muscles:['chest','triceps','core'],           eq:'med ball'},
+  // SPEED / DRILLS
+  {id:'a_skip',          name:'A-Skip',                   cat:'speed',       type:'drill',   muscles:['hip flexors','calves'],             eq:'none'},
+  {id:'b_skip',          name:'B-Skip',                   cat:'speed',       type:'drill',   muscles:['hamstrings','hip flexors'],         eq:'none'},
+  {id:'high_knees',      name:'High Knees',               cat:'speed',       type:'drill',   muscles:['hip flexors','calves'],             eq:'none'},
+  {id:'wall_drive',      name:'Wall Drive',               cat:'speed',       type:'drill',   muscles:['hip flexors','glutes'],             eq:'none'},
+  {id:'resisted_sprint', name:'Resisted Sprint',          cat:'speed',       type:'drill',   muscles:['glutes','hamstrings','calves'],     eq:'sled'},
+  {id:'shuttle_run',     name:'5-10-5 Shuttle',           cat:'speed',       type:'drill',   muscles:['full body'],                        eq:'none'},
+  // ISOMETRICS
+  {id:'mid_thigh_pull',  name:'Mid Thigh Pull (ISO)',     cat:'iso',         type:'iso',     muscles:['hamstrings','glutes','back'],       eq:'barbell'},
+  {id:'iso_squat',       name:'ISO Squat Hold',           cat:'iso',         type:'iso',     muscles:['quads','glutes'],                   eq:'bodyweight'},
+  {id:'spanish_squat',   name:'Spanish Squat',            cat:'iso',         type:'iso',     muscles:['quads','glutes'],                   eq:'band'},
+  {id:'cph_plank',       name:'Copenhagen Plank',         cat:'iso',         type:'iso',     muscles:['adductors','core'],                 eq:'bench'},
+  {id:'split_squat_hold',name:'Split Squat Wall Hold',    cat:'iso',         type:'iso',     muscles:['quads','hip flexors'],              eq:'bodyweight'},
+  {id:'iso_bench',       name:'ISO Bench Press',          cat:'iso',         type:'iso',     muscles:['chest','triceps'],                  eq:'barbell'},
+  // CONDITIONING
+  {id:'prowler_push',    name:'Prowler Push',             cat:'conditioning',type:'conditioning',muscles:['full body'],                   eq:'sled'},
+  {id:'farmers_carry',   name:"Farmer's Carry",           cat:'conditioning',type:'conditioning',muscles:['traps','grip','core'],         eq:'dumbbells'},
+  {id:'battle_ropes',    name:'Battle Ropes',             cat:'conditioning',type:'conditioning',muscles:['shoulders','core'],            eq:'ropes'},
+  {id:'rowing',          name:'Rowing Ergometer',         cat:'conditioning',type:'conditioning',muscles:['full body'],                   eq:'rower'},
+  {id:'assault_bike',    name:'Assault Bike Intervals',   cat:'conditioning',type:'conditioning',muscles:['full body'],                   eq:'bike'},
+  {id:'kb_swing',        name:'Kettlebell Swing',         cat:'power',       type:'conditioning',muscles:['glutes','hamstrings','back'],  eq:'kettlebell'},
+  {id:'sled_drag',       name:'Sled Drag',                cat:'conditioning',type:'conditioning',muscles:['hamstrings','glutes'],         eq:'sled'},
+];
+
+/* ── Split Templates ── */
+const SPLIT_TEMPLATES = {
+  full_body: {
+    id:'full_body', label:'Full Body  3×/week', days:3,
+    description:'3 full-body sessions — best for beginners and those with 3 days available.',
+    schedule:[
+      {day:'Monday',   sessionName:'Full Body A', exercises:[{name:'Back Squat',sets:'4',reps:'5',load:'RPE 8'},{name:'Bench Press',sets:'3',reps:'8',load:'RPE 7'},{name:'Barbell Row',sets:'3',reps:'8',load:'RPE 7'},{name:'Romanian Deadlift',sets:'3',reps:'10',load:'RPE 7'},{name:'Plank',sets:'3',reps:'30s',load:'BW'}]},
+      {day:'Tuesday',  type:'rest',sessionName:'Rest'},
+      {day:'Wednesday',sessionName:'Full Body B', exercises:[{name:'Deadlift',sets:'4',reps:'4',load:'RPE 8'},{name:'Overhead Press',sets:'3',reps:'8',load:'RPE 7'},{name:'Pull Up',sets:'3',reps:'6–8',load:'BW'},{name:'Bulgarian Split Squat',sets:'3',reps:'10/leg',load:'RPE 7'},{name:'Dead Bug',sets:'3',reps:'10/side',load:'BW'}]},
+      {day:'Thursday', type:'rest',sessionName:'Rest'},
+      {day:'Friday',   sessionName:'Full Body C', exercises:[{name:'Back Squat',sets:'4',reps:'5',load:'RPE 8'},{name:'Incline Bench Press',sets:'3',reps:'10',load:'RPE 7'},{name:'Lat Pulldown',sets:'3',reps:'10',load:'RPE 7'},{name:'Hip Thrust',sets:'3',reps:'12',load:'RPE 7'},{name:'Ab Wheel Rollout',sets:'3',reps:'8',load:'BW'}]},
+      {day:'Saturday', type:'rest',sessionName:'Rest'},
+      {day:'Sunday',   type:'rest',sessionName:'Rest'},
+    ]
+  },
+  upper_lower: {
+    id:'upper_lower', label:'Upper / Lower  4×/week', days:4,
+    description:'4 sessions split upper/lower — strong balance of volume and frequency.',
+    schedule:[
+      {day:'Monday',   sessionName:'Upper A — Push', exercises:[{name:'Bench Press',sets:'4',reps:'5',load:'RPE 8'},{name:'Overhead Press',sets:'3',reps:'8',load:'RPE 7'},{name:'Barbell Row',sets:'3',reps:'8',load:'RPE 7'},{name:'Lat Pulldown',sets:'3',reps:'10',load:'RPE 7'},{name:'Lateral Raise',sets:'3',reps:'15',load:'RPE 8'},{name:'Tricep Pushdown',sets:'3',reps:'12',load:'RPE 8'}]},
+      {day:'Tuesday',  sessionName:'Lower A — Squat', exercises:[{name:'Back Squat',sets:'4',reps:'5',load:'RPE 8'},{name:'Romanian Deadlift',sets:'3',reps:'10',load:'RPE 7'},{name:'Bulgarian Split Squat',sets:'3',reps:'8/leg',load:'RPE 7'},{name:'Leg Press',sets:'3',reps:'12',load:'RPE 7'},{name:'Standing Calf Raise',sets:'4',reps:'12',load:'RPE 8'}]},
+      {day:'Wednesday',type:'rest',sessionName:'Rest'},
+      {day:'Thursday', sessionName:'Upper B — Pull', exercises:[{name:'Pull Up',sets:'4',reps:'6–8',load:'BW'},{name:'Dumbbell Row',sets:'3',reps:'10/side',load:'RPE 7'},{name:'Incline Bench Press',sets:'3',reps:'10',load:'RPE 7'},{name:'Face Pull',sets:'3',reps:'15',load:'RPE 8'},{name:'Barbell Curl',sets:'3',reps:'12',load:'RPE 8'},{name:'Skull Crusher',sets:'3',reps:'12',load:'RPE 7'}]},
+      {day:'Friday',   sessionName:'Lower B — Hinge', exercises:[{name:'Deadlift',sets:'4',reps:'4',load:'RPE 8'},{name:'Hip Thrust',sets:'3',reps:'10',load:'RPE 7'},{name:'Single Leg RDL',sets:'3',reps:'8/leg',load:'RPE 7'},{name:'Hack Squat',sets:'3',reps:'12',load:'RPE 7'},{name:'Nordic Curl',sets:'3',reps:'4–6',load:'BW'}]},
+      {day:'Saturday', type:'rest',sessionName:'Rest'},
+      {day:'Sunday',   type:'rest',sessionName:'Rest'},
+    ]
+  },
+  ppl: {
+    id:'ppl', label:'Push / Pull / Legs  6×/week', days:6,
+    description:'6-day PPL — high volume, best for experienced lifters wanting size and strength.',
+    schedule:[
+      {day:'Monday',   sessionName:'Push A', exercises:[{name:'Bench Press',sets:'4',reps:'5',load:'RPE 8'},{name:'Overhead Press',sets:'3',reps:'8',load:'RPE 7'},{name:'Incline Bench Press',sets:'3',reps:'10',load:'RPE 7'},{name:'Lateral Raise',sets:'4',reps:'15',load:'RPE 8'},{name:'Tricep Pushdown',sets:'3',reps:'12',load:'RPE 8'},{name:'Overhead Tricep Extension',sets:'3',reps:'12',load:'RPE 7'}]},
+      {day:'Tuesday',  sessionName:'Pull A', exercises:[{name:'Deadlift',sets:'4',reps:'4',load:'RPE 8'},{name:'Pull Up',sets:'4',reps:'6–8',load:'BW'},{name:'Barbell Row',sets:'3',reps:'8',load:'RPE 7'},{name:'Face Pull',sets:'3',reps:'15',load:'RPE 8'},{name:'Barbell Curl',sets:'3',reps:'12',load:'RPE 8'},{name:'Hammer Curl',sets:'3',reps:'12',load:'RPE 7'}]},
+      {day:'Wednesday',sessionName:'Legs A', exercises:[{name:'Back Squat',sets:'4',reps:'5',load:'RPE 8'},{name:'Romanian Deadlift',sets:'3',reps:'10',load:'RPE 7'},{name:'Bulgarian Split Squat',sets:'3',reps:'8/leg',load:'RPE 7'},{name:'Leg Press',sets:'3',reps:'12',load:'RPE 7'},{name:'Nordic Curl',sets:'3',reps:'4–6',load:'BW'},{name:'Standing Calf Raise',sets:'4',reps:'12',load:'RPE 8'}]},
+      {day:'Thursday', sessionName:'Push B', exercises:[{name:'Incline Bench Press',sets:'4',reps:'8',load:'RPE 7'},{name:'Dumbbell Shoulder Press',sets:'3',reps:'10',load:'RPE 7'},{name:'Dumbbell Bench Press',sets:'3',reps:'12',load:'RPE 7'},{name:'Arnold Press',sets:'3',reps:'10',load:'RPE 7'},{name:'Cable Fly',sets:'3',reps:'15',load:'RPE 8'},{name:'Skull Crusher',sets:'3',reps:'12',load:'RPE 7'}]},
+      {day:'Friday',   sessionName:'Pull B', exercises:[{name:'Trap Bar Deadlift',sets:'4',reps:'5',load:'RPE 8'},{name:'Lat Pulldown',sets:'3',reps:'10',load:'RPE 7'},{name:'Chest Supported Row',sets:'3',reps:'12',load:'RPE 7'},{name:'Straight Arm Pulldown',sets:'3',reps:'15',load:'RPE 8'},{name:'Incline Dumbbell Curl',sets:'3',reps:'12',load:'RPE 7'},{name:'Cable Curl',sets:'3',reps:'15',load:'RPE 8'}]},
+      {day:'Saturday', sessionName:'Legs B', exercises:[{name:'Back Squat',sets:'4',reps:'8',load:'RPE 7'},{name:'Hip Thrust',sets:'4',reps:'10',load:'RPE 7'},{name:'Box Squat',sets:'3',reps:'5',load:'RPE 8'},{name:'Single Leg RDL',sets:'3',reps:'8/leg',load:'RPE 7'},{name:'Hack Squat',sets:'3',reps:'15',load:'RPE 7'},{name:'Seated Calf Raise',sets:'4',reps:'15',load:'RPE 8'}]},
+      {day:'Sunday',   type:'rest',sessionName:'Rest'},
+    ]
+  },
+  strength: {
+    id:'strength', label:'Strength  4×/week', days:4,
+    description:'Powerlifting-style 4-day split built around the big 4 lifts.',
+    schedule:[
+      {day:'Monday',   sessionName:'Squat Day', exercises:[{name:'Back Squat',sets:'5',reps:'5',load:'RPE 8'},{name:'Box Squat',sets:'3',reps:'3',load:'90% 1RM'},{name:'Romanian Deadlift',sets:'3',reps:'8',load:'RPE 7'},{name:'Bulgarian Split Squat',sets:'3',reps:'6/leg',load:'RPE 7'},{name:'Ab Wheel Rollout',sets:'3',reps:'8',load:'BW'},{name:'Copenhagen Plank',sets:'3',reps:'20s/side',load:'BW'}]},
+      {day:'Tuesday',  sessionName:'Bench Day', exercises:[{name:'Bench Press',sets:'5',reps:'5',load:'RPE 8'},{name:'Close Grip Bench Press',sets:'3',reps:'5',load:'RPE 7'},{name:'Dumbbell Row',sets:'4',reps:'8/side',load:'RPE 7'},{name:'Face Pull',sets:'3',reps:'15',load:'RPE 8'},{name:'Tricep Dip',sets:'3',reps:'8–10',load:'BW'},{name:'Barbell Curl',sets:'3',reps:'10',load:'RPE 7'}]},
+      {day:'Wednesday',type:'rest',sessionName:'Rest'},
+      {day:'Thursday', sessionName:'Deadlift Day', exercises:[{name:'Deadlift',sets:'5',reps:'4',load:'RPE 8'},{name:'Trap Bar Deadlift',sets:'3',reps:'5',load:'RPE 7'},{name:'Nordic Curl',sets:'3',reps:'4–6',load:'BW'},{name:'Hip Thrust',sets:'3',reps:'8',load:'RPE 7'},{name:'Barbell Row',sets:'4',reps:'6',load:'RPE 7'},{name:'ISO Squat Hold',sets:'3',reps:'30s',load:'BW'}]},
+      {day:'Friday',   sessionName:'Press Day', exercises:[{name:'Overhead Press',sets:'5',reps:'5',load:'RPE 8'},{name:'Push Press',sets:'3',reps:'4',load:'RPE 8'},{name:'Incline Bench Press',sets:'3',reps:'8',load:'RPE 7'},{name:'Pull Up',sets:'4',reps:'6–8',load:'BW'},{name:'Lateral Raise',sets:'4',reps:'15',load:'RPE 8'},{name:'Plank',sets:'3',reps:'45s',load:'BW'}]},
+      {day:'Saturday', type:'rest',sessionName:'Rest'},
+      {day:'Sunday',   type:'rest',sessionName:'Rest'},
+    ]
+  },
+  athletic: {
+    id:'athletic', label:'Athletic  4×/week', days:4,
+    description:'Sport-focused plan — power, speed, and strength combined.',
+    schedule:[
+      {day:'Monday',   sessionName:'Lower Power', exercises:[{name:'Back Squat',sets:'4',reps:'4',load:'RPE 8'},{name:'Box Jump',sets:'4',reps:'5',load:'BW'},{name:'Deadlift',sets:'3',reps:'4',load:'RPE 8'},{name:'Broad Jump',sets:'3',reps:'5',load:'BW'},{name:'Nordic Curl',sets:'3',reps:'4–6',load:'BW'},{name:'Copenhagen Plank',sets:'3',reps:'20s/side',load:'BW'}]},
+      {day:'Tuesday',  sessionName:'Upper Power', exercises:[{name:'Bench Press',sets:'4',reps:'5',load:'RPE 8'},{name:'Pull Up',sets:'4',reps:'6',load:'BW'},{name:'Push Press',sets:'3',reps:'4',load:'RPE 8'},{name:'Barbell Row',sets:'3',reps:'6',load:'RPE 7'},{name:'Face Pull',sets:'3',reps:'15',load:'RPE 8'},{name:'Pallof Press',sets:'3',reps:'10/side',load:'RPE 7'}]},
+      {day:'Wednesday',type:'rest',sessionName:'Rest',keyLifts:'Optional: drills + sprint work only. 20 min max.'},
+      {day:'Thursday', sessionName:'Lower Hypertrophy', exercises:[{name:'Bulgarian Split Squat',sets:'4',reps:'8/leg',load:'RPE 7'},{name:'Hip Thrust',sets:'4',reps:'10',load:'RPE 7'},{name:'Lateral Bound',sets:'3',reps:'8/side',load:'BW'},{name:'Single Leg RDL',sets:'3',reps:'8/leg',load:'RPE 7'},{name:'Pogo Jump',sets:'3',reps:'20',load:'BW'},{name:'Standing Calf Raise',sets:'4',reps:'12',load:'RPE 8'}]},
+      {day:'Friday',   sessionName:'Upper Hypertrophy', exercises:[{name:'Incline Bench Press',sets:'4',reps:'10',load:'RPE 7'},{name:'Lat Pulldown',sets:'3',reps:'10',load:'RPE 7'},{name:'Dumbbell Row',sets:'3',reps:'12/side',load:'RPE 7'},{name:'Lateral Raise',sets:'4',reps:'15',load:'RPE 8'},{name:'Barbell Curl',sets:'3',reps:'12',load:'RPE 8'},{name:'Overhead Tricep Extension',sets:'3',reps:'12',load:'RPE 7'}]},
+      {day:'Saturday', type:'rest',sessionName:'Rest'},
+      {day:'Sunday',   type:'rest',sessionName:'Rest'},
+    ]
+  },
+  custom: {
+    id:'custom', label:'Custom — Build From Scratch', days:0,
+    description:'Set up your own days and exercises however you want.',
+    schedule: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d=>({day:d,type:'rest',sessionName:'Rest',exercises:[]}))
+  }
+};
+
+const ORDER_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+function getRecommendedSplit() {
+  const freq = parseInt(OB.train?.frequency) || (AL_STATE?.frequency ? parseInt(AL_STATE.frequency) : 0) || 4;
+  const goals = AL_STATE?.goals || [];
+  const sports = AL_STATE?.sports || [];
+  const isSport = sports.length > 0 && !sports.every(s => ['gym','strength','general','other'].includes(s));
+  if(freq <= 3) return 'full_body';
+  if(isSport) return 'athletic';
+  if(freq === 4 && goals.includes('strength_pbs')) return 'strength';
+  if(freq >= 5) return 'ppl';
+  return 'upper_lower';
+}
+
+/* ════════════════════════════════════════
+   TRAINING HISTORY
+════════════════════════════════════════ */
+async function loadTrainingHistory() {
+  if(!USER) return;
+  try {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
+    const { data: sessions } = await sb.from('workout_sessions')
+      .select('id,date,session_type')
+      .eq('user_id',USER.id)
+      .gte('date',cutoff.toISOString().slice(0,10))
+      .order('date',{ascending:false});
+    if(!sessions?.length) return;
+
+    const { data: sets } = await sb.from('session_sets')
+      .select('session_id,exercise_name,set_number,reps,weight_kg')
+      .in('session_id', sessions.map(s=>s.id));
+    if(!sets?.length) return;
+
+    // Group sets by session
+    const setsBySess = {};
+    sets.forEach(s => {
+      if(!setsBySess[s.session_id]) setsBySess[s.session_id] = {};
+      if(!setsBySess[s.session_id][s.exercise_name]) setsBySess[s.session_id][s.exercise_name] = [];
+      setsBySess[s.session_id][s.exercise_name].push(s);
+    });
+
+    // Most recent session per exercise (sessions newest-first)
+    sessions.forEach(sess => {
+      const exData = setsBySess[sess.id] || {};
+      Object.entries(exData).forEach(([exName, exSets]) => {
+        if(!_lastSessionData[exName]) {
+          _lastSessionData[exName] = { date: sess.date, sets: exSets.sort((a,b)=>a.set_number-b.set_number) };
+        }
+      });
+    });
+
+    // PB data (max weight per exercise)
+    sets.forEach(s => {
+      if(!_pbData[s.exercise_name] || s.weight_kg > _pbData[s.exercise_name].maxWeight) {
+        const sessDate = sessions.find(ss=>ss.id===s.session_id)?.date||'';
+        _pbData[s.exercise_name] = { maxWeight: s.weight_kg, date: sessDate };
+      }
+    });
+
+    // Exercise history for progress sheet
+    sessions.forEach(sess => {
+      const exData = setsBySess[sess.id] || {};
+      Object.entries(exData).forEach(([exName, exSets]) => {
+        if(!_exerciseHistory[exName]) _exerciseHistory[exName] = [];
+        const topWt = Math.max(...exSets.map(s=>s.weight_kg));
+        const totalVol = exSets.reduce((a,s)=>a+s.reps*s.weight_kg,0);
+        const est1rm = Math.max(...exSets.map(s=>s.weight_kg*(1+s.reps/30)));
+        _exerciseHistory[exName].push({ date:sess.date, sets:exSets, topWt, totalVol, est1rm });
+      });
+    });
+    Object.values(_exerciseHistory).forEach(arr=>arr.sort((a,b)=>a.date.localeCompare(b.date)));
+  } catch(e) { /* silent */ }
+}
+
+/* ════════════════════════════════════════
+   PLAN BUILDER
+════════════════════════════════════════ */
+let _pbBuilderPlan = [];
+let _pbBuilderSplitId = null;
+
+function showPlanBuilder() {
+  document.getElementById('plan-builder')?.classList.add('open');
+  _pbBuilderPlan = _weeklyPlan.length
+    ? JSON.parse(JSON.stringify(_weeklyPlan))
+    : [];
+  _pbBuilderSplitId = null;
+  renderPlanBuilderStep1();
+}
+
+function hidePlanBuilder() {
+  document.getElementById('plan-builder')?.classList.remove('open');
+}
+
+function renderPlanBuilderStep1() {
+  const rec = getRecommendedSplit();
+  document.getElementById('pb-topbar-title').textContent = 'Choose a Split';
+  document.getElementById('pb-back-btn').style.display = 'none';
+  document.getElementById('pb-save-btn').style.display = 'none';
+  document.getElementById('pb-footer').querySelectorAll('#pb-next-btn').forEach(el=>el.remove());
+
+  const splits = Object.values(SPLIT_TEMPLATES);
+  document.getElementById('pb-body').innerHTML = `
+    <div style="padding:16px 16px 24px">
+      <p style="font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.6">
+        ${rec !== 'custom' ? `<strong style="color:var(--teal)">${SPLIT_TEMPLATES[rec].label}</strong> is recommended based on your profile.` : 'Choose a split or build your own.'}
+      </p>
+      ${splits.map(s => {
+        const sel = _pbBuilderSplitId===s.id || (!_pbBuilderSplitId && s.id===rec);
+        return `<div onclick="pbSelectSplit('${s.id}')" id="pb-card-${s.id}"
+          style="padding:14px 16px;margin-bottom:10px;border:1px solid ${sel?'var(--teal)':'var(--border)'};background:${sel?'rgba(44,212,196,.06)':'var(--s1)'};cursor:pointer;position:relative">
+          ${s.id===rec?`<div style="position:absolute;top:10px;right:12px;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)">Recommended</div>`:''}
+          <div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:3px;padding-right:${s.id===rec?'90px':'0'}">${escHtml(s.label)}</div>
+          <div style="font-size:12px;color:var(--dim)">${escHtml(s.description)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  const nextBtn = document.createElement('button');
+  nextBtn.id = 'pb-next-btn';
+  nextBtn.style.cssText = 'flex:1;padding:14px;background:var(--teal);border:none;font-family:var(--D);font-size:15px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#000;cursor:pointer';
+  nextBtn.textContent = 'Edit Days →';
+  nextBtn.onclick = () => pbSelectSplit(_pbBuilderSplitId || rec, true);
+  document.getElementById('pb-footer').appendChild(nextBtn);
+}
+
+function pbSelectSplit(splitId, advance = false) {
+  _pbBuilderSplitId = splitId;
+  document.querySelectorAll('[id^="pb-card-"]').forEach(c => {
+    const isSel = c.id === 'pb-card-'+splitId;
+    c.style.border = isSel ? '1px solid var(--teal)' : '1px solid var(--border)';
+    c.style.background = isSel ? 'rgba(44,212,196,.06)' : 'var(--s1)';
+  });
+  if(advance) {
+    if(splitId !== 'custom') {
+      _pbBuilderPlan = JSON.parse(JSON.stringify(SPLIT_TEMPLATES[splitId].schedule));
+    } else if(!_pbBuilderPlan.length) {
+      _pbBuilderPlan = ORDER_DAYS.map(d=>({day:d,type:'rest',sessionName:'Rest',exercises:[]}));
+    }
+    renderPlanBuilderStep2();
+  }
+}
+
+function renderPlanBuilderStep2() {
+  document.getElementById('pb-topbar-title').textContent = 'Edit Your Days';
+  document.getElementById('pb-back-btn').style.display = '';
+  document.getElementById('pb-save-btn').style.display = '';
+  document.getElementById('pb-footer').querySelectorAll('#pb-next-btn').forEach(el=>el.remove());
+
+  const labItems = [
+    ...(AL_STATE.results?.drills||[]).map(d=>d.split(' — WHY:')[0].split(' — ')[0]),
+    ...(AL_STATE.results?.plyos||[]).map(p=>p.split(' — WHY:')[0].split(' — ')[0]),
+  ].filter(Boolean).slice(0,6);
+
+  const ordered = ORDER_DAYS.map(d => _pbBuilderPlan.find(p=>p.day===d) || {day:d,type:'rest',sessionName:'Rest',exercises:[]});
+
+  document.getElementById('pb-body').innerHTML = `
+    <div style="padding:10px;padding-bottom:80px">
+      ${labItems.length ? `
+        <div style="margin-bottom:12px;padding:10px 12px;background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.2)">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:8px">Lab Suggestions</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${labItems.map((s,i)=>`<button id="pb-lab-${i}" onclick="pbAddLabSuggestion(${i},'${escHtml(s.replace(/'/g,"\\'"))}')" style="font-size:11px;padding:5px 10px;background:rgba(44,212,196,.06);border:1px solid rgba(44,212,196,.3);color:var(--teal);cursor:pointer;font-family:var(--B);font-weight:600">${escHtml(s.split(/\s+/).slice(0,3).join(' '))}</button>`).join('')}
+          </div>
+        </div>` : ''}
+      ${ordered.map((day) => {
+        const isRest = day.type === 'rest' || (!day.exercises?.length && day.sessionName === 'Rest');
+        return `
+          <div class="pb-day-block" id="pb-day-${day.day}">
+            <div style="padding:10px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)">${escHtml(day.day)}</div>
+                <input value="${escHtml(isRest?'Rest':day.sessionName)}" placeholder="Session name"
+                  style="background:none;border:none;color:var(--white);font-family:var(--B);font-size:13px;font-weight:700;width:100%;padding:2px 0 0;outline:none"
+                  onchange="pbUpdateDayName('${day.day}',this.value)">
+              </div>
+              <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim);cursor:pointer;flex-shrink:0">
+                <input type="checkbox" ${isRest?'checked':''} onchange="pbToggleRest('${day.day}',this.checked)" style="accent-color:var(--teal)"> Rest
+              </label>
+            </div>
+            ${!isRest ? `
+              <div id="pb-exs-${day.day}" style="padding:6px 12px">
+                ${(day.exercises||[]).map((ex,ei)=>`
+                  <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+                    <button class="ex-ctrl-btn" onclick="pbMoveEx('${day.day}',${ei},-1)" ${ei===0?'disabled':''}>↑</button>
+                    <button class="ex-ctrl-btn" onclick="pbMoveEx('${day.day}',${ei},1)" ${ei===(day.exercises.length-1)?'disabled':''}>↓</button>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:13px;color:var(--white);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(ex.name)}</div>
+                      <div style="font-size:11px;color:var(--dim)">${escHtml(ex.sets||'3')}×${escHtml(ex.reps||'8')} &middot; ${escHtml(ex.load||'RPE 7')}</div>
+                    </div>
+                    <button class="ex-ctrl-btn del" onclick="pbRemoveEx('${day.day}',${ei})">✕</button>
+                  </div>
+                `).join('')}
+              </div>
+              <div style="padding:6px 12px 10px;display:flex;gap:6px">
+                <input class="ex-add-input" placeholder="Add exercise…" id="pbadd-${day.day}"
+                  onkeydown="if(event.key==='Enter')pbAddEx('${day.day}')">
+                <button class="ex-add-go" onclick="pbAddEx('${day.day}')">+ Add</button>
+                <button class="ex-add-go" onclick="showExLibrary('${day.day}','builder')" style="background:rgba(255,255,255,.05)">Browse</button>
+              </div>` : ''}
+          </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function pbUpdateDayName(day, val) {
+  const d = _pbBuilderPlan.find(p=>p.day===day);
+  if(d) d.sessionName = val;
+}
+
+function pbToggleRest(day, isRest) {
+  const d = _pbBuilderPlan.find(p=>p.day===day);
+  if(!d) return;
+  d.type = isRest ? 'rest' : 'workout';
+  d.sessionName = isRest ? 'Rest' : (d.sessionName==='Rest' ? day+' Session' : d.sessionName);
+  if(!isRest) d.exercises = d.exercises||[];
+  renderPlanBuilderStep2();
+}
+
+function pbMoveEx(day, idx, dir) {
+  const d = _pbBuilderPlan.find(p=>p.day===day);
+  if(!d?.exercises) return;
+  const to = idx+dir;
+  if(to<0||to>=d.exercises.length) return;
+  [d.exercises[idx],d.exercises[to]]=[d.exercises[to],d.exercises[idx]];
+  renderPlanBuilderStep2();
+}
+
+function pbRemoveEx(day, idx) {
+  const d = _pbBuilderPlan.find(p=>p.day===day);
+  if(d?.exercises) { d.exercises.splice(idx,1); renderPlanBuilderStep2(); }
+}
+
+function pbAddEx(day) {
+  const inp = document.getElementById('pbadd-'+day);
+  if(!inp?.value.trim()) return;
+  const d = _pbBuilderPlan.find(p=>p.day===day);
+  if(!d) return;
+  if(!d.exercises) d.exercises = [];
+  const raw = inp.value.trim();
+  const m = raw.match(/^(.+?)\s+(\d+)[x×]([^\s]+)(?:\s+@?\s*(.+))?$/i);
+  d.exercises.push(m
+    ? { name:m[1].trim(), sets:m[2], reps:m[3], load:m[4]||'RPE 7' }
+    : { name:raw, sets:'3', reps:'8', load:'RPE 7' });
+  inp.value = '';
+  renderPlanBuilderStep2();
+}
+
+function pbAddLabSuggestion(idx, exName) {
+  const dayObj = _pbBuilderPlan.find(d=>d.type!=='rest');
+  if(!dayObj) return;
+  if(!dayObj.exercises) dayObj.exercises = [];
+  dayObj.exercises.push({ name:exName.split(/\s+\d/)[0].trim(), sets:'3', reps:'6', load:'BW' });
+  const btn = document.getElementById('pb-lab-'+idx);
+  if(btn) { btn.style.opacity='0.35'; btn.style.pointerEvents='none'; }
+  renderPlanBuilderStep2();
+}
+
+function savePlanBuilderPlan() {
+  const workoutDays = _pbBuilderPlan.filter(d=>d.type!=='rest');
+  if(!workoutDays.length) { showToast('Add at least one workout day'); return; }
+  OB.train = OB.train||{};
+  OB.train.weeklyPlan = JSON.parse(JSON.stringify(_pbBuilderPlan));
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  renderWeeklyCalendar(OB.train.weeklyPlan);
+  const es = document.getElementById('train-empty-state');
+  if(es) es.style.display = 'none';
+  hidePlanBuilder();
+  showToast('Plan saved');
+}
+
+/* ════════════════════════════════════════
+   EXERCISE LIBRARY SHEET
+════════════════════════════════════════ */
+let _exLibTarget = null;
+let _exLibContext = 'session'; // 'session' | 'builder'
+let _exLibCat = 'all';
+
+function showExLibrary(targetDay, context) {
+  _exLibTarget = targetDay || null;
+  _exLibContext = context || 'session';
+  document.getElementById('ex-library')?.classList.add('open');
+  if(document.getElementById('ex-search')) document.getElementById('ex-search').value = '';
+  _exLibCat = 'all';
+  document.querySelectorAll('.ex-lib-chip').forEach(c=>c.classList.remove('active'));
+  document.querySelector('.ex-lib-chip[data-cat="all"]')?.classList.add('active');
+  renderExLibrary();
+}
+
+function hideExLibrary() {
+  document.getElementById('ex-library')?.classList.remove('open');
+}
+
+function setExLibCat(btn, cat) {
+  _exLibCat = cat;
+  document.querySelectorAll('.ex-lib-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  renderExLibrary();
+}
+
+function filterExLibrary() { renderExLibrary(); }
+
+function renderExLibrary() {
+  const q = (document.getElementById('ex-search')?.value||'').toLowerCase().trim();
+  const list = document.getElementById('ex-list');
+  if(!list) return;
+  let items = EX_LIB;
+  if(_exLibCat !== 'all') items = items.filter(e=>e.cat===_exLibCat);
+  if(q) items = items.filter(e=>e.name.toLowerCase().includes(q)||e.muscles.some(m=>m.includes(q)));
+  if(!items.length) { list.innerHTML = '<div style="padding:24px 16px;text-align:center;color:var(--dim);font-size:13px">No exercises match</div>'; return; }
+
+  const typeLabels = {squat:'Squat / Quad',hinge:'Hinge / Posterior',push_h:'Horizontal Push',push_v:'Vertical Push / Shoulder',pull_h:'Horizontal Pull',pull_v:'Vertical Pull',biceps:'Biceps',triceps:'Triceps',core:'Core',calves:'Calves',power:'Power / Olympic',plyo:'Plyometrics',drill:'Speed Drills',iso:'Isometrics',conditioning:'Conditioning'};
+  const groups = {};
+  items.forEach(e=>{ const g=e.type||'other'; if(!groups[g])groups[g]=[]; groups[g].push(e); });
+
+  list.innerHTML = Object.entries(groups).map(([type,exs])=>`
+    <div class="ex-lib-group">${typeLabels[type]||type}</div>
+    ${exs.map(e=>`
+      <div class="ex-lib-item" onclick="addExFromLib('${e.id}')">
+        <div>
+          <div class="ex-lib-item-name">${escHtml(e.name)}</div>
+          <div class="ex-lib-item-muscles">${escHtml(e.muscles.join(' · '))}</div>
+        </div>
+        <div class="ex-lib-item-add">+ Add</div>
+      </div>`).join('')}
+  `).join('');
+}
+
+function addExFromLib(exId) {
+  const ex = EX_LIB.find(e=>e.id===exId);
+  if(!ex) return;
+  if(_exLibContext === 'builder' && _exLibTarget) {
+    const d = _pbBuilderPlan.find(p=>p.day===_exLibTarget);
+    if(d) {
+      if(!d.exercises) d.exercises = [];
+      d.exercises.push({ name:ex.name, sets:'3', reps:'8', load:'RPE 7' });
+      hideExLibrary();
+      renderPlanBuilderStep2();
+    }
+  } else if(_exLibContext === 'session') {
+    if(!_activeSession) { showToast('Start a session first'); return; }
+    _activeSession.exercises.push({ name:ex.name, sets:'3', reps:'8', load:'RPE 7' });
+    const dayObj = _weeklyPlan.find(d=>d.sessionName===_activeSession.name);
+    if(dayObj) {
+      dayObj.exercises = _activeSession.exercises;
+      const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+      document.getElementById('train-day-detail').innerHTML = renderDayDetail(dayObj, true);
+    }
+    hideExLibrary();
+    showToast(`Added ${ex.name}`);
+  }
+}
+
+/* ════════════════════════════════════════
+   EXERCISE PROGRESS SHEET
+════════════════════════════════════════ */
+let _currentProgressEx = null;
+
+function showExProgress(exName) {
+  _currentProgressEx = exName;
+  document.getElementById('ex-progress-sheet')?.classList.add('open');
+  document.getElementById('ep-name').textContent = exName;
+  const pb = _pbData[exName];
+  document.getElementById('ep-pb-line').textContent = pb
+    ? `PB: ${pb.maxWeight}kg · ${pb.date}`
+    : 'No data yet — log a session to start tracking';
+  renderExProgress(exName);
+}
+
+function hideExProgress() {
+  document.getElementById('ex-progress-sheet')?.classList.remove('open');
+  _currentProgressEx = null;
+}
+
+function renderExProgress(exName) {
+  const history = _exerciseHistory[exName] || [];
+  const body = document.getElementById('ep-body');
+  if(!history.length) {
+    body.innerHTML = `<div style="padding:28px 16px;text-align:center;color:var(--dim);font-size:13px">No sessions logged yet.</div>`;
+    return;
+  }
+
+  // SVG sparkline — est 1RM
+  const vals = history.map(h=>h.est1rm).filter(v=>v>0);
+  let sparkHtml = '';
+  if(vals.length >= 2) {
+    const W=280, H=52, minV=Math.min(...vals), maxV=Math.max(...vals), range=maxV-minV||1;
+    const pts = vals.map((v,i)=>`${(i/(vals.length-1))*W},${H-((v-minV)/range)*(H*.8)-H*.1}`).join(' ');
+    const dots = vals.map((v,i)=>{
+      const x=(i/(vals.length-1))*W, y=H-((v-minV)/range)*(H*.8)-H*.1;
+      return `<circle cx="${x}" cy="${y}" r="3" fill="var(--teal)"/>`;
+    }).join('');
+    sparkHtml = `
+      <div style="padding:12px 16px 0">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Est. 1RM Trend</div>
+        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;overflow:visible">
+          <polyline fill="none" stroke="var(--teal)" stroke-width="1.5" points="${pts}"/>
+          ${dots}
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px">
+          <span>${history[0].date}</span><span>${history[history.length-1].date}</span>
+        </div>
+      </div>`;
+  }
+
+  const rows = [...history].reverse().slice(0,10);
+  body.innerHTML = `
+    ${sparkHtml}
+    <div style="padding:12px 16px">
+      <div style="display:grid;grid-template-columns:80px 1fr 60px 70px;gap:4px;padding:6px 0;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">
+        <span>Date</span><span>Sets</span><span>Top kg</span><span>Est 1RM</span>
+      </div>
+      ${rows.map(r=>`
+        <div style="display:grid;grid-template-columns:80px 1fr 60px 70px;gap:4px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;color:var(--muted)">
+          <span style="color:var(--dim)">${r.date}</span>
+          <span>${r.sets.length} sets</span>
+          <span style="color:var(--white);font-weight:600">${r.topWt}kg</span>
+          <span style="color:var(--teal)">${Math.round(r.est1rm)}kg</span>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+/* ════════════════════════════════════════
+   PB DETECTION (LIVE ON INPUT BLUR)
+════════════════════════════════════════ */
+function checkPbOnInput(input, exName) {
+  const wt = parseFloat(input.value);
+  if(!wt) return;
+  const existing = _pbData[exName];
+  if(!existing || wt > existing.maxWeight) {
+    const row = input.closest('.set-row');
+    if(row && !row.querySelector('.pb-badge')) {
+      const badge = document.createElement('span');
+      badge.className = 'pb-badge';
+      badge.textContent = 'PB';
+      row.appendChild(badge);
+    }
+  }
 }
 
 /* ── ADMIN SELF-APPROVE ── */
