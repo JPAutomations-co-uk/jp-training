@@ -580,8 +580,57 @@
     .al-chip:active{transform:scale(.97)}
     .al-chip.sel{background:rgba(44,212,196,.08);border-color:var(--teal);color:var(--teal)}
     .al-chip-icon{font-size:16px;line-height:1}
-    .al-section-label{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;margin-top:20px}
+    .al-section-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--white);margin-bottom:12px;margin-top:24px;display:flex;align-items:center;gap:6px}
+    .al-section-label::before{content:'';display:inline-block;width:3px;height:14px;background:var(--teal);flex-shrink:0}
     .al-notes-wrap{margin-top:16px}
+    /* Quest items */
+    .quest-section{margin-top:24px}
+    .quest-section-title{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+    .quest-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s1);border:1px solid var(--border);margin-bottom:6px;transition:border-color .2s}
+    .quest-item.done{border-color:rgba(44,212,196,.35);background:rgba(44,212,196,.04)}
+    .quest-icon{font-size:20px;flex-shrink:0;width:30px;text-align:center}
+    .quest-info{flex:1;min-width:0}
+    .quest-name{font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px}
+    .quest-item.done .quest-name{color:var(--muted)}
+    .quest-desc{font-size:11px;color:var(--dim);line-height:1.4}
+    .quest-xp{font-size:11px;font-weight:800;color:var(--teal);white-space:nowrap;flex-shrink:0}
+    .quest-item.done .quest-xp{color:var(--dim);text-decoration:line-through}
+    .quest-check{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+    .quest-item.done .quest-check{background:var(--teal);border-color:var(--teal);color:#000}
+    /* Habit ctrl buttons */
+    .habit-del{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:4px 6px;flex-shrink:0;line-height:1;transition:color .15s}
+    .habit-del:hover,.habit-del:active{color:#f87171}
+    .habit-hide{background:none;border:none;color:rgba(255,255,255,.15);font-size:12px;cursor:pointer;padding:4px 6px;flex-shrink:0;line-height:1;letter-spacing:.06em;font-family:var(--B);font-weight:600;transition:color .15s}
+    .habit-hide:hover{color:var(--dim)}
+    /* Coach history */
+    #coach-hist-sheet{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);display:none;flex-direction:column;justify-content:flex-end}
+    #coach-hist-sheet.open{display:flex}
+    .ch-panel{background:var(--s1);border-top:1px solid var(--border);max-height:85vh;display:flex;flex-direction:column}
+    .ch-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .ch-title{font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+    .ch-body{flex:1;overflow-y:auto;padding:12px 16px}
+    .ch-session{margin-bottom:16px}
+    .ch-date{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+    .ch-msg-u{font-size:13px;color:var(--teal);padding:6px 10px;margin-bottom:4px;background:rgba(44,212,196,.06);border-left:2px solid var(--teal)}
+    .ch-msg-a{font-size:12px;color:var(--muted);padding:6px 10px;margin-bottom:4px;line-height:1.6}
+    /* Leaderboard enhancements */
+    .lb-active-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;flex-shrink:0;margin-left:4px}
+    .lb-row-streak{font-size:10px;color:var(--dim);margin-top:1px}
+    /* Fridge input */
+    .fridge-wrap{margin-bottom:12px}
+    .fridge-inp{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);padding:10px 12px;color:var(--white);font-family:var(--B);font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box}
+    .fridge-inp:focus{border-color:rgba(44,212,196,.5)}
+    .fridge-inp::placeholder{color:var(--dim)}
+    /* Plan history sheet */
+    #plan-hist-sheet{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);display:none;flex-direction:column;justify-content:flex-end}
+    #plan-hist-sheet.open{display:flex}
+    .ph-panel{background:var(--s1);border-top:1px solid var(--border);max-height:80vh;display:flex;flex-direction:column}
+    .ph-snap{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;transition:background .15s}
+    .ph-snap:hover{background:rgba(255,255,255,.03)}
+    .ph-snap-date{font-size:11px;font-weight:700;color:var(--teal);margin-bottom:3px}
+    .ph-snap-days{font-size:12px;color:var(--muted)}
+    /* Swap button on exercises */
+    .ex-swap-btn{width:26px;height:26px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);color:rgba(255,215,0,.7);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;transition:all .15s}
     .al-notes-toggle{font-size:11px;color:var(--dim);cursor:pointer;display:flex;align-items:center;gap:5px;margin-bottom:8px;padding:0;background:none;border:none}
     .al-notes-toggle:hover{color:var(--muted)}
     .al-textarea{width:100%;background:var(--s1);border:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:13px;font-weight:300;padding:12px 14px;resize:none;height:80px;line-height:1.6;box-sizing:border-box;transition:border-color .2s}
@@ -884,11 +933,15 @@
 
       <div id="overview-card-wrap"></div>
       <div style="margin-top:16px" id="habits-list"></div>
+      <div id="quests-section"></div>
       <div class="habit-add-wrap">
         <input class="habit-add-input" id="habit-add-input"
           placeholder="Add your own habit (e.g. Read 20 minutes)…"
           onkeydown="if(event.key==='Enter')addCustomHabit()">
         <button class="habit-add-btn" onclick="addCustomHabit()">+ Add</button>
+      </div>
+      <div id="habits-restore-wrap" style="display:none;text-align:center;padding:6px 0">
+        <button onclick="restoreAllHabits()" style="background:none;border:none;color:var(--dim);font-size:11px;cursor:pointer;font-family:var(--B)">Restore hidden habits</button>
       </div>
     </div>
 
@@ -902,6 +955,7 @@
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:8px">
           <button class="edit-plan-btn" onclick="showPlanBuilder()">Edit Plan</button>
+          <button class="edit-plan-btn" onclick="openPlanHistory()" style="border-color:rgba(255,255,255,.15);color:var(--dim)">History</button>
           <button class="ob-edit-btn" onclick="showOnboarding('train')">Edit profile</button>
         </div>
       </div>
@@ -990,7 +1044,10 @@
       </div>
 
       <div id="eat-suggestions" style="margin-bottom:16px"></div>
-      <button onclick="getMealSuggestion()" style="width:100%;padding:12px;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:12px;cursor:pointer;margin-bottom:16px;transition:all .2s" onmouseover="this.style.borderColor='rgba(44,212,196,.3)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">What should I eat today?</button>
+      <div class="fridge-wrap">
+        <input class="fridge-inp" id="fridge-input" placeholder="What do you have available? e.g. eggs, chicken, rice, sweet potato… (optional)">
+        <button onclick="getMealSuggestion()" style="width:100%;padding:12px;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:12px;cursor:pointer;margin-top:6px;margin-bottom:12px;transition:all .2s" onmouseover="this.style.borderColor='rgba(44,212,196,.3)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Build my meal plan →</button>
+      </div>
       <div class="food-list" id="food-list"></div>
     </div>
 
@@ -1041,7 +1098,10 @@
           <div class="sh-title">Ask<br><span style="color:var(--teal)">JP</span></div>
           <p class="sh-sub">Questions about your programme, nutrition, sleep, recovery — anything in your protocol.</p>
         </div>
-        <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('coach')">Edit profile</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:8px">
+          <button class="ob-edit-btn" onclick="showOnboarding('coach')">Edit profile</button>
+          <button class="ob-edit-btn" onclick="openCoachHistory()">History</button>
+        </div>
       </div>
       <div class="coach-messages" id="coach-messages">
         <div class="msg coach" id="coach-greeting">Hey. Ask me anything about your training, nutrition, sleep or recovery — I've got your full protocol context.</div>
@@ -1128,7 +1188,7 @@
             <div class="al-step-dot" id="al-dot-3"></div>
             <span class="al-step-label">Sport &amp; Activity</span>
           </div>
-          <div class="al-q">What's your main sport or training style?</div>
+          <div class="al-q" style="font-size:16px;font-weight:700;line-height:1.5">What sport or training do you do?<br><span style="font-size:13px;font-weight:400;color:var(--muted)">Pick your main one — or tap all that apply.</span></div>
           <div class="al-chips" id="al-sport-chips">
             <button class="al-chip" data-val="sprinting" onclick="alPickSport(this)"><span class="al-chip-icon">⚡</span>Sprinting</button>
             <button class="al-chip" data-val="plyometrics" onclick="alPickSport(this)"><span class="al-chip-icon">🦘</span>Plyometrics / Jump</button>
@@ -1161,10 +1221,10 @@
             <span class="al-step-label">Sport Details</span>
           </div>
           <div id="al-sp-position-wrap">
-            <div class="al-q" id="al-sp-position-q">What position do you play?</div>
+            <div class="al-q" id="al-sp-position-q" style="font-size:15px;font-weight:700">What position do you play?</div>
             <div class="al-chips" id="al-position-chips"></div>
           </div>
-          <div class="al-section-label">Competition level</div>
+          <div class="al-section-label">Competition Level</div>
           <div class="al-chips" id="al-level-chips">
             <button class="al-chip" data-val="recreational" onclick="alPickLevel(this)">Recreational</button>
             <button class="al-chip" data-val="amateur" onclick="alPickLevel(this)">Amateur / club</button>
@@ -1172,7 +1232,7 @@
             <button class="al-chip" data-val="semi_pro" onclick="alPickLevel(this)">Semi-professional</button>
             <button class="al-chip" data-val="professional" onclick="alPickLevel(this)">Professional / elite</button>
           </div>
-          <div class="al-section-label">Biggest performance gaps <span style="font-size:11px;color:var(--dim);font-weight:400">(pick all that apply)</span></div>
+          <div class="al-section-label">Biggest Performance Gaps <span style="font-size:11px;color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(pick all that apply)</span></div>
           <div class="al-chips" id="al-weakness-chips">
             <button class="al-chip" data-val="first_step" onclick="alToggleWeakness(this)">⚡ First step / acceleration</button>
             <button class="al-chip" data-val="top_speed" onclick="alToggleWeakness(this)">🏃 Top end speed</button>
@@ -1270,6 +1330,28 @@
       <div class="al-picker-title">Add to which day?</div>
       <div id="al-picker-days"></div>
       <button class="al-picker-cancel" onclick="alCancelPicker()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ══ COACH HISTORY SHEET ══ -->
+  <div id="coach-hist-sheet" onclick="if(event.target===this)closeCoachHistory()">
+    <div class="ch-panel">
+      <div class="ch-header">
+        <div class="ch-title">Past Conversations</div>
+        <button style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:2px 6px" onclick="closeCoachHistory()">✕</button>
+      </div>
+      <div class="ch-body" id="ch-body"></div>
+    </div>
+  </div>
+
+  <!-- ══ PLAN HISTORY SHEET ══ -->
+  <div id="plan-hist-sheet" onclick="if(event.target===this)closePlanHistory()">
+    <div class="ph-panel">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+        <div style="font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.06em">Plan History</div>
+        <button style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:2px 6px" onclick="closePlanHistory()">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto" id="ph-body"></div>
     </div>
   </div>
 
@@ -1473,7 +1555,8 @@ function getHabits(){
      name:'Hydration',
      desc:'2.5–3L water today — every hormone, enzyme, and neurotransmitter in the body depends on adequate hydration; performance and cognition drop before thirst kicks in'},
   ];
-  return [...base, ...custom];
+  const hidden = new Set(OB.hidden_habits || []);
+  return [...base.filter(h=>!hidden.has(h.key)), ...custom];
 }
 const HABITS=getHabits();
 
@@ -1840,6 +1923,7 @@ async function initHabits(){
     localStorage.setItem(`jpt_habits_${USER.id}_${TODAY}`, JSON.stringify(habitState));
     renderHabits();
   }
+  renderQuests().catch(()=>{});
 }
 
 function renderHabits(){
@@ -1847,6 +1931,8 @@ function renderHabits(){
   const done=Object.values(habitState).filter(Boolean).length;
   document.getElementById('habits-count').textContent=`${done} / ${allH.length}`;
   document.getElementById('habits-bar').style.width=`${(done/allH.length)*100}%`;
+  const restoreWrap = document.getElementById('habits-restore-wrap');
+  if(restoreWrap) restoreWrap.style.display = (OB.hidden_habits?.length) ? 'block' : 'none';
 
   const list=document.getElementById('habits-list');
   const allHabits=getHabits();
@@ -1860,7 +1946,10 @@ function renderHabits(){
         <div class="habit-desc">${escHtml(h.desc)}</div>
       </div>
       ${HABIT_PROTOCOLS[h.key]?`<button class="habit-expand" onclick="event.stopPropagation();showHabitDetail('${h.key}')">Guide →</button>`:''}
-      ${h.custom?`<button class="habit-del" onclick="event.stopPropagation();removeCustomHabit('${h.key}')">×</button>`:''}
+      ${h.custom
+        ? `<button class="habit-del" style="color:var(--teal);font-size:11px;padding:4px 6px" onclick="event.stopPropagation();editCustomHabit('${h.key}')">Edit</button><button class="habit-del" onclick="event.stopPropagation();removeCustomHabit('${h.key}')">×</button>`
+        : `<button class="habit-del" title="Hide" onclick="event.stopPropagation();hideBuiltInHabit('${h.key}')">–</button>`
+      }
     </div>
   `).join('');
 }
@@ -2024,6 +2113,7 @@ function renderDayDetail(day, isToday) {
           <div class="ex-controls">
             <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},-1)"${ei===0?' disabled':''}>↑</button>
             <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},1)"${ei===total-1?' disabled':''}>↓</button>
+            <button class="ex-ctrl-btn ex-swap-btn" onclick="swapExercise('${escHtml(day.day)}',${ei})" title="Swap">⇄</button>
             <button class="ex-ctrl-btn del" onclick="removeExercise('${escHtml(day.day)}',${ei})">✕</button>
           </div>
         </div>
@@ -2145,6 +2235,14 @@ async function saveWorkout(){
   newPBs.forEach(n => showToast(`🏅 New PB on ${n}!`));
   showToast('Session saved');
   await earnXP('workout_save', TODAY, 75);
+  // Mark session quest as completed
+  try {
+    const qs = _getQuestState();
+    qs._sessions = qs._sessions || {};
+    qs._sessions[TODAY] = true;
+    _saveQuestState(qs);
+    renderQuests().catch(()=>{});
+  } catch(e) {}
   // Bonus: all sets ticked
   const allDone = document.querySelectorAll('.set-done');
   const allChecked = document.querySelectorAll('.set-done.checked');
@@ -2415,7 +2513,9 @@ async function getMealSuggestion(){
   try{
     const e=OB.eat||{};
     const existing = foods.map(f=>f.food_name).join(', ');
-    const prompt = `Based on my full profile, give me a specific meal plan for today. ${existing?'I have already eaten: '+existing+'. ':''} Give me 3–4 meals with specific foods and quantities that hit my targets. Be precise — actual foods, actual grams.`;
+    const fridgeVal = (document.getElementById('fridge-input')?.value||'').trim();
+    const fridgeLine = fridgeVal ? ` I only have access to: ${fridgeVal}. Build my plan using ONLY those ingredients.` : '';
+    const prompt = `Based on my full profile, give me a specific meal plan for today.${fridgeLine} ${existing?'I have already eaten: '+existing+'. ':''} Give me 3–4 meals with specific foods and quantities that hit my targets. Be precise — actual foods, actual grams.`;
     const res = await fetch('/api/coach',{method:'POST',headers:{'content-type':'application/json'},
       body:JSON.stringify({messages:[{role:'user',content:prompt}],userProfile:PROFILE||{},userContext:window._coachContext})});
     const d = await res.json();
@@ -2681,6 +2781,7 @@ async function sendMessage(){
     const d=await res.json();
     const reply=d.reply||d.error||'Something went wrong — try again.';
     coachHistory.push({role:'assistant',content:reply});
+    _persistCoachSession();
     document.getElementById('coach-loading')?.remove();
     msgs.innerHTML+=`<div class="msg coach">${escHtml(stripMd(reply)).replace(/\n/g,'<br>')}</div>`;
   }catch(e){
@@ -4309,7 +4410,7 @@ function alHasDetailPhase() {
 const AL_POSITIONS = {
   football:         ['Goalkeeper','Right Back / Left Back','Centre Back','Defensive Midfielder','Central Midfielder','Attacking Midfielder','Winger','Striker'],
   rugby:            ['Prop','Hooker','Lock','Blindside Flanker','Openside Flanker','Number 8','Scrum Half','Fly Half','Inside Centre','Outside Centre','Winger','Fullback'],
-  basketball:       ['Point Guard','Shooting Guard','Small Forward','Power Forward','Centre'],
+  basketball:       ['Point Guard','Shooting Guard','Combo Guard','Small Forward','Power Forward','Centre'],
   mma:              ['Boxer / Striker','Muay Thai fighter','BJJ / Grappler','Wrestler','All-round MMA'],
   tennis:           ['Aggressive baseliner','Counter-puncher','Serve & volleyer','All-court player'],
   sprinting:        ['60m / 100m','200m','400m','Long Jump / Triple Jump','Hurdles','Decathlon / Heptathlon'],
@@ -4696,7 +4797,9 @@ function addExToDay(dayName) {
    LEADERBOARD
 ══════════════════════════════════════════ */
 function lbHandle(p, myName) {
-  return p.isMe ? myName : 'Athlete '+p.id.slice(0,5).toUpperCase();
+  if(p.isMe) return myName;
+  if(p.display_name) return p.display_name.split(' ')[0];
+  return 'Athlete '+p.id.slice(0,5).toUpperCase();
 }
 
 function lbInitial(name) {
@@ -4753,7 +4856,7 @@ async function openLeaderboard() {
   const body = document.getElementById('lb-body');
   body.innerHTML = '<div class="lb-empty">Loading...</div>';
   try {
-    const { data, error } = await sb.from('profiles').select('id,xp,level,streak_days').order('xp', { ascending: false }).limit(50);
+    const { data, error } = await sb.from('profiles').select('id,xp,level,streak_days,last_active_date,display_name').order('xp', { ascending: false }).limit(50);
     if(error || !data?.length) { body.innerHTML = '<div class="lb-empty">No one\'s here yet — you could be first</div>'; return; }
 
     const myName = USER?.user_metadata?.display_name?.split(' ')[0] || 'You';
@@ -4778,9 +4881,11 @@ async function openLeaderboard() {
       const name    = lbHandle(p, myName);
       const initial = lbInitial(name);
       const isMe    = p.isMe;
+      const activeToday = p.last_active_date === TODAY;
       html += `<div class="lb-pod-col p${pos}${isMe?' is-me':''}">
-        <div class="lb-pod-avatar">${initial}</div>
+        <div class="lb-pod-avatar">${initial}${activeToday?'<span class="lb-active-dot" style="position:absolute;top:2px;right:2px"></span>':''}</div>
         <div class="lb-pod-name">${escHtml(name)}${isMe?' ★':''}</div>
+        ${p.streak_days>0?`<div style="font-size:10px;color:var(--dim)">🔥 ${p.streak_days}d</div>`:''}
         <div class="lb-pod-score-val">${p.score.toLocaleString()}</div>
         <div class="lb-pod-block"><div class="lb-pod-medal">${medal}</div></div>
       </div>`;
@@ -4804,11 +4909,13 @@ async function openLeaderboard() {
       html += '<div class="lb-list-wrap"><div class="lb-list-title">Full Rankings</div><div class="lb-list">';
       rest.forEach((p, i) => {
         const name = lbHandle(p, myName);
+        const activeToday = p.last_active_date === TODAY;
+        const streakTxt = p.streak_days > 0 ? `🔥 ${p.streak_days}d` : '';
         html += `<div class="lb-row${p.isMe?' lb-you':''}">
           <div class="lb-row-pos">#${i+4}</div>
           <div class="lb-row-info">
-            <div class="lb-row-name">${escHtml(name)}${p.isMe?' ★':''}</div>
-            <div class="lb-row-level">Level ${p.level||1}</div>
+            <div class="lb-row-name">${escHtml(name)}${p.isMe?' ★':''}${activeToday?'<span class="lb-active-dot" title="Active today"></span>':''}</div>
+            <div class="lb-row-level">Level ${p.level||1}${streakTxt?` · <span class="lb-row-streak">${escHtml(streakTxt)}</span>`:''}</div>
           </div>
           <div style="text-align:right">
             <div class="lb-row-score">${p.score.toLocaleString()}</div>
@@ -5279,6 +5386,7 @@ function savePlanBuilderPlan() {
   if(!workoutDays.length) { showToast('Add at least one workout day'); return; }
   OB.train = OB.train||{};
   OB.train.weeklyPlan = JSON.parse(JSON.stringify(_pbBuilderPlan));
+  _savePlanSnapshot();
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
   sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
   renderWeeklyCalendar(OB.train.weeklyPlan);
@@ -5292,7 +5400,7 @@ function savePlanBuilderPlan() {
    EXERCISE LIBRARY SHEET
 ════════════════════════════════════════ */
 let _exLibTarget = null;
-let _exLibContext = 'session'; // 'session' | 'builder'
+let _exLibContext = 'session'; // 'session' | 'builder' | 'swap'
 let _exLibCat = 'all';
 
 function showExLibrary(targetDay, context) {
@@ -5348,7 +5456,22 @@ function renderExLibrary() {
 function addExFromLib(exId) {
   const ex = EX_LIB.find(e=>e.id===exId);
   if(!ex) return;
-  if(_exLibContext === 'builder' && _exLibTarget) {
+  if(_exLibContext === 'swap' && _swapTarget) {
+    // Swap exercise in the weekly plan (non-today view)
+    const dayObj = _weeklyPlan.find(d=>d.day===_swapTarget.dayName);
+    if(dayObj && dayObj.exercises?.[_swapTarget.idx] !== undefined) {
+      const old = dayObj.exercises[_swapTarget.idx];
+      dayObj.exercises[_swapTarget.idx] = { ...old, name: ex.name };
+      OB.train = OB.train||{};
+      OB.train.weeklyPlan = _weeklyPlan;
+      localStorage.setItem('jpt_ob', JSON.stringify(OB));
+      sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+      document.getElementById('train-day-detail').innerHTML = renderDayDetail(dayObj, false);
+    }
+    _swapTarget = null;
+    hideExLibrary();
+    showToast(`Swapped to ${ex.name}`);
+  } else if(_exLibContext === 'builder' && _exLibTarget) {
     const d = _pbBuilderPlan.find(p=>p.day===_exLibTarget);
     if(d) {
       if(!d.exercises) d.exercises = [];
@@ -5362,7 +5485,6 @@ function addExFromLib(exId) {
     const dayObj = _weeklyPlan.find(d=>d.sessionName===_activeSession.name);
     if(dayObj) {
       dayObj.exercises = _activeSession.exercises;
-      const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
       document.getElementById('train-day-detail').innerHTML = renderDayDetail(dayObj, true);
     }
     hideExLibrary();
@@ -5456,6 +5578,273 @@ function checkPbOnInput(input, exName) {
       row.appendChild(badge);
     }
   }
+}
+
+/* ════════════════════════════════════════
+   COACH HISTORY
+════════════════════════════════════════ */
+const _COACH_HIST_KEY = () => `jpt_coach_hist_${USER?.id||'guest'}`;
+
+function _persistCoachSession() {
+  try {
+    const raw = localStorage.getItem(_COACH_HIST_KEY()) || '[]';
+    const hist = JSON.parse(raw);
+    // Find or create today's session
+    const todayIdx = hist.findIndex(s => s.date === TODAY);
+    const msgs = coachHistory.map(m => ({ role: m.role, content: m.content }));
+    if(todayIdx >= 0) {
+      hist[todayIdx].messages = msgs;
+    } else {
+      hist.unshift({ date: TODAY, messages: msgs });
+    }
+    // Keep last 30 sessions
+    localStorage.setItem(_COACH_HIST_KEY(), JSON.stringify(hist.slice(0, 30)));
+  } catch(e) {}
+}
+
+function openCoachHistory() {
+  document.getElementById('coach-hist-sheet')?.classList.add('open');
+  const body = document.getElementById('ch-body');
+  if(!body) return;
+  try {
+    const raw = localStorage.getItem(_COACH_HIST_KEY()) || '[]';
+    const hist = JSON.parse(raw);
+    if(!hist.length) {
+      body.innerHTML = '<div style="padding:28px 16px;text-align:center;color:var(--dim);font-size:13px">No past conversations yet. Start chatting with the coach.</div>';
+      return;
+    }
+    body.innerHTML = hist.map(session => {
+      const msgs = (session.messages || []).filter(m => m.role === 'user' || m.role === 'assistant');
+      if(!msgs.length) return '';
+      return `
+        <div class="ch-session">
+          <div class="ch-date">${escHtml(session.date)}</div>
+          ${msgs.map(m => m.role === 'user'
+            ? `<div class="ch-msg-u">${escHtml(m.content)}</div>`
+            : `<div class="ch-msg-a">${escHtml(stripMd(m.content)).replace(/\n/g,'<br>')}</div>`
+          ).join('')}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    body.innerHTML = '<div style="padding:20px;color:var(--dim);font-size:13px">Could not load history.</div>';
+  }
+}
+
+function closeCoachHistory() {
+  document.getElementById('coach-hist-sheet')?.classList.remove('open');
+}
+
+/* ════════════════════════════════════════
+   TRAINING PLAN HISTORY
+════════════════════════════════════════ */
+const _PLAN_HIST_KEY = () => `jpt_plan_hist_${USER?.id||'guest'}`;
+
+function _savePlanSnapshot() {
+  if(!_weeklyPlan?.length) return;
+  try {
+    const raw = localStorage.getItem(_PLAN_HIST_KEY()) || '[]';
+    const hist = JSON.parse(raw);
+    const snap = { date: new Date().toISOString().slice(0, 16).replace('T', ' '), plan: JSON.parse(JSON.stringify(_weeklyPlan)) };
+    // Don't duplicate if plan hasn't changed from last snapshot
+    if(hist.length && JSON.stringify(hist[0].plan) === JSON.stringify(snap.plan)) return;
+    hist.unshift(snap);
+    localStorage.setItem(_PLAN_HIST_KEY(), JSON.stringify(hist.slice(0, 10)));
+  } catch(e) {}
+}
+
+function openPlanHistory() {
+  document.getElementById('plan-hist-sheet')?.classList.add('open');
+  const body = document.getElementById('ph-body');
+  if(!body) return;
+  try {
+    const raw = localStorage.getItem(_PLAN_HIST_KEY()) || '[]';
+    const hist = JSON.parse(raw);
+    if(!hist.length) {
+      body.innerHTML = '<div style="padding:28px 16px;text-align:center;color:var(--dim);font-size:13px">No plan history yet — history saves automatically when you update your plan.</div>';
+      return;
+    }
+    body.innerHTML = hist.map((snap, i) => {
+      const workoutDays = (snap.plan || []).filter(d => d.type !== 'rest');
+      const dayNames = workoutDays.map(d => d.day.slice(0,3)).join(', ');
+      return `<div class="ph-snap" onclick="restorePlanSnapshot(${i})">
+        <div class="ph-snap-date">${escHtml(snap.date)}${i===0?' <span style="font-size:9px;color:var(--dim)">(current)</span>':''}</div>
+        <div class="ph-snap-days">${workoutDays.length} training days — ${escHtml(dayNames)}</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:3px">${escHtml(workoutDays.map(d=>d.sessionName).join(' · '))}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    body.innerHTML = '<div style="padding:20px;color:var(--dim);font-size:13px">Could not load history.</div>';
+  }
+}
+
+function closePlanHistory() {
+  document.getElementById('plan-hist-sheet')?.classList.remove('open');
+}
+
+function restorePlanSnapshot(idx) {
+  try {
+    const raw = localStorage.getItem(_PLAN_HIST_KEY()) || '[]';
+    const hist = JSON.parse(raw);
+    if(!hist[idx]) return;
+    if(!confirm('Restore this plan? Your current plan will be replaced.')) return;
+    OB.train = OB.train||{};
+    OB.train.weeklyPlan = JSON.parse(JSON.stringify(hist[idx].plan));
+    localStorage.setItem('jpt_ob', JSON.stringify(OB));
+    sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+    renderWeeklyCalendar(OB.train.weeklyPlan);
+    closePlanHistory();
+    showToast('Plan restored');
+  } catch(e) {}
+}
+
+/* ════════════════════════════════════════
+   EXERCISE SWAP
+════════════════════════════════════════ */
+let _swapTarget = null; // { dayName, idx }
+
+function swapExercise(dayName, idx) {
+  _swapTarget = { dayName, idx };
+  showExLibrary(dayName, 'swap');
+}
+
+/* ════════════════════════════════════════
+   QUESTS SYSTEM
+════════════════════════════════════════ */
+const DAILY_QUESTS = [
+  { id:'q_habit3',   icon:'✅', name:'Habit Triple',          desc:'Complete 3 habits today',                         xp:25 },
+  { id:'q_habit_all',icon:'🌟', name:'Perfect Habits',        desc:'Complete every habit today',                       xp:100 },
+  { id:'q_session',  icon:'🏋️', name:'Train Today',           desc:'Log a training session',                           xp:75 },
+  { id:'q_log3',     icon:'🍖', name:'Log 3 Meals',           desc:'Log at least 3 food entries today',                xp:30 },
+  { id:'q_protein',  icon:'💪', name:'Hit Protein',           desc:'Log 100g+ protein today',                          xp:40 },
+  { id:'q_steps',    icon:'🚶', name:'Step Goal',             desc:'Hit your daily steps target',                      xp:20 },
+];
+
+const WEEKLY_QUESTS = [
+  { id:'q_train3w',  icon:'🔁', name:'3 Sessions This Week',  desc:'Log 3 training sessions this week',               xp:100 },
+  { id:'q_streak7',  icon:'🔥', name:'7-Day Streak',          desc:'Maintain a 7-day habit streak',                   xp:150 },
+  { id:'q_streak30', icon:'💎', name:'30-Day Warrior',        desc:'Maintain a 30-day habit streak',                  xp:500 },
+];
+
+const MILESTONE_QUESTS = [
+  { id:'q_first_plan',   icon:'📋', name:'Build Your Plan',     desc:'Create your first training plan',               xp:50  },
+  { id:'q_first_pb',     icon:'🏅', name:'First PB',            desc:'Log a personal best weight on any exercise',    xp:50  },
+  { id:'q_lab_done',     icon:'🧬', name:'Hormone Lab Done',    desc:'Complete your hormone lab analysis',            xp:30  },
+  { id:'q_athlete_done', icon:'🏆', name:'Athlete Lab Done',    desc:'Complete your athlete lab analysis',            xp:35  },
+  { id:'q_level5',       icon:'⭐', name:'Reach Level 5',       desc:'Hit Level 5 in the XP system',                 xp:100 },
+  { id:'q_level10',      icon:'🌠', name:'Level 10 Grind',      desc:'Hit Level 10',                                  xp:250 },
+];
+
+function _getQuestState() {
+  try { return JSON.parse(localStorage.getItem(`jpt_quests_${USER?.id||'guest'}`) || '{}'); } catch(e) { return {}; }
+}
+function _saveQuestState(state) {
+  try { localStorage.setItem(`jpt_quests_${USER?.id||'guest'}`, JSON.stringify(state)); } catch(e) {}
+}
+
+function _checkDailyQuestCompletion() {
+  const state = _getQuestState();
+  const todayHabits = Object.values(habitState).filter(Boolean).length;
+  const allHabits = getHabits().length;
+  const foodsCount = (typeof foods !== 'undefined' ? foods : []).length;
+  const proteinTotal = (typeof foods !== 'undefined' ? foods : []).reduce((a,f)=>a+(+f.protein_g||0), 0);
+  const stepsGoal = +(OB.habits?.steps_goal||10000);
+
+  const completed = new Set(state[TODAY] || []);
+
+  if(todayHabits >= 3) completed.add('q_habit3');
+  if(todayHabits >= allHabits && allHabits > 0) completed.add('q_habit_all');
+  if(foodsCount >= 3) completed.add('q_log3');
+  if(proteinTotal >= 100) completed.add('q_protein');
+  if(todaySteps >= stepsGoal && todaySteps > 0) completed.add('q_steps');
+  // session check via _activeSession or check earnXP log
+  if(state._sessions?.[TODAY]) completed.add('q_session');
+
+  // Streak quests
+  if(XP_STATE.streak_days >= 7) completed.add('q_streak7');
+  if(XP_STATE.streak_days >= 30) completed.add('q_streak30');
+
+  // Milestone quests
+  if(_weeklyPlan?.length) completed.add('q_first_plan');
+  if(Object.keys(_pbData||{}).length) completed.add('q_first_pb');
+  if(OB.lab_done) completed.add('q_lab_done');
+  if(OB.athlete_lab_done) completed.add('q_athlete_done');
+  if(XP_STATE.level >= 5) completed.add('q_level5');
+  if(XP_STATE.level >= 10) completed.add('q_level10');
+
+  state[TODAY] = [...completed];
+  _saveQuestState(state);
+  return completed;
+}
+
+async function renderQuests() {
+  const el = document.getElementById('quests-section');
+  if(!el) return;
+  const completed = _checkDailyQuestCompletion();
+
+  const makeItems = (quests, checkFn) => quests.map(q => {
+    const done = checkFn(q.id);
+    return `<div class="quest-item${done?' done':''}">
+      <div class="quest-check">${done?'✓':''}</div>
+      <div class="quest-icon">${q.icon}</div>
+      <div class="quest-info">
+        <div class="quest-name">${escHtml(q.name)}</div>
+        <div class="quest-desc">${escHtml(q.desc)}</div>
+      </div>
+      <div class="quest-xp">${done?'Done':'+'+q.xp+' XP'}</div>
+    </div>`;
+  }).join('');
+
+  const weeklyDone = new Set(
+    [...(JSON.parse(localStorage.getItem(`jpt_quests_${USER?.id||'guest'}`)||'{}')[TODAY]||[])].filter(id=>id.startsWith('q_'))
+  );
+
+  el.innerHTML = `
+    <div class="quest-section">
+      <div class="quest-section-title">
+        <span>Daily Quests</span>
+        <span style="color:var(--teal)">${[...completed].filter(id=>DAILY_QUESTS.some(q=>q.id===id)).length}/${DAILY_QUESTS.length}</span>
+      </div>
+      ${makeItems(DAILY_QUESTS, id => completed.has(id))}
+      <div class="quest-section-title" style="margin-top:20px">
+        <span>Weekly Challenges</span>
+      </div>
+      ${makeItems(WEEKLY_QUESTS, id => completed.has(id))}
+      <div class="quest-section-title" style="margin-top:20px">
+        <span>Milestones</span>
+        <span style="color:var(--teal)">${MILESTONE_QUESTS.filter(q=>completed.has(q.id)).length}/${MILESTONE_QUESTS.length}</span>
+      </div>
+      ${makeItems(MILESTONE_QUESTS, id => completed.has(id))}
+    </div>
+  `;
+}
+
+/* ════════════════════════════════════════
+   HABIT HIDE (built-ins) & EDIT (custom)
+════════════════════════════════════════ */
+function hideBuiltInHabit(key) {
+  OB.hidden_habits = OB.hidden_habits || [];
+  if(!OB.hidden_habits.includes(key)) OB.hidden_habits.push(key);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  initHabits();
+}
+
+function restoreAllHabits() {
+  OB.hidden_habits = [];
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  initHabits();
+}
+
+function editCustomHabit(fullKey) {
+  const h = (OB.custom_habits||[]).find(ch=>'custom_'+ch.key===fullKey);
+  if(!h) return;
+  const newName = prompt('Rename habit:', h.name);
+  if(!newName?.trim()) return;
+  h.name = newName.trim();
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  initHabits();
 }
 
 /* ── ADMIN SELF-APPROVE ── */
