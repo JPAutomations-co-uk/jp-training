@@ -1738,9 +1738,13 @@ function renderXPUI() {
   const init=USER.user_metadata?.display_name||USER.email.split('@')[0];
   document.getElementById('tb-avatar-init').textContent=init[0].toUpperCase();
 
-  // Load profile
+  // Load profile and sync display_name from auth metadata → profiles table
   const{data:prof}=await sb.from('profiles').select('*').eq('id',USER.id).single();
   PROFILE=prof;
+  const authName = USER.user_metadata?.display_name || USER.email?.split('@')[0] || null;
+  if(authName && prof && prof.display_name !== authName) {
+    sb.from('profiles').update({ display_name: authName }).eq('id', USER.id).then(()=>{});
+  }
 
   if(!prof||prof.status==='pending'||prof.status===null){
     // Show pending screen only
