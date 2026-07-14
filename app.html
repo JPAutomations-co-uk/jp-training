@@ -631,6 +631,48 @@
     .ph-snap-days{font-size:12px;color:var(--muted)}
     /* Swap button on exercises */
     .ex-swap-btn{width:26px;height:26px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);color:rgba(255,215,0,.7);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;transition:all .15s}
+
+    /* ── EXERCISE SETS/REPS QUICK CONFIG ── */
+    .ex-quick-cfg{display:none;background:rgba(255,255,255,.03);border:1px solid rgba(44,212,196,.15);padding:10px 12px;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+    .ex-quick-cfg.show{display:flex}
+    .ex-quick-cfg label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+    .ex-quick-cfg input{width:52px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:13px;padding:6px 8px;text-align:center;outline:none}
+    .ex-quick-cfg input:focus{border-color:rgba(44,212,196,.4)}
+    .ex-quick-cfg-confirm{background:var(--teal);border:none;color:#000;font-family:var(--D);font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;cursor:pointer;flex:1}
+
+    /* ── MOBILITY / MOVE PANE ── */
+    #pane-move{}
+    .mob-phase{display:none}
+    .mob-phase.active{display:block}
+    .mob-chip-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+    .mob-chip{padding:9px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:12px;cursor:pointer;transition:all .15s;user-select:none}
+    .mob-chip.sel{background:rgba(44,212,196,.12);border-color:var(--teal);color:var(--teal)}
+    .mob-radio-group{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+    .mob-radio{padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:13px;cursor:pointer;transition:all .15s;text-align:left;display:block}
+    .mob-radio.sel{background:rgba(44,212,196,.12);border-color:var(--teal);color:var(--white)}
+    .mob-phase-nav{display:flex;gap:8px;margin-top:20px}
+    .mob-next-btn{flex:1;padding:14px;background:var(--teal);border:none;color:#000;font-family:var(--D);font-size:14px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+    .mob-back-btn{padding:14px 18px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+    .mob-processing{text-align:center;padding:60px 20px}
+    .mob-results{}
+    .mob-section{margin-bottom:20px}
+    .mob-section-title{font-family:var(--D);font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .mob-ex-item{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+    .mob-ex-item:last-child{border-bottom:none}
+    .mob-ex-name{font-size:14px;font-weight:700;color:var(--white);margin-bottom:2px}
+    .mob-ex-meta{font-size:11px;color:var(--teal);font-family:var(--B);margin-bottom:4px}
+    .mob-ex-how{font-size:12px;color:var(--muted);line-height:1.6;display:none}
+    .mob-ex-how.open{display:block}
+    .mob-ex-toggle{font-size:11px;color:var(--dim);background:none;border:none;cursor:pointer;padding:0;font-family:var(--B)}
+    .mob-add-habits-btn{width:100%;padding:14px;background:rgba(44,212,196,.12);border:1px solid var(--teal);color:var(--teal);font-family:var(--D);font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin-top:12px;transition:all .2s}
+    .mob-add-habits-btn:hover{background:rgba(44,212,196,.2)}
+    .mob-add-habits-btn:disabled{opacity:.4;cursor:default}
+    .mob-restart-btn{width:100%;padding:12px;background:none;border:1px solid var(--border);color:var(--dim);font-family:var(--B);font-size:12px;cursor:pointer;margin-top:8px}
+
+    /* ── NAV: allow 7 tabs ── */
+    #bottomnav{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    #bottomnav::-webkit-scrollbar{display:none}
+    .bn-tab{min-width:52px}
     .al-notes-toggle{font-size:11px;color:var(--dim);cursor:pointer;display:flex;align-items:center;gap:5px;margin-bottom:8px;padding:0;background:none;border:none}
     .al-notes-toggle:hover{color:var(--muted)}
     .al-textarea{width:100%;background:var(--s1);border:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:13px;font-weight:300;padding:12px 14px;resize:none;height:80px;line-height:1.6;box-sizing:border-box;transition:border-color .2s}
@@ -1355,6 +1397,160 @@
     </div>
   </div>
 
+  <!-- ══ MOBILITY / MOVE PANE ══ -->
+  <div id="pane-move" class="pane">
+    <div class="sh">
+      <div class="sh-label">Move</div>
+      <div class="sh-title">Your<br><span style="color:var(--teal)">Movement</span></div>
+      <p class="sh-sub">Daily stretches, mobility, posture correction, flexibility & height protocol — built for you.</p>
+    </div>
+
+    <!-- Phase 1: Goals -->
+    <div id="mob-phase-1" class="mob-phase active">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">What do you want to get out of this? Pick everything that applies.</p>
+      <div class="mob-chip-grid" id="mob-goals-grid">
+        <button class="mob-chip" data-val="flexibility" onclick="mobToggleChip(this)">Improve flexibility</button>
+        <button class="mob-chip" data-val="posture" onclick="mobToggleChip(this)">Fix posture</button>
+        <button class="mob-chip" data-val="height" onclick="mobToggleChip(this)">Height maximisation</button>
+        <button class="mob-chip" data-val="stiffness" onclick="mobToggleChip(this)">Reduce stiffness / pain</button>
+        <button class="mob-chip" data-val="injury_prev" onclick="mobToggleChip(this)">Injury prevention</button>
+        <button class="mob-chip" data-val="performance" onclick="mobToggleChip(this)">Athletic performance</button>
+        <button class="mob-chip" data-val="morning" onclick="mobToggleChip(this)">Morning energiser</button>
+        <button class="mob-chip" data-val="wind_down" onclick="mobToggleChip(this)">Evening wind-down</button>
+      </div>
+      <div id="mob-p1-error" style="font-size:12px;color:#f87171;display:none;margin-bottom:8px">Select at least one to continue.</div>
+      <button class="mob-next-btn" onclick="mobPhaseNext(1)">Next →</button>
+    </div>
+
+    <!-- Phase 2: Problem areas -->
+    <div id="mob-phase-2" class="mob-phase">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:700;color:var(--white)">Where are you tight or uncomfortable?</p>
+      <p style="font-size:12px;color:var(--dim);margin-bottom:16px">Select all that apply — or none if you're unsure.</p>
+      <div class="mob-chip-grid" id="mob-problems-grid">
+        <button class="mob-chip" data-val="hip_flexors" onclick="mobToggleChip(this)">Hip flexors</button>
+        <button class="mob-chip" data-val="hamstrings" onclick="mobToggleChip(this)">Hamstrings</button>
+        <button class="mob-chip" data-val="thoracic" onclick="mobToggleChip(this)">Upper back / thoracic spine</button>
+        <button class="mob-chip" data-val="shoulders" onclick="mobToggleChip(this)">Shoulders & chest</button>
+        <button class="mob-chip" data-val="calves" onclick="mobToggleChip(this)">Calves & ankles</button>
+        <button class="mob-chip" data-val="neck" onclick="mobToggleChip(this)">Neck & traps</button>
+        <button class="mob-chip" data-val="lower_back" onclick="mobToggleChip(this)">Lower back</button>
+        <button class="mob-chip" data-val="groin" onclick="mobToggleChip(this)">Groin & inner thighs</button>
+        <button class="mob-chip" data-val="knees" onclick="mobToggleChip(this)">IT band & knees</button>
+      </div>
+      <div class="mob-phase-nav">
+        <button class="mob-back-btn" onclick="mobPhaseBack(2)">←</button>
+        <button class="mob-next-btn" onclick="mobPhaseNext(2)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Phase 3: Posture -->
+    <div id="mob-phase-3" class="mob-phase">
+      <p style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:4px">Do you have any of these posture issues?</p>
+      <p style="font-size:12px;color:var(--dim);margin-bottom:16px">Be honest — the protocol corrects these specifically.</p>
+      <div class="mob-chip-grid" id="mob-posture-grid">
+        <button class="mob-chip" data-val="forward_head" onclick="mobToggleChip(this)">Forward head (chin juts forward)</button>
+        <button class="mob-chip" data-val="rounded_shoulders" onclick="mobToggleChip(this)">Rounded / hunched shoulders</button>
+        <button class="mob-chip" data-val="apt" onclick="mobToggleChip(this)">Anterior pelvic tilt (arched lower back)</button>
+        <button class="mob-chip" data-val="ppt" onclick="mobToggleChip(this)">Posterior pelvic tilt (flat back)</button>
+        <button class="mob-chip" data-val="scoliosis" onclick="mobToggleChip(this)">Scoliosis (spine curves sideways)</button>
+        <button class="mob-chip" data-val="none" onclick="mobToggleChip(this)">None / Not sure</button>
+      </div>
+      <div class="mob-phase-nav">
+        <button class="mob-back-btn" onclick="mobPhaseBack(3)">←</button>
+        <button class="mob-next-btn" onclick="mobPhaseNext(3)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Phase 4: Lifestyle -->
+    <div id="mob-phase-4" class="mob-phase">
+      <p style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:16px">Tell us about your day</p>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Hours sitting / at a desk per day</div>
+        <div class="mob-chip-grid">
+          <button class="mob-chip" data-group="desk" data-val="<2" onclick="mobPickSingle(this,'desk')">Under 2 hrs</button>
+          <button class="mob-chip" data-group="desk" data-val="2-4" onclick="mobPickSingle(this,'desk')">2–4 hrs</button>
+          <button class="mob-chip" data-group="desk" data-val="4-8" onclick="mobPickSingle(this,'desk')">4–8 hrs</button>
+          <button class="mob-chip sel" data-group="desk" data-val="8+" onclick="mobPickSingle(this,'desk')">8+ hrs</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Daily time available for mobility work</div>
+        <div class="mob-chip-grid">
+          <button class="mob-chip" data-group="time" data-val="5" onclick="mobPickSingle(this,'time')">5 min</button>
+          <button class="mob-chip sel" data-group="time" data-val="10" onclick="mobPickSingle(this,'time')">10 min</button>
+          <button class="mob-chip" data-group="time" data-val="15" onclick="mobPickSingle(this,'time')">15 min</button>
+          <button class="mob-chip" data-group="time" data-val="20" onclick="mobPickSingle(this,'time')">20+ min</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Preferred time to do mobility work</div>
+        <div class="mob-chip-grid">
+          <button class="mob-chip sel" data-group="pref" data-val="morning" onclick="mobPickSingle(this,'pref')">Morning</button>
+          <button class="mob-chip" data-group="pref" data-val="evening" onclick="mobPickSingle(this,'pref')">Evening</button>
+          <button class="mob-chip" data-group="pref" data-val="both" onclick="mobPickSingle(this,'pref')">Both</button>
+          <button class="mob-chip" data-group="pref" data-val="whenever" onclick="mobPickSingle(this,'pref')">Whenever</button>
+        </div>
+      </div>
+
+      <div class="mob-phase-nav">
+        <button class="mob-back-btn" onclick="mobPhaseBack(4)">←</button>
+        <button class="mob-next-btn" onclick="mobPhaseNext(4)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Phase 5: Background -->
+    <div id="mob-phase-5" class="mob-phase">
+      <p style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:16px">A few more details</p>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Are you still growing? (under 25)</div>
+        <div class="mob-chip-grid">
+          <button class="mob-chip" data-group="growing" data-val="yes" onclick="mobPickSingle(this,'growing')">Yes — include height protocol</button>
+          <button class="mob-chip sel" data-group="growing" data-val="no" onclick="mobPickSingle(this,'growing')">No / Not sure</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Current flexibility level</div>
+        <div class="mob-chip-grid">
+          <button class="mob-chip" data-group="flex" data-val="very_stiff" onclick="mobPickSingle(this,'flex')">Very stiff — can't reach shins</button>
+          <button class="mob-chip" data-group="flex" data-val="stiff" onclick="mobPickSingle(this,'flex')">Stiff — touch toes on a good day</button>
+          <button class="mob-chip sel" data-group="flex" data-val="average" onclick="mobPickSingle(this,'flex')">Average — can touch toes</button>
+          <button class="mob-chip" data-group="flex" data-val="flexible" onclick="mobPickSingle(this,'flex')">Flexible — palms flat on floor</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Any injuries or areas to avoid? (optional)</div>
+        <textarea id="mob-injuries-input" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:13px;padding:10px 12px;outline:none;resize:none;box-sizing:border-box;line-height:1.5" rows="2" placeholder="e.g. bad left knee, recent shoulder injury…"></textarea>
+      </div>
+
+      <div class="mob-phase-nav">
+        <button class="mob-back-btn" onclick="mobPhaseBack(5)">←</button>
+        <button class="mob-next-btn" onclick="mobRunAnalysis()">Build My Protocol →</button>
+      </div>
+    </div>
+
+    <!-- Phase 6: Processing -->
+    <div id="mob-phase-6" class="mob-phase">
+      <div class="mob-processing">
+        <div class="lab-spinner" style="margin:0 auto 24px"></div>
+        <div style="font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:8px">Building Protocol</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6">Personalising your daily movement routine based on your goals, tight areas, posture, and lifestyle…</div>
+      </div>
+    </div>
+
+    <!-- Phase 7: Results -->
+    <div id="mob-phase-7" class="mob-phase">
+      <div id="mob-results-body"></div>
+      <button class="mob-add-habits-btn" id="mob-add-habits-btn" onclick="mobAddHabits()">+ Add Mobility Habits to Daily Tracker</button>
+      <button class="mob-restart-btn" onclick="mobRestart()">Redo questionnaire</button>
+    </div>
+  </div>
+
   <!-- ══ PLAN BUILDER OVERLAY ══ -->
   <div id="plan-builder">
     <div class="pb-topbar">
@@ -1429,6 +1625,10 @@
     <button class="bn-tab" data-tab="lab" onclick="switchTab('lab')">
       <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
       <span>Lab</span>
+    </button>
+    <button class="bn-tab" data-tab="move" onclick="switchTab('move')">
+      <svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="5" r="2"/><path d="M12 7v5l-3 4m3-4l3 4M9 10H6m12 0h-3"/></svg>
+      <span>Move</span>
     </button>
   </nav>
 
@@ -1873,6 +2073,7 @@ function switchTab(tab){
     return;
   }
   if(tab==='progress') { setTimeout(()=>renderMilestones(), 50); }
+  if(tab==='move') { setTimeout(()=>initMove(), 50); return; }
   // Show onboarding on first visit if not yet done
   const obTabs=['habits','train','eat','progress','coach'];
   if(obTabs.includes(tab) && !isOnboarded(tab)){
@@ -2133,8 +2334,14 @@ function renderDayDetail(day, isToday) {
     ${day.keyLifts?`<p style="font-size:12px;color:var(--dim);margin:0 0 12px">${escHtml(day.keyLifts)}</p>`:''}
     ${exHtml}
     <div class="ex-add-row">
-      <input class="ex-add-input" id="ex-add-${escHtml(day.day)}" placeholder="Add exercise — e.g. Nordic curl 3×6" onkeydown="if(event.key==='Enter')addExToDay('${escHtml(day.day)}')">
-      <button class="ex-add-go" onclick="addExToDay('${escHtml(day.day)}')">+ Add</button>
+      <input class="ex-add-input" id="ex-add-${escHtml(day.day)}" placeholder="Exercise name…" onkeydown="if(event.key==='Enter')showExQuickCfg('${escHtml(day.day)}')">
+      <button class="ex-add-go" onclick="showExQuickCfg('${escHtml(day.day)}')">Configure</button>
+    </div>
+    <div class="ex-quick-cfg" id="ex-qcfg-${escHtml(day.day)}">
+      <label>Sets</label><input type="number" id="ex-sets-${escHtml(day.day)}" value="3" min="1" max="10" style="width:44px">
+      <label style="margin-left:4px">Reps</label><input type="text" id="ex-reps-${escHtml(day.day)}" value="8" placeholder="8" style="width:54px">
+      <label style="margin-left:4px">Load</label><input type="text" id="ex-load-${escHtml(day.day)}" value="RPE 7" placeholder="RPE 7" style="width:64px">
+      <button class="ex-quick-cfg-confirm" onclick="confirmAddExToDay('${escHtml(day.day)}')">Add →</button>
     </div>
     ${isToday?`<button class="btn-primary" onclick="saveWorkout()" style="margin-top:14px">Save Session</button>`:''}
   </div>`;
@@ -5849,6 +6056,213 @@ function editCustomHabit(fullKey) {
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
   sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
   initHabits();
+}
+
+/* ════════════════════════════════════════
+   EXERCISE SETS/REPS QUICK CONFIG
+════════════════════════════════════════ */
+function showExQuickCfg(dayName) {
+  const nameInput = document.getElementById('ex-add-' + dayName);
+  if(!nameInput?.value.trim()) { nameInput?.focus(); return; }
+  const cfg = document.getElementById('ex-qcfg-' + dayName);
+  if(cfg) {
+    cfg.classList.add('show');
+    document.getElementById('ex-sets-' + dayName)?.focus();
+  }
+}
+
+function confirmAddExToDay(dayName) {
+  const nameInput = document.getElementById('ex-add-' + dayName);
+  const setsInput = document.getElementById('ex-sets-' + dayName);
+  const repsInput = document.getElementById('ex-reps-' + dayName);
+  const loadInput = document.getElementById('ex-load-' + dayName);
+  const name = nameInput?.value.trim();
+  if(!name) return;
+  const day = _weeklyPlan.find(d => d.day === dayName);
+  if(!day) return;
+  if(!day.exercises) day.exercises = [];
+  day.exercises.push({
+    name,
+    sets: setsInput?.value || '3',
+    reps: repsInput?.value || '8',
+    load: loadInput?.value || 'RPE 7',
+    notes: ''
+  });
+  OB.train = OB.train || {};
+  OB.train.weeklyPlan = _weeklyPlan;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  nameInput.value = '';
+  if(nameInput) nameInput.value = '';
+  const cfg = document.getElementById('ex-qcfg-' + dayName);
+  if(cfg) cfg.classList.remove('show');
+  selectDay(dayName);
+  showToast(`Added ${name}`);
+}
+
+/* ════════════════════════════════════════
+   MOBILITY / MOVE SECTION
+════════════════════════════════════════ */
+let MOB_STATE = {
+  goals: [], problems: [], posture: [],
+  desk: '8+', time: '10', pref: 'morning',
+  growing: 'no', flex: 'average', injuries: '',
+  results: null
+};
+
+function mobToggleChip(btn) {
+  btn.classList.toggle('sel');
+}
+
+function mobPickSingle(btn, group) {
+  document.querySelectorAll(`.mob-chip[data-group="${group}"]`).forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+function mobGetChips(gridId) {
+  return [...document.querySelectorAll(`#${gridId} .mob-chip.sel`)].map(b => b.dataset.val);
+}
+
+function mobGetSingle(group) {
+  return document.querySelector(`.mob-chip[data-group="${group}"].sel`)?.dataset.val || '';
+}
+
+function mobShowPhase(n) {
+  document.querySelectorAll('.mob-phase').forEach(p => p.classList.remove('active'));
+  document.getElementById(`mob-phase-${n}`)?.classList.add('active');
+}
+
+function mobPhaseNext(from) {
+  if(from === 1) {
+    MOB_STATE.goals = mobGetChips('mob-goals-grid');
+    const err = document.getElementById('mob-p1-error');
+    if(!MOB_STATE.goals.length) { err.style.display='block'; return; }
+    err.style.display='none';
+  }
+  if(from === 2) MOB_STATE.problems = mobGetChips('mob-problems-grid');
+  if(from === 3) MOB_STATE.posture = mobGetChips('mob-posture-grid');
+  if(from === 4) {
+    MOB_STATE.desk = mobGetSingle('desk') || '8+';
+    MOB_STATE.time = mobGetSingle('time') || '10';
+    MOB_STATE.pref = mobGetSingle('pref') || 'morning';
+  }
+  mobShowPhase(from + 1);
+}
+
+function mobPhaseBack(from) { mobShowPhase(from - 1); }
+
+async function mobRunAnalysis() {
+  MOB_STATE.growing  = mobGetSingle('growing') || 'no';
+  MOB_STATE.flex     = mobGetSingle('flex') || 'average';
+  MOB_STATE.injuries = document.getElementById('mob-injuries-input')?.value.trim() || '';
+  mobShowPhase(6);
+
+  try {
+    const profile = PROFILE || {};
+    const ctx = { profile, obHabits: OB.habits || {}, obCoach: OB.coach || {} };
+    const res = await fetch('/api/mobility', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...MOB_STATE, appContext: ctx })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    MOB_STATE.results = data;
+    OB.mobility = { state: MOB_STATE, results: data, ts: Date.now() };
+    localStorage.setItem('jpt_ob', JSON.stringify(OB));
+    sb.auth.updateUser({ data: { onboarding: OB } }).catch(() => {});
+    mobRenderResults(data);
+    mobShowPhase(7);
+  } catch(e) {
+    mobShowPhase(5);
+    showToast('Could not build protocol — try again');
+  }
+}
+
+function mobRenderResults(data) {
+  const el = document.getElementById('mob-results-body');
+  if(!el) return;
+
+  const section = (title, icon, items, extraClass='') => {
+    if(!items?.length) return '';
+    const itemsHtml = items.map((ex, i) => `
+      <div class="mob-ex-item">
+        <div class="mob-ex-name">${escHtml(ex.name)}</div>
+        <div class="mob-ex-meta">${escHtml(ex.duration || ex.sets_reps || '')}</div>
+        ${ex.how_to ? `<button class="mob-ex-toggle" onclick="mobToggleHow(this)">How to ▾</button><div class="mob-ex-how">${escHtml(ex.how_to).replace(/\n/g,'<br>')}</div>` : ''}
+        ${ex.why ? `<div style="font-size:11px;color:rgba(44,212,196,.6);margin-top:4px;font-style:italic">${escHtml(ex.why)}</div>` : ''}
+      </div>`).join('');
+    return `<div class="mob-section card ${extraClass}">
+      <div class="mob-section-title">${icon} ${escHtml(title)}</div>
+      ${itemsHtml}
+    </div>`;
+  };
+
+  el.innerHTML = `
+    ${data.summary ? `<div class="card" style="margin-bottom:16px"><p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0">${escHtml(data.summary)}</p></div>` : ''}
+    ${data.key_focus ? `<div style="background:rgba(44,212,196,.08);border-left:3px solid var(--teal);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--white);line-height:1.5"><strong>Key focus:</strong> ${escHtml(data.key_focus)}</div>` : ''}
+    ${section('Morning Routine', '🌅', data.morning_routine)}
+    ${section('Posture Corrections', '🧍', data.posture_corrections)}
+    ${section('Desk Break (2–5 min)', '💼', data.desk_breaks)}
+    ${section('Evening Routine', '🌙', data.evening_routine)}
+    ${data.height_protocol?.length ? section('Height Protocol', '📏', data.height_protocol) : ''}
+  `;
+}
+
+function mobToggleHow(btn) {
+  const how = btn.nextElementSibling;
+  if(!how) return;
+  how.classList.toggle('open');
+  btn.textContent = how.classList.contains('open') ? 'How to ▴' : 'How to ▾';
+}
+
+async function mobAddHabits() {
+  const btn = document.getElementById('mob-add-habits-btn');
+  if(!btn) return;
+  const data = MOB_STATE.results;
+  if(!data) return;
+
+  const habitsToAdd = data.habits_to_add || [];
+  if(!habitsToAdd.length) { showToast('No habits to add'); return; }
+
+  OB.custom_habits = OB.custom_habits || [];
+  let added = 0;
+  habitsToAdd.forEach(h => {
+    const key = 'mob_' + h.id;
+    if(!OB.custom_habits.find(c => c.key === key)) {
+      OB.custom_habits.push({ key, name: h.name, desc: h.desc || 'Daily mobility habit' });
+      added++;
+    }
+  });
+
+  if(!added) { showToast('These habits are already in your tracker'); return; }
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data: { onboarding: OB } }).catch(() => {});
+  btn.textContent = `✓ ${added} habit${added>1?'s':''} added to Habits tab`;
+  btn.disabled = true;
+  showToast(`Added ${added} mobility habit${added>1?'s':''}`);
+}
+
+function mobRestart() {
+  MOB_STATE = { goals:[], problems:[], posture:[], desk:'8+', time:'10', pref:'morning', growing:'no', flex:'average', injuries:'', results:null };
+  // Reset all chip selections
+  document.querySelectorAll('#pane-move .mob-chip').forEach(c => {
+    const defaultSel = ['8+','10','morning','no','average'].includes(c.dataset.val);
+    c.classList.toggle('sel', defaultSel);
+  });
+  document.getElementById('mob-injuries-input').value = '';
+  document.getElementById('mob-add-habits-btn').disabled = false;
+  document.getElementById('mob-add-habits-btn').textContent = '+ Add Mobility Habits to Daily Tracker';
+  mobShowPhase(1);
+}
+
+function initMove() {
+  // Restore saved results if they exist
+  if(OB.mobility?.results) {
+    MOB_STATE = { ...MOB_STATE, ...(OB.mobility.state || {}), results: OB.mobility.results };
+    mobRenderResults(OB.mobility.results);
+    mobShowPhase(7);
+  }
 }
 
 /* ── ADMIN SELF-APPROVE ── */
