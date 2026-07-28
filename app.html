@@ -2,8 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <title>JP Training — Your Programme</title>
+
+  <!-- PWA / installable app -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#000000">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="JP Training">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+      });
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
@@ -647,6 +663,9 @@
     .mob-chip-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
     .mob-chip{padding:9px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:12px;cursor:pointer;transition:all .15s;user-select:none}
     .mob-chip.sel{background:rgba(44,212,196,.12);border-color:var(--teal);color:var(--teal)}
+    .food-ctx-grid{display:flex;flex-wrap:wrap;gap:6px}
+    .food-ctx-chip{padding:7px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:11px;cursor:pointer;transition:all .15s;user-select:none}
+    .food-ctx-chip.sel{background:var(--teal);border-color:var(--teal);color:#000;font-weight:600}
     .mob-radio-group{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
     .mob-radio{padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:13px;cursor:pointer;transition:all .15s;text-align:left;display:block}
     .mob-radio.sel{background:rgba(44,212,196,.12);border-color:var(--teal);color:var(--white)}
@@ -924,7 +943,11 @@
         </div>
         <button class="ob-edit-btn" style="margin-top:8px" onclick="showOnboarding('habits')">Edit targets</button>
       </div>
-      <div class="tag" id="habits-date"></div>
+      <div class="eat-date-nav" style="margin-bottom:14px">
+        <button class="eat-nav-btn" onclick="shiftHabitDate(-1)">‹</button>
+        <div class="eat-date-lbl" id="habit-date-lbl"></div>
+        <button class="eat-nav-btn" id="habit-nav-next" onclick="shiftHabitDate(1)">›</button>
+      </div>
       <div class="prog-label"><span>Progress</span><span id="habits-count">0 / 10</span></div>
       <div class="prog-bar-wrap"><div class="prog-bar-fill" id="habits-bar" style="width:0%"></div></div>
       <div id="xp-card" class="xp-card" style="display:none">
@@ -945,7 +968,7 @@
       <div class="steps-card" id="steps-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
           <div>
-            <div class="sh-label" style="margin-bottom:3px">Steps Today</div>
+            <div class="sh-label" style="margin-bottom:3px">Steps</div>
             <div style="font-size:11px;color:var(--dim)">Goal: <span id="steps-goal-display">10,000</span></div>
             <div id="steps-week-avg" style="font-size:10px;color:var(--dim);margin-top:2px"></div>
           </div>
@@ -1040,6 +1063,8 @@
         <div class="macro-tile"><div class="macro-name">Carbs</div><div class="macro-val" id="m-c">0</div><div class="macro-unit">g</div></div>
         <div class="macro-tile"><div class="macro-name">Fat</div><div class="macro-val" id="m-f">0</div><div class="macro-unit">g</div></div>
       </div>
+      <!-- JP's real nutrition plan — only rendered for his account, see renderNutritionPlan() -->
+      <div id="nutrition-plan-card" style="display:none"></div>
       <div id="micro-totals" style="display:none;background:rgba(255,255,255,.02);border:1px solid var(--border);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--muted)">
         <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:6px">Micronutrients today</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
@@ -1069,6 +1094,7 @@
         <div class="eat-date-lbl" id="eat-date-lbl"></div>
         <button class="eat-nav-btn" id="eat-nav-next" onclick="shiftEatDate(1)">›</button>
       </div>
+      <div id="eat-day-score" style="display:none;text-align:center;margin:-6px 0 14px;font-size:12px;color:var(--dim)"></div>
 
       <!-- Add food form -->
       <div class="food-form" id="eat-add-form">
@@ -1082,7 +1108,18 @@
             style="width:110px;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);padding:10px 12px;color:#fff;font-family:var(--B);font-size:13px">
           <span style="font-size:11px;color:var(--dim)">Meal time (optional)</span>
         </div>
-        <button class="btn-primary" id="food-add-btn" style="margin-top:10px" onclick="addFood()">Add &amp; Rate</button>
+        <div style="margin-top:10px">
+          <div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:6px">What's this for right now?</div>
+          <div class="food-ctx-grid" id="food-ctx-grid">
+            <button type="button" class="food-ctx-chip sel" data-ctx="general" onclick="pickFoodCtx(this)">General</button>
+            <button type="button" class="food-ctx-chip" data-ctx="pre-training" onclick="pickFoodCtx(this)">Pre-training</button>
+            <button type="button" class="food-ctx-chip" data-ctx="post-workout" onclick="pickFoodCtx(this)">Post-workout</button>
+            <button type="button" class="food-ctx-chip" data-ctx="deep-work" onclick="pickFoodCtx(this)">Deep work</button>
+            <button type="button" class="food-ctx-chip" data-ctx="pre-work" onclick="pickFoodCtx(this)">Before work</button>
+            <button type="button" class="food-ctx-chip" data-ctx="wind-down" onclick="pickFoodCtx(this)">Winding down</button>
+          </div>
+        </div>
+        <button class="btn-primary" id="food-add-btn" style="margin-top:12px" onclick="addFood()">Add &amp; Rate</button>
       </div>
 
       <div id="eat-suggestions" style="margin-bottom:16px"></div>
@@ -1363,8 +1400,6 @@
 
     </div>
 
-  </div>
-
   <!-- ATHLETE LAB — ADD TO TRAINING DAY PICKER -->
   <div id="al-day-picker" onclick="if(event.target===this)alCancelPicker()">
     <div class="al-picker-sheet">
@@ -1550,6 +1585,7 @@
       <button class="mob-restart-btn" onclick="mobRestart()">Redo questionnaire</button>
     </div>
   </div>
+  </div><!-- /#content -->
 
   <!-- ══ PLAN BUILDER OVERLAY ══ -->
   <div id="plan-builder">
@@ -1710,6 +1746,7 @@ let USER=null, PROFILE=null;
 const TODAY=new Date().toISOString().split('T')[0];
 let OB={};
 let EAT_DATE=TODAY;
+let HABIT_DATE=TODAY;   // habits + steps can be logged for any past day
 
 function getHabits(){
   const h=OB.habits||{};
@@ -1982,7 +2019,7 @@ function stepsKey() { return `jpt_steps_${USER?.id||'guest'}`; }
 
 function loadStepsHistory() {
   try { stepsHistory = JSON.parse(localStorage.getItem(stepsKey()) || '{}'); } catch(e) { stepsHistory = {}; }
-  todaySteps = stepsHistory[TODAY] || 0;
+  todaySteps = stepsHistory[HABIT_DATE] || 0;
   renderStepsCard();
 }
 
@@ -2018,7 +2055,7 @@ function renderStepsCard() {
 function saveStepsToday(count) {
   count = Math.max(0, Math.round(+count || 0));
   todaySteps = count;
-  stepsHistory[TODAY] = count;
+  stepsHistory[HABIT_DATE] = count;   // logs against the selected day
   // Trim to 90 days
   const trimmed = {};
   Object.keys(stepsHistory).sort().slice(-90).forEach(k => trimmed[k] = stepsHistory[k]);
@@ -2030,8 +2067,8 @@ function saveStepsToday(count) {
   if(count >= goal && !habitState['steps']) {
     habitState['steps'] = true;
     renderHabits();
-    try { localStorage.setItem(`jpt_habits_${USER.id}_${TODAY}`, JSON.stringify(habitState)); } catch(e){}
-    sb.from('daily_habits').upsert({ user_id:USER.id, date:TODAY, habit_name:'steps', completed:true }, { onConflict:'user_id,date,habit_name' }).catch(()=>{});
+    try { localStorage.setItem(`jpt_habits_${USER.id}_${HABIT_DATE}`, JSON.stringify(habitState)); } catch(e){}
+    sb.from('habit_log').upsert({ user_id:USER.id, date:HABIT_DATE, habit_name:'steps', completed:true }, { onConflict:'user_id,date,habit_name' }).catch(()=>{});
     earnXP('habit','steps',10);
     checkPerfectDay();
     showToast('✓ Step goal hit');
@@ -2106,26 +2143,42 @@ function showToast(msg){
 ════════════════════════════════════════ */
 let habitState={};
 
+function shiftHabitDate(delta){
+  const d = new Date(HABIT_DATE+'T00:00:00');
+  d.setDate(d.getDate()+delta);
+  const nd = d.toISOString().split('T')[0];
+  if(nd > TODAY) return;            // no future logging
+  HABIT_DATE = nd;
+  todaySteps = stepsHistory[HABIT_DATE] || 0;
+  renderStepsCard();
+  initHabits();
+}
+
 async function initHabits(){
   renderOverviewCard();
   const fresh=getHabits();
   fresh.forEach((h,i)=>{ if(HABITS[i]) Object.assign(HABITS[i],h); });
-  document.getElementById('habits-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  // Date navigator label + disable "next" when on today
+  const hlbl=document.getElementById('habit-date-lbl');
+  if(hlbl){ const d=new Date(HABIT_DATE+'T00:00:00'); const isT=HABIT_DATE===TODAY; hlbl.textContent=(isT?'Today · ':'')+d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); }
+  const hnext=document.getElementById('habit-nav-next'); if(hnext) hnext.disabled = HABIT_DATE>=TODAY;
 
   // Restore from localStorage immediately (instant UI while DB loads)
   habitState={};
-  const cached = localStorage.getItem(`jpt_habits_${USER.id}_${TODAY}`);
+  const cached = localStorage.getItem(`jpt_habits_${USER.id}_${HABIT_DATE}`);
   if(cached){ try{ Object.assign(habitState, JSON.parse(cached)); }catch(e){} }
   renderHabits();
 
-  // Load from Supabase and merge
-  const{data, error}=await sb.from('daily_habits')
-    .select('*').eq('user_id',USER.id).eq('date',TODAY);
+  // Load from Supabase and merge (guard against the date changing mid-load)
+  const reqDate = HABIT_DATE;
+  const{data, error}=await sb.from('habit_log')
+    .select('*').eq('user_id',USER.id).eq('date',reqDate);
   if(error){ console.error('initHabits load error:', error); return; }
+  if(reqDate !== HABIT_DATE) return;
   if(data?.length){
     habitState={};
     data.forEach(r=>{ habitState[r.habit_name] = !!r.completed; });
-    localStorage.setItem(`jpt_habits_${USER.id}_${TODAY}`, JSON.stringify(habitState));
+    localStorage.setItem(`jpt_habits_${USER.id}_${HABIT_DATE}`, JSON.stringify(habitState));
     renderHabits();
   }
   renderQuests().catch(()=>{});
@@ -2160,13 +2213,14 @@ function renderHabits(){
 }
 
 async function toggleHabit(key){
+  const _d = HABIT_DATE;
   habitState[key]=!habitState[key];
   renderHabits();
   // Persist to localStorage immediately so reloads survive DB failure
-  try{ localStorage.setItem(`jpt_habits_${USER.id}_${TODAY}`, JSON.stringify(habitState)); }catch(e){}
+  try{ localStorage.setItem(`jpt_habits_${USER.id}_${_d}`, JSON.stringify(habitState)); }catch(e){}
 
-  const { error } = await sb.from('daily_habits').upsert({
-    user_id: USER.id, date: TODAY, habit_name: key, completed: habitState[key]
+  const { error } = await sb.from('habit_log').upsert({
+    user_id: USER.id, date: _d, habit_name: key, completed: habitState[key]
   }, { onConflict: 'user_id,date,habit_name' });
   if(error) console.error('Habit save failed:', error.message, error);
 
@@ -2176,7 +2230,7 @@ async function toggleHabit(key){
     await earnXP('habit', key, 10);
     const allH = getHabits();
     const allDone = allH.every(h => habitState[h.key]);
-    if(allDone) await earnXP('habits_all', TODAY, 75);
+    if(allDone) await earnXP('habits_all', _d, 75);
     await checkPerfectDay();
   }
 }
@@ -2204,6 +2258,45 @@ function initTrain(){
 let _activeSession = null; // {name, exercises: [{name, sets, reps, load}]}
 let _weeklyPlan = [];
 const _DAY_SHORT = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri', Saturday:'Sat', Sunday:'Sun' };
+let _selectedDayName = null;
+
+// ── Training draft auto-save ──────────────────────────────────
+// Every rep/weight typed is written to localStorage immediately, keyed by
+// day + exercise + set, so nothing is lost on reload — for any day, including
+// prior days that haven't been saved to history yet.
+function _trainDraftKey(){ return `jpt_traindraft_${USER?.id || 'anon'}`; }
+function _loadTrainDraft(){ try { return JSON.parse(localStorage.getItem(_trainDraftKey()) || '{}'); } catch(e){ return {}; } }
+function _getTrainDraftField(dayName, exName, si, field){
+  const d = _loadTrainDraft();
+  return (d[dayName] && d[dayName][exName] && d[dayName][exName][si] && d[dayName][exName][si][field]) || '';
+}
+function saveTrainDraft(ei, si, field, val){
+  const day = _weeklyPlan.find(d => d.day === _selectedDayName);
+  if(!day || !day.exercises || !day.exercises[ei]) return;
+  const exName = day.exercises[ei].name;
+  const d = _loadTrainDraft();
+  d[_selectedDayName] = d[_selectedDayName] || {};
+  d[_selectedDayName][exName] = d[_selectedDayName][exName] || {};
+  d[_selectedDayName][exName][si] = d[_selectedDayName][exName][si] || {};
+  d[_selectedDayName][exName][si][field] = val;
+  try { localStorage.setItem(_trainDraftKey(), JSON.stringify(d)); } catch(e){}
+}
+function _clearTrainDraftDay(dayName){
+  const d = _loadTrainDraft();
+  if(d[dayName]){ delete d[dayName]; try { localStorage.setItem(_trainDraftKey(), JSON.stringify(d)); } catch(e){} }
+}
+// Date of a given weekday within the current week, never in the future.
+function _dateForWeekday(dayName){
+  const names = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const target = names.indexOf(dayName);
+  if(target < 0) return TODAY;
+  const now = new Date(TODAY + 'T00:00:00');
+  let back = now.getDay() - target;
+  if(back < 0) back += 7;            // target later in the week → last week's occurrence
+  const d = new Date(now); d.setDate(d.getDate() - back);
+  const iso = d.toISOString().split('T')[0];
+  return iso > TODAY ? TODAY : iso;
+}
 
 function renderWeeklyCalendar(plan) {
   _weeklyPlan = plan || [];
@@ -2234,6 +2327,7 @@ function selectDay(dayName) {
   const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
   const day = _weeklyPlan.find(d => d.day === dayName);
   if(!day) return;
+  _selectedDayName = dayName;
 
   _weeklyPlan.forEach(d => {
     const tab = document.getElementById('day-tab-'+d.day);
@@ -2265,19 +2359,26 @@ function renderDayDetail(day, isToday) {
 
   const exercises = day.exercises || [];
   const exHtml = exercises.map((ex, ei) => {
-    if(isToday) {
-      const targetRep = String(ex.reps||ex.rep||'').split('–')[0].split('-')[0].replace(/[^0-9]/g,'') || '';
-      const targetKg  = String(ex.load||'').replace(/[^0-9.]/g,'') || '';
-      const lastData = _lastSessionData[ex.name];
-      const pbInfo = _pbData[ex.name];
-      const overload = _overloadEx.has(ex.name);
-      const lastLabel = lastData
-        ? `Last: ${lastData.sets.length}×${lastData.sets.map(s=>s.reps).join('/')} @ ${Math.max(...lastData.sets.map(s=>s.weight_kg))}kg`
-        : '';
-      return `<div class="workout-ex">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+    const targetRep = String(ex.reps||ex.rep||'').split('–')[0].split('-')[0].replace(/[^0-9]/g,'') || '';
+    const targetKg  = String(ex.load||'').replace(/[^0-9.]/g,'') || '';
+    const lastData = _lastSessionData[ex.name];
+    const overload = _overloadEx.has(ex.name);
+    const lastLabel = lastData
+      ? `Last: ${lastData.sets.length}×${lastData.sets.map(s=>s.reps).join('/')} @ ${Math.max(...lastData.sets.map(s=>s.weight_kg))}kg`
+      : '';
+    const total = exercises.length;
+    // Reorder / swap / delete controls stay available on non-today (planning) days.
+    const controls = isToday ? '' : `<div class="ex-controls">
+            <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},-1)"${ei===0?' disabled':''}>↑</button>
+            <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},1)"${ei===total-1?' disabled':''}>↓</button>
+            <button class="ex-ctrl-btn ex-swap-btn" onclick="swapExercise('${escHtml(day.day)}',${ei})" title="Swap">⇄</button>
+            <button class="ex-ctrl-btn del" onclick="removeExercise('${escHtml(day.day)}',${ei})">✕</button>
+          </div>`;
+    return `<div class="workout-ex">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:6px">
           <div class="ex-name" style="margin:0;flex:1;min-width:0">${escHtml(ex.name)}</div>
           <button class="progress-btn" onclick="showExProgress('${escHtml(ex.name)}')" title="View progress">↗</button>
+          ${controls}
         </div>
         ${lastLabel ? `<div class="last-session-label">${escHtml(lastLabel)}${overload ? ' <span class="overload-hint">+2.5kg ↑</span>' : ''}</div>` : ''}
         ${ex.notes?`<div style="font-size:11px;color:var(--dim);margin-bottom:6px">${escHtml(ex.notes)}</div>`:''}
@@ -2290,15 +2391,16 @@ function renderDayDetail(day, isToday) {
           </div>
           ${Array.from({length:+ex.sets||3},(_,si)=>{
             const ls = lastData?.sets[si];
+            const draftReps = _getTrainDraftField(day.day, ex.name, si, 'reps');
+            const draftKg   = _getTrainDraftField(day.day, ex.name, si, 'wt');
             const prefillReps = ls?.reps || targetRep || '';
             const suggestKg = overload && ls ? (ls.weight_kg + 2.5) : (ls?.weight_kg || +targetKg || 0);
             const prefillKg = suggestKg || '';
             return `
             <div class="set-row" id="set-row-${ei}-${si}">
               <span class="set-num">${si+1}</span>
-              <input class="set-field" type="number" min="0" placeholder="${prefillReps||'—'}" id="reps-${ei}-${si}">
-              <input class="set-field" type="number" min="0" step="2.5" placeholder="${prefillKg||'0'}" id="wt-${ei}-${si}"
-                onblur="checkPbOnInput(this,'${escHtml(ex.name)}','${ei}-${si}')">
+              <input class="set-field" type="number" min="0" placeholder="${prefillReps||'—'}" id="reps-${ei}-${si}" value="${draftReps}" oninput="saveTrainDraft(${ei},${si},'reps',this.value)">
+              <input class="set-field" type="number" min="0" step="2.5" placeholder="${prefillKg||'0'}" id="wt-${ei}-${si}" value="${draftKg}" oninput="saveTrainDraft(${ei},${si},'wt',this.value)" onblur="checkPbOnInput(this,'${escHtml(ex.name)}','${ei}-${si}')">
               <button class="set-done" id="sd-${ei}-${si}" onclick="checkSet('${ei}-${si}')">
                 <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
               </button>
@@ -2306,24 +2408,6 @@ function renderDayDetail(day, isToday) {
           `;}).join('')}
         </div>
       </div>`;
-    } else {
-      const total = exercises.length;
-      return `<div class="workout-ex" style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)">
-        <div style="display:flex;align-items:center">
-          <div style="flex:1;min-width:0">
-            <div class="ex-name" style="margin:0">${escHtml(ex.name)}</div>
-            <div style="font-size:11px;color:var(--dim);margin-top:1px">${escHtml(ex.sets)}×${escHtml(ex.reps||ex.rep||'—')} · ${escHtml(ex.load||'RPE 8')}</div>
-            ${ex.notes?`<div style="font-size:11px;color:rgba(44,212,196,.5);margin-top:2px;font-style:italic">${escHtml(ex.notes)}</div>`:''}
-          </div>
-          <div class="ex-controls">
-            <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},-1)"${ei===0?' disabled':''}>↑</button>
-            <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},1)"${ei===total-1?' disabled':''}>↓</button>
-            <button class="ex-ctrl-btn ex-swap-btn" onclick="swapExercise('${escHtml(day.day)}',${ei})" title="Swap">⇄</button>
-            <button class="ex-ctrl-btn del" onclick="removeExercise('${escHtml(day.day)}',${ei})">✕</button>
-          </div>
-        </div>
-      </div>`;
-    }
   }).join('');
 
   return `<div class="card">
@@ -2343,7 +2427,7 @@ function renderDayDetail(day, isToday) {
       <label style="margin-left:4px">Load</label><input type="text" id="ex-load-${escHtml(day.day)}" value="RPE 7" placeholder="RPE 7" style="width:64px">
       <button class="ex-quick-cfg-confirm" onclick="confirmAddExToDay('${escHtml(day.day)}')">Add →</button>
     </div>
-    ${isToday?`<button class="btn-primary" onclick="saveWorkout()" style="margin-top:14px">Save Session</button>`:''}
+    <button class="btn-primary" onclick="saveWorkout()" style="margin-top:14px">Save Session${isToday?'':' — '+escHtml(_DAY_SHORT[day.day]||day.day)}</button>
   </div>`;
 }
 
@@ -2396,18 +2480,26 @@ function checkSet(id){
 }
 
 async function saveWorkout(){
-  let sessionName, exercises;
-  if(_activeSession) {
+  let sessionName, exercises, saveDate;
+  // Save whichever day is currently selected (today or a prior day), under its own date.
+  const selDay = _weeklyPlan.find(d => d.day === _selectedDayName);
+  if(selDay && selDay.type !== 'rest') {
+    sessionName = selDay.sessionName;
+    exercises = (selDay.exercises||[]).map((ex,i)=>({...ex, _idx:i}));
+    saveDate = _dateForWeekday(selDay.day);
+  } else if(_activeSession) {
     sessionName = _activeSession.name;
     exercises = _activeSession.exercises.map((ex,i)=>({...ex, _idx:i}));
+    saveDate = TODAY;
   } else {
     const day=new Date().getDay();const adjusted=day===0?6:day-1;
     const s=PROGRAMME[DAY_MAP[adjusted]];
     sessionName = s.name;
     exercises = s.exercises.map((ex,i)=>({name:ex.name, sets:ex.sets, reps:ex.rep, _idx:i}));
+    saveDate = TODAY;
   }
   const{data:ws}=await sb.from('workout_sessions').insert({
-    user_id:USER.id,date:TODAY,session_type:sessionName
+    user_id:USER.id,date:saveDate,session_type:sessionName
   }).select().single();
   if(!ws)return;
   const sets=[];
@@ -2420,29 +2512,28 @@ async function saveWorkout(){
     }
   });
   if(sets.length)await sb.from('session_sets').insert(sets);
-  // PB detection & overload tracking
+  // PB detection & overload tracking — for whichever day was just saved.
   const newPBs = [];
-  if(_activeSession) {
-    _activeSession.exercises.forEach((ex, ei) => {
-      const exName = ex.name;
-      const numSets = +ex.sets || 3;
-      const targetRep = parseInt(String(ex.reps||ex.rep||'').split('–')[0].split('-')[0]) || 0;
-      let topWt = 0;
-      let allHitTarget = true;
-      for(let si=0; si<numSets; si++) {
-        const wt = +(document.getElementById(`wt-${ei}-${si}`)?.value) || 0;
-        const reps = +(document.getElementById(`reps-${ei}-${si}`)?.value) || 0;
-        if(wt > topWt) topWt = wt;
-        if(targetRep && reps < targetRep) allHitTarget = false;
-      }
-      const existing = _pbData[exName];
-      if(topWt > 0 && (!existing || topWt > existing.maxWeight)) {
-        newPBs.push(exName);
-        _pbData[exName] = { ...(existing||{}), maxWeight: topWt };
-      }
-      if(allHitTarget && targetRep) _overloadEx.add(exName);
-    });
-  }
+  exercises.forEach((ex) => {
+    const ei = ex._idx;
+    const exName = ex.name;
+    const numSets = +ex.sets || 3;
+    const targetRep = parseInt(String(ex.reps||ex.rep||'').split('–')[0].split('-')[0]) || 0;
+    let topWt = 0;
+    let allHitTarget = true;
+    for(let si=0; si<numSets; si++) {
+      const wt = +(document.getElementById(`wt-${ei}-${si}`)?.value) || 0;
+      const reps = +(document.getElementById(`reps-${ei}-${si}`)?.value) || 0;
+      if(wt > topWt) topWt = wt;
+      if(targetRep && reps < targetRep) allHitTarget = false;
+    }
+    const existing = _pbData[exName];
+    if(topWt > 0 && (!existing || topWt > existing.maxWeight)) {
+      newPBs.push(exName);
+      _pbData[exName] = { ...(existing||{}), maxWeight: topWt };
+    }
+    if(allHitTarget && targetRep) _overloadEx.add(exName);
+  });
   newPBs.forEach(n => showToast(`🏅 New PB on ${n}!`));
   showToast('Session saved');
   await earnXP('workout_save', TODAY, 75);
@@ -2470,11 +2561,46 @@ let foods=[];
 
 async function initEat(){
   updateEatDateUI();
+  renderNutritionPlan();
   const{data}=await sb.from('nutrition_logs').select('*').eq('user_id',USER.id).eq('date',EAT_DATE).order('created_at');
   foods=data||[];
   // Restore ratings from localStorage cache (ratings are not stored in Supabase — no schema dependency)
   _loadRatingsCache();
   renderFoods();
+}
+
+// JP's real planned meals for the day being viewed — read-only reference
+// sitting above the normal log-and-score flow below it, which stays the
+// actual adherence-tracking mechanism (logging what he really ate against
+// what was planned, not replacing logging with the plan itself).
+function renderNutritionPlan(){
+  const card = document.getElementById('nutrition-plan-card');
+  if(!card) return;
+  const plan = OB.nutritionPlan;
+  if(!plan){ card.style.display='none'; return; }
+
+  const d = new Date(EAT_DATE+'T00:00:00');
+  const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+  const day = plan[dayName];
+  if(!day){ card.style.display='none'; return; }
+
+  card.style.display='';
+  card.innerHTML = `
+    <div style="background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.15);padding:14px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--teal);font-weight:600">Today's Plan — ${escHtml(day.label)}</div>
+        <div style="font-size:10px;color:var(--dim)">${day.targets.calories} kcal · ${day.targets.protein}p / ${day.targets.carbs}c / ${day.targets.fat}f</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${day.meals.map(m=>`
+          <div style="display:flex;gap:10px;font-size:12px">
+            <span style="color:var(--dim);min-width:38px;flex-shrink:0">${escHtml(m.time)}</span>
+            <span style="color:var(--muted)">${escHtml(m.name)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
 function _saveRatingsCache(){
@@ -2500,7 +2626,10 @@ function updateEatDateUI(){
     lbl.textContent = isToday ? 'Today · '+d.toLocaleDateString('en-GB',opts) : d.toLocaleDateString('en-GB',opts);
   }
   if(nextBtn) nextBtn.disabled = EAT_DATE >= TODAY;
-  if(addForm) addForm.style.display = EAT_DATE === TODAY ? '' : 'none';
+  // Allow logging on any past day too (future is already blocked by shiftEatDate).
+  if(addForm) addForm.style.display = '';
+  const lblEl = document.querySelector('#eat-add-form .sh-label');
+  if(lblEl) lblEl.textContent = EAT_DATE === TODAY ? 'Log food' : 'Log food for this day';
 }
 
 function shiftEatDate(delta){
@@ -2526,6 +2655,20 @@ function renderFoods(){
   document.getElementById('m-p').textContent=Math.round(totals.p);
   document.getElementById('m-c').textContent=Math.round(totals.c);
   document.getElementById('m-f').textContent=Math.round(totals.fat);
+
+  // Daily eating rating (average of this day's rated foods, out of 10)
+  const dayScoreEl = document.getElementById('eat-day-score');
+  if(dayScoreEl){
+    const scored = foods.map(f=>foodRatings[f.id]?.score).filter(s=>s!=null);
+    if(scored.length){
+      const avg = Math.round(scored.reduce((a,b)=>a+b,0)/scored.length*10)/10;
+      const col = avg>=8?'var(--teal)':avg>=5?'var(--white)':'#f87171';
+      dayScoreEl.innerHTML = `Day rating <span style="color:${col};font-weight:700;font-size:15px">${avg}</span><span style="color:var(--dim)">/10</span> · ${scored.length} rated`;
+      dayScoreEl.style.display='';
+    } else {
+      dayScoreEl.style.display='none';
+    }
+  }
 
   // Micronutrient totals
   const microWrap = document.getElementById('micro-totals');
@@ -2557,6 +2700,7 @@ function renderFoods(){
     const tipsHtml = hasRating ? `<div class="food-tips-wrap" id="tips-${f.id}">
       <div class="food-tips-reasons">${escHtml(r.reasons)}</div>
       ${(r.tips||[]).map(t=>`<div class="food-tip-item">${escHtml(t)}</div>`).join('')}
+      ${r.toTen ? `<div style="margin-top:8px;padding:9px 11px;background:rgba(44,212,196,.06);border-left:2px solid var(--teal);font-size:12px;color:var(--white);line-height:1.5"><span style="color:var(--teal);font-weight:700">${r.score>=10?'Perfect:':'Make it a 10/10:'}</span> ${escHtml(r.toTen)}</div>` : ''}
       ${r.micros ? `<div style="font-size:11px;color:var(--dim);padding:4px 0 0">
         ${r.micros.vitD_iu ? `Vit D ${Math.round(r.micros.vitD_iu)} IU · ` : ''}${r.micros.zinc_mg ? `Zinc ${(+r.micros.zinc_mg).toFixed(1)}mg · ` : ''}${r.micros.b12_ug ? `B12 ${(+r.micros.b12_ug).toFixed(1)}μg · ` : ''}${r.micros.omega3_mg ? `Omega-3 ${Math.round(r.micros.omega3_mg)}mg` : ''}
       </div>` : ''}
@@ -2579,6 +2723,13 @@ function toggleFoodTips(id){
   if(el) el.classList.toggle('open');
 }
 
+let _foodContext = 'general';
+function pickFoodCtx(btn){
+  document.querySelectorAll('#food-ctx-grid .food-ctx-chip').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  _foodContext = btn.dataset.ctx || 'general';
+}
+
 async function callFoodAPI(name, timeVal) {
   const t = OB.train || {}; const e = OB.eat || {};
   const res = await fetch('/api/food', {
@@ -2589,7 +2740,9 @@ async function callFoodAPI(name, timeVal) {
       goals: t.goal || e.goal,
       weight: e.weight_kg,
       bodyFat: e.body_fat,
-      primaryGoal: t.goal
+      primaryGoal: t.goal,
+      context: _foodContext || 'general',
+      time: timeVal || null
     })
   });
   return res.json();
@@ -2606,6 +2759,7 @@ async function logFoodEntry(name, timeVal, d) {
   const rating = (hasData && d.score) ? {
     score: d.score, headline: d.headline||null,
     reasons: d.reasons||null, tips: Array.isArray(d.tips)?d.tips:[],
+    toTen: d.to_ten||null,
     micros: d.micros||null, mealTime: timeVal||null
   } : (timeVal ? { mealTime: timeVal } : null);
 
@@ -2648,7 +2802,7 @@ async function addFood(){
   btn.disabled = true; btn.textContent = 'Analysing...';
 
   try {
-    const d = await callFoodAPI(name);
+    const d = await callFoodAPI(name, timeVal);
 
     if(d.error) {
       console.error('Food API error:', d.error, d.raw || '');
@@ -2698,7 +2852,7 @@ async function submitClarification() {
   btn.disabled = true; btn.textContent = 'Logging...';
 
   try {
-    const d = await callFoodAPI(fullName);
+    const d = await callFoodAPI(fullName, pendingTime);
     await logFoodEntry(fullName, pendingTime, d);
   } catch(e) {
     await logFoodEntry(fullName, pendingTime, {});
@@ -2751,7 +2905,7 @@ async function loadProgressCharts(){
   const from = d.toISOString().split('T')[0];
 
   const [{ data: habitData }, { data: checkinData }, { data: calData }] = await Promise.all([
-    sb.from('daily_habits').select('date,completed').eq('user_id',USER.id).gte('date',from),
+    sb.from('habit_log').select('date,completed').eq('user_id',USER.id).gte('date',from),
     sb.from('progress_checkins').select('*').eq('user_id',USER.id).order('date',{ascending:true}).limit(10),
     sb.from('nutrition_logs').select('date,calories').eq('user_id',USER.id).gte('date',from),
   ]);
@@ -3215,6 +3369,168 @@ const OB_DEFS = {
   }
 };
 
+// ════════════════════════════════════════
+// JP'S OWN REAL PROTOCOL — static, not AI-generated
+// ════════════════════════════════════════
+// Everyone else's Train/Eat content on this app is generated fresh by
+// /api/programme and /api/food on demand (a real, deliberate design for a
+// multi-client coaching product). JP is both the coach and his own athlete,
+// and his actual programme (v3 training: PPL×2 + Muay Thai + sport, v20
+// nutrition: full 7-day protocol) has been fully built, audited, and
+// research-verified over a long prior process — it should never be
+// re-improvised by the AI generator. Gated to his account specifically so
+// every other real signed-up user (e.g. Fraser) keeps the normal AI-plan
+// experience unaffected.
+const JP_USER_ID = 'cfa880cb-bdf4-4ffa-a7ca-7b9c918984ea'; // jamesharvey51@hotmail.com
+
+const JP_TRAINING_PLAN = [
+  { day: 'Monday', type: 'push', sessionName: 'Push A — Upper Chest Priority + Muay Thai 18:30', exercises: [
+    { name: 'Incline Barbell Press', sets: 4, reps: '3-4 top / 8-10 back-off', load: '80kg / 65kg', notes: 'Add load once all back-off sets hit the top of the rep range' },
+    { name: 'Weighted Dips', sets: 3, reps: '3-4 top / 10-12 back-off', load: '45kg / 25-30kg', notes: 'Add weight once both back-off sets hit 12 clean' },
+    { name: 'Incline DB Press', sets: 3, reps: '10-12', load: '25-27.5kg each', notes: 'Double progression — reps first, then weight' },
+    { name: 'Cable Lateral Raise', sets: 4, reps: '12-15', load: '10kg', notes: 'Strict form over load — side delt priority day' },
+    { name: 'Overhead Cable Tricep Extension', sets: 3, reps: '10-12', load: '20kg', notes: 'Double progression' },
+    { name: 'Face Pull', sets: 3, reps: '15', load: '12.5kg', notes: 'Rear delt/rotator cuff health — keep light, high rep' },
+    { name: '4-Way Neck Isometric Holds', sets: 2, reps: '20-30 sec each direction', load: 'Bodyweight', notes: 'Flexion/extension/left/right lateral flexion — Muay Thai prep' },
+  ], keyLifts: 'Incline Barbell Press, Weighted Dips' },
+  { day: 'Tuesday', type: 'legs', sessionName: 'Legs A — Quad + Upper Glute', exercises: [
+    { name: 'Plyometrics A (pre-lift)', sets: 1, reps: 'Box Jump 4×5, Broad Jump 3×5, Pogo Jumps 3×15', load: '—', notes: 'Warm-up: ankle circles, 5× pogo hops, 3× low box step-downs' },
+    { name: 'Hack Squat', sets: 3, reps: '3-4 top / 10-12 back-off', load: '55kg / 45kg', notes: 'Add load once back-off hits 12' },
+    { name: 'Bulgarian Split Squat', sets: 3, reps: '10-12 each', load: '35kg each', notes: 'Double progression, both legs' },
+    { name: 'Hip Abduction Machine', sets: 3, reps: '12-15', load: '40-50kg', notes: 'Lean 30° forward to bias upper glutes' },
+    { name: 'Leg Extension × Sissy Squat (superset)', sets: 2, reps: '12-15', load: '37.5kg / BW', notes: '2 rounds, no rest between the pair' },
+    { name: 'Seated Leg Curl', sets: 3, reps: '10-12', load: '82.5-90kg', notes: 'Double progression' },
+    { name: 'Single-Leg Calf Raise', sets: 3, reps: '12-15 each', load: 'BW or +10kg', notes: 'Full stretch at the bottom' },
+  ], keyLifts: 'Hack Squat, Bulgarian Split Squat' },
+  { day: 'Wednesday', type: 'pull', sessionName: 'Pull A — Lat Width + Muay Thai 17:30', exercises: [
+    { name: 'Weighted Pull-Ups', sets: 3, reps: '2-3 top / 8-10 back-off', load: '37.5kg / 15kg', notes: 'Add weight once back-off sets hit 10' },
+    { name: 'Neutral/Mag Grip Pulldown', sets: 3, reps: '10-12', load: '90-95kg', notes: 'Double progression' },
+    { name: 'Machine Row', sets: 3, reps: '4-5 top / 10-12 back-off', load: '145kg / 90kg', notes: 'Add load once back-off hits 12' },
+    { name: 'Incline DB Curl', sets: 3, reps: '10-12', load: '17.5-20kg', notes: 'Double progression' },
+    { name: 'Hammer Curl', sets: 3, reps: '12-15', load: '17.5kg', notes: 'Double progression' },
+    { name: 'DB Lateral Raise', sets: 3, reps: '12-15', load: 'new — start ~7.5-10kg', notes: 'Different resistance curve than cable — genuine second angle of stimulus, not just more volume' },
+    { name: '4-Way Neck Isometric Holds', sets: 2, reps: '20-30 sec each direction', load: 'Bodyweight', notes: 'Muay Thai prep' },
+  ], keyLifts: 'Weighted Pull-Ups, Machine Row' },
+  { day: 'Thursday', type: 'push', sessionName: 'Push B — Side Delt Priority', exercises: [
+    { name: 'Sprint Protocol (pre-lift)', sets: 1, reps: '5×10m starts, 4×20m accel, 3×40m top speed, 3× flying sprints', load: '—', notes: 'Full recovery between every set — speed work, not conditioning' },
+    { name: 'Machine Shoulder Press', sets: 3, reps: '3-4 top / 8-10 back-off', load: '60kg/side / 45kg/side', notes: 'Add load once back-off hits 10' },
+    { name: 'Cable Lateral Raise', sets: 5, reps: '12-15', load: '10-11.25kg', notes: '5 sets — this is the side delt priority day' },
+    { name: 'Flat Barbell Bench', sets: 3, reps: '3-4 top / 8-10 back-off', load: '87.5kg / 75kg', notes: 'Add load once back-off hits 10' },
+    { name: 'Incline Cable Fly', sets: 3, reps: '12-15', load: '25kg', notes: 'Double progression' },
+    { name: 'Bar Tricep Pressdown', sets: 3, reps: '10-12', load: '35kg', notes: 'Double progression' },
+    { name: 'Rear Delt Cable Fly', sets: 3, reps: '12-15', load: '10-12.5kg', notes: 'Double progression' },
+    { name: 'Hanging Leg Raise', sets: 3, reps: '12-15', load: 'BW', notes: 'First direct core work in the split' },
+  ], keyLifts: 'Machine Shoulder Press, Flat Barbell Bench' },
+  { day: 'Friday', type: 'legs', sessionName: 'Legs B — Posterior Chain + Glute Priority', exercises: [
+    { name: 'Plyometrics B (pre-lift)', sets: 1, reps: 'Depth Drop→Vertical Jump 3×5, Lateral Bounds 3×6 each, Broad Jump 3×5', load: '—', notes: 'Warm-up: ankle circles, 5× pogo hops, 3× low box step-downs' },
+    { name: 'Barbell RDL', sets: 3, reps: '3-5 top / 8-10 back-off', load: '110-120kg / 90-100kg', notes: 'Add load once back-off hits 10' },
+    { name: 'Barbell Hip Thrust', sets: 4, reps: '3-5 top / 10-12 back-off', load: '80-100kg / 70-80kg', notes: 'Add load once back-off hits 12' },
+    { name: 'Hip Abduction Machine', sets: 3, reps: '12-15', load: '40-50kg', notes: 'Lean 30° forward to bias upper glutes' },
+    { name: 'Walking Lunges', sets: 3, reps: '10-12 each', load: '25-30kg DB each hand', notes: 'Double progression' },
+    { name: 'Seated Leg Curl', sets: 3, reps: '10-12', load: '82.5-90kg', notes: 'Double progression' },
+    { name: 'Seated Calf Raise', sets: 3, reps: '12-15', load: '60-70kg', notes: 'Full stretch at the bottom' },
+    { name: 'Standing Calf Machine', sets: 2, reps: '12-15', load: '82.5kg', notes: 'Double progression' },
+  ], keyLifts: 'Barbell RDL, Barbell Hip Thrust' },
+  { day: 'Saturday', type: 'pull', sessionName: 'Pull B — Mid-Back Thickness', exercises: [
+    { name: 'Zone 2 Cardio (pre-lift)', sets: 1, reps: '20-25 min, incline treadmill/track, conversational pace', load: '—', notes: 'Walking only — never jogging, running competes with leg hypertrophy' },
+    { name: 'Weighted Pull-Ups', sets: 3, reps: '2-3 top / 10-12 back-off', load: '37.5kg / 15kg', notes: 'Add weight once back-off hits 12' },
+    { name: 'Meadows Row / Single-Arm DB Row', sets: 3, reps: '10-12 each', load: '45-50kg', notes: 'Double progression, both sides' },
+    { name: 'Neutral Grip Pulldown', sets: 3, reps: '10-12', load: '85-90kg', notes: 'Double progression' },
+    { name: 'Preacher EZ Bar Curl', sets: 3, reps: '4-5 top / 8-10 back-off', load: '45kg / 32.5-35kg', notes: 'Add load once back-off hits 10' },
+    { name: 'Incline DB Curl', sets: 2, reps: '10-12', load: '17.5-20kg', notes: 'Double progression' },
+    { name: 'Face Pull', sets: 2, reps: '15', load: '12.5kg', notes: 'Rear delt/rotator cuff health' },
+    { name: 'Pallof Press', sets: 3, reps: '12-15 each side', load: 'light cable stack', notes: 'Anti-rotation core — deliberately low fatigue cost given Zone 2 + full Pull session' },
+  ], keyLifts: 'Weighted Pull-Ups, Meadows Row' },
+  { day: 'Sunday', type: 'rest', sessionName: 'Rest AM + Sport ~12:00', exercises: [],
+    keyLifts: 'No lifting — football/basketball/squash (rotating) ~12:00-13:30, plus mobility work positioned around the session.' },
+];
+
+// v20 nutrition protocol — dark chocolate removed, espresso→yerba mate,
+// clock times matched to his real 07:30 wake, Wednesday's carb target
+// matched to Monday's (identical Muay Thai session, was previously
+// under-fuelled). Full research/audit trail lives in the nutrition
+// protocol memory — this is the final, current state of that work.
+const JP_NUTRITION_PLAN = {
+  Monday: { label: 'Push A + Muay Thai — full carb', targets: { calories: 5100, protein: 350, carbs: 340, fat: 160 }, meals: [
+    { time: '07:45', name: '6 eggs (fried in beef tallow), potato (in butter), banana, raw milk, raw colostrum' },
+    { time: '10:15', name: 'Carrot, 2 Brazil nuts, 35g almonds, 20g macadamia' },
+    { time: '12:00', name: '200g salmon, avocado, mixed berries + pineapple, beetroot juice' },
+    { time: '13:00', name: 'Honey, banana, yerba mate, taurine' },
+    { time: '15:30', name: '375g beef (seared in tallow), 4 eggs' },
+    { time: '16:45', name: 'Sweet potato (in butter), coconut water' },
+    { time: '17:30', name: 'Banana, honey, salt in water (pre-Muay Thai)' },
+    { time: '20:00', name: '300g lean beef, boiled potato (in butter), turmeric & black pepper — lighter, post-Muay Thai' },
+    { time: '20:00', name: '100g raw kefir, pomegranate' },
+    { time: '21:00', name: '500ml raw milk, beef bone broth' },
+  ] },
+  Tuesday: { label: 'Legs A — highest carb', targets: { calories: 4900, protein: 350, carbs: 340, fat: 160 }, meals: [
+    { time: '07:45', name: '6 eggs (fried in beef tallow), potato (in butter), banana, raw milk, raw colostrum' },
+    { time: '10:15', name: 'Carrot, 2 Brazil nuts, 35g almonds, 20g macadamia' },
+    { time: '12:00', name: '200g salmon, avocado, mango, beetroot juice' },
+    { time: '13:00', name: 'Honey, banana, yerba mate, taurine' },
+    { time: '15:30', name: '275g beef + 100g liver (seared in tallow), 4 eggs — folate + copper' },
+    { time: '16:45', name: 'Large sweet potato (in butter), coconut water' },
+    { time: '19:00', name: '375g beef, squash (in butter), avocado, 20g Parmigiano Reggiano' },
+    { time: '20:00', name: '100g raw kefir, pomegranate' },
+    { time: '21:00', name: '500ml raw milk, beef bone broth' },
+  ] },
+  Wednesday: { label: 'Pull A + Muay Thai — matched to Monday\'s fuelling', targets: { calories: 5100, protein: 350, carbs: 340, fat: 160 }, meals: [
+    { time: '07:45', name: '6 eggs (fried in beef tallow), potato (in butter), banana, raw milk, raw colostrum' },
+    { time: '10:15', name: 'Carrot, 2 Brazil nuts, 35g almonds, 20g macadamia' },
+    { time: '12:00', name: '200g salmon, avocado, pineapple, beetroot juice' },
+    { time: '13:00', name: 'Honey, banana, yerba mate, taurine' },
+    { time: '15:30', name: '375g beef (seared in tallow), 4 eggs' },
+    { time: '16:45', name: 'Sweet potato (in butter), coconut water' },
+    { time: '17:00', name: 'Banana, honey, salt in water (pre-Muay Thai)' },
+    { time: '19:00', name: '375g beef, squash (in butter), avocado, turmeric & black pepper — post-Muay Thai' },
+    { time: '20:00', name: '100g raw kefir, pomegranate' },
+    { time: '21:00', name: '500ml raw milk, beef bone broth' },
+  ] },
+  Thursday: { label: 'Push B — full carb', targets: { calories: 4800, protein: 350, carbs: 320, fat: 160 }, meals: [
+    { time: '07:45', name: '6 eggs (fried in beef tallow), potato (in butter), banana, raw milk, raw colostrum' },
+    { time: '10:15', name: 'Carrot, 2 Brazil nuts, 35g almonds, 20g macadamia' },
+    { time: '12:00', name: '100g sardines, avocado, watermelon + mango, beetroot juice' },
+    { time: '13:00', name: 'Honey, banana, yerba mate, taurine' },
+    { time: '15:30', name: '375g beef (seared in tallow), 4 eggs' },
+    { time: '16:45', name: 'Sweet potato (in butter), coconut water' },
+    { time: '19:00', name: '275g beef + 100g beef heart, squash (in butter), avocado, 20g Parmigiano Reggiano — CoQ10 + taurine' },
+    { time: '20:00', name: '100g raw kefir, pomegranate' },
+    { time: '21:00', name: '500ml raw milk, beef bone broth' },
+  ] },
+  Friday: { label: 'Legs B — highest carb', targets: { calories: 4900, protein: 350, carbs: 340, fat: 160 }, meals: [
+    { time: '07:45', name: '6 eggs (fried in beef tallow), potato (in butter), banana, raw milk, raw colostrum' },
+    { time: '10:15', name: 'Carrot, 2 Brazil nuts, 35g almonds, 20g macadamia' },
+    { time: '12:00', name: '200g salmon, avocado, berries + pineapple, beetroot juice' },
+    { time: '13:00', name: 'Honey, banana, yerba mate, taurine' },
+    { time: '15:30', name: '275g beef + 100g liver (seared in tallow), 4 eggs — folate + copper, 2nd hit' },
+    { time: '16:45', name: 'Large sweet potato (in butter), coconut water' },
+    { time: '19:00', name: '375g beef, squash (in butter), avocado, turmeric & black pepper' },
+    { time: '20:00', name: '100g raw kefir, pomegranate' },
+    { time: '21:00', name: '500ml raw milk, beef bone broth' },
+  ] },
+  Saturday: { label: 'Pull B — reduced carb', targets: { calories: 4600, protein: 350, carbs: 260, fat: 160 }, meals: [
+    { time: '07:45', name: '6 eggs (fried in beef tallow), potato (in butter), banana, raw milk, raw colostrum' },
+    { time: '10:15', name: 'Carrot, 2 Brazil nuts, 35g almonds, 20g macadamia' },
+    { time: '12:00', name: '200g salmon, avocado, papaya — no beetroot today' },
+    { time: '13:00', name: 'Banana, yerba mate, taurine — no honey' },
+    { time: '15:30', name: '375g beef (seared in tallow), 4 eggs' },
+    { time: '16:45', name: 'Sweet potato (in butter), coconut water' },
+    { time: '19:00', name: '150g mussels (cooked) + 200g beef, squash (in butter), avocado, 20g Parmigiano Reggiano' },
+    { time: '20:00', name: '100g raw kefir, pomegranate' },
+    { time: '21:00', name: '500ml raw milk, beef bone broth' },
+  ] },
+  Sunday: { label: 'Rest AM + Sport — moderate carb', targets: { calories: 4600, protein: 350, carbs: 270, fat: 160 }, meals: [
+    { time: '07:45', name: '6 eggs (fried in beef tallow), potato (in butter), banana, raw milk, raw colostrum' },
+    { time: '10:15', name: 'Carrot, 2 Brazil nuts, 35g almonds, 20g macadamia' },
+    { time: '10:45', name: 'Banana, honey (pre-sport)' },
+    { time: '13:30', name: '200g salmon, avocado, pineapple (post-sport)' },
+    { time: '15:30', name: '375g beef (seared in tallow), 4 eggs (post-sport recovery)' },
+    { time: '19:00', name: '375g beef, squash (in butter), avocado' },
+    { time: '20:00', name: '100g raw kefir, pomegranate' },
+    { time: '21:00', name: '500ml raw milk, beef bone broth' },
+  ] },
+};
+
 function loadOnboardingData() {
   const meta = USER?.user_metadata?.onboarding || {};
   // Only use localStorage if it was written by this exact user
@@ -3222,6 +3538,44 @@ function loadOnboardingData() {
   const localUid = localStorage.getItem('jpt_uid');
   const local = localUid === USER.id ? localRaw : {};
   OB = { ...local, ...meta }; // metadata wins
+  applyJPRealProtocol();
+}
+
+// Bump this string to push a real protocol update (overwrites whatever's in
+// OB.train.weeklyPlan / OB.nutritionPlan, including any in-app edits made
+// since the last version). Left unchanged, his real protocol seeds once and
+// then behaves like any other user's plan — editable through the app's own
+// swapExercise() flow without this function silently discarding it on the
+// next page load, which unconditional overwriting-every-load would do.
+const JP_PROTOCOL_VERSION = 'v20-nutrition-v3-training';
+
+function applyJPRealProtocol() {
+  if (USER?.id !== JP_USER_ID) return;
+  OB.train = OB.train || {};
+  if (OB.train._protocolVersion !== JP_PROTOCOL_VERSION) {
+    OB.train.weeklyPlan = JP_TRAINING_PLAN;
+    OB.train._protocolVersion = JP_PROTOCOL_VERSION;
+  }
+  OB.train_done = true;
+  if (OB._nutritionPlanVersion !== JP_PROTOCOL_VERSION) {
+    OB.nutritionPlan = JP_NUTRITION_PLAN;
+    OB._nutritionPlanVersion = JP_PROTOCOL_VERSION;
+  }
+
+  // Neck training — Mon/Wed only (Muay Thai days), via the app's existing
+  // custom-habit mechanism rather than a new fixed base-habit category,
+  // since it's specific to his own protocol, not something every client
+  // would need. Re-derived on every load (filter-then-push) so it doesn't
+  // duplicate across sessions and correctly disappears on non-Muay-Thai days.
+  const isNeckDay = [1, 3].includes(new Date().getDay()); // Mon, Wed
+  OB.custom_habits = (OB.custom_habits || []).filter(h => h.key !== 'neck_training');
+  if (isNeckDay) {
+    OB.custom_habits.push({
+      key: 'neck_training',
+      name: 'Neck Training',
+      desc: '4-way isometric holds — 2×20-30 sec each direction. Muay Thai prep.',
+    });
+  }
 }
 
 async function saveOnboardingSection(section, data) {
@@ -6174,9 +6528,83 @@ async function mobRunAnalysis() {
     mobRenderResults(data);
     mobShowPhase(7);
   } catch(e) {
-    mobShowPhase(5);
-    showToast('Could not build protocol — try again');
+    // API unavailable — build a solid protocol on-device so the user always gets output.
+    const data = mobBuildFallback(MOB_STATE);
+    MOB_STATE.results = data;
+    OB.mobility = { state: MOB_STATE, results: data, ts: Date.now() };
+    try { localStorage.setItem('jpt_ob', JSON.stringify(OB)); } catch(_) {}
+    sb.auth.updateUser({ data: { onboarding: OB } }).catch(() => {});
+    mobRenderResults(data);
+    mobShowPhase(7);
+    showToast('Protocol ready');
   }
+}
+
+// Deterministic fallback protocol built from the questionnaire answers.
+// Guarantees the user always gets a personalised routine, even if the API is down.
+function mobBuildFallback(s) {
+  const probs = s.problems || [], post = s.posture || [], goals = s.goals || [];
+  const has = (arr, v) => arr.indexOf(v) !== -1;
+  const time = parseInt(s.time, 10) || 10;
+  const big = time >= 15;
+
+  const morning = [
+    { name: 'Cat-Cow', duration: '8 slow reps', how_to: 'On all fours, alternate arching and rounding your spine with your breath. Move slowly and control each vertebra.', why: 'Wakes up the whole spine and restores segmental movement after sleep.' },
+    { name: "World's Greatest Stretch", duration: '5 each side', how_to: 'From a lunge, drop the back knee, rotate your torso and reach the same-side hand to the ceiling. Return and repeat.', why: 'One movement that opens hips, thoracic spine and hamstrings together.' },
+  ];
+  if (has(probs, 'hip_flexors') || has(post, 'apt')) morning.push({ name: 'Half-Kneeling Hip Flexor Stretch', duration: '30 sec each side', how_to: 'In a half-kneeling position, squeeze the back glute and gently tuck your pelvis until you feel a stretch at the front of the hip.', why: 'Directly lengthens the tight hip flexors driving your anterior pelvic tilt.' });
+  if (has(probs, 'thoracic') || has(post, 'rounded_shoulders')) morning.push({ name: 'Thoracic Rotations', duration: '8 each side', how_to: 'On all fours, hand behind your head, rotate your elbow down under your body then up to the ceiling, following it with your eyes.', why: 'Restores the upper-back rotation that rounded shoulders take away.' });
+  if (big) morning.push({ name: 'Deep Squat Hold', duration: '60 sec', how_to: 'Sink into a deep squat, heels down, and use your elbows to gently push your knees out. Breathe and relax into it.', why: 'Opens hips, ankles and lower back in one loaded position.' });
+
+  const desk = [
+    { name: 'Standing Hip Flexor Reset', duration: '20 sec each side', how_to: 'Stand, step one foot back, squeeze that glute and tuck the pelvis until you feel the front of the hip open.', why: 'Undoes the shortening from long hours sitting.' },
+    { name: 'Chin Tucks', duration: '10 reps', how_to: 'Sitting tall, glide your head straight back to make a "double chin", hold 2 seconds, release.', why: 'Counters forward head posture from screen time.' },
+    { name: 'Seated Thoracic Extension', duration: '8 reps', how_to: 'Hands behind your head, gently arch your upper back over the top of the chair, then return.', why: 'Reverses the desk hunch before it sets in.' },
+  ];
+
+  const evening = [
+    { name: 'Couch Stretch', duration: '45 sec each side', how_to: 'Back foot up on a couch or wall, front foot forward in a lunge, stay tall and squeeze the back glute.', why: 'Deepest stretch for chronically tight hip flexors and quads.' },
+    { name: 'Figure-4 Glute Stretch', duration: '30 sec each side', how_to: 'Lying on your back, cross one ankle over the opposite knee and pull the far thigh toward you.', why: 'Releases the glutes and deep hip rotators that stiffen from sitting.' },
+  ];
+  if (has(probs, 'hamstrings')) evening.push({ name: 'Lying Hamstring Stretch', duration: '30 sec each side', how_to: 'On your back, loop a towel around one foot and draw the straight leg toward you until you feel a stretch behind the thigh.', why: 'Safely lengthens tight hamstrings without loading the lower back.' });
+  if (has(probs, 'calves')) evening.push({ name: 'Calf Wall Stretch', duration: '30 sec each side', how_to: 'Hands on a wall, one leg back with the heel down and knee straight, lean in until the calf stretches.', why: 'Restores ankle mobility that limits squatting and walking.' });
+  evening.push({ name: "Child's Pose with Reach", duration: '60 sec', how_to: 'Kneel and sit back onto your heels, walk your hands forward and to each side, breathing into your lower back and lats.', why: 'Calms the nervous system and decompresses the spine before sleep.' });
+
+  const POST = {
+    forward_head:      { name: 'Chin Tuck + Wall Angel', sets_reps: '3 × 10', how_to: 'Chin tucks to reset head position, then back to a wall and slide your arms overhead keeping contact.', why: 'Retrains the deep neck flexors and upper-back muscles to hold your head over your shoulders.', priority: 'High' },
+    rounded_shoulders: { name: 'Doorway Pec Stretch + Band Pull-Apart', sets_reps: '30 sec + 3 × 15', how_to: 'Stretch the chest in a doorway, then pull a band apart squeezing the shoulder blades together.', why: 'Loosens the tight chest and strengthens the mid-back that lets shoulders round.', priority: 'High' },
+    apt:               { name: 'Dead Bug', sets_reps: '3 × 8 each side', how_to: 'On your back, lower opposite arm and leg while pressing your lower back flat into the floor.', why: 'Builds the core control that pulls an over-arched pelvis back to neutral.', priority: 'High' },
+    ppt:               { name: 'Hip Flexor Activation + Cobra', sets_reps: '3 × 10', how_to: 'Gently arch into a cobra and march the hips into a slight anterior tilt to restore the natural curve.', why: 'Reintroduces the lumbar curve a flat back has lost.', priority: 'Medium' },
+    scoliosis:         { name: 'Side Plank (weaker side) + Book Breathing', sets_reps: '3 × 20 sec', how_to: 'Hold a side plank on the side of the curve and practise breathing into the compressed rib area.', why: 'Gently balances the muscles around a lateral curve — see a physio for a full assessment.', priority: 'Medium' },
+  };
+  const posture_corrections = post.filter(p => p !== 'none' && POST[p]).map(p => POST[p]);
+  if (!posture_corrections.length) posture_corrections.push({ name: 'Wall Angels', sets_reps: '3 × 10', how_to: 'Back flat to a wall, slide your arms up and down keeping wrists, elbows and head in contact.', why: 'General posture reset for the whole upper body.', priority: 'Medium' });
+
+  const height_protocol = s.growing === 'yes' ? [
+    { name: 'Dead Hangs', duration: '3 × 30–45 sec', how_to: 'Hang from a bar with a relaxed grip and let your whole body decompress. Breathe out and let go of tension.', why: 'Decompresses the spine and discs, the reversible component of standing height.' },
+    { name: 'Cat-Cow + Cobra Flow', duration: '10 reps', how_to: 'Flow between cat-cow and a gentle cobra to mobilise and lengthen the spine.', why: 'Keeps the spine mobile and encourages full disc height recovery.' },
+    { name: 'Explosive Jumps', duration: '3 × 8', how_to: 'Countermovement or box jumps with full recovery between reps, landing soft on a hard surface.', why: 'Intermittent bone loading is the primary stimulus for growth-plate activity while plates remain open.' },
+    { name: 'Sleep Posture + 9 hrs', duration: 'Nightly', how_to: 'Sleep on your back or side with a supportive pillow; protect a full 9 hours.', why: 'Most growth hormone is released in deep sleep — the single biggest lever for growth.' },
+  ] : [];
+
+  const mins = time;
+  const habits_to_add = [];
+  if (s.pref === 'morning' || s.pref === 'both' || s.pref === 'whenever') habits_to_add.push({ id: 'am', name: `Morning Mobility (${mins} min)`, desc: 'Daily morning movement routine' });
+  if (s.pref === 'evening' || s.pref === 'both') habits_to_add.push({ id: 'pm', name: 'Evening Stretch (15 min)', desc: 'Daily evening wind-down stretch' });
+  if (!habits_to_add.length) habits_to_add.push({ id: 'am', name: `Daily Mobility (${mins} min)`, desc: 'Daily mobility routine' });
+
+  const goalText = goals.length ? goals.map(g => ({flexibility:'flexibility',posture:'posture',height:'height',stiffness:'stiffness reduction',injury_prev:'injury prevention',performance:'performance',morning:'morning energy',wind_down:'evening recovery'}[g] || g)).join(', ') : 'overall mobility';
+
+  return {
+    summary: `Built from your answers: you're focused on ${goalText}, with ${probs.length ? probs.length + ' tight area(s)' : 'no specific tight areas'} and ${mins} minutes a day to work with. This routine targets exactly those points across your day.`,
+    key_focus: post.filter(p => p !== 'none').length ? 'Fix your posture first — it drives most of the tightness you feel everywhere else.' : (probs.length ? 'Consistency on your tight areas daily will unlock the fastest change.' : 'Little and often — daily consistency beats the occasional long session.'),
+    morning_routine: morning,
+    desk_breaks: desk,
+    evening_routine: evening,
+    posture_corrections,
+    height_protocol,
+    habits_to_add,
+  };
 }
 
 function mobRenderResults(data) {
@@ -6257,12 +6685,28 @@ function mobRestart() {
 }
 
 function initMove() {
-  // Restore saved results if they exist
-  if(OB.mobility?.results) {
-    MOB_STATE = { ...MOB_STATE, ...(OB.mobility.state || {}), results: OB.mobility.results };
-    mobRenderResults(OB.mobility.results);
-    mobShowPhase(7);
+  // Guarantee the pane is never left blank: show saved results only if they're
+  // valid, otherwise always fall back to the questionnaire (phase 1).
+  try {
+    const saved = (typeof OB !== 'undefined' && OB && OB.mobility) ? OB.mobility.results : null;
+    const valid = saved && typeof saved === 'object' && (
+      (Array.isArray(saved.morning_routine)     && saved.morning_routine.length)  ||
+      (Array.isArray(saved.evening_routine)     && saved.evening_routine.length)  ||
+      (Array.isArray(saved.posture_corrections) && saved.posture_corrections.length)
+    );
+    if(valid) {
+      MOB_STATE = { ...MOB_STATE, ...((OB.mobility && OB.mobility.state) || {}), results: saved };
+      mobRenderResults(saved);
+      mobShowPhase(7);
+    } else {
+      mobShowPhase(1);
+    }
+  } catch(e) {
+    mobShowPhase(1);
   }
+  // Reset scroll so the top of the pane is always visible on entry.
+  const c = document.getElementById('content');
+  if(c) c.scrollTop = 0;
 }
 
 /* ── ADMIN SELF-APPROVE ── */
