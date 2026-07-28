@@ -1,10 +1,18 @@
 export const config = { runtime: 'edge' }
 
 // One-time setup — creates progress_checkins table
-// Visit: /api/setup?secret=jpt-setup-2026
+// Visit: /api/setup?secret=<SETUP_SECRET env var>
+//
+// SECURITY: this secret used to be hardcoded ('jpt-setup-2026')
+// and committed to git history. Moved to an env var with no
+// hardcoded fallback. Set via: vercel env add SETUP_SECRET
 export default async function handler(req) {
   const secret = new URL(req.url).searchParams.get('secret')
-  if (secret !== 'jpt-setup-2026') {
+  const SETUP_SECRET = process.env.SETUP_SECRET
+  if (!SETUP_SECRET) {
+    return new Response('Server not configured — SETUP_SECRET env var missing', { status: 500 })
+  }
+  if (!secret || secret !== SETUP_SECRET) {
     return new Response('Unauthorized', { status: 401 })
   }
 

@@ -1,17 +1,27 @@
 export const config = { runtime: 'edge' }
 
 // Admin endpoint — approve a user by email
-// Usage: POST /api/admin?secret=jpt-admin-2026
+// Usage: POST /api/admin?secret=<ADMIN_SECRET env var>
 // Body: { "email": "user@example.com" }  → approves that user
 // Body: { "self": true }  → approves the currently authenticated user (requires Bearer token)
-
-const ADMIN_SECRET = 'jpt-admin-2026'
+// Body: { "wipe": true, "confirm": "WIPE ALL USERS" }  → deletes every auth user (testing resets only)
+//
+// SECURITY: the secret used to live hardcoded in this file
+// ('jpt-admin-2026') and was committed to git history — anyone
+// who found it could hit `wipe: true` and delete every real user
+// account (there is at least one real user, Fraser, with live
+// data). Moved to an env var with no hardcoded fallback, and the
+// wipe path now needs a second, exact confirmation string on top
+// of the secret so a stray/guessed request can't trigger it by
+// accident. Set the secret via: vercel env add ADMIN_SECRET
 const SUPA_URL = 'https://uzzcvrduoswjsrvuopgv.supabase.co'
 
 export default async function handler(req) {
   const url = new URL(req.url)
   const secret = url.searchParams.get('secret')
-  if (secret !== ADMIN_SECRET) {
+  const ADMIN_SECRET = process.env.ADMIN_SECRET
+  if (!ADMIN_SECRET) return json({ error: 'Server not configured — ADMIN_SECRET env var missing' }, 500)
+  if (!secret || secret !== ADMIN_SECRET) {
     return json({ error: 'Unauthorized' }, 401)
   }
 
@@ -21,8 +31,13 @@ export default async function handler(req) {
   let body = {}
   try { body = await req.json() } catch {}
 
-  // Wipe all users (for testing resets)
+  // Wipe all users (for testing resets). Requires the secret AND this exact
+  // confirmation string in the body — a leaked/guessed secret alone is no
+  // longer enough to trigger this.
   if (body.wipe) {
+    if (body.confirm !== 'WIPE ALL USERS') {
+      return json({ error: 'Add "confirm": "WIPE ALL USERS" to the request body to actually wipe.' }, 400)
+    }
     const listRes = await fetch(`${SUPA_URL}/auth/v1/admin/users?per_page=1000`, {
       headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` }
     })
