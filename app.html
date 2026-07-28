@@ -3652,6 +3652,40 @@ const JP_MOBILITY_PLAN = {
   },
 };
 
+// Move tab content for JP's account — bypasses the generic questionnaire
+// (api/mobility.js / mobBuildFallback) entirely. Shaped to match exactly what
+// mobRenderResults() expects. Day-specific work (warm-up, PNF, post-session
+// static stretch) already lives in the Train tab's mobility card, keyed by
+// weekday — this schema has no day concept, so Move covers what's constant
+// regardless of the day instead of duplicating Train's content: the daily
+// Postural Protocol, daily walking, and an honest height-protocol summary
+// rather than the generic fallback's overstated "dead hangs decompress the
+// spine" / "explosive jumps are the growth stimulus" framing.
+const JP_MOVE_RESULTS = {
+  summary: 'Your day-specific warm-up, PNF prep, and post-session static stretching already live in the Train tab, matched to whatever session you\'re doing that day. This page covers what stays constant regardless of the day: daily posture correction, daily walking, and the honest version of what actually moves your height goal.',
+  key_focus: 'The daily Postural Protocol below is the one item here with a real, measurable payoff (1-3cm of functional height from correcting compressed posture) — everything else here is either baseline movement or an honest account of what is and isn\'t actually driving the height goal.',
+  morning_routine: [
+    { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your lifting/Muay Thai/sprint days don\'t otherwise cover.' },
+  ],
+  desk_breaks: [],
+  evening_routine: [],
+  posture_corrections: [
+    { name: 'Hip Flexor Lunge Stretch', sets_reps: '2 × 45 sec each side', how_to: 'Kneeling lunge position, rear knee down, drive the hips forward while staying upright.', why: 'Anterior pelvic tilt correction.', priority: 'High' },
+    { name: 'Thoracic Extension Over Foam Roller', sets_reps: '1 × 2 min', how_to: 'Roller placed under the mid-back (T4-T12), arms crossed over the chest, extend gently over the roller.', why: 'Kyphosis correction.', priority: 'High' },
+    { name: 'Chin Tuck', sets_reps: '2 × 10 reps, 5 sec hold', how_to: 'Lying on your back, flatten the neck toward the floor without lifting the head, hold, release.', why: 'Forward head posture correction.', priority: 'High' },
+    { name: 'Wall Slide', sets_reps: '2 × 15 reps', how_to: 'Back and arms against a wall, slide the arms overhead keeping contact throughout.', why: 'Upper crossed syndrome correction.', priority: 'Medium' },
+    { name: 'Cat-Cow', sets_reps: '2 × 10 reps', how_to: 'On all fours, alternate arching and rounding the spine with your breath.', why: 'General spinal mobility.', priority: 'Medium' },
+    { name: 'Child\'s Pose', sets_reps: '1 × 60 sec', how_to: 'Kneel and sit back onto the heels, arms extended forward.', why: 'Spinal decompression, low-key close to the block.', priority: 'Low' },
+  ],
+  height_protocol: [
+    { name: 'The honest ceiling', duration: 'Read once, keep in mind', how_to: 'At 18.5, growth plates in the height-critical bones (femur/tibia) are likely closing or closed — real window status is unconfirmed without a bone-age X-ray.', why: 'Nothing below overrides biology — this is "do everything legitimate on the chance a window remains," not a guarantee.' },
+    { name: 'Sleep, 9-9.5h/night', duration: 'Nightly', how_to: 'Already in place — protect it, this is the single highest-leverage lever that exists (~70% of GH release happens in slow-wave sleep).', why: 'Biggest real lever if any growth window remains.' },
+    { name: 'Never run a caloric deficit', duration: 'Standing rule', how_to: 'Sustained energy deficit can directly slow or stunt growth in adolescents (RED-S) — your nutrition protocol already runs a large surplus, so this is a non-issue as long as it stays that way.', why: 'Protects against a real, mechanistic growth risk, not just a training-consistency issue.' },
+    { name: 'Plyometrics (Tue/Fri, in Train)', duration: 'Already programmed', how_to: 'The one training element with a genuine height-relevant mechanism — chondrocyte stimulation at the growth plates, if they\'re still open.', why: 'Honest caveat: the strongest evidence for this is in 8-11 year olds, far more mechanosensitive than an 18-year-old — don\'t expect the same magnitude even in the best case.' },
+  ],
+  habits_to_add: [],
+};
+
 function renderMobilityCard(dayName) {
   if (USER?.id !== JP_USER_ID) return '';
   const m = JP_MOBILITY_PLAN[dayName];
@@ -3698,6 +3732,14 @@ function applyJPRealProtocol() {
   if (OB._nutritionPlanVersion !== JP_PROTOCOL_VERSION) {
     OB.nutritionPlan = JP_NUTRITION_PLAN;
     OB._nutritionPlanVersion = JP_PROTOCOL_VERSION;
+  }
+  // Move tab — bypasses the generic questionnaire the same way Train/Eat
+  // bypass AI generation. Version-gated for the same reason: without it,
+  // this would silently overwrite a deliberate "Redo questionnaire" result
+  // on the very next reload.
+  if (OB._moveResultsVersion !== JP_PROTOCOL_VERSION) {
+    OB.mobility = { state: null, results: JP_MOVE_RESULTS, ts: Date.now() };
+    OB._moveResultsVersion = JP_PROTOCOL_VERSION;
   }
 
   // Neck training — Mon/Wed only (Muay Thai days), via the app's existing
