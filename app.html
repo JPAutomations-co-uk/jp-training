@@ -2467,7 +2467,11 @@ function renderDayDetail(day, isToday) {
       <label style="margin-left:4px">Load</label><input type="text" id="ex-load-${escHtml(day.day)}" value="RPE 7" placeholder="RPE 7" style="width:64px">
       <button class="ex-quick-cfg-confirm" onclick="confirmAddExToDay('${escHtml(day.day)}')">Add →</button>
     </div>
-    <button class="btn-primary" onclick="saveWorkout()" style="margin-top:14px">Save Session${isToday?'':' — '+escHtml(_DAY_SHORT[day.day]||day.day)}</button>
+    ${isToday
+      ? `<button class="btn-primary" onclick="saveWorkout()" style="margin-top:14px">Save Session</button>`
+      : `<button class="btn-primary" onclick="saveWorkout(true)" style="margin-top:14px">Do This Session Today →</button>
+         <button class="btn-primary" onclick="saveWorkout(false)" style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--muted)">Backfill for ${escHtml(_DAY_SHORT[day.day]||day.day)} instead</button>`
+    }
   </div>`;
 }
 
@@ -2519,14 +2523,21 @@ function checkSet(id){
   btn.classList.toggle('checked');
 }
 
-async function saveWorkout(){
+async function saveWorkout(asToday){
   let sessionName, exercises, saveDate;
-  // Save whichever day is currently selected (today or a prior day), under its own date.
+  // Save whichever day is currently selected. Default (asToday undefined,
+  // i.e. the tab you're viewing IS today) saves under today's date as
+  // always. When viewing a different day's tab, asToday distinguishes two
+  // real, different intents: true = "I'm doing this session today instead
+  // of my normal one" (logs against today's actual date, so the split can
+  // be reordered freely without losing progression tracking), false =
+  // "I missed that day and I'm backfilling it now" (logs against that
+  // weekday's most recent past occurrence, preserving accurate history).
   const selDay = _weeklyPlan.find(d => d.day === _selectedDayName);
   if(selDay && selDay.type !== 'rest') {
     sessionName = selDay.sessionName;
     exercises = (selDay.exercises||[]).map((ex,i)=>({...ex, _idx:i}));
-    saveDate = _dateForWeekday(selDay.day);
+    saveDate = asToday === false ? _dateForWeekday(selDay.day) : TODAY;
   } else if(_activeSession) {
     sessionName = _activeSession.name;
     exercises = _activeSession.exercises.map((ex,i)=>({...ex, _idx:i}));
@@ -2576,12 +2587,14 @@ async function saveWorkout(){
   });
   newPBs.forEach(n => showToast(`🏅 New PB on ${n}!`));
   showToast('Session saved');
-  await earnXP('workout_save', TODAY, 75);
-  // Mark session quest as completed
+  await earnXP('workout_save', saveDate, 75);
+  // Mark session quest as completed — keyed to saveDate, not TODAY, so
+  // backfilling a missed past day doesn't falsely mark today's session
+  // quest complete too.
   try {
     const qs = _getQuestState();
     qs._sessions = qs._sessions || {};
-    qs._sessions[TODAY] = true;
+    qs._sessions[saveDate] = true;
     _saveQuestState(qs);
     renderQuests().catch(()=>{});
   } catch(e) {}
