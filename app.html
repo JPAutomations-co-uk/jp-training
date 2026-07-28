@@ -1031,6 +1031,7 @@
       </div>
 
       <!-- Section 1: Weekly calendar -->
+      <select id="train-day-select" onchange="selectDay(this.value)" style="width:100%;padding:10px 12px;margin-bottom:10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:13px;font-family:var(--B)"></select>
       <div id="train-day-tabs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:none"></div>
       <div id="train-day-detail"></div>
 
@@ -2357,6 +2358,15 @@ function renderWeeklyCalendar(plan) {
     </button>`;
   }).join('');
 
+  const daySelect = document.getElementById('train-day-select');
+  if(daySelect) {
+    daySelect.innerHTML = _weeklyPlan.map(d => {
+      const isToday = d.day === todayName;
+      const label = d.type === 'rest' ? `${d.day} — Rest` : `${d.day} — ${d.sessionName || d.type}`;
+      return `<option value="${d.day}">${escHtml(label)}${isToday?' (Today)':''}</option>`;
+    }).join('');
+  }
+
   selectDay(todayName);
 }
 
@@ -2366,6 +2376,9 @@ function selectDay(dayName) {
   const day = _weeklyPlan.find(d => d.day === dayName);
   if(!day) return;
   _selectedDayName = dayName;
+
+  const daySelect = document.getElementById('train-day-select');
+  if(daySelect && daySelect.value !== dayName) daySelect.value = dayName;
 
   _weeklyPlan.forEach(d => {
     const tab = document.getElementById('day-tab-'+d.day);
