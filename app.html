@@ -1742,6 +1742,15 @@ const sb=supabase.createClient(SUPA_URL,SUPA_KEY,{
   auth:{storage:window.localStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
 });
 
+// JP's own account — his real training/nutrition/mobility protocol (built,
+// audited, and research-verified over a long prior process) is gated to this
+// ID so every other real signed-up user keeps the normal AI-generated
+// experience unaffected. Declared this early (not next to the rest of his
+// protocol data further down) because getHabits() below references it and
+// is invoked eagerly at script load — a later declaration would throw a
+// temporal-dead-zone ReferenceError and break the site for everyone.
+const JP_USER_ID = 'cfa880cb-bdf4-4ffa-a7ca-7b9c918984ea'; // jamesharvey51@hotmail.com
+
 let USER=null, PROFILE=null;
 const TODAY=new Date().toISOString().split('T')[0];
 let OB={};
@@ -1769,7 +1778,9 @@ function getHabits(){
      desc:'Log today\'s session in the Train tab — compound strength training is the single highest-leverage driver of testosterone, GH, and metabolic health'},
     {key:'steps',
      name:'Steps / Zone 2 Movement',
-     desc:`${h.steps_goal?'Hit '+Number(h.steps_goal).toLocaleString()+' steps today':'Target 8,000–10,000 steps'} — cardiovascular fitness, insulin sensitivity, cortisol clearance, VO2 max`},
+     desc: USER?.id === JP_USER_ID
+       ? `${h.steps_goal?'Hit '+Number(h.steps_goal).toLocaleString():'Target 8,000–10,000'} steps — 3 checkpoints so it's not sporadic: morning walk ~07:45 (~2,500), post-lunch walk ~12:15 (~1,500 — also blunts the post-meal glucose spike), then top up any gap by 20:00 before wind-down`
+       : `${h.steps_goal?'Hit '+Number(h.steps_goal).toLocaleString()+' steps today':'Target 8,000–10,000 steps'} — cardiovascular fitness, insulin sensitivity, cortisol clearance, VO2 max`},
     {key:'sleep',
      name:'In Bed on Time',
      desc:`Lights out by ${h.sleep_time||'10:30pm'}${poorSleep?' — your sleep quality needs fixing: this is the first lever':' — testosterone and GH peak in the first 90 min of deep sleep'}`},
@@ -2381,7 +2392,8 @@ function renderDayDetail(day, isToday) {
     return `<div class="card">
       <div class="card-title" style="margin-bottom:6px">Rest Day</div>
       <p style="font-size:13px;color:var(--muted);margin:0">${escHtml(day.keyLifts||'Full recovery — sleep, nutrition, walk.')}</p>
-    </div>`;
+    </div>
+    ${renderMobilityCard(day.day)}`;
   }
 
   const exercises = day.exercises || [];
@@ -2443,6 +2455,7 @@ function renderDayDetail(day, isToday) {
       ${isToday?'<span style="font-size:10px;color:var(--teal);font-family:var(--B);letter-spacing:.1em">TODAY</span>':''}
     </div>
     ${day.keyLifts?`<p style="font-size:12px;color:var(--dim);margin:0 0 12px">${escHtml(day.keyLifts)}</p>`:''}
+    ${renderMobilityCard(day.day)}
     ${exHtml}
     <div class="ex-add-row">
       <input class="ex-add-input" id="ex-add-${escHtml(day.day)}" placeholder="Exercise name…" onkeydown="if(event.key==='Enter')showExQuickCfg('${escHtml(day.day)}')">
@@ -3411,14 +3424,6 @@ const OB_DEFS = {
 // Everyone else's Train/Eat content on this app is generated fresh by
 // /api/programme and /api/food on demand (a real, deliberate design for a
 // multi-client coaching product). JP is both the coach and his own athlete,
-// and his actual programme (v3 training: PPL×2 + Muay Thai + sport, v20
-// nutrition: full 7-day protocol) has been fully built, audited, and
-// research-verified over a long prior process — it should never be
-// re-improvised by the AI generator. Gated to his account specifically so
-// every other real signed-up user (e.g. Fraser) keeps the normal AI-plan
-// experience unaffected.
-const JP_USER_ID = 'cfa880cb-bdf4-4ffa-a7ca-7b9c918984ea'; // jamesharvey51@hotmail.com
-
 const JP_TRAINING_PLAN = [
   { day: 'Monday', type: 'push', sessionName: 'Push A — Upper Chest Priority + Muay Thai 18:30', exercises: [
     { name: 'Incline Barbell Press', sets: 4, reps: '3-4 top / 8-10 back-off', load: '80kg / 65kg', notes: 'Add load once all back-off sets hit the top of the rep range' },
@@ -3570,6 +3575,86 @@ const JP_NUTRITION_PLAN = {
     { time: '21:00', name: '500ml raw milk, beef bone broth' },
   ] },
 };
+
+// v5 stretching rebuild — day-specific dynamic warm-up, PNF (Mon/Wed pre-Muay
+// Thai), formalised static stretch sets, daily Postural Protocol, sport-matched
+// Sunday mobility. Reference/informational only — not sets×reps×load work, so
+// it isn't pushed through the session_sets tracking pipeline like the lifts.
+const JP_MOBILITY_PLAN = {
+  Monday: {
+    warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
+    staticStretch: { label: 'Chest/shoulders, 2×30-45s', drills: ['Doorway pec stretch', 'Cross-body rear delt', 'Overhead tricep', 'Anterior shoulder'] },
+    extras: [
+      { label: 'Neck stretch', detail: 'Right after neck training — lateral flexion 2×20s each side, flexion 2×20s, extension 2×15s' },
+      { label: 'PNF hip flexor + adductor — 10 min, pre-Muay Thai', detail: 'Hip Flexor CRAC 3 sets each side, Adductor 3 sets — kick height & hip mobility' },
+    ],
+  },
+  Tuesday: {
+    warmup: { label: 'Lower/Explosive (10-12 min) — precedes plyometrics', drills: ['Walking hip circles ×10 each direction', 'Leg swings front-back ×10 each leg', 'Leg swings lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', 'Walking heel flicks 20m ×2', '2 build-up jumps @ 50%/75% effort'] },
+    staticStretch: { label: 'Quads/hip flexors/glutes, 2×30-45s', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Hip abductor side-lying'] },
+    extras: [
+      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
+    ],
+  },
+  Wednesday: {
+    warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
+    staticStretch: { label: 'Lats/biceps, 2×30-45s', drills: ['Lat overhead stretch', 'Cross-body rear delt', 'Bicep wall stretch', 'Thoracic rotation'] },
+    extras: [
+      { label: 'Neck stretch', detail: 'Right after neck training — lateral flexion 2×20s each side, flexion 2×20s, extension 2×15s' },
+      { label: 'PNF hip flexor + adductor — 10 min, pre-Muay Thai', detail: 'Hip Flexor CRAC 3 sets each side, Adductor 3 sets — kick height & hip mobility' },
+    ],
+  },
+  Thursday: {
+    warmup: { label: 'Sprint warm-up (5 min) then Upper (6-8 min)', drills: ['A-skips, B-skips, high knees, butt kicks, falling starts (pre-sprint)', 'Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', '2 build-up sets of first compound @ 50%/75%'] },
+    staticStretch: { label: 'Chest/shoulders, 2×30-45s', drills: ['Doorway pec stretch', 'Cross-body rear delt', 'Overhead tricep', 'Anterior shoulder'] },
+    extras: [
+      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
+    ],
+  },
+  Friday: {
+    warmup: { label: 'Lower/Explosive (10-12 min) — precedes plyometrics', drills: ['Walking hip circles ×10 each direction', 'Leg swings front-back ×10 each leg', 'Leg swings lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', 'Walking heel flicks 20m ×2', '2 build-up jumps @ 50%/75% effort'] },
+    staticStretch: { label: 'Hamstrings/glutes/calves, 2×30-45s', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Hip abductor side-lying'] },
+    extras: [
+      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
+    ],
+  },
+  Saturday: {
+    warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
+    staticStretch: { label: 'Lats/rear delts, 2×30-45s', drills: ['Lat overhead stretch', 'Cross-body rear delt', 'Bicep wall stretch', 'Thoracic rotation'] },
+    extras: [
+      { label: 'Zone 2 Cardio — 20-25 min, pre-gym', detail: 'Incline treadmill walk or cycling, conversational pace (~120-140 bpm) — not running' },
+      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
+    ],
+  },
+  Sunday: {
+    warmup: null,
+    staticStretch: null,
+    extras: [
+      { label: 'Sport-matched mobility — pick whichever matches today\'s sport, positioned around the session', detail:
+        'Football: Couch stretch 2×60s each side · Standing hamstring 2×45s each side · Copenhagen split/adductor 2×30s each side · Seated thoracic rotation 2×10 each direction · Calf stretch 2×45s each.  '
+        + 'Basketball: Kneeling hip flexor + quad 2×45s each side · Figure-4 2×60s each side · Wall ankle dorsiflexion 2×10 reps×3s each side · Sleeper stretch 2×45s each side · Thoracic extension over foam roller 2 min.  '
+        + 'Rugby: Deep squat hold 2×45s · Thread-the-needle rotation 2×8 each side · Neck lateral flexion 2×20s each direction · Seated figure-4 + forward lean 2×45s each side · Couch stretch 2×60s each side.  '
+        + 'Squash: Lateral lunge hold 2×45s each side · Wall ankle dorsiflexion 2×10 reps×3s each side · Cross-body posterior shoulder 2×45s each side · Standing quad stretch 2×45s each side · Seated thoracic rotation 2×10 each direction.' },
+    ],
+  },
+};
+
+function renderMobilityCard(dayName) {
+  if (USER?.id !== JP_USER_ID) return '';
+  const m = JP_MOBILITY_PLAN[dayName];
+  if (!m) return '';
+  const drillList = drills => `<ul style="margin:4px 0 0;padding-left:16px;font-size:12px;color:var(--muted)">${drills.map(d=>`<li style="margin-bottom:2px">${escHtml(d)}</li>`).join('')}</ul>`;
+  const sections = [];
+  if (m.warmup) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}</div>${drillList(m.warmup.drills)}</div>`);
+  if (m.staticStretch) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">After — ${escHtml(m.staticStretch.label)}</div>${drillList(m.staticStretch.drills)}</div>`);
+  (m.extras||[]).forEach(e => {
+    sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">${escHtml(e.label)}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${escHtml(e.detail)}</div></div>`);
+  });
+  return `<div style="border:1px solid var(--border);background:rgba(255,255,255,.02);padding:14px;margin-bottom:12px">
+    <div style="font-size:12px;font-weight:700;color:var(--white);margin-bottom:8px">Mobility & Stretching</div>
+    ${sections.join('')}
+  </div>`;
+}
 
 function loadOnboardingData() {
   const meta = USER?.user_metadata?.onboarding || {};
