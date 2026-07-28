@@ -2235,6 +2235,33 @@ async function toggleHabit(key){
   }
 }
 
+// Auto-completes a habit from a real signal elsewhere in the app (a saved
+// training session, steps goal hit, etc.) instead of requiring a manual tap —
+// same idea as the steps auto-complete below, generalised so other habits can
+// use it too. Only updates the live Habits-tab UI when that tab is actually
+// showing today (HABIT_DATE can be viewing a past day); the Supabase write
+// always targets today regardless, so it's correct next time today is opened.
+async function autoCompleteHabit(key) {
+  if(HABIT_DATE === TODAY && habitState[key]) return; // already logged
+  sb.from('habit_log').upsert({
+    user_id: USER.id, date: TODAY, habit_name: key, completed: true
+  }, { onConflict: 'user_id,date,habit_name' }).catch(()=>{});
+  if(HABIT_DATE === TODAY) {
+    habitState[key] = true;
+    renderHabits();
+    try{ localStorage.setItem(`jpt_habits_${USER.id}_${TODAY}`, JSON.stringify(habitState)); }catch(e){}
+  }
+  const h = getHabits().find(h=>h.key===key);
+  showToast('✓ '+(h?.name||key)+' auto-logged');
+  await earnXP('habit', key, 10);
+  if(HABIT_DATE === TODAY) {
+    const allH = getHabits();
+    const allDone = allH.every(hh => habitState[hh.key]);
+    if(allDone) await earnXP('habits_all', TODAY, 75);
+  }
+  await checkPerfectDay();
+}
+
 /* ════════════════════════════════════════
    TRAIN
 ════════════════════════════════════════ */
@@ -2545,6 +2572,15 @@ async function saveWorkout(){
     _saveQuestState(qs);
     renderQuests().catch(()=>{});
   } catch(e) {}
+  // Auto-complete the "Complete Training Session" habit — the habit literally
+  // says "log today's session in the Train tab", so having just done exactly
+  // that and still requiring a separate manual tap in the Habits tab was pure
+  // double bookkeeping. Same for neck training on the days it's programmed —
+  // if it was part of the session just saved, it's done, no extra tap needed.
+  if(saveDate === TODAY) {
+    autoCompleteHabit('training');
+    if(exercises.some(ex => ex.name === '4-Way Neck Isometric Holds')) autoCompleteHabit('custom_neck_training');
+  }
   // Bonus: all sets ticked
   const allDone = document.querySelectorAll('.set-done');
   const allChecked = document.querySelectorAll('.set-done.checked');
@@ -3394,7 +3430,9 @@ const JP_TRAINING_PLAN = [
     { name: '4-Way Neck Isometric Holds', sets: 2, reps: '20-30 sec each direction', load: 'Bodyweight', notes: 'Flexion/extension/left/right lateral flexion — Muay Thai prep' },
   ], keyLifts: 'Incline Barbell Press, Weighted Dips' },
   { day: 'Tuesday', type: 'legs', sessionName: 'Legs A — Quad + Upper Glute', exercises: [
-    { name: 'Plyometrics A (pre-lift)', sets: 1, reps: 'Box Jump 4×5, Broad Jump 3×5, Pogo Jumps 3×15', load: '—', notes: 'Warm-up: ankle circles, 5× pogo hops, 3× low box step-downs' },
+    { name: 'Box Jump', sets: 4, reps: '5', load: 'Bodyweight', notes: 'Step down, don\'t jump down. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
+    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Max horizontal distance, full reset between reps' },
+    { name: 'Pogo Jumps', sets: 3, reps: '15', load: 'Bodyweight', notes: 'Stiff ankles, minimal ground contact — Achilles elasticity' },
     { name: 'Hack Squat', sets: 3, reps: '3-4 top / 10-12 back-off', load: '55kg / 45kg', notes: 'Add load once back-off hits 12' },
     { name: 'Bulgarian Split Squat', sets: 3, reps: '10-12 each', load: '35kg each', notes: 'Double progression, both legs' },
     { name: 'Hip Abduction Machine', sets: 3, reps: '12-15', load: '40-50kg', notes: 'Lean 30° forward to bias upper glutes' },
@@ -3422,7 +3460,9 @@ const JP_TRAINING_PLAN = [
     { name: 'Hanging Leg Raise', sets: 3, reps: '12-15', load: 'BW', notes: 'First direct core work in the split' },
   ], keyLifts: 'Machine Shoulder Press, Flat Barbell Bench' },
   { day: 'Friday', type: 'legs', sessionName: 'Legs B — Posterior Chain + Glute Priority', exercises: [
-    { name: 'Plyometrics B (pre-lift)', sets: 1, reps: 'Depth Drop→Vertical Jump 3×5, Lateral Bounds 3×6 each, Broad Jump 3×5', load: '—', notes: 'Warm-up: ankle circles, 5× pogo hops, 3× low box step-downs' },
+    { name: 'Depth Drop → Vertical Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Step off box, land and explode immediately. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
+    { name: 'Lateral Bounds', sets: 3, reps: '6 each', load: 'Bodyweight', notes: 'Glute-driven push-off, stick the landing' },
+    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Max horizontal distance, full reset between reps' },
     { name: 'Barbell RDL', sets: 3, reps: '3-5 top / 8-10 back-off', load: '110-120kg / 90-100kg', notes: 'Add load once back-off hits 10' },
     { name: 'Barbell Hip Thrust', sets: 4, reps: '3-5 top / 10-12 back-off', load: '80-100kg / 70-80kg', notes: 'Add load once back-off hits 12' },
     { name: 'Hip Abduction Machine', sets: 3, reps: '12-15', load: '40-50kg', notes: 'Lean 30° forward to bias upper glutes' },
