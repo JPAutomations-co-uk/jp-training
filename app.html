@@ -2781,6 +2781,12 @@ function pickFoodCtx(btn){
 
 async function callFoodAPI(name, timeVal) {
   const t = OB.train || {}; const e = OB.eat || {};
+  // Sum what's already logged today so the scorer judges this item in context
+  // of the whole day rather than as if it must be a complete meal on its own —
+  // a snack sitting between two protein-dense meals shouldn't get marked down
+  // for being macro-light when that was never the point of logging it.
+  const dayCalories = foods.reduce((a,f)=>a+(+f.calories||0), 0);
+  const dayProtein  = foods.reduce((a,f)=>a+(+f.protein_g||0), 0);
   const res = await fetch('/api/food', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -2791,7 +2797,8 @@ async function callFoodAPI(name, timeVal) {
       bodyFat: e.body_fat,
       primaryGoal: t.goal,
       context: _foodContext || 'general',
-      time: timeVal || null
+      time: timeVal || null,
+      dayCalories, dayProtein
     })
   });
   return res.json();
