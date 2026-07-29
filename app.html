@@ -1687,9 +1687,11 @@
       <div style="display:flex;gap:8px;margin-bottom:16px">
         <button class="admin-sw-btn active" data-view="applications" onclick="switchAdminView('applications')" style="flex:1;padding:10px;background:var(--teal-lo);border:1px solid var(--teal-mid);color:var(--teal);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Applications</button>
         <button class="admin-sw-btn" data-view="compliance" onclick="switchAdminView('compliance')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Compliance</button>
+        <button class="admin-sw-btn" data-view="casestudies" onclick="switchAdminView('casestudies')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Case Studies</button>
       </div>
       <div id="admin-applications-view"></div>
       <div id="admin-compliance-view" style="display:none"></div>
+      <div id="admin-casestudies-view" style="display:none"></div>
     </div>
   </div>
 
@@ -1847,7 +1849,9 @@ function getHabits(){
      desc:`Lights out by ${h.sleep_time||'10:30pm'}${poorSleep?' — your sleep quality needs fixing: this is the first lever':' — testosterone and GH peak in the first 90 min of deep sleep'}`},
     {key:'cold',
      name:'Cold Exposure',
-     desc:'Cold shower (2–3 min) or immersion — norepinephrine +530%, dopamine baseline reset, accelerated recovery, reduced inflammation'},
+     desc: USER?.id === JP_USER_ID
+       ? 'Cold shower (2–3 min) — norepinephrine reset, accelerated recovery. Timing matters: NOT within 4h of a lift (cold blunts the hypertrophy signal), so keep it to mornings or well clear of training.'
+       : 'Cold shower (2–3 min) or immersion — norepinephrine +530%, dopamine baseline reset, accelerated recovery, reduced inflammation'},
     {key:'supplements',
      name:'Morning Stack',
      desc:`Vitamin D3+K2, Magnesium Glycinate, Zinc, Omega-3${c.hormones&&c.hormones.includes('testosterone')?' — directly support testosterone synthesis':'  — the hormonal and inflammatory foundation everything else runs on'}`},
@@ -2268,7 +2272,13 @@ async function loadMessages(){
     const time = new Date(m.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     const author = m.author?.display_name || 'Member';
     if(m.deleted_at) return `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span></div><div style="font-size:13px;color:var(--dim);font-style:italic">Message removed</div></div>`;
-    return `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span></div><div style="font-size:14px">${escHtml(m.body)}</div></div>`;
+    // Admin-only case-study flag toggle — ties real member results (#wins
+    // or anywhere) into the content pipeline. Not shown to regular
+    // members, and toggling it never touches the message body itself.
+    const flagBtn = PROFILE?.is_admin
+      ? `<button onclick="toggleCaseStudyFlag('${m.id}',${!!m.case_study_flagged})" title="${m.case_study_flagged ? 'Unflag case study' : 'Flag as case study'}" style="background:none;border:none;cursor:pointer;padding:0;font-size:12px;opacity:${m.case_study_flagged ? '1' : '.35'}">⭐</button>`
+      : '';
+    return `<div style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span>${flagBtn}</div><div style="font-size:14px">${escHtml(m.body)}</div></div>`;
   }).join('');
   box.scrollTop = box.scrollHeight;
 }
@@ -2280,6 +2290,13 @@ async function sendCommunityMessage(){
   input.value = '';
   const { error } = await sb.from('channel_messages').insert({ channel_id: communityActiveChannel.id, user_id: USER.id, body });
   if(error){ showToast('Failed to send'); return; }
+  await loadMessages();
+}
+
+async function toggleCaseStudyFlag(messageId, currentlyFlagged){
+  if(!PROFILE?.is_admin) return;
+  const { error } = await sb.from('channel_messages').update({ case_study_flagged: !currentlyFlagged }).eq('id', messageId);
+  if(error){ showToast('Failed to update'); return; }
   await loadMessages();
 }
 
@@ -2340,7 +2357,33 @@ function switchAdminView(view){
   });
   document.getElementById('admin-applications-view').style.display = view === 'applications' ? 'block' : 'none';
   document.getElementById('admin-compliance-view').style.display = view === 'compliance' ? 'block' : 'none';
+  document.getElementById('admin-casestudies-view').style.display = view === 'casestudies' ? 'block' : 'none';
   if(view === 'compliance') loadCompliance();
+  if(view === 'casestudies') loadCaseStudies();
+}
+
+async function loadCaseStudies(){
+  const box = document.getElementById('admin-casestudies-view');
+  box.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data, error } = await sb.from('channel_messages')
+    .select('*, author:profiles(id,display_name,email), channel:channels(name,slug)')
+    .eq('case_study_flagged', true)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
+  if(error){ box.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load.</div>'; return; }
+  if(!data || data.length === 0){ box.innerHTML = '<div style="color:var(--muted);font-size:13px">No flagged messages yet — star one in any channel to add it here.</div>'; return; }
+  box.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Flagging isn\'t consent — still a real conversation with the member before using anything publicly.</div>'
+    + data.map(m => {
+      const when = new Date(m.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      return `<div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid var(--teal);border-radius:8px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">${escHtml(m.author?.display_name || 'Member')}</div>
+          <button onclick="toggleCaseStudyFlag('${m.id}',true)" style="background:none;border:none;color:var(--dim);font-size:11px;cursor:pointer">Unflag</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">#${escHtml(m.channel?.slug || '')} · ${when}</div>
+        <div style="font-size:14px">${escHtml(m.body)}</div>
+      </div>`;
+    }).join('');
 }
 
 async function loadApplications(){
@@ -2396,10 +2439,18 @@ async function loadCompliance(){
   const sinceStr = since.toISOString().slice(0,10);
   const memberIds = members.map(m => m.id);
 
-  const [{ data: habits }, { data: checkins }, { data: revenue }] = await Promise.all([
+  const sinceIso = since.toISOString();
+
+  const [{ data: habits }, { data: checkins }, { data: revenue }, { data: messages }, { data: rsvps }] = await Promise.all([
     sb.from('habit_log').select('user_id,date,habit_name,completed').in('user_id', memberIds).gte('date', sinceStr),
     sb.from('progress_checkins').select('user_id,date,energy,mood,sleep_q').in('user_id', memberIds).gte('date', sinceStr),
     sb.from('business_metrics').select('user_id,period_start,revenue').in('user_id', memberIds),
+    // Community engagement — arguably a stronger "falling off" signal than
+    // habit/checkin silence given the network itself is the core product,
+    // not just an add-on. is_admin() on channel_messages' read policy
+    // grants this query every member's messages, not just JP's own.
+    sb.from('channel_messages').select('user_id,created_at').in('user_id', memberIds).gte('created_at', sinceIso),
+    sb.from('call_rsvps').select('user_id,created_at').in('user_id', memberIds).gte('created_at', sinceIso),
   ]);
 
   const today = new Date().toISOString().slice(0,10);
@@ -2407,6 +2458,8 @@ async function loadCompliance(){
     const myHabits = (habits || []).filter(h => h.user_id === m.id);
     const myCheckins = (checkins || []).filter(c => c.user_id === m.id);
     const myRevenue = (revenue || []).filter(r => r.user_id === m.id).sort((a,b) => a.period_start < b.period_start ? 1 : -1);
+    const myMessages = (messages || []).filter(x => x.user_id === m.id);
+    const myRsvps = (rsvps || []).filter(x => x.user_id === m.id);
 
     const lastDates = [...myHabits.map(h => h.date), ...myCheckins.map(c => c.date)].sort();
     const lastActivity = lastDates[lastDates.length - 1] || null;
@@ -2425,6 +2478,7 @@ async function loadCompliance(){
     const businessDaysThisWeek = myHabits.filter(h => h.date >= sinceStr && (h.habit_name === 'business_action' || h.habit_name === 'revenue_activity') && h.completed).length;
     if(businessDaysThisWeek === 0) flags.push('No business activity logged this week');
     if(myRevenue.length >= 2 && (myRevenue[0].revenue ?? 0) <= (myRevenue[1].revenue ?? 0)) flags.push('Revenue flat or down month-on-month');
+    if(myMessages.length === 0 && myRsvps.length === 0) flags.push('No community engagement — no messages or event RSVPs in 14 days');
 
     return { member: m, flags };
   });
@@ -3207,6 +3261,21 @@ async function logFoodEntry(name, timeVal, d) {
     await earnXP('food_log', data.id, foodXP);
     if(foods.length >= 3) await earnXP('food_3meals', TODAY, 30);
     await checkPerfectDay();
+    // Auto-complete "Followed Meal Plan" — checks whether today's running
+    // calorie/protein totals land within 10% of the day's planned targets.
+    // This is a totals check, not exact-food matching: free-text logs can't
+    // be reliably compared item-for-item against the plan's wording.
+    if (USER?.id === JP_USER_ID && OB.nutritionPlan && EAT_DATE === TODAY) {
+      const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+      const targets = OB.nutritionPlan[dayName]?.targets;
+      if (targets) {
+        const totalCal = foods.reduce((a,f)=>a+(+f.calories||0), 0);
+        const totalProtein = foods.reduce((a,f)=>a+(+f.protein_g||0), 0);
+        const calOk = targets.calories > 0 && Math.abs(totalCal - targets.calories) / targets.calories <= 0.10;
+        const proteinOk = targets.protein > 0 && Math.abs(totalProtein - targets.protein) / targets.protein <= 0.10;
+        if (calOk && proteinOk) autoCompleteHabit('custom_meal_plan');
+      }
+    }
   } else {
     showToast('Save failed — ' + (error?.message || 'check connection'));
     console.error('logFoodEntry:', error);
@@ -4107,20 +4176,33 @@ function applyJPRealProtocol() {
     OB._moveResultsVersion = JP_PROTOCOL_VERSION;
   }
 
-  // Neck training — Mon/Wed only (Muay Thai days), via the app's existing
-  // custom-habit mechanism rather than a new fixed base-habit category,
-  // since it's specific to his own protocol, not something every client
-  // would need. Re-derived on every load (filter-then-push) so it doesn't
-  // duplicate across sessions and correctly disappears on non-Muay-Thai days.
-  const isNeckDay = [1, 3].includes(new Date().getDay()); // Mon, Wed
-  OB.custom_habits = (OB.custom_habits || []).filter(h => h.key !== 'neck_training');
-  if (isNeckDay) {
-    OB.custom_habits.push({
-      key: 'neck_training',
-      name: 'Neck Training',
-      desc: '4-way isometric holds — 2×20-30 sec each direction. Muay Thai prep.',
-    });
-  }
+  // Full needle-moving habit set (v7, 28 Jul 2026) — every day-gated custom
+  // habit lives in one data-driven list rather than repeating the
+  // filter-then-push pattern per habit. Days use JS getDay() numbering
+  // (0=Sun..6=Sat). Re-derived on every load so additions/removals here
+  // take effect immediately without leaving stale entries behind.
+  // Sauna excluded — no access currently (JP's call, not a gap).
+  const JP_CUSTOM_HABITS = [
+    { key: 'neck_training',    name: 'Neck Training',              desc: '4-way isometric holds — 2×20-30 sec each direction, plus the neck stretch right after. Muay Thai prep.', days: [1,3] },
+    { key: 'pnf_prep',         name: 'PNF Prep',                    desc: 'Hip flexor + adductor PNF, 10 min pre-Muay Thai — kick height & groin injury prevention.', days: [1,3] },
+    { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before plyometrics — the single highest injury-risk moment in your week if skipped.', days: [2,5] },
+    { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: [1,2,3,4,5,6] },
+    { key: 'sport_mobility',   name: 'Sport-Matched Mobility',      desc: 'Whichever routine matches today\'s sport (football/basketball/rugby/squash) — see the Move tab.', days: [0] },
+    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, cat-cow, wall slides, chin tucks, child\'s pose — 10 min, evening. Real 1-3cm functional height payoff, needs daily consistency to work.', days: [0,1,2,3,4,5,6] },
+    { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: [0,1,2,3,4,5,6] },
+    { key: 'taurine',          name: 'Taurine',                     desc: '1.5g, 13:00 pre-workout slot — peak power output.', days: [1,2,3,4,5,6] },
+    { key: 'prebed_stack',     name: 'Pre-Bed Stack',               desc: 'Magnesium glycinate 200mg + L-theanine 200mg, 21:00 — sleep quality, feeds directly into the recovery/height/muscle levers.', days: [0,1,2,3,4,5,6] },
+    { key: 'red_light',        name: 'Red Light Therapy',           desc: 'Needs a device you don\'t have yet — leave unticked until you\'re set up. Real mechanism (mitochondrial cytochrome c oxidase), modest recovery/testosterone benefit.', days: [0,1,2,3,4,5,6] },
+    { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: [0,1,2,3,4,5,6] },
+    { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: [0,1,2,3,4,5,6] },
+    { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: [0,1,2,3,4,5,6] },
+  ];
+  const todayDow = new Date().getDay();
+  const jpCustomKeys = new Set(JP_CUSTOM_HABITS.map(h => h.key));
+  OB.custom_habits = (OB.custom_habits || []).filter(h => !jpCustomKeys.has(h.key));
+  JP_CUSTOM_HABITS.forEach(h => {
+    if (h.days.includes(todayDow)) OB.custom_habits.push({ key: h.key, name: h.name, desc: h.desc });
+  });
 }
 
 async function saveOnboardingSection(section, data) {
