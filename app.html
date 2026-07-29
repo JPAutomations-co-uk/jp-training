@@ -1637,6 +1637,62 @@
     </div>
   </div>
 
+  <!-- ══ PANE: COMMUNITY (channels + chat) ══ -->
+  <div id="pane-community" class="pane">
+    <div id="community-list-view">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-family:var(--D);font-size:26px;font-weight:900;letter-spacing:-.02em">THE STANDARD</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="openEvents()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">📅</button>
+          <button id="community-admin-btn" onclick="openAdmin()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">⚙️</button>
+        </div>
+      </div>
+      <div id="community-channels"></div>
+    </div>
+    <div id="community-chat-view" style="display:none;margin:-24px -20px;height:calc(100% + 64px);display:none;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border)">
+        <button onclick="closeChannelView()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0">←</button>
+        <div>
+          <div id="community-chat-title" style="font-family:var(--D);font-size:20px;font-weight:900"></div>
+          <div id="community-chat-desc" style="font-size:11px;color:var(--muted)"></div>
+        </div>
+      </div>
+      <div id="community-messages" style="flex:1;overflow-y:auto;padding:16px 20px"></div>
+      <div id="community-composer" style="display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--border)">
+        <input id="community-input" placeholder="Message..." style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--white);font-family:var(--B);font-size:14px" onkeydown="if(event.key==='Enter')sendCommunityMessage()">
+        <button onclick="sendCommunityMessage()" style="background:var(--teal);border:none;border-radius:8px;padding:0 16px;color:#000;font-weight:700;cursor:pointer">Send</button>
+      </div>
+      <div id="community-readonly-note" style="display:none;padding:12px 20px;text-align:center;font-size:12px;color:var(--muted)">Only JP can post here.</div>
+    </div>
+  </div>
+
+  <!-- ══ EVENTS MODAL ══ -->
+  <div id="events-modal" onclick="if(event.target===this)closeEvents()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-family:var(--D);font-size:22px;font-weight:900">EVENTS</div>
+        <button onclick="closeEvents()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div id="events-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ ADMIN MODAL (applications + compliance) — only ever opened for PROFILE.is_admin ══ -->
+  <div id="admin-modal" onclick="if(event.target===this)closeAdmin()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-family:var(--D);font-size:22px;font-weight:900">THE STANDARD — ADMIN</div>
+        <button onclick="closeAdmin()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="admin-sw-btn active" data-view="applications" onclick="switchAdminView('applications')" style="flex:1;padding:10px;background:var(--teal-lo);border:1px solid var(--teal-mid);color:var(--teal);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Applications</button>
+        <button class="admin-sw-btn" data-view="compliance" onclick="switchAdminView('compliance')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Compliance</button>
+      </div>
+      <div id="admin-applications-view"></div>
+      <div id="admin-compliance-view" style="display:none"></div>
+    </div>
+  </div>
+
   <!-- BOTTOM NAV -->
   <nav id="bottomnav">
     <button class="bn-tab active" data-tab="habits" onclick="switchTab('habits')">
@@ -1666,6 +1722,10 @@
     <button class="bn-tab" data-tab="move" onclick="switchTab('move')">
       <svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="5" r="2"/><path d="M12 7v5l-3 4m3-4l3 4M9 10H6m12 0h-3"/></svg>
       <span>Move</span>
+    </button>
+    <button class="bn-tab" data-tab="community" onclick="switchTab('community')">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      <span>Community</span>
     </button>
   </nav>
 
@@ -2111,6 +2171,12 @@ function addSteps(delta) {
 
 /* ── NAV ── */
 function switchTab(tab){
+  // Leaving Community with a channel open (e.g. tapping another bottom-nav
+  // tab instead of the chat's back button) previously left the realtime
+  // subscription running indefinitely in the background — closeChannelView
+  // only ran if the user explicitly backed out. Guard it here instead so
+  // any way of leaving the tab tears it down.
+  if(tab!=='community' && communityRealtimeSub){ closeChannelView(); }
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+tab));
   document.getElementById('content').scrollTop=0;
@@ -2123,11 +2189,257 @@ function switchTab(tab){
   }
   if(tab==='progress') { setTimeout(()=>renderMilestones(), 50); }
   if(tab==='move') { setTimeout(()=>initMove(), 50); return; }
+  if(tab==='community') { setTimeout(()=>initCommunity(), 50); return; }
   // Show onboarding on first visit if not yet done
   const obTabs=['habits','train','eat','progress','coach'];
   if(obTabs.includes(tab) && !isOnboarded(tab)){
     setTimeout(()=>showOnboarding(tab), 320);
   }
+}
+
+/* ── COMMUNITY (THE STANDARD) ── */
+let communityChannelsCache = [];
+let communityActiveChannel = null;
+let communityRealtimeSub = null;
+
+async function initCommunity(){
+  document.getElementById('community-admin-btn').style.display = PROFILE?.is_admin ? 'flex' : 'none';
+  await loadChannels();
+}
+
+async function loadChannels(){
+  const list = document.getElementById('community-channels');
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data, error } = await sb.from('channels').select('*').order('position', { ascending: true });
+  if(error){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load channels.</div>'; return; }
+  communityChannelsCache = data || [];
+  if(communityChannelsCache.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No channels yet.</div>'; return; }
+  list.innerHTML = communityChannelsCache.map(ch => `
+    <div onclick="openChannel('${ch.id}')" style="display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer">
+      <div style="font-size:16px">${ch.admin_only_post ? '📢' : '#'}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">${escHtml(ch.name)}</div>
+        ${ch.description ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${escHtml(ch.description)}</div>` : ''}
+      </div>
+      <div style="color:var(--dim)">›</div>
+    </div>
+  `).join('');
+}
+
+async function openChannel(channelId){
+  const ch = communityChannelsCache.find(c => c.id === channelId);
+  if(!ch) return;
+  communityActiveChannel = ch;
+  document.getElementById('community-list-view').style.display = 'none';
+  const chatView = document.getElementById('community-chat-view');
+  chatView.style.display = 'flex';
+  document.getElementById('community-chat-title').textContent = ch.name;
+  document.getElementById('community-chat-desc').textContent = ch.description || '';
+  const canPost = !ch.admin_only_post || PROFILE?.is_admin;
+  document.getElementById('community-composer').style.display = canPost ? 'flex' : 'none';
+  document.getElementById('community-readonly-note').style.display = canPost ? 'none' : 'block';
+  await loadMessages();
+  if(communityRealtimeSub) sb.removeChannel(communityRealtimeSub);
+  communityRealtimeSub = sb.channel('channel_messages:' + channelId)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
+    .subscribe();
+}
+
+function closeChannelView(){
+  if(communityRealtimeSub){ sb.removeChannel(communityRealtimeSub); communityRealtimeSub = null; }
+  communityActiveChannel = null;
+  document.getElementById('community-chat-view').style.display = 'none';
+  document.getElementById('community-list-view').style.display = 'block';
+}
+
+async function loadMessages(){
+  if(!communityActiveChannel) return;
+  const { data, error } = await sb.from('channel_messages')
+    .select('*, author:profiles(id,display_name)')
+    .eq('channel_id', communityActiveChannel.id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  const box = document.getElementById('community-messages');
+  if(error){ box.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load messages.</div>'; return; }
+  const msgs = (data || []).slice().reverse();
+  if(msgs.length === 0){ box.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;margin-top:20px">Nobody\'s posted here yet.</div>'; return; }
+  box.innerHTML = msgs.map(m => {
+    const time = new Date(m.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const author = m.author?.display_name || 'Member';
+    if(m.deleted_at) return `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span></div><div style="font-size:13px;color:var(--dim);font-style:italic">Message removed</div></div>`;
+    return `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span></div><div style="font-size:14px">${escHtml(m.body)}</div></div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendCommunityMessage(){
+  const input = document.getElementById('community-input');
+  const body = input.value.trim();
+  if(!body || !communityActiveChannel) return;
+  input.value = '';
+  const { error } = await sb.from('channel_messages').insert({ channel_id: communityActiveChannel.id, user_id: USER.id, body });
+  if(error){ showToast('Failed to send'); return; }
+  await loadMessages();
+}
+
+/* ── EVENTS ── */
+async function openEvents(){
+  document.getElementById('events-modal').style.display = 'flex';
+  const list = document.getElementById('events-list');
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data: calls, error } = await sb.from('calls').select('*').gte('scheduled_at', new Date().toISOString()).order('scheduled_at', { ascending: true });
+  if(error){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load events.</div>'; return; }
+  if(!calls || calls.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">Nothing scheduled yet.</div>'; return; }
+  const callIds = calls.map(c => c.id);
+  const { data: rsvps } = await sb.from('call_rsvps').select('*').in('call_id', callIds);
+  list.innerHTML = calls.map(call => {
+    const mine = (rsvps || []).find(r => r.call_id === call.id && r.user_id === USER.id);
+    const going = (rsvps || []).filter(r => r.call_id === call.id && r.status === 'going').length;
+    const when = new Date(call.scheduled_at).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const icon = call.type === 'group_call' ? '🎥' : '👥';
+    const rsvpBtns = ['going','maybe','not_going'].map(s => {
+      const label = s === 'going' ? 'Going' : s === 'maybe' ? 'Maybe' : "Can't make it";
+      const active = mine?.status === s;
+      return `<button onclick="setEventRsvp('${call.id}','${s}')" style="flex:1;padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;background:${active?'var(--teal-lo)':'var(--s2)'};border:1px solid ${active?'var(--teal)':'var(--border)'};color:${active?'var(--teal)':'var(--muted)'}">${label}</button>`;
+    }).join('');
+    return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span>${icon}</span><span style="font-weight:700">${escHtml(call.title)}</span></div>
+      <div style="font-size:12px;color:var(--muted)">${when}</div>
+      ${call.location ? `<div style="font-size:11px;color:var(--dim);margin-top:2px">${escHtml(call.location)}</div>` : ''}
+      ${call.price != null ? `<div style="font-size:11px;color:var(--teal);margin-top:2px">£${call.price} per head — booked separately</div>` : ''}
+      ${call.description ? `<div style="font-size:13px;color:var(--muted);margin-top:8px">${escHtml(call.description)}</div>` : ''}
+      <div style="display:flex;gap:6px;margin-top:10px">${rsvpBtns}</div>
+      <div style="font-size:11px;color:var(--dim);margin-top:6px">${going} going</div>
+    </div>`;
+  }).join('');
+}
+
+function closeEvents(){ document.getElementById('events-modal').style.display = 'none'; }
+
+async function setEventRsvp(callId, status){
+  await sb.from('call_rsvps').upsert({ call_id: callId, user_id: USER.id, status, updated_at: new Date().toISOString() }, { onConflict: 'call_id,user_id' });
+  await openEvents();
+}
+
+/* ── ADMIN: APPLICATIONS + COMPLIANCE ── */
+async function openAdmin(){
+  if(!PROFILE?.is_admin) return;
+  document.getElementById('admin-modal').style.display = 'flex';
+  await loadApplications();
+}
+function closeAdmin(){ document.getElementById('admin-modal').style.display = 'none'; }
+
+function switchAdminView(view){
+  document.querySelectorAll('.admin-sw-btn').forEach(b => {
+    const active = b.dataset.view === view;
+    b.classList.toggle('active', active);
+    b.style.background = active ? 'var(--teal-lo)' : 'var(--s1)';
+    b.style.borderColor = active ? 'var(--teal-mid)' : 'var(--border)';
+    b.style.color = active ? 'var(--teal)' : 'var(--muted)';
+  });
+  document.getElementById('admin-applications-view').style.display = view === 'applications' ? 'block' : 'none';
+  document.getElementById('admin-compliance-view').style.display = view === 'compliance' ? 'block' : 'none';
+  if(view === 'compliance') loadCompliance();
+}
+
+async function loadApplications(){
+  const box = document.getElementById('admin-applications-view');
+  box.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data, error } = await sb.from('applications').select('*').order('created_at', { ascending: false });
+  if(error){ box.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load applications.</div>'; return; }
+  const pending = (data || []).filter(a => a.status === 'pending');
+  const rest = (data || []).filter(a => a.status !== 'pending');
+  if(!data || data.length === 0){ box.innerHTML = '<div style="color:var(--muted);font-size:13px">No applications yet.</div>'; return; }
+  const renderApp = (app) => {
+    const statusColor = { pending: 'var(--teal)', screening_booked: 'var(--teal)', accepted: '#22C55E', rejected: '#EF4444' }[app.status] || 'var(--muted)';
+    return `<div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid ${statusColor};border-radius:8px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:700">${escHtml(app.name)}</div>
+          <div style="font-size:11px;color:var(--muted)">${escHtml(app.email)}${app.phone ? ' · ' + escHtml(app.phone) : ''}</div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:${statusColor};text-transform:uppercase">${app.status.replace('_',' ')}</div>
+      </div>
+      <div style="font-size:12px;margin-top:10px"><b style="color:var(--muted)">Building:</b> ${escHtml(app.building)}</div>
+      <div style="font-size:12px;margin-top:6px"><b style="color:var(--muted)">Duration/week:</b> ${escHtml(app.building_duration)}</div>
+      <div style="font-size:12px;margin-top:6px"><b style="color:var(--muted)">Health:</b> ${escHtml(app.health_state)}</div>
+      <div style="font-size:12px;margin-top:6px"><b style="color:var(--muted)">What they've tried:</b> ${escHtml(app.what_tried)}</div>
+      <div style="font-size:12px;margin-top:6px"><b style="color:var(--muted)">Why a network:</b> ${escHtml(app.why_network)}</div>
+      <div style="font-size:12px;margin-top:6px"><b style="color:var(--muted)">Agrees to standard:</b> ${app.agrees_to_standard ? 'Yes' : 'No — flagged themselves'}</div>
+      <div style="display:flex;gap:6px;margin-top:12px">
+        <button onclick="updateApplicationStatus('${app.id}','screening_booked')" style="flex:1;padding:8px;border-radius:6px;font-size:11px;background:var(--s2);border:1px solid var(--border);color:var(--teal);cursor:pointer">Screening booked</button>
+        <button onclick="updateApplicationStatus('${app.id}','accepted')" style="flex:1;padding:8px;border-radius:6px;font-size:11px;background:var(--teal-lo);border:1px solid var(--teal);color:var(--teal);font-weight:700;cursor:pointer">Accept</button>
+        <button onclick="updateApplicationStatus('${app.id}','rejected')" style="flex:1;padding:8px;border-radius:6px;font-size:11px;background:var(--s2);border:1px solid var(--border);color:#EF4444;cursor:pointer">Reject</button>
+      </div>
+    </div>`;
+  };
+  box.innerHTML = (pending.length ? '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Pending (' + pending.length + ')</div>' + pending.map(renderApp).join('') : '<div style="color:var(--muted);font-size:13px;margin-bottom:16px">No pending applications.</div>')
+    + (rest.length ? '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin:16px 0 8px">Reviewed</div>' + rest.map(renderApp).join('') : '');
+}
+
+async function updateApplicationStatus(id, status){
+  if((status === 'accepted' || status === 'rejected') && !confirm('Mark this application as ' + status + '?')) return;
+  const { error } = await sb.from('applications').update({ status, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id);
+  if(error){ showToast('Failed to update'); return; }
+  await loadApplications();
+}
+
+async function loadCompliance(){
+  const box = document.getElementById('admin-compliance-view');
+  box.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data: members, error: pErr } = await sb.from('profiles').select('id,display_name,email').eq('status', 'approved').eq('is_admin', false);
+  if(pErr){ box.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load members.</div>'; return; }
+  if(!members || members.length === 0){ box.innerHTML = '<div style="color:var(--muted);font-size:13px">No approved members yet.</div>'; return; }
+
+  const since = new Date(); since.setDate(since.getDate() - 13);
+  const sinceStr = since.toISOString().slice(0,10);
+  const memberIds = members.map(m => m.id);
+
+  const [{ data: habits }, { data: checkins }, { data: revenue }] = await Promise.all([
+    sb.from('habit_log').select('user_id,date,habit_name,completed').in('user_id', memberIds).gte('date', sinceStr),
+    sb.from('progress_checkins').select('user_id,date,energy,mood,sleep_q').in('user_id', memberIds).gte('date', sinceStr),
+    sb.from('business_metrics').select('user_id,period_start,revenue').in('user_id', memberIds),
+  ]);
+
+  const today = new Date().toISOString().slice(0,10);
+  const reports = members.map(m => {
+    const myHabits = (habits || []).filter(h => h.user_id === m.id);
+    const myCheckins = (checkins || []).filter(c => c.user_id === m.id);
+    const myRevenue = (revenue || []).filter(r => r.user_id === m.id).sort((a,b) => a.period_start < b.period_start ? 1 : -1);
+
+    const lastDates = [...myHabits.map(h => h.date), ...myCheckins.map(c => c.date)].sort();
+    const lastActivity = lastDates[lastDates.length - 1] || null;
+    const daysSince = lastActivity ? Math.round((new Date(today) - new Date(lastActivity)) / 86400000) : null;
+
+    const flags = [];
+    if(daysSince === null || daysSince >= 5) flags.push(daysSince === null ? 'No app activity logged yet' : 'No activity for ' + daysSince + ' days');
+    const lastCheckin = myCheckins.map(c => c.date).sort().pop();
+    const daysSinceCheckin = lastCheckin ? Math.round((new Date(today) - new Date(lastCheckin)) / 86400000) : null;
+    if(!(daysSince === null || daysSince >= 5) && (daysSinceCheckin === null || daysSinceCheckin >= 3)) flags.push(daysSinceCheckin === null ? 'No check-ins logged' : 'No check-in for ' + daysSinceCheckin + ' days');
+    // Deliberately independent of whether any habit_log rows exist at all —
+    // a member who only ever does check-ins and never touches business
+    // habits is exactly who this flag exists to catch, not a reason to
+    // skip it (same gap already caught and fixed once in the other app's
+    // version of this same logic).
+    const businessDaysThisWeek = myHabits.filter(h => h.date >= sinceStr && (h.habit_name === 'business_action' || h.habit_name === 'revenue_activity') && h.completed).length;
+    if(businessDaysThisWeek === 0) flags.push('No business activity logged this week');
+    if(myRevenue.length >= 2 && (myRevenue[0].revenue ?? 0) <= (myRevenue[1].revenue ?? 0)) flags.push('Revenue flat or down month-on-month');
+
+    return { member: m, flags };
+  });
+  const flaggedCount = reports.filter(r => r.flags.length > 0).length;
+  const html = reports.map(({ member: m, flags }) => {
+    const hasFlags = flags.length > 0;
+    return `<div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid ${hasFlags?'#EAB308':'#22C55E'};border-radius:8px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700">${escHtml(m.display_name || m.email || 'Member')}</div>
+        <div>${hasFlags ? '⚠️' : '✅'}</div>
+      </div>
+      ${hasFlags ? flags.map(f => `<div style="font-size:12px;color:#EAB308;margin-top:6px">• ${escHtml(f)}</div>`).join('') : '<div style="font-size:12px;color:#22C55E;margin-top:6px">On track — no flags</div>'}
+    </div>`;
+  }).join('');
+  box.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">' + members.length + ' active members, ' + flaggedCount + ' flagged. These are signals, not decisions — the removal call is still yours.</div>' + html;
 }
 
 function skipOnboarding(){
@@ -2648,6 +2960,24 @@ async function initEat(){
 // sitting above the normal log-and-score flow below it, which stays the
 // actual adherence-tracking mechanism (logging what he really ate against
 // what was planned, not replacing logging with the plan itself).
+// Temporary organ-meat substitutes — shown instead of the real liver/heart
+// meals whenever JP doesn't currently have them in stock. Toggled by the
+// button rendered into the plan card; persists in OB.hasOrganMeats so it
+// survives reload until he explicitly flips it back.
+const JP_ORGAN_SUBS = {
+  Tuesday:  { '15:30': '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g) — liver swapped for extra beef until restocked; folate is the one real gap this leaves, not fully replaceable within animal-first foods' },
+  Friday:   { '15:30': '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g) — liver swapped for extra beef (2nd weekly slot); same folate gap as Tuesday' },
+  Thursday: { '19:00': '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 20g Parmigiano Reggiano — beef heart swapped for extra beef; taurine already covered by your 13:00 supplement, so this isn\'t a real gap' },
+};
+
+async function toggleOrganMeats(){
+  OB.hasOrganMeats = !OB.hasOrganMeats;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e){}
+  showToast(OB.hasOrganMeats ? 'Liver/heart back in — plan restored' : 'Switched to beef substitute until restocked');
+  renderNutritionPlan();
+}
+
 function renderNutritionPlan(){
   const card = document.getElementById('nutrition-plan-card');
   if(!card) return;
@@ -2659,6 +2989,9 @@ function renderNutritionPlan(){
   const day = plan[dayName];
   if(!day){ card.style.display='none'; return; }
 
+  const subsToday = JP_ORGAN_SUBS[dayName];
+  const hasOrgans = !!OB.hasOrganMeats;
+
   card.style.display='';
   card.innerHTML = `
     <div style="background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.15);padding:14px;margin-bottom:14px">
@@ -2667,13 +3000,19 @@ function renderNutritionPlan(){
         <div style="font-size:10px;color:var(--dim)">${day.targets.calories} kcal · ${day.targets.protein}p / ${day.targets.carbs}c / ${day.targets.fat}f</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px">
-        ${day.meals.map(m=>`
+        ${day.meals.map(m=>{
+          const useSub = !hasOrgans && subsToday && subsToday[m.time];
+          const text = useSub ? subsToday[m.time] : m.name;
+          return `
           <div style="display:flex;gap:10px;font-size:12px">
             <span style="color:var(--dim);min-width:38px;flex-shrink:0">${escHtml(m.time)}</span>
-            <span style="color:var(--muted)">${escHtml(m.name)}</span>
+            <span style="color:var(--muted)">${escHtml(text)}${useSub?' <span style="color:rgba(44,212,196,.6);font-style:italic">(organ swap active)</span>':''}</span>
           </div>
-        `).join('')}
+        `;}).join('')}
       </div>
+      <button onclick="toggleOrganMeats()" style="margin-top:10px;width:100%;padding:8px;font-size:11px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer">
+        ${hasOrgans ? 'Mark liver/heart as out of stock' : "I've got liver/heart in stock now →"}
+      </button>
     </div>
   `;
 }
