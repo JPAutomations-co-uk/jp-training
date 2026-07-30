@@ -1835,7 +1835,9 @@ function getHabits(){
   const base = [
     {key:'sunlight',
      name:'Morning Sunlight',
-     desc:`Natural light within 1hr of waking${h.wake_time?' ('+h.wake_time+')':''} — triggers your cortisol peak, anchors your circadian clock, and sets melatonin timing for that night`},
+     desc: USER?.id === JP_USER_ID
+       ? `Natural light within 1hr of waking${h.wake_time?' ('+h.wake_time+')':''} + a Bible chapter — triggers your cortisol peak, anchors your circadian clock, sets melatonin timing for that night`
+       : `Natural light within 1hr of waking${h.wake_time?' ('+h.wake_time+')':''} — triggers your cortisol peak, anchors your circadian clock, and sets melatonin timing for that night`},
     {key:'training',
      name:'Complete Training Session',
      desc:'Log today\'s session in the Train tab — compound strength training is the single highest-leverage driver of testosterone, GH, and metabolic health'},
@@ -4190,7 +4192,8 @@ function applyJPRealProtocol() {
     { key: 'sport_mobility',   name: 'Sport-Matched Mobility',      desc: 'Whichever routine matches today\'s sport (football/basketball/rugby/squash) — see the Move tab.', days: [0] },
     { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, cat-cow, wall slides, chin tucks, child\'s pose — 10 min, evening. Real 1-3cm functional height payoff, needs daily consistency to work.', days: [0,1,2,3,4,5,6] },
     { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: [0,1,2,3,4,5,6] },
-    { key: 'taurine',          name: 'Taurine',                     desc: '1.5g, 13:00 pre-workout slot — peak power output.', days: [1,2,3,4,5,6] },
+    { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: [0,1,2,3,4,5,6] },
+    { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: [0,1,2,3,4,5,6] },
     { key: 'prebed_stack',     name: 'Pre-Bed Stack',               desc: 'Magnesium glycinate 200mg + L-theanine 200mg, 21:00 — sleep quality, feeds directly into the recovery/height/muscle levers.', days: [0,1,2,3,4,5,6] },
     { key: 'red_light',        name: 'Red Light Therapy',           desc: 'Needs a device you don\'t have yet — leave unticked until you\'re set up. Real mechanism (mitochondrial cytochrome c oxidase), modest recovery/testosterone benefit.', days: [0,1,2,3,4,5,6] },
     { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: [0,1,2,3,4,5,6] },
