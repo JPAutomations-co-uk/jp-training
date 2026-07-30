@@ -1037,6 +1037,7 @@
       <!-- Section 1: Weekly calendar -->
       <select id="train-day-select" onchange="selectDay(this.value)" style="width:100%;padding:10px 12px;margin-bottom:10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:13px;font-family:var(--B)"></select>
       <div id="train-day-tabs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:none"></div>
+      <div id="weekly-prs-card"></div>
       <div id="train-day-detail"></div>
 
       <!-- Section 2: Coach (clearly separated) -->
@@ -2869,8 +2870,9 @@ function renderWeeklyCalendar(plan) {
     const isToday = d.day === todayName;
     const isRest = d.type === 'rest';
     return `<button id="day-tab-${d.day}" onclick="selectDay('${d.day}')"
-      style="flex-shrink:0;min-width:48px;padding:8px 10px;font-size:11px;font-family:var(--B);letter-spacing:.06em;cursor:pointer;transition:all .15s;border:1px solid ${isToday?'var(--teal)':'var(--border)'};background:${isToday?'var(--teal)':'var(--s1)'};color:${isToday?'#000':'var(--muted)'};${isRest?'opacity:.55':''}">
+      style="position:relative;flex-shrink:0;min-width:48px;padding:8px 10px;font-size:11px;font-family:var(--B);letter-spacing:.06em;cursor:pointer;transition:all .15s;border:1px solid ${isToday?'var(--teal)':'var(--border)'};background:${isToday?'var(--teal)':'var(--s1)'};color:${isToday?'#000':'var(--muted)'};${isRest?'opacity:.55':''}">
       ${_DAY_SHORT[d.day]||d.day.slice(0,3)}${isToday?'<br><span style="font-size:8px;letter-spacing:.1em">TODAY</span>':''}
+      <span id="day-tab-dot-${d.day}" style="position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%"></span>
     </button>`;
   }).join('');
 
@@ -2882,8 +2884,50 @@ function renderWeeklyCalendar(plan) {
       return `<option value="${d.day}">${escHtml(label)}${isToday?' (Today)':''}</option>`;
     }).join('');
   }
+  renderDayTabIndicators();
 
   selectDay(todayName);
+}
+
+// Small coloured dot on each day tab: teal = session logged for that
+// weekday's occurrence THIS week, red = that day is already in the past
+// this week and nothing was logged (missed), no dot = today or later this
+// week (nothing to judge yet). Cheap DOM patch, doesn't touch selection
+// state, safe to call after loadTrainingHistory() resolves async.
+// This week's PRs — _pbData holds ALL-TIME max weight per exercise with the
+// date it was set; filtered here to just this week (Mon-Sun) so it reads as
+// "what actually improved recently" rather than a lifetime best-of list.
+function renderWeeklyPRs(){
+  const el = document.getElementById('weekly-prs-card');
+  if(!el) return;
+  const now = new Date(TODAY+'T00:00:00');
+  const dow = now.getDay(); // 0=Sun
+  const monday = new Date(now); monday.setDate(now.getDate() - ((dow+6)%7));
+  const mondayStr = monday.toISOString().split('T')[0];
+  const thisWeekPRs = Object.entries(_pbData||{})
+    .filter(([,v]) => v.date >= mondayStr)
+    .sort((a,b) => b[1].date.localeCompare(a[1].date));
+  if(!thisWeekPRs.length){ el.innerHTML=''; return; }
+  el.innerHTML = `<div style="border:1px solid rgba(44,212,196,.25);background:rgba(44,212,196,.04);padding:12px 14px;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">🏅 This Week's PRs</div>
+    ${thisWeekPRs.map(([name,v])=>`<div style="font-size:12px;color:var(--muted);padding:2px 0">${escHtml(name)} — <span style="color:var(--white);font-weight:600">${v.maxWeight}kg</span></div>`).join('')}
+  </div>`;
+}
+
+function renderDayTabIndicators(){
+  const names = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const todayDow = new Date().getDay();
+  (_weeklyPlan||[]).forEach(d=>{
+    const dot = document.getElementById('day-tab-dot-'+d.day);
+    if(!dot) return;
+    if(d.type === 'rest'){ dot.style.background='transparent'; return; }
+    const diff = names.indexOf(d.day) - todayDow; // <0 earlier this week, 0 today, >0 later this week
+    const dt = new Date(TODAY+'T00:00:00'); dt.setDate(dt.getDate()+diff);
+    const dateForThisWeek = dt.toISOString().split('T')[0];
+    if(_loggedSessionDates.has(dateForThisWeek)){ dot.style.background='var(--teal)'; dot.title='Logged'; }
+    else if(diff < 0){ dot.style.background='#f87171'; dot.title='Missed'; }
+    else { dot.style.background='transparent'; dot.title=''; }
+  });
 }
 
 function selectDay(dayName) {
@@ -3115,6 +3159,7 @@ async function saveWorkout(asToday){
     if(allHitTarget && targetRep) _overloadEx.add(exName);
   });
   newPBs.forEach(n => showToast(`🏅 New PB on ${n}!`));
+  if(newPBs.length) renderWeeklyPRs();
   showToast('Session saved');
   await earnXP('workout_save', saveDate, 75);
   // Mark session quest as completed — keyed to saveDate, not TODAY, so
@@ -4294,16 +4339,34 @@ const JP_MOVE_RESULTS = {
   habits_to_add: [],
 };
 
+// Small inline checkbox that writes to the exact same habit_log entry as the
+// Habits tab — completing mobility from right here (where the session lives)
+// instead of requiring a tab-switch. Optimistic UI: flips its own look
+// immediately, toggleHabit() handles the real state/DB write in the
+// background same as it always does.
+function mobCheckbox(key){
+  const done = !!habitState[key];
+  return `<span onclick="event.stopPropagation();toggleHabit('${key}');this.classList.toggle('done');this.querySelector('span').textContent=this.classList.contains('done')?'✓ Done':'Mark done';"
+    class="${done?'done':''}" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--B);letter-spacing:.04em;padding:3px 8px;border:1px solid ${done?'var(--teal)':'var(--border)'};color:${done?'var(--teal)':'var(--dim)'};margin-left:8px"><span>${done?'✓ Done':'Mark done'}</span></span>`;
+}
+
 function renderMobilityCard(dayName) {
   if (USER?.id !== JP_USER_ID) return '';
   const m = JP_MOBILITY_PLAN[dayName];
   if (!m) return '';
   const drillList = drills => `<ul style="margin:4px 0 0;padding-left:16px;font-size:12px;color:var(--muted)">${drills.map(d=>`<li style="margin-bottom:2px">${escHtml(d)}</li>`).join('')}</ul>`;
   const sections = [];
-  if (m.warmup) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}</div>${drillList(m.warmup.drills)}</div>`);
-  if (m.staticStretch) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">After — ${escHtml(m.staticStretch.label)}</div>${drillList(m.staticStretch.drills)}</div>`);
+  if (m.warmup) {
+    const isExplosive = dayName === 'Tuesday' || dayName === 'Friday';
+    sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}${isExplosive?mobCheckbox('custom_explosive_warmup'):''}</div>${drillList(m.warmup.drills)}</div>`);
+  }
+  if (m.staticStretch) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">After — ${escHtml(m.staticStretch.label)}${mobCheckbox('custom_static_stretch')}</div>${drillList(m.staticStretch.drills)}</div>`);
   (m.extras||[]).forEach(e => {
-    sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">${escHtml(e.label)}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${escHtml(e.detail)}</div></div>`);
+    let key = null;
+    if (e.label.includes('PNF')) key = 'custom_pnf_prep';
+    else if (e.label.includes('Postural Protocol')) key = 'custom_postural_protocol';
+    else if (e.label.includes('Sport-matched')) key = 'custom_sport_mobility';
+    sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">${escHtml(e.label)}${key?mobCheckbox(key):''}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${escHtml(e.detail)}</div></div>`);
   });
   return `<div style="border:1px solid var(--border);background:rgba(255,255,255,.02);padding:14px;margin-bottom:12px">
     <div style="font-size:12px;font-weight:700;color:var(--white);margin-bottom:8px">Mobility & Stretching</div>
@@ -6313,6 +6376,7 @@ function closeLeaderboard() {
    TRAINING OS — STATE
 ════════════════════════════════════════ */
 let _lastSessionData = {};   // { [exName]: { date, sets:[{reps,weight_kg}] } }
+let _loggedSessionDates = new Set(); // dates (YYYY-MM-DD) with a saved workout_session, for the day-tab completed/skipped indicator
 let _pbData = {};            // { [exName]: { maxWeight, date } }
 const _overloadEx = new Set(); // exercises flagged for +2.5kg next session
 let _exerciseHistory = {};   // { [exName]: [{date,sets,topWt,totalVol,est1rm}] }
@@ -6517,6 +6581,9 @@ async function loadTrainingHistory() {
       .order('date',{ascending:false});
     if(!sessions?.length) return;
 
+    _loggedSessionDates = new Set(sessions.map(s=>s.date));
+    renderDayTabIndicators();
+
     const { data: sets } = await sb.from('session_sets')
       .select('session_id,exercise_name,set_number,reps,weight_kg')
       .in('session_id', sessions.map(s=>s.id));
@@ -6547,6 +6614,7 @@ async function loadTrainingHistory() {
         _pbData[s.exercise_name] = { maxWeight: s.weight_kg, date: sessDate };
       }
     });
+    renderWeeklyPRs();
 
     // Exercise history for progress sheet
     sessions.forEach(sess => {
