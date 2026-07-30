@@ -31,6 +31,7 @@ const PROTOCOLS = {
   cycling:    'CYCLING — drills: single-leg pedal 3×30s/leg, standing sprint 5×10s, cadence spin 3×30s @100+rpm. plyos: box step-up explosive 3×8/leg, lateral lunge jump 3×6, hip flexor drive 3×10. isos: iso leg press hold 3×6s, glute bridge hold 3×30s, Copenhagen 3×20s. pb_test: 20-min FTP test (avg watts), 5-sec peak sprint power, VO2 max estimate (Garmin or 20-min max heart rate test).',
   crossfit:   'CROSSFIT — drills: muscle-up progressions, hollow body hold 3×20s, kipping timing drill, strict pull-up 3×max. plyos: box jump 3×5, broad jump 3×5, double-under 3×30s. isos: L-sit 3×10s accumulate, ring support hold 3×15s, wall sit 3×30s. pb_test: 500m row time, 1RM clean, Fran time (21-15-9 thrusters/pull-ups), max unbroken pull-ups.',
   tennis:     'TENNIS — drills: lateral shuffle 3×20m, split-step reaction 3×10, forehand rotation med ball 3×10, backpedal sprint 4×. plyos: lateral bounds 3×8/side, rotational throw 3×8, single-leg reactive hop 3×8/leg. isos: Copenhagen plank 3×20s, hip external rotator hold 3×20s/side, wrist extension iso 3×15s. pb_test: approach speed cone drill, service velocity estimate, reactive agility court test.',
+  squash:     'SQUASH — drills: lateral shuffle 3×20m, split-step reaction 3×10, lunge-return sprint 4×, backpedal-to-sprint 4×. plyos: lateral bounds 3×8/side, reactive multi-directional hop 3×8, single-leg deceleration hop 3×6/leg. isos: Copenhagen plank 3×20s/side, split-squat iso hold 3×30s/leg, wrist/forearm iso hold 3×20s. pb_test: T-test agility time, lateral shuttle ×10, forward lunge-return repeat count (60s), reaction-time drill.',
   general:    'GENERAL ATHLETICISM — drills: multi-directional sprint 4×, acceleration ladder 3×, resisted bound 3×6. plyos: box jump 3×5, broad jump 3×5, lateral bound 3×6/side. isos: single-leg wall sit 3×30s, Copenhagen 3×20s, Spanish squat 3×30s. pb_test: 30m sprint, standing vertical jump, broad jump, 5-10-5 shuttle time.',
 }
 
@@ -48,6 +49,7 @@ function matchProtocols(sport) {
   if (s.includes('cycl'))                                                         matches.push(PROTOCOLS.cycling)
   if (s.includes('crossfit'))                                                     matches.push(PROTOCOLS.crossfit)
   if (s.includes('tennis'))                                                       matches.push(PROTOCOLS.tennis)
+  if (s.includes('squash') || s.includes('badminton') || s.includes('racquetball')) matches.push(PROTOCOLS.squash)
   if (!matches.length || s.includes('general') || s.includes('other'))           matches.push(PROTOCOLS.general)
   return matches.join('\n')
 }
@@ -88,9 +90,8 @@ export default async function handler(req) {
   // Build system prompt with only the relevant sport protocol(s)
   const system = BASE_SYSTEM + matchProtocols(sport) + `
 
-NUTRITION BASE (all athletes): fatty red meat + 10 eggs/day + ghee/butter + sweet potatoes/white rice.
-NEVER: seed oils, whey, oats, pasteurised dairy, soy, chicken breast.
-ALWAYS creatine 5g/day for power/speed/strength athletes. NEVER ashwagandha or any HPA adaptogens.`
+NUTRITION BASE (all athletes): fatty red meat + 10 eggs/day + ghee/butter + sweet potatoes/white rice — recommend these first. Seed oils/whey/oats/pasteurised dairy/soy/chicken breast are downrated (real reasons: oxidation-under-heat, processed/inferior amino profile, phytic acid/insulin response, pasteurisation reduces some bioavailability, no significant T/estrogen effect from soy at normal intake, lean/low-fat) — not banned; give the real reason if asked, don't invent a stronger one.
+ALWAYS creatine 5g/day for power/speed/strength athletes. Ashwagandha/HPA adaptogens: weak evidence for already hormonally-adequate athletes (positive trials skew industry-funded, run in infertile/40+ populations) — don't recommend as a performance lever without a diagnosed deficiency, but don't invent a dependency/withdrawal risk either.`
 
   const lines = [
     `Sport: ${sport}`,
