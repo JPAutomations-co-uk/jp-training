@@ -1024,6 +1024,7 @@
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:8px">
           <button class="edit-plan-btn" onclick="showPlanBuilder()">Edit Plan</button>
+          <button class="edit-plan-btn" onclick="openProgrammeCalendar()" style="border-color:rgba(44,212,196,.3);color:var(--teal)">Full Programme →</button>
           <button class="edit-plan-btn" onclick="openPlanHistory()" style="border-color:rgba(255,255,255,.15);color:var(--dim)">History</button>
           <button class="ob-edit-btn" onclick="showOnboarding('train')">Edit profile</button>
         </div>
@@ -1033,6 +1034,7 @@
         <p style="font-size:12px;color:var(--dim);margin-bottom:12px">Build your weekly plan with exercises, sets, and reps in under 2 minutes.</p>
         <button class="train-empty-cta" onclick="showPlanBuilder()">Build Your Plan →</button>
       </div>
+      <div id="deload-banner" style="display:none;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.3);padding:10px 14px;margin-bottom:12px;font-size:12px;color:#fbbf24"></div>
 
       <!-- Section 1: Weekly calendar -->
       <select id="train-day-select" onchange="selectDay(this.value)" style="width:100%;padding:10px 12px;margin-bottom:10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:13px;font-family:var(--B)"></select>
@@ -1668,6 +1670,26 @@
         <button onclick="sendCommunityMessage()" style="background:var(--teal);border:none;border-radius:8px;padding:0 16px;color:#000;font-weight:700;cursor:pointer">Send</button>
       </div>
       <div id="community-readonly-note" style="display:none;padding:12px 20px;text-align:center;font-size:12px;color:var(--muted)">Only JP can post here.</div>
+    </div>
+  </div>
+
+  <!-- ══ PROGRAMME CALENDAR MODAL (month/year view + deload weeks) ══ -->
+  <div id="programme-calendar-modal" onclick="if(event.target===this)closeProgrammeCalendar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px">
+        <div>
+          <div style="font-family:var(--D);font-size:22px;font-weight:900">FULL PROGRAMME</div>
+          <div id="pc-subtitle" style="font-size:11px;color:var(--dim);margin-top:2px"></div>
+        </div>
+        <button onclick="closeProgrammeCalendar()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px">✕</button>
+      </div>
+      <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center">
+        <label style="font-size:11px;color:var(--dim)">Deload every</label>
+        <select id="pc-cadence-select" onchange="setDeloadCadence(this.value)" style="background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px;padding:4px 8px">
+          ${[4,5,6,7,8,9,10,12].map(n=>`<option value="${n}">${n} weeks</option>`).join('')}
+        </select>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 20px 20px"><div id="pc-week-list"></div></div>
     </div>
   </div>
 
@@ -2797,6 +2819,7 @@ async function autoCompleteHabit(key) {
 function initTrain(){
   initTrainChat(OB.train?.analysis || null, OB.train?.improvements || null);
   document.getElementById('train-chat-input')?.addEventListener('keydown', e => { if(e.key==='Enter') sendTrainChat(); });
+  renderDeloadBanner();
 
   if(OB.train?.weeklyPlan?.length) {
     renderWeeklyCalendar(OB.train.weeklyPlan);
@@ -2894,6 +2917,84 @@ function renderWeeklyCalendar(plan) {
 // this week and nothing was logged (missed), no dot = today or later this
 // week (nothing to judge yet). Cheap DOM patch, doesn't touch selection
 // state, safe to call after loadTrainingHistory() resolves async.
+// Deload/mesocycle tracking — the app previously had no concept of elapsed
+// programme time at all (hardcoded week 1 everywhere), so nutrition and
+// training never scaled down on a deload week even when one was clearly due.
+// programStartDate seeds itself to today on first use if never set — not
+// retroactive, but every user gets real week-counting from here on rather
+// than none at all.
+function getProgramWeekInfo(){
+  OB.train = OB.train || {};
+  if(!OB.train.programStartDate){
+    OB.train.programStartDate = TODAY;
+    localStorage.setItem('jpt_ob', JSON.stringify(OB));
+    sb.auth.updateUser({ data:{ onboarding: OB } }).catch(()=>{});
+  }
+  const start = new Date(OB.train.programStartDate+'T00:00:00');
+  const now = new Date(TODAY+'T00:00:00');
+  const daysSince = Math.max(0, Math.round((now-start)/86400000));
+  const weekNumber = Math.floor(daysSince/7)+1;
+  const cadence = +(OB.train.deloadCadence) || 8;
+  return { weekNumber, cadence, isDeload: weekNumber % cadence === 0, startDate: OB.train.programStartDate };
+}
+
+function setDeloadCadence(n){
+  OB.train = OB.train || {};
+  OB.train.deloadCadence = +n;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data:{ onboarding: OB } }).catch(()=>{});
+  renderProgrammeCalendar();
+  renderDeloadBanner();
+}
+
+function renderDeloadBanner(){
+  const el = document.getElementById('deload-banner');
+  if(!el) return;
+  const info = getProgramWeekInfo();
+  if(info.isDeload){
+    el.style.display = '';
+    el.textContent = `⚠ Deload week (week ${info.weekNumber}) — sets reduced ~40% below. Same movements, same weight, less total volume. This is the recovery week, not a lighter version of a normal week to push through.`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function openProgrammeCalendar(){
+  document.getElementById('programme-calendar-modal').style.display = 'flex';
+  const info = getProgramWeekInfo();
+  document.getElementById('pc-cadence-select').value = info.cadence;
+  document.getElementById('pc-subtitle').textContent = `Started ${new Date(info.startDate+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} — currently week ${info.weekNumber}`;
+  renderProgrammeCalendar();
+}
+function closeProgrammeCalendar(){
+  document.getElementById('programme-calendar-modal').style.display = 'none';
+}
+
+// Full year view (52 weeks from programme start), deload weeks marked by
+// cadence, current week highlighted — answers "where do deload weeks slot
+// in" directly rather than leaving it implicit.
+function renderProgrammeCalendar(){
+  const el = document.getElementById('pc-week-list');
+  if(!el) return;
+  const info = getProgramWeekInfo();
+  const start = new Date(info.startDate+'T00:00:00');
+  const rows = [];
+  for(let w=1; w<=52; w++){
+    const weekStart = new Date(start); weekStart.setDate(start.getDate() + (w-1)*7);
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+6);
+    const isDeload = w % info.cadence === 0;
+    const isCurrent = w === info.weekNumber;
+    const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    rows.push(`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:3px;border:1px solid ${isCurrent?'var(--teal)':'transparent'};background:${isDeload?'rgba(251,191,36,.06)':'transparent'}">
+      <span style="font-size:11px;color:${isCurrent?'var(--teal)':'var(--dim)'};min-width:56px;font-family:var(--B)">Week ${w}</span>
+      <span style="font-size:11px;color:var(--muted);flex:1">${fmt(weekStart)} – ${fmt(weekEnd)}</span>
+      ${isDeload?`<span style="font-size:10px;color:#fbbf24;border:1px solid rgba(251,191,36,.3);padding:2px 6px">DELOAD</span>`:''}
+      ${isCurrent?`<span style="font-size:10px;color:var(--teal);border:1px solid var(--teal);padding:2px 6px">NOW</span>`:''}
+    </div>`);
+  }
+  el.innerHTML = rows.join('');
+}
+
 // This week's PRs — _pbData holds ALL-TIME max weight per exercise with the
 // date it was set; filtered here to just this week (Mon-Sun) so it reads as
 // "what actually improved recently" rather than a lifetime best-of list.
@@ -2970,9 +3071,13 @@ function renderDayDetail(day, isToday) {
   }
 
   const exercises = day.exercises || [];
+  const _isDeloadWeek = getProgramWeekInfo().isDeload;
   const exHtml = exercises.map((ex, ei) => {
     const targetRep = String(ex.reps||ex.rep||'').split('–')[0].split('-')[0].replace(/[^0-9]/g,'') || '';
     const targetKg  = String(ex.load||'').replace(/[^0-9.]/g,'') || '';
+    // Deload week: same movements/weight, ~40% fewer sets — never below 1.
+    const rawSets = +ex.sets||3;
+    const effectiveSets = _isDeloadWeek ? Math.max(1, Math.round(rawSets*0.6)) : rawSets;
     const lastData = _lastSessionData[ex.name];
     const overload = _overloadEx.has(ex.name);
     const lastLabel = lastData
@@ -2997,11 +3102,11 @@ function renderDayDetail(day, isToday) {
         <div class="ex-sets">
           <div class="set-row" style="margin-bottom:4px">
             <span class="set-num"></span>
-            <span style="flex:1;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:center">Reps (target: ${escHtml(ex.reps||ex.rep||'—')})</span>
+            <span style="flex:1;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:center">Reps (target: ${escHtml(ex.reps||ex.rep||'—')})${_isDeloadWeek?' · deload':''}</span>
             <span class="set-unit" style="text-align:center">kg</span>
             <span class="set-unit"></span>
           </div>
-          ${Array.from({length:+ex.sets||3},(_,si)=>{
+          ${Array.from({length:effectiveSets},(_,si)=>{
             const ls = lastData?.sets[si];
             const draftReps = _getTrainDraftField(day.day, ex.name, si, 'reps');
             const draftKg   = _getTrainDraftField(day.day, ex.name, si, 'wt');
