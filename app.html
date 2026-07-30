@@ -1203,6 +1203,7 @@
         <button id="nutrient-tab-extra" onclick="setNutrientView('extra')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Other</button>
       </div>
       <div id="nutrient-tracker-body"></div>
+      <button onclick="askCoachAboutGaps()" style="margin-top:10px;width:100%;padding:9px;font-size:12px;background:transparent;border:1px solid rgba(44,212,196,.3);color:var(--teal);cursor:pointer">Ask Coach how to close today's gaps →</button>
       <div class="divider"></div>
 
       <!-- HABIT CATEGORY BREAKDOWN -->
@@ -4496,6 +4497,47 @@ function renderNutrientTracker(){
       <div style="height:5px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${Math.min(100,pct)}%;background:${barColor}"></div></div>
     </div>`;
   }).join('') || '<p style="font-size:12px;color:var(--dim)">Log some food to see this.</p>';
+}
+
+// Nutrients below 70% of target today (only Tier 1 — the ones with a real
+// target to be "deficient" against; Tier 2/3 don't have one, so they're not
+// included here regardless of amount).
+function getDeficientNutrients(){
+  const { totals } = computeDayNutrients();
+  const deficient = [];
+  Object.keys(NUTRIENT_TARGETS).forEach(k=>{
+    const t = totals[k] || {verified:0, estimated:0};
+    const amount = t.verified + t.estimated;
+    const target = NUTRIENT_TARGETS[k];
+    const pct = Math.round(amount/target*100);
+    if(pct < 70) deficient.push({ key:k, name:NUTRIENT_META[k].name, unit:NUTRIENT_META[k].unit, amount, target, pct });
+  });
+  return deficient.sort((a,b)=>a.pct-b.pct);
+}
+// Top approved-food sources for a given nutrient, from the verified
+// database — grounds the Coach's suggestion in real numbers rather than
+// letting the model free-associate a food it thinks is high in something.
+function findBestSourcesForNutrient(key, n){
+  n = n || 3;
+  return Object.entries(FOOD_NUTRIENT_DB)
+    .filter(([,data])=>data[key])
+    .sort((a,b)=>b[1][key]-a[1][key])
+    .slice(0,n)
+    .map(([food,data])=>`${food} (${data[key]}${NUTRIENT_META[key].unit}/100g)`);
+}
+function askCoachAboutGaps(){
+  const deficient = getDeficientNutrients();
+  if(!deficient.length){ showToast('Nothing below 70% of target today — no real gaps to ask about.'); return; }
+  const lines = deficient.map(d=>{
+    const sources = findBestSourcesForNutrient(d.key, 3);
+    return `${d.name}: ${Math.round(d.amount*10)/10}/${d.target}${d.unit} (${d.pct}%) — best approved sources: ${sources.join(', ')}`;
+  });
+  const prompt = `Today I'm below 70% of target on these (verified from my approved-food database, not a guess):\n${lines.join('\n')}\n\nGive me specific foods and exact gram amounts to close these gaps today, using only foods from my approved list — prioritise the ones that close more than one gap at once if possible.`;
+  switchTab('coach');
+  setTimeout(()=>{
+    const input = document.getElementById('coach-input');
+    if(input){ input.value = prompt; sendMessage(); }
+  }, 350);
 }
 
 // ── Habit completion broken down by time-of-day bucket (last 7 days) ──
