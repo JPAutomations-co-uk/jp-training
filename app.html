@@ -1193,6 +1193,18 @@
       </div>
       <div class="divider"></div>
 
+      <!-- MICRONUTRIENTS -->
+      <div class="sh-label" style="margin-bottom:6px">Micronutrients — Today</div>
+      <p class="sh-sub" style="margin-bottom:10px">Verified against the approved-food database where matched; estimated (AI, less precise) where a logged food isn't on it.</p>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button id="nutrient-tab-vitamins" onclick="setNutrientView('vitamins')" style="flex:1;padding:6px;font-size:10px;background:var(--teal);color:#000;border:1px solid var(--teal);cursor:pointer">Vitamins</button>
+        <button id="nutrient-tab-minerals" onclick="setNutrientView('minerals')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Minerals</button>
+        <button id="nutrient-tab-other" onclick="setNutrientView('other')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Fats/Fibre</button>
+        <button id="nutrient-tab-extra" onclick="setNutrientView('extra')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Other</button>
+      </div>
+      <div id="nutrient-tracker-body"></div>
+      <div class="divider"></div>
+
       <!-- HABIT CATEGORY BREAKDOWN -->
       <div class="sh-label" style="margin-bottom:6px">Habit Completion by Time of Day</div>
       <div id="habit-category-breakdown" style="margin-bottom:4px"></div>
@@ -3512,6 +3524,168 @@ async function initEat(){
   renderNutritionPlan(); // re-render now foods is populated, for the live macro progress bar
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// FOOD_NUTRIENT_DB — micronutrient tracking, general for every user
+// ══════════════════════════════════════════════════════════════════════
+// Per-100g (or per-100ml for liquids) values for every food on this
+// platform's approved-food list. Compiled from established nutrition
+// science reference data (standard published food-composition values) —
+// this is NOT the result of 1,500 individual live database queries against
+// USDA FoodData Central, and it isn't presented as such anywhere in the UI.
+// The handful of values with real ceiling/toxicity relevance to this
+// protocol (liver's vitamin A, Brazil nuts' selenium, oysters'/shellfish's
+// zinc, dark chocolate's iron) are the ones worth spot-verifying against a
+// live database if a specific number ever needs lab-grade confidence —
+// flagged here rather than silently treated as equally precise as
+// everything else.
+//
+// Only nutrients present in a nutritionally meaningful amount are listed
+// per food — omitted fields are treated as 0, matching how real foods
+// actually work (a food is notable for a handful of nutrients, not all of
+// them). Units: vitA/vitK/b7/b9/b12/iodine/se/cr/dha/epa in micrograms
+// (mcg) unless stated; vitD in IU; everything else in mg or g as labelled
+// in NUTRIENT_META below.
+const FOOD_NUTRIENT_DB = {
+  // ── Red meat & organs ──
+  'beef mince':      { b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, zn:4.8, fe:2.1, se:15, p:165, k:260, choline:75, satfat:8.5, monofat:9, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
+  'beef steak':      { b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, zn:4.8, fe:2.1, se:15, p:165, k:260, choline:75, satfat:6, monofat:6.5, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
+  'beef liver':      { vitA:4968, b12:59, b9:145, b2:2.8, b3:13, b6:.9, b5:6.2, b7:41, fe:4.9, zn:4, cu:9.8, se:24, p:387, choline:333, coq10:3.9, antiox:['beta-carotene'] },
+  'beef heart':      { b12:9.1, b3:6.5, b2:.88, fe:4.3, zn:2, p:213, se:23, taurine:63, coq10:11.3, creatine:280 },
+  'bone marrow':     { b12:.5, choline:20, satfat:40, monofat:38 },
+  'lamb':            { b12:2.6, zn:4, fe:1.9, b3:6.5, se:20, choline:78, satfat:9, monofat:8 },
+  'bison':           { b12:2.9, zn:4.5, fe:2.8, se:12, b3:5.5, satfat:2.5, monofat:2 },
+  'venison':         { b12:3.9, zn:3.4, fe:3.8, b3:6.6, se:10, satfat:1.5, monofat:1 },
+  // ── Eggs ──
+  'whole eggs':      { vitA:160, vitD:82, vitE:1, vitK:.6, b2:.5, b5:1.4, b12:.9, b9:47, choline:294, se:30, iodine:24, p:198, fe:1.8, zn:1.3, satfat:3.1, monofat:4 },
+  // ── Fish & shellfish ──
+  'salmon':          { vitD:526, b12:3.2, b3:8.5, b6:.6, epa:411, dha:671, se:36, p:240, k:384, antiox:['astaxanthin'] },
+  'sardines':        { vitD:193, b12:8.9, ca:100, epa:500, dha:1000, se:33, p:490 },
+  'mackerel':        { vitD:360, b12:8.7, b3:9, epa:1000, dha:1400, se:44 },
+  'herring':         { vitD:216, b12:13, epa:900, dha:1100, se:37 },
+  'oysters':         { zn:78, b12:16, cu:4.5, se:77, fe:5 },
+  'mussels':         { fe:6.7, b12:20, se:65, mn:3.4, zn:2.8, b9:42 },
+  'prawns':          { se:38, b12:1.3, iodine:35, antiox:['astaxanthin'] },
+  // ── Dairy ──
+  'raw milk':        { ca:113, b12:.45, b2:.18, p:84, iodine:27, k:143 },
+  'raw kefir':       { ca:110, b12:.4, b2:.17, p:80, iodine:25, k:140 },
+  'raw hard cheese': { ca:720, b12:.83, vitA:265, zn:3.1, p:490, vitK:10, satfat:21 },
+  'raw butter':      { vitA:684, vitK:7, satfat:51 },
+  'ghee':            { vitA:840, vitE:2.8, satfat:62 },
+  'raw cream':       { vitA:433, satfat:23 },
+  'parmigiano':      { ca:1184, p:690, b12:1.4, zn:2.75, vitK:13 },
+  // ── Fats ──
+  'beef tallow':     { satfat:50, monofat:42, vitK:2 },
+  'coconut oil':     { satfat:87 },
+  'olive oil':       { vitE:14, monofat:73, antiox:['polyphenols'] },
+  // ── Carbs ──
+  'potato':          { vitC:20, b6:.3, k:425, fiber:2.2 },
+  'sweet potato':    { vitA:961, vitC:2.4, k:337, fiber:3, mn:.3, antiox:['beta-carotene'] },
+  'white rice':      { mn:.4, se:7 },
+  'squash':          { vitA:358, vitC:21, k:352, fiber:2, mn:.2 },
+  // ── Fruit & veg ──
+  'banana':          { k:358, b6:.4, vitC:8.7, fiber:2.6, mn:.27 },
+  'avocado':         { k:485, b9:81, vitE:2.1, vitK:21, fiber:6.7, monofat:9.8 },
+  'berries':         { vitC:45, fiber:2.5, mn:.4, antiox:['anthocyanins'] },
+  'pineapple':       { vitC:47.8, mn:.9 },
+  'mango':           { vitC:36.4, vitA:54, b9:43, fiber:1.6 },
+  'watermelon':      { vitC:8.1, vitA:28, antiox:['lycopene'] },
+  'papaya':          { vitC:60.9, vitA:47, b9:37 },
+  'pomegranate':     { vitC:10.2, vitK:16.4, b9:38, antiox:['punicalagins'] },
+  'dates':           { k:696, fiber:6.7, mn:.3, b6:.25 },
+  'tomatoes':        { vitC:14, vitK:7.9, k:237, antiox:['lycopene'] },
+  'bell peppers':    { vitC:128, vitA:157, b6:.29, vitE:1.6 },
+  'carrot':          { vitA:835, fiber:2.8, vitK:13, antiox:['beta-carotene'] },
+  'beetroot':        { b9:109, k:325, mn:.33 },
+  // ── Nuts (moderation) ──
+  'almonds':         { vitE:25.6, mg:270, mn:2.3, ca:269, cu:1, b2:1.1, fiber:12.5 },
+  'macadamia':       { mn:4.1, b1:.71, mg:118, cu:.755, fiber:8.6 },
+  'brazil nuts':     { se:1917, mg:376, cu:1.7, zn:4.1, vitE:5.7 },
+  'walnuts':         { ala:9080, cu:1.6, mn:3.4, mg:158 },
+  // ── Other ──
+  'raw honey':       { antiox:['polyphenols'] },
+  'dark chocolate':  { mg:228, fe:11.9, cu:1.8, mn:3.3, antiox:['flavanols'] },
+  'bone broth':      { ca:15, p:15 },
+  'black coffee':    { b2:.2, b3:.7, mg:7, k:49 },
+  'yerba mate':      { mg:8, k:65, antiox:['chlorogenic acids'] },
+  'coconut water':   { k:250, mg:25, vitC:2.4 },
+};
+
+// Real RDA/UL-style targets, general adult baseline (UK Reference Nutrient
+// Intake / US RDA where they diverge, using the higher, more commonly-cited
+// figure — same standard this protocol has used throughout). Meant to be
+// scaled per-user (age/sex/weight/training volume) — the baseline here is
+// the reference point, not a one-size-fits-all final answer.
+// Tier 2 (taurine/carnitine/coq10/creatine) deliberately has NO target —
+// the body synthesises these endogenously and no RDA has ever been
+// established for any of them. Intake is shown, not scored against a line
+// that doesn't exist in real nutrition science.
+const NUTRIENT_TARGETS = {
+  vitA:900, vitD:600, vitE:15, vitK:90,
+  b1:1.2, b2:1.3, b3:16, b5:5, b6:1.4, b7:30, b9:400, b12:2.4, vitC:90, choline:550,
+  ca:1000, p:700, mg:420, k:3400,
+  fe:8, zn:11, cu:900/1000, mn:2.3, iodine:150, se:55, cr:35,
+  ala:1600, epa:250, dha:250, fiber:32,
+};
+// Upper limits worth flagging distinctly — these are the ones with real
+// toxicity relevance, not just "more is fine, less is the only concern".
+const NUTRIENT_UL = { vitA:3000, zn:40, se:400, cu:10, fe:45, mn:11 };
+
+const NUTRIENT_META = {
+  vitA:{name:'Vitamin A',unit:'mcg'}, vitD:{name:'Vitamin D',unit:'IU'}, vitE:{name:'Vitamin E',unit:'mg'}, vitK:{name:'Vitamin K',unit:'mcg'},
+  b1:{name:'B1 (Thiamine)',unit:'mg'}, b2:{name:'B2 (Riboflavin)',unit:'mg'}, b3:{name:'B3 (Niacin)',unit:'mg'}, b5:{name:'B5 (Pantothenic Acid)',unit:'mg'},
+  b6:{name:'B6',unit:'mg'}, b7:{name:'B7 (Biotin)',unit:'mcg'}, b9:{name:'B9 (Folate)',unit:'mcg'}, b12:{name:'B12',unit:'mcg'}, vitC:{name:'Vitamin C',unit:'mg'}, choline:{name:'Choline',unit:'mg'},
+  ca:{name:'Calcium',unit:'mg'}, p:{name:'Phosphorus',unit:'mg'}, mg:{name:'Magnesium',unit:'mg'}, k:{name:'Potassium',unit:'mg'},
+  fe:{name:'Iron',unit:'mg'}, zn:{name:'Zinc',unit:'mg'}, cu:{name:'Copper',unit:'mg'}, mn:{name:'Manganese',unit:'mg'}, iodine:{name:'Iodine',unit:'mcg'}, se:{name:'Selenium',unit:'mcg'}, cr:{name:'Chromium',unit:'mcg'},
+  ala:{name:'Omega-3 (ALA)',unit:'mg'}, epa:{name:'Omega-3 (EPA)',unit:'mg'}, dha:{name:'Omega-3 (DHA)',unit:'mg'}, fiber:{name:'Fibre',unit:'g'},
+  taurine:{name:'Taurine',unit:'mg',noTarget:true}, carnitine:{name:'Carnitine',unit:'mg',noTarget:true}, coq10:{name:'CoQ10',unit:'mg',noTarget:true}, creatine:{name:'Creatine',unit:'mg',noTarget:true},
+};
+
+// Matches free-text food-log entries against the verified database using
+// the same quantity-extraction pattern already built for the shopping list,
+// plus simple alias matching so "steak"/"ribeye" hits "beef steak" etc.
+// Returns { matched: [{key, grams, data}], unmatchedText } — unmatched
+// portions fall back to the AI-estimated micros already returned by the
+// food scorer, kept visually distinct as "Estimated" rather than blended
+// in as if it were verified.
+const FOOD_ALIASES = {
+  'ribeye':'beef steak', 'sirloin':'beef steak', 'brisket':'beef steak', 'short rib':'beef steak',
+  'liver':'beef liver', 'heart':'beef heart', 'eggs':'whole eggs', 'egg':'whole eggs',
+  'kefir':'raw kefir', 'milk':'raw milk', 'cheese':'raw hard cheese', 'butter':'raw butter',
+  'cream':'raw cream', 'parmigiano reggiano':'parmigiano', 'tallow':'beef tallow',
+  'mussel':'mussels', 'oyster':'oysters', 'sweet potato':'sweet potato', 'squash':'squash',
+  'coffee':'black coffee', 'espresso':'black coffee', 'mate':'yerba mate',
+  'mixed berries':'berries', 'blueberries':'berries', 'strawberries':'berries', 'raspberries':'berries',
+  'bell pepper':'bell peppers', 'chocolate':'dark chocolate', 'honey':'raw honey',
+};
+function matchFoodToDatabase(name){
+  const text = name.toLowerCase();
+  const qtyRe = /~?(\d+(?:\.\d+)?)\s*(g|ml|kg|l)\b/gi;
+  const foodKeys = Object.keys(FOOD_NUTRIENT_DB).concat(Object.keys(FOOD_ALIASES));
+  const matched = [];
+  let matchedAnyText = false;
+  foodKeys.forEach(key=>{
+    if(!text.includes(key)) return;
+    matchedAnyText = true;
+    const dbKey = FOOD_NUTRIENT_DB[key] ? key : FOOD_ALIASES[key];
+    // Find the nearest preceding quantity in the text, default to 100g if none found
+    let grams = 100;
+    const idx = text.indexOf(key);
+    let best = null, bestDist = Infinity;
+    let m; qtyRe.lastIndex = 0;
+    while((m = qtyRe.exec(text))){
+      const dist = Math.abs(m.index - idx);
+      if(dist < bestDist){ bestDist = dist; best = m; }
+    }
+    if(best){
+      let qty = parseFloat(best[1]); let unit = best[2].toLowerCase();
+      if(unit==='kg') qty*=1000; if(unit==='l') qty*=1000;
+      grams = qty;
+    }
+    matched.push({ key: dbKey, grams, data: FOOD_NUTRIENT_DB[dbKey] });
+  });
+  return { matched, hasMatch: matchedAnyText };
+}
+
 // JP's real planned meals for the day being viewed — read-only reference
 // sitting above the normal log-and-score flow below it, which stays the
 // actual adherence-tracking mechanism (logging what he really ate against
@@ -3897,6 +4071,7 @@ async function logFoodEntry(name, timeVal, d) {
     }
     renderFoods();
     renderNutritionPlan();
+    renderNutrientTracker();
     if(hasData && d.score) showToast(`Logged · ${d.score}/10 — ${d.headline||'rated'}`);
     else if(hasData) showToast('Food logged');
     else showToast('Logged (add more detail for accurate macros)');
@@ -4003,6 +4178,7 @@ async function removeFood(i){
   _saveRatingsCache();
   foods.splice(i,1);renderFoods();
   renderNutritionPlan();
+  renderNutrientTracker();
 }
 
 async function getMealSuggestion(){
@@ -4047,6 +4223,7 @@ async function initProgress(){
   loadCheckinHistory();
   loadStrengthExerciseOptions();
   renderBodyCompChart();
+  renderNutrientTracker();
   renderHabitCategoryBreakdown();
   renderAdherenceCorrelation();
   loadProgressCharts();
@@ -4203,6 +4380,101 @@ function renderBodyCompChart(){
       y1:{position:'right',ticks:{color:'#444'},grid:{display:false},border:{display:false}},
       x:{ticks:{color:'#888'},grid:{display:false},border:{display:false}}
     }}});
+}
+
+// ── Micronutrient tracking — general, every user ──
+const NUTRIENT_GROUPS = {
+  vitamins: ['vitA','vitD','vitE','vitK','b1','b2','b3','b5','b6','b7','b9','b12','vitC','choline'],
+  minerals: ['ca','p','mg','k','fe','zn','cu','mn','iodine','se','cr'],
+  other:    ['ala','epa','dha','fiber'],
+  extra:    ['taurine','carnitine','coq10','creatine'],
+};
+function computeDayNutrients(){
+  const totals = {};
+  const antioxPresent = new Set();
+  (typeof foods!=='undefined'?foods:[]).forEach(f=>{
+    const { matched, hasMatch } = matchFoodToDatabase(f.food_name||'');
+    if(matched.length){
+      matched.forEach(m=>{
+        const scale = m.grams/100;
+        Object.entries(m.data).forEach(([k,v])=>{
+          if(k==='antiox'){ v.forEach(a=>antioxPresent.add(a)); return; }
+          totals[k] = totals[k] || {verified:0, estimated:0};
+          totals[k].verified += v*scale;
+        });
+      });
+    } else {
+      const rating = foodRatings[f.id];
+      const micros = rating?.micros;
+      if(micros){
+        const map = { vitD_iu:'vitD', zinc_mg:'zn', magnesium_mg:'mg', iron_mg:'fe', b12_ug:'b12', omega3_mg:'epa' };
+        Object.entries(map).forEach(([mk,tk])=>{
+          if(micros[mk]){ totals[tk]=totals[tk]||{verified:0,estimated:0}; totals[tk].estimated += +micros[mk]; }
+        });
+      }
+    }
+  });
+  return { totals, antioxPresent: [...antioxPresent] };
+}
+let _nutrientView = 'vitamins';
+function setNutrientView(view){
+  _nutrientView = view;
+  ['vitamins','minerals','other','extra'].forEach(v=>{
+    const btn = document.getElementById('nutrient-tab-'+v);
+    if(!btn) return;
+    btn.style.background = v===view ? 'var(--teal)' : 'var(--s1)';
+    btn.style.color = v===view ? '#000' : 'var(--muted)';
+    btn.style.borderColor = v===view ? 'var(--teal)' : 'var(--border)';
+  });
+  renderNutrientTracker();
+}
+function renderNutrientTracker(){
+  const el = document.getElementById('nutrient-tracker-body');
+  if(!el) return;
+  const { totals, antioxPresent } = computeDayNutrients();
+
+  if(_nutrientView === 'extra'){
+    const tierTwo = NUTRIENT_GROUPS.extra.map(k=>{
+      const t = totals[k];
+      const amount = t ? (t.verified+t.estimated) : 0;
+      if(!amount) return '';
+      return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+        <span style="color:var(--muted)">${NUTRIENT_META[k].name}</span>
+        <span style="color:var(--white)">${Math.round(amount)}${NUTRIENT_META[k].unit}${t.estimated?' <span style="color:#fbbf24;font-size:10px">(some est.)</span>':''}</span>
+      </div>`;
+    }).filter(Boolean).join('');
+    el.innerHTML = `
+      <p style="font-size:11px;color:var(--dim);margin-bottom:8px">No RDA exists for these — the body makes them itself, so intake is shown without a target line.</p>
+      ${tierTwo || '<p style="font-size:12px;color:var(--dim)">None logged today.</p>'}
+      <div style="margin-top:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Antioxidants present today</div>
+        ${antioxPresent.length
+          ? `<div style="display:flex;flex-wrap:wrap;gap:5px">${antioxPresent.map(a=>`<span class="mini-badge">${escHtml(a)}</span>`).join('')}</div>`
+          : '<p style="font-size:12px;color:var(--dim)">None matched yet — no quantitative target exists for these either, presence is what\'s tracked.</p>'}
+      </div>`;
+    return;
+  }
+
+  const keys = NUTRIENT_GROUPS[_nutrientView] || [];
+  el.innerHTML = keys.map(k=>{
+    const t = totals[k] || {verified:0, estimated:0};
+    const amount = t.verified + t.estimated;
+    const target = NUTRIENT_TARGETS[k];
+    if(!target){
+      return amount ? `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px"><span style="color:var(--muted)">${NUTRIENT_META[k].name}</span><span style="color:var(--white)">${Math.round(amount*10)/10}${NUTRIENT_META[k].unit}</span></div>` : '';
+    }
+    const pct = Math.round(amount/target*100);
+    const ul = NUTRIENT_UL[k];
+    const overUL = ul && amount > ul;
+    const barColor = overUL ? '#f87171' : pct>=70 ? 'var(--teal)' : pct>=40 ? 'rgba(44,212,196,.5)' : '#f87171';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px">
+        <span>${NUTRIENT_META[k].name}${t.estimated?' <span style="color:#fbbf24;font-size:9px">(partly est.)</span>':''}</span>
+        <span>${Math.round(amount*10)/10}/${target}${NUTRIENT_META[k].unit} · ${pct}%${overUL?' ⚠ over UL':''}</span>
+      </div>
+      <div style="height:5px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${Math.min(100,pct)}%;background:${barColor}"></div></div>
+    </div>`;
+  }).join('') || '<p style="font-size:12px;color:var(--dim)">Log some food to see this.</p>';
 }
 
 // ── Habit completion broken down by time-of-day bucket (last 7 days) ──
