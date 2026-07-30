@@ -1752,7 +1752,14 @@
       <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <label style="font-size:11px;color:var(--dim)">Deload every</label>
         <select id="pc-cadence-select" onchange="setDeloadCadence(this.value)" style="background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px;padding:4px 8px">
-          ${[4,5,6,7,8,9,10,12].map(n=>`<option value="${n}">${n} weeks</option>`).join('')}
+          <option value="4">4 weeks</option>
+          <option value="5">5 weeks</option>
+          <option value="6">6 weeks</option>
+          <option value="7">7 weeks</option>
+          <option value="8">8 weeks</option>
+          <option value="9">9 weeks</option>
+          <option value="10">10 weeks</option>
+          <option value="12">12 weeks</option>
         </select>
         <button onclick="resetProgrammeStart()" style="margin-left:auto;font-size:11px;padding:5px 10px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer">Restart week count from today →</button>
       </div>
