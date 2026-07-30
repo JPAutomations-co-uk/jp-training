@@ -1749,11 +1749,12 @@
         </div>
         <button onclick="closeProgrammeCalendar()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px">✕</button>
       </div>
-      <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center">
+      <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <label style="font-size:11px;color:var(--dim)">Deload every</label>
         <select id="pc-cadence-select" onchange="setDeloadCadence(this.value)" style="background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px;padding:4px 8px">
           ${[4,5,6,7,8,9,10,12].map(n=>`<option value="${n}">${n} weeks</option>`).join('')}
         </select>
+        <button onclick="resetProgrammeStart()" style="margin-left:auto;font-size:11px;padding:5px 10px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer">Restart week count from today →</button>
       </div>
       <div style="flex:1;overflow-y:auto;padding:0 20px 20px"><div id="pc-week-list"></div></div>
     </div>
@@ -3150,6 +3151,19 @@ function getProgramWeekInfo(){
   const weekNumber = Math.floor(daysSince/7)+1;
   const cadence = +(OB.train.deloadCadence) || 8;
   return { weekNumber, cadence, isDeload: weekNumber % cadence === 0, startDate: OB.train.programStartDate };
+}
+
+// Resets the mesocycle week-counter to treat today as Week 1, Day 1 — for
+// when someone wants to deliberately restart the deload cadence from a
+// specific point rather than wherever it happened to auto-seed.
+async function resetProgrammeStart(){
+  OB.train = OB.train || {};
+  OB.train.programStartDate = TODAY;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await sb.auth.updateUser({ data:{ onboarding: OB } }); } catch(e){}
+  showToast('Week count restarted from today');
+  openProgrammeCalendar();
+  renderDeloadBanner();
 }
 
 function setDeloadCadence(n){
