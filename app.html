@@ -3307,6 +3307,7 @@ async function initEat(){
   // Restore ratings from localStorage cache (ratings are not stored in Supabase — no schema dependency)
   _loadRatingsCache();
   renderFoods();
+  renderNutritionPlan(); // re-render now foods is populated, for the live macro progress bar
 }
 
 // JP's real planned meals for the day being viewed — read-only reference
@@ -3331,6 +3332,47 @@ async function toggleOrganMeats(){
   renderNutritionPlan();
 }
 
+// General "I don't have this ingredient" mechanism — the organ-meat toggle
+// above only ever covered liver/heart specifically. Anything else marked
+// unavailable (raw milk delivery late, out of Brazil nuts, whatever) gets
+// flagged wherever it appears in the plan and can request an AI substitute
+// on demand, reusing /api/coach (already carries JP's real protocol context).
+async function addUnavailableIngredient(){
+  const inp = document.getElementById('unavail-ing-input');
+  const val = inp.value.trim().toLowerCase();
+  if(!val) return;
+  OB.unavailableIngredients = OB.unavailableIngredients || [];
+  if(!OB.unavailableIngredients.includes(val)) OB.unavailableIngredients.push(val);
+  inp.value = '';
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e){}
+  renderNutritionPlan();
+}
+async function removeUnavailableIngredient(val){
+  OB.unavailableIngredients = (OB.unavailableIngredients||[]).filter(v=>v!==val);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e){}
+  renderNutritionPlan();
+}
+async function suggestMealSubstitute(mealText, ingredient, btn){
+  btn.textContent = 'Thinking...'; btn.disabled = true;
+  initCoach(); // ensure window._coachContext is fresh, in case Eat was opened without visiting Train/Coach first
+  try {
+    const res = await fetch('/api/coach', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({
+        messages: [{role:'user', content:`I don't currently have "${ingredient}". Suggest a direct substitute for this exact meal, keeping it within my approved foods and roughly the same macros: "${mealText}". One or two sentences, just the swap.`}],
+        userProfile: PROFILE||{}, userContext: window._coachContext||null
+      })
+    });
+    const d = await res.json();
+    btn.parentElement.querySelector('.mob-sub-result').textContent = d.reply || d.error || 'Could not get a suggestion — try again.';
+  } catch(e){
+    btn.parentElement.querySelector('.mob-sub-result').textContent = 'Coach unavailable right now.';
+  }
+  btn.style.display = 'none';
+}
+
 function renderNutritionPlan(){
   const card = document.getElementById('nutrition-plan-card');
   if(!card) return;
@@ -3344,6 +3386,15 @@ function renderNutritionPlan(){
 
   const subsToday = JP_ORGAN_SUBS[dayName];
   const hasOrgans = !!OB.hasOrganMeats;
+  const unavailable = OB.unavailableIngredients || [];
+
+  // Live macro progress — recomputed from whatever's actually logged today,
+  // so it's the same numbers the food scorer's day-context already uses,
+  // just visible to the person instead of only sent to the AI.
+  const loggedCal = (typeof foods!=='undefined'?foods:[]).reduce((a,f)=>a+(+f.calories||0),0);
+  const loggedProt = (typeof foods!=='undefined'?foods:[]).reduce((a,f)=>a+(+f.protein_g||0),0);
+  const calPct = Math.min(100, Math.round(loggedCal/day.targets.calories*100));
+  const protPct = Math.min(100, Math.round(loggedProt/day.targets.protein*100));
 
   card.style.display='';
   card.innerHTML = `
@@ -3352,22 +3403,113 @@ function renderNutritionPlan(){
         <div style="font-size:12px;color:var(--teal);font-weight:600">Today's Plan — ${escHtml(day.label)}</div>
         <div style="font-size:10px;color:var(--dim)">${day.targets.calories} kcal · ${day.targets.protein}p / ${day.targets.carbs}c / ${day.targets.fat}f</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        ${day.meals.map(m=>{
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:3px"><span>${Math.round(loggedCal)}/${day.targets.calories} kcal</span><span>${calPct}%</span></div>
+        <div style="height:4px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${calPct}%;background:var(--teal)"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin:5px 0 3px"><span>${Math.round(loggedProt)}/${day.targets.protein}g protein</span><span>${protPct}%</span></div>
+        <div style="height:4px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${protPct}%;background:#818cf8"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${day.meals.map((m,mi)=>{
           const useSub = !hasOrgans && subsToday && subsToday[m.time];
           const text = useSub ? subsToday[m.time] : m.name;
+          const flaggedIng = unavailable.find(ing => text.toLowerCase().includes(ing));
           return `
-          <div style="display:flex;gap:10px;font-size:12px">
-            <span style="color:var(--dim);min-width:38px;flex-shrink:0">${escHtml(m.time)}</span>
-            <span style="color:var(--muted)">${escHtml(text)}${useSub?' <span style="color:rgba(44,212,196,.6);font-style:italic">(organ swap active)</span>':''}</span>
+          <div style="font-size:12px">
+            <div style="display:flex;gap:10px;align-items:baseline">
+              <span style="color:var(--dim);min-width:38px;flex-shrink:0">${escHtml(m.time)}</span>
+              <span style="color:var(--muted);flex:1">${escHtml(text)}${useSub?' <span style="color:rgba(44,212,196,.6);font-style:italic">(organ swap active)</span>':''}</span>
+              <button onclick="logPlannedMeal('${escHtml(text).replace(/'/g,"\\'")}','${m.time}')" title="Log this — you can edit amounts before submitting" style="flex-shrink:0;font-size:10px;background:transparent;border:1px solid var(--border);color:var(--teal);padding:2px 7px;cursor:pointer">+ Log</button>
+            </div>
+            ${flaggedIng ? `
+              <div style="margin:4px 0 0 48px;font-size:11px;color:#fbbf24">
+                ⚠ Contains "${escHtml(flaggedIng)}" — marked unavailable.
+                <button onclick="suggestMealSubstitute('${escHtml(text).replace(/'/g,"\\'")}','${escHtml(flaggedIng)}',this)" style="background:none;border:none;color:#fbbf24;text-decoration:underline;cursor:pointer;font-size:11px;padding:0">Get substitute</button>
+                <div class="mob-sub-result" style="color:var(--muted);margin-top:2px"></div>
+              </div>` : ''}
           </div>
         `;}).join('')}
       </div>
       <button onclick="toggleOrganMeats()" style="margin-top:10px;width:100%;padding:8px;font-size:11px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer">
         ${hasOrgans ? 'Mark liver/heart as out of stock' : "I've got liver/heart in stock now →"}
       </button>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--dim);margin-bottom:6px">Don't have something else right now?</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <input id="unavail-ing-input" placeholder="e.g. raw milk" onkeydown="if(event.key==='Enter')addUnavailableIngredient()" style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:6px 8px;color:#fff;font-size:11px">
+          <button onclick="addUnavailableIngredient()" style="font-size:11px;padding:6px 10px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer">Add</button>
+        </div>
+        ${unavailable.length ? `<div style="display:flex;flex-wrap:wrap;gap:5px">${unavailable.map(u=>`<span style="font-size:10px;color:var(--dim);border:1px solid var(--border);padding:2px 6px">${escHtml(u)} <span onclick="removeUnavailableIngredient('${escHtml(u)}')" style="cursor:pointer;color:#f87171">×</span></span>`).join('')}</div>` : ''}
+      </div>
+      <button onclick="openShoppingList()" style="margin-top:10px;width:100%;padding:8px;font-size:11px;background:transparent;border:1px solid rgba(44,212,196,.3);color:var(--teal);cursor:pointer">Weekly Shopping List →</button>
     </div>
   `;
+}
+
+// Pre-fills the existing log form with a planned meal's exact text rather
+// than a locked one-tap log — the amounts are editable before submitting,
+// same form, same "Add & Rate" flow, just saves re-typing the whole thing.
+function logPlannedMeal(text, time){
+  const nameEl = document.getElementById('f-name');
+  const timeEl = document.getElementById('f-time');
+  if(nameEl) nameEl.value = text;
+  if(timeEl && time) timeEl.value = time;
+  nameEl?.scrollIntoView({behavior:'smooth', block:'center'});
+  nameEl?.focus();
+  showToast('Pre-filled — edit amounts if needed, then Add & Rate');
+}
+
+// Weekly shopping list — parses "NUMBERunit ingredient" patterns out of every
+// meal across all 7 days and sums by ingredient. Free-text parsing, so this
+// is a reasonable-estimate total to shop against, not a lab-measured one —
+// same honesty standard as the rest of this protocol's quantities.
+function computeShoppingList(){
+  const plan = OB.nutritionPlan;
+  if(!plan) return {};
+  const totals = {};
+  const re = /~?(\d+(?:\.\d+)?)\s*(g|ml|kg|l)\b\s*([a-z][a-z\s]*?)(?=[,;()]|\d|$)/gi;
+  Object.values(plan).forEach(day=>{
+    (day.meals||[]).forEach(m=>{
+      let match;
+      re.lastIndex = 0;
+      while((match = re.exec(m.name))){
+        let [, qty, unit, name] = match;
+        qty = parseFloat(qty);
+        unit = unit.toLowerCase();
+        name = name.trim().replace(/\s+/g,' ');
+        if(!name || name.length < 3) continue;
+        if(unit==='kg'){ qty*=1000; unit='g'; }
+        if(unit==='l'){ qty*=1000; unit='ml'; }
+        const key = name+'|'+unit;
+        totals[key] = (totals[key]||0) + qty;
+      }
+    });
+  });
+  return totals;
+}
+function openShoppingList(){
+  const totals = computeShoppingList();
+  const rows = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const body = rows.length
+    ? rows.map(([key,qty])=>{
+        const [name,unit] = key.split('|');
+        const display = qty>=1000 ? `${(qty/1000).toFixed(qty%1000?1:0)}${unit==='g'?'kg':'L'}` : `${Math.round(qty)}${unit}`;
+        return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--muted);text-transform:capitalize">${escHtml(name)}</span><span style="color:var(--white);font-weight:600">${display}/week</span></div>`;
+      }).join('')
+    : '<p style="font-size:12px;color:var(--dim)">No plan to total up yet.</p>';
+  const win = document.createElement('div');
+  win.id = 'shopping-list-modal';
+  win.onclick = e=>{ if(e.target===win) win.remove(); };
+  win.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:600;display:flex;align-items:flex-end';
+  win.innerHTML = `<div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:80vh;overflow-y:auto;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-family:var(--D);font-size:20px;font-weight:900">SHOPPING LIST</div>
+      <button onclick="document.getElementById('shopping-list-modal').remove()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <p style="font-size:11px;color:var(--dim);margin-bottom:10px">Whole week's totals, parsed from the plan — reasonable-estimate quantities to shop against, not lab-measured.</p>
+    ${body}
+  </div>`;
+  document.body.appendChild(win);
 }
 
 function _saveRatingsCache(){
@@ -3552,6 +3694,7 @@ async function logFoodEntry(name, timeVal, d) {
       _saveRatingsCache();
     }
     renderFoods();
+    renderNutritionPlan();
     if(hasData && d.score) showToast(`Logged · ${d.score}/10 — ${d.headline||'rated'}`);
     else if(hasData) showToast('Food logged');
     else showToast('Logged (add more detail for accurate macros)');
@@ -3657,6 +3800,7 @@ async function removeFood(i){
   delete foodRatings[f.id];
   _saveRatingsCache();
   foods.splice(i,1);renderFoods();
+  renderNutritionPlan();
 }
 
 async function getMealSuggestion(){
