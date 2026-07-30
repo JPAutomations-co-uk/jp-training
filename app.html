@@ -1151,6 +1151,39 @@
       <div id="milestones-wrap"></div>
       <div class="divider"></div>
 
+      <!-- STRENGTH PROGRESS -->
+      <div class="sh-label" style="margin-bottom:6px">Strength Progress</div>
+      <select id="pr-exercise-select" onchange="renderStrengthChart(this.value)" style="width:100%;padding:8px 10px;margin-bottom:8px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px"></select>
+      <div class="chart-card">
+        <canvas id="chart-strength" height="110"></canvas>
+        <div id="chart-strength-empty" class="chart-empty" style="display:none">Log a few sessions for this exercise to see progression.</div>
+      </div>
+      <div class="divider"></div>
+
+      <!-- BODY COMPOSITION -->
+      <div class="sh-label" style="margin-bottom:6px">Body Composition</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="bc-weight-input" type="number" step="0.1" placeholder="Weight (kg)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
+        <input id="bc-bf-input" type="number" step="0.1" placeholder="Body fat (%)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
+        <button onclick="logBodyComp()" style="padding:8px 14px;background:var(--teal);border:none;color:#000;font-weight:600;font-size:12px;cursor:pointer">Log</button>
+      </div>
+      <div class="chart-card">
+        <canvas id="chart-bodycomp" height="110"></canvas>
+        <div id="chart-bodycomp-empty" class="chart-empty" style="display:none">Log your weight/body fat a few times to see the trend.</div>
+      </div>
+      <div class="divider"></div>
+
+      <!-- HABIT CATEGORY BREAKDOWN -->
+      <div class="sh-label" style="margin-bottom:6px">Habit Completion by Time of Day</div>
+      <div id="habit-category-breakdown" style="margin-bottom:4px"></div>
+      <div class="divider"></div>
+
+      <!-- ADHERENCE vs OUTCOMES -->
+      <div class="sh-label" style="margin-bottom:6px">Adherence vs. Wellbeing</div>
+      <p class="sh-sub" style="margin-bottom:10px">Weekly habit completion next to your check-in scores — does higher adherence actually track with feeling better?</p>
+      <div id="adherence-correlation"></div>
+      <div class="divider"></div>
+
       <div class="chart-card">
         <div class="chart-lbl">Habit Completion — Last 7 Days</div>
         <canvas id="chart-habits" height="110"></canvas>
@@ -3822,12 +3855,31 @@ async function getMealSuggestion(){
   }catch(e){wrap.innerHTML='';}
 }
 
+// Flat key→time lookup covering both base and JP's custom habits, for the
+// category-breakdown chart — built separately from getHabits() because that
+// only returns TODAY's applicable habits (e.g. pnf_prep only shows Mon/Wed),
+// but a 7-day habit_log history can contain entries from any day.
+const HABIT_TIME_LOOKUP = {
+  sunlight:'Morning', training:'Post-Training', steps:'Anytime', sleep:'Evening',
+  cold:'Morning', supplements:'Morning', stress:'Anytime', no_phone:'Evening',
+  no_alcohol:'Anytime', hydration:'Anytime',
+  custom_neck_training:'Post-Training', custom_pnf_prep:'Evening', custom_explosive_warmup:'Pre-Training',
+  custom_static_stretch:'Post-Training', custom_sport_mobility:'Pre-Training', custom_postural_protocol:'Evening',
+  custom_creatine:'Post-Training', custom_no_cannabis:'Anytime', custom_no_nicotine:'Anytime',
+  custom_prebed_stack:'Evening', custom_red_light:'Evening', custom_nsdr_yoga:'Evening',
+  custom_breathing_protocol:'Anytime', custom_meal_plan:'Evening',
+};
+
 /* ════════════════════════════════════════
    PROGRESS
 ════════════════════════════════════════ */
 async function initProgress(){
   renderScoreGrid();
   loadCheckinHistory();
+  loadStrengthExerciseOptions();
+  renderBodyCompChart();
+  renderHabitCategoryBreakdown();
+  renderAdherenceCorrelation();
   loadProgressCharts();
 }
 
@@ -3843,8 +3895,12 @@ async function loadProgressCharts(){
     sb.from('nutrition_logs').select('date,calories').eq('user_id',USER.id).gte('date',from),
   ]);
 
-  Object.values(_charts).forEach(c=>{ try{c.destroy()}catch(e){} });
-  _charts = {};
+  // Scoped to just the charts this function owns — _charts is now shared
+  // with renderStrengthChart()/renderBodyCompChart() too, and those run
+  // concurrently (fire-and-forget from initProgress()), so a blanket
+  // "destroy everything, reset the object" here would race-condition-wipe
+  // whichever of those finished first, leaving their canvases blank.
+  ['habits','checkin','cals'].forEach(k=>{ if(_charts[k]){ try{_charts[k].destroy()}catch(e){} delete _charts[k]; } });
 
   const days=[], pcts=[], calMap={};
   for(let i=6;i>=0;i--){
@@ -3896,6 +3952,143 @@ async function loadProgressCharts(){
       data:calVals,backgroundColor:'rgba(44,212,196,.3)',borderRadius:3,
     }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,ticks:{...gridOpts.y.ticks,callback:v=>v+'kcal'}}}}});
   }
+}
+
+// ── Strength Progress: weight-over-time per exercise, from real session_sets ──
+async function loadStrengthExerciseOptions(){
+  const sel = document.getElementById('pr-exercise-select');
+  if(!sel || !USER) return;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-90);
+  const { data: sessions } = await sb.from('workout_sessions').select('id,date').eq('user_id',USER.id).gte('date',cutoff.toISOString().slice(0,10));
+  if(!sessions?.length){ sel.innerHTML = '<option>No sessions logged yet</option>'; return; }
+  const { data: sets } = await sb.from('session_sets').select('session_id,exercise_name,weight_kg').in('session_id',sessions.map(s=>s.id)).gt('weight_kg',0);
+  const counts = {};
+  (sets||[]).forEach(s=>{ counts[s.exercise_name] = (counts[s.exercise_name]||0)+1; });
+  const names = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
+  if(!names.length){ sel.innerHTML = '<option>No weighted sets logged yet</option>'; return; }
+  sel.innerHTML = names.map(n=>`<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+  renderStrengthChart(names[0]);
+}
+async function renderStrengthChart(exName){
+  const canvas = document.getElementById('chart-strength');
+  const empty = document.getElementById('chart-strength-empty');
+  if(!canvas || !exName || !USER) return;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-90);
+  const { data: sessions } = await sb.from('workout_sessions').select('id,date').eq('user_id',USER.id).gte('date',cutoff.toISOString().slice(0,10)).order('date',{ascending:true});
+  if(!sessions?.length){ empty.style.display='block'; canvas.style.display='none'; return; }
+  const { data: sets } = await sb.from('session_sets').select('session_id,weight_kg').eq('exercise_name',exName).in('session_id',sessions.map(s=>s.id));
+  const byDate = {};
+  (sets||[]).forEach(s=>{
+    const date = sessions.find(ss=>ss.id===s.session_id)?.date;
+    if(!date) return;
+    byDate[date] = Math.max(byDate[date]||0, +s.weight_kg||0);
+  });
+  const dates = Object.keys(byDate).sort();
+  if(dates.length < 2){ empty.style.display='block'; canvas.style.display='none'; return; }
+  empty.style.display='none'; canvas.style.display='';
+  if(_charts.strength) try{_charts.strength.destroy()}catch(e){}
+  _charts.strength = new Chart(canvas,{type:'line',data:{
+    labels: dates.map(d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})),
+    datasets:[{ data: dates.map(d=>byDate[d]), borderColor:'#2CD4C4', backgroundColor:'rgba(44,212,196,.08)', fill:true, tension:.3, pointBackgroundColor:'#2CD4C4', pointRadius:4 }]
+  },options:{responsive:true,plugins:{legend:{display:false}},scales:{
+    y:{ticks:{color:'#444',callback:v=>v+'kg'},grid:{color:'#1A1A1A'},border:{display:false}},
+    x:{ticks:{color:'#888'},grid:{display:false},border:{display:false}}
+  }}});
+}
+
+// ── Body Composition: stored in OB (no dedicated table exists, and no DDL
+// execution path is available from this environment — same constraint
+// documented elsewhere in this project) ──
+async function logBodyComp(){
+  const w = +document.getElementById('bc-weight-input').value || null;
+  const bf = +document.getElementById('bc-bf-input').value || null;
+  if(!w && !bf){ showToast('Enter a weight or body fat %'); return; }
+  OB.bodyCompLog = OB.bodyCompLog || [];
+  OB.bodyCompLog = OB.bodyCompLog.filter(e=>e.date!==TODAY); // one entry per day, latest wins
+  OB.bodyCompLog.push({ date: TODAY, weight_kg: w, body_fat: bf });
+  OB.bodyCompLog.sort((a,b)=>a.date.localeCompare(b.date));
+  if(OB.bodyCompLog.length > 90) OB.bodyCompLog = OB.bodyCompLog.slice(-90);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await sb.auth.updateUser({ data:{ onboarding: OB } }); } catch(e){}
+  document.getElementById('bc-weight-input').value = '';
+  document.getElementById('bc-bf-input').value = '';
+  showToast('Logged');
+  renderBodyCompChart();
+}
+function renderBodyCompChart(){
+  const canvas = document.getElementById('chart-bodycomp');
+  const empty = document.getElementById('chart-bodycomp-empty');
+  if(!canvas) return;
+  const log = OB.bodyCompLog || [];
+  if(log.length < 2){ empty.style.display='block'; canvas.style.display='none'; return; }
+  empty.style.display='none'; canvas.style.display='';
+  if(_charts.bodycomp) try{_charts.bodycomp.destroy()}catch(e){}
+  const labels = log.map(e=>new Date(e.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
+  const datasets = [];
+  if(log.some(e=>e.weight_kg)) datasets.push({ label:'Weight (kg)', data:log.map(e=>e.weight_kg), borderColor:'#2CD4C4', backgroundColor:'rgba(44,212,196,.08)', tension:.3, pointRadius:3, yAxisID:'y' });
+  if(log.some(e=>e.body_fat)) datasets.push({ label:'Body Fat %', data:log.map(e=>e.body_fat), borderColor:'#818cf8', backgroundColor:'rgba(129,140,248,.08)', tension:.3, pointRadius:3, yAxisID:'y1' });
+  _charts.bodycomp = new Chart(canvas,{type:'line',data:{labels,datasets},options:{responsive:true,
+    plugins:{legend:{display:datasets.length>1,labels:{color:'#888',font:{size:10}}}},
+    scales:{
+      y:{position:'left',ticks:{color:'#444'},grid:{color:'#1A1A1A'},border:{display:false}},
+      y1:{position:'right',ticks:{color:'#444'},grid:{display:false},border:{display:false}},
+      x:{ticks:{color:'#888'},grid:{display:false},border:{display:false}}
+    }}});
+}
+
+// ── Habit completion broken down by time-of-day bucket (last 7 days) ──
+async function renderHabitCategoryBreakdown(){
+  const el = document.getElementById('habit-category-breakdown');
+  if(!el || !USER) return;
+  const from = new Date(); from.setDate(from.getDate()-6);
+  const { data } = await sb.from('habit_log').select('habit_name,completed').eq('user_id',USER.id).gte('date',from.toISOString().slice(0,10));
+  if(!data?.length){ el.innerHTML = '<p style="font-size:12px;color:var(--dim)">Log a few days of habits to see this.</p>'; return; }
+  const buckets = {};
+  data.forEach(r=>{
+    const t = HABIT_TIME_LOOKUP[r.habit_name] || 'Anytime';
+    buckets[t] = buckets[t] || {done:0,total:0};
+    buckets[t].total++;
+    if(r.completed) buckets[t].done++;
+  });
+  el.innerHTML = HABIT_TIME_ORDER.filter(t=>buckets[t]).map(t=>{
+    const pct = Math.round(buckets[t].done/buckets[t].total*100);
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px"><span>${t}</span><span>${pct}%</span></div>
+      <div style="height:6px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${pct}%;background:${pct>=70?'var(--teal)':pct>=40?'rgba(44,212,196,.5)':'#f87171'}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── Weekly habit adherence vs. check-in wellbeing — does higher completion
+// actually track with feeling better, for this specific person ──
+async function renderAdherenceCorrelation(){
+  const el = document.getElementById('adherence-correlation');
+  if(!el || !USER) return;
+  const from = new Date(); from.setDate(from.getDate()-28);
+  const fromStr = from.toISOString().slice(0,10);
+  const [{data:habitData}, {data:checkinData}] = await Promise.all([
+    sb.from('habit_log').select('date,completed').eq('user_id',USER.id).gte('date',fromStr),
+    sb.from('progress_checkins').select('date,energy,mood,sleep_q').eq('user_id',USER.id).gte('date',fromStr).order('date',{ascending:true}),
+  ]);
+  if(!checkinData?.length){ el.innerHTML = '<p style="font-size:12px;color:var(--dim)">Submit a few weekly check-ins to see this.</p>'; return; }
+  // Group into weeks (Mon-Sun) ending at each check-in date
+  const rows = checkinData.map(c=>{
+    const end = new Date(c.date+'T00:00:00');
+    const start = new Date(end); start.setDate(end.getDate()-6);
+    const startStr = start.toISOString().slice(0,10);
+    const weekHabits = (habitData||[]).filter(h=>h.date>=startStr && h.date<=c.date);
+    const pct = weekHabits.length ? Math.round(weekHabits.filter(h=>h.completed).length/weekHabits.length*100) : null;
+    const wellbeing = Math.round(((+c.energy||0)+(+c.mood||0)+(+c.sleep_q||0))/3*10)/10;
+    return { date:c.date, pct, wellbeing };
+  }).filter(r=>r.pct!==null);
+  if(!rows.length){ el.innerHTML = '<p style="font-size:12px;color:var(--dim)">Not enough overlapping data yet — need both habit logs and check-ins in the same week.</p>'; return; }
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
+    ${rows.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="color:var(--dim)">${new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>
+      <span style="color:var(--muted)">${r.pct}% habits</span>
+      <span style="color:var(--white);font-weight:600">${r.wellbeing}/10 wellbeing</span>
+    </div>`).join('')}
+  </div>`;
 }
 
 function renderScoreGrid(){
@@ -5958,6 +6151,7 @@ function generatePersonalisedMilestones(stats) {
   const isEndurance = ['cycling','distance_running','swimming'].some(s=>alSports.includes(s)) || alGoals.includes('endurance');
   const wantsFat    = alGoals.includes('fat_loss') || bf > 18 || goal.includes('fat');
   const wantsMuscle = alGoals.includes('lean_muscle') || goal.includes('muscle') || goal.includes('strength');
+  const wantsHeight = goal.includes('height') || (OB?.mobility?.state?.goals||[]).includes('height');
   const hasAthleteLab = !!AL_STATE.results;
 
   const ms = [];
@@ -6008,6 +6202,13 @@ function generatePersonalisedMilestones(stats) {
     ms.push({ id:'mus1', xp:350, name:'50 Meals Logged',      desc:'50 meals tracked — fuelling consistency for muscle growth',  check:s=>s.foodLogs>=50 });
   }
 
+  // Height milestone — the one real lever (Postural Protocol) needs sustained
+  // daily consistency to pay off, so the milestone tracks that specifically
+  // rather than a generic streak.
+  if(wantsHeight) {
+    ms.push({ id:'height1', xp:280, name:'Postural Protocol, 14 Days', desc:'14-day streak on Postural Protocol — the one habit here with a real functional-height payoff, and it needs consistency to work', check:s=>s.posturalStreak>=14 });
+  }
+
   // Age-specific
   if(age >= 40) {
     ms.push({ id:'retest', xp:300, name:'Re-Test Hormones',   desc:'Run a second Hormone Lab after 30+ days of protocol',        check:s=>s.labCount>=2 });
@@ -6042,6 +6243,7 @@ function getMilestoneStats() {
     labDone:       !!HL_STATE.results,
     labCount:      HL_STATE.results ? 1 : 0,
     athleteLabDone: !!AL_STATE.results,
+    posturalStreak: habitStreaks['custom_postural_protocol'] || 0,
   };
 }
 
