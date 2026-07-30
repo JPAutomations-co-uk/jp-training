@@ -1649,7 +1649,7 @@
       </div>
       <div id="community-channels"></div>
     </div>
-    <div id="community-chat-view" style="display:none;margin:-24px -20px;height:calc(100% + 64px);display:none;flex-direction:column">
+    <div id="community-chat-view" style="display:none;margin:-24px -20px;height:70vh;flex-direction:column">
       <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border)">
         <button onclick="closeChannelView()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0">←</button>
         <div>
@@ -1668,30 +1668,47 @@
 
   <!-- ══ EVENTS MODAL ══ -->
   <div id="events-modal" onclick="if(event.target===this)closeEvents()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px">
         <div style="font-family:var(--D);font-size:22px;font-weight:900">EVENTS</div>
-        <button onclick="closeEvents()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+        <button onclick="closeEvents()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px">✕</button>
       </div>
-      <div id="events-list"></div>
+      <div style="flex:1;overflow-y:auto;padding:0 20px"><div id="events-list"></div></div>
+      <!-- This is a position:fixed, full-screen overlay — on its own the
+           only way out was the small ✕ above, which if missed left the
+           entire app (bottom nav included) genuinely unclickable, since
+           this backdrop physically sits on top of it. A big, unmissable,
+           always-visible (never requires scrolling to reach) close bar
+           closes that gap. -->
+      <div style="padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0">
+        <button onclick="closeEvents()" style="width:100%;padding:14px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--white);font-weight:700;font-size:14px;cursor:pointer">Close</button>
+      </div>
     </div>
   </div>
 
   <!-- ══ ADMIN MODAL (applications + compliance) — only ever opened for PROFILE.is_admin ══ -->
   <div id="admin-modal" onclick="if(event.target===this)closeAdmin()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px">
         <div style="font-family:var(--D);font-size:22px;font-weight:900">THE STANDARD — ADMIN</div>
-        <button onclick="closeAdmin()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+        <button onclick="closeAdmin()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px">✕</button>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <button class="admin-sw-btn active" data-view="applications" onclick="switchAdminView('applications')" style="flex:1;padding:10px;background:var(--teal-lo);border:1px solid var(--teal-mid);color:var(--teal);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Applications</button>
-        <button class="admin-sw-btn" data-view="compliance" onclick="switchAdminView('compliance')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Compliance</button>
-        <button class="admin-sw-btn" data-view="casestudies" onclick="switchAdminView('casestudies')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Case Studies</button>
+      <div style="flex:1;overflow-y:auto;padding:0 20px">
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="admin-sw-btn active" data-view="applications" onclick="switchAdminView('applications')" style="flex:1;padding:10px;background:var(--teal-lo);border:1px solid var(--teal-mid);color:var(--teal);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Applications</button>
+          <button class="admin-sw-btn" data-view="compliance" onclick="switchAdminView('compliance')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Compliance</button>
+          <button class="admin-sw-btn" data-view="casestudies" onclick="switchAdminView('casestudies')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Case Studies</button>
+        </div>
+        <div id="admin-applications-view"></div>
+        <div id="admin-compliance-view" style="display:none"></div>
+        <div id="admin-casestudies-view" style="display:none"></div>
       </div>
-      <div id="admin-applications-view"></div>
-      <div id="admin-compliance-view" style="display:none"></div>
-      <div id="admin-casestudies-view" style="display:none"></div>
+      <!-- Same reasoning as the Events modal's close bar — this backdrop
+           physically covers the bottom nav while open; a small header ✕
+           alone was too easy to miss and left the app looking frozen. -->
+      <div style="padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0">
+        <button onclick="closeAdmin()" style="width:100%;padding:14px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--white);font-weight:700;font-size:14px;cursor:pointer">Close</button>
+      </div>
     </div>
   </div>
 
@@ -2177,6 +2194,18 @@ function addSteps(delta) {
 
 /* ── NAV ── */
 function switchTab(tab){
+  // Events/Admin are position:fixed, full-screen, z-index:500 overlays
+  // completely outside the pane/tab system — nothing previously forced
+  // them shut on tab switch. If either was left open (closed via the
+  // wrong tap, a stray click, anything short of hitting the X), it would
+  // sit on top of the entire app, bottom nav included, making everything
+  // underneath look and act completely dead. Force both shut on every
+  // tab switch, unconditionally, so this can't happen regardless of how
+  // they got left open.
+  const eventsModal = document.getElementById('events-modal');
+  const adminModal  = document.getElementById('admin-modal');
+  if(eventsModal) eventsModal.style.display = 'none';
+  if(adminModal)  adminModal.style.display  = 'none';
   // Leaving Community with a channel open (e.g. tapping another bottom-nav
   // tab instead of the chat's back button) previously left the realtime
   // subscription running indefinitely in the background — closeChannelView
@@ -2209,15 +2238,30 @@ let communityActiveChannel = null;
 let communityRealtimeSub = null;
 
 async function initCommunity(){
-  document.getElementById('community-admin-btn').style.display = PROFILE?.is_admin ? 'flex' : 'none';
+  // Defensive null check — if this element lookup ever fails, it used to
+  // throw synchronously and loadChannels() below would never run at all,
+  // leaving the pane stuck on its initial empty state with no visible
+  // error and no way to tell why.
+  const adminBtn = document.getElementById('community-admin-btn');
+  if(adminBtn) adminBtn.style.display = PROFILE?.is_admin ? 'flex' : 'none';
   await loadChannels();
 }
 
 async function loadChannels(){
   const list = document.getElementById('community-channels');
+  if(!list) return;
   list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
-  const { data, error } = await sb.from('channels').select('*').order('position', { ascending: true });
-  if(error){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load channels.</div>'; return; }
+  let data, error;
+  try {
+    ({ data, error } = await sb.from('channels').select('*').order('position', { ascending: true }));
+  } catch(err) {
+    // A genuine thrown exception (network layer, not a resolved {error})
+    // used to leave this stuck on "Loading..." forever with no way to
+    // recover short of reloading the whole page.
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load channels. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>';
+    return;
+  }
+  if(error){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load channels. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>'; return; }
   communityChannelsCache = data || [];
   if(communityChannelsCache.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No channels yet.</div>'; return; }
   list.innerHTML = communityChannelsCache.map(ch => `
@@ -2235,28 +2279,40 @@ async function loadChannels(){
 async function openChannel(channelId){
   const ch = communityChannelsCache.find(c => c.id === channelId);
   if(!ch) return;
-  communityActiveChannel = ch;
-  document.getElementById('community-list-view').style.display = 'none';
-  const chatView = document.getElementById('community-chat-view');
-  chatView.style.display = 'flex';
-  document.getElementById('community-chat-title').textContent = ch.name;
-  document.getElementById('community-chat-desc').textContent = ch.description || '';
-  const canPost = !ch.admin_only_post || PROFILE?.is_admin;
-  document.getElementById('community-composer').style.display = canPost ? 'flex' : 'none';
-  document.getElementById('community-readonly-note').style.display = canPost ? 'none' : 'block';
-  await loadMessages();
-  if(communityRealtimeSub) sb.removeChannel(communityRealtimeSub);
-  communityRealtimeSub = sb.channel('channel_messages:' + channelId)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
-    .subscribe();
+  // Wrapped end-to-end: this does 6 DOM lookups before reaching the
+  // realtime subscribe call — any one throwing used to abort silently
+  // partway through, sometimes leaving the chat view visible but with no
+  // messages loaded and no subscription set up (looks identical to
+  // "broken" from the outside, with nothing in the UI explaining why).
+  try {
+    communityActiveChannel = ch;
+    document.getElementById('community-list-view').style.display = 'none';
+    const chatView = document.getElementById('community-chat-view');
+    chatView.style.display = 'flex';
+    document.getElementById('community-chat-title').textContent = ch.name;
+    document.getElementById('community-chat-desc').textContent = ch.description || '';
+    const canPost = !ch.admin_only_post || PROFILE?.is_admin;
+    document.getElementById('community-composer').style.display = canPost ? 'flex' : 'none';
+    document.getElementById('community-readonly-note').style.display = canPost ? 'none' : 'block';
+    await loadMessages();
+    if(communityRealtimeSub) sb.removeChannel(communityRealtimeSub);
+    communityRealtimeSub = sb.channel('channel_messages:' + channelId)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
+      .subscribe();
+  } catch(err) {
+    showToast('Failed to open channel');
+    closeChannelView();
+  }
 }
 
 function closeChannelView(){
   if(communityRealtimeSub){ sb.removeChannel(communityRealtimeSub); communityRealtimeSub = null; }
   communityActiveChannel = null;
-  document.getElementById('community-chat-view').style.display = 'none';
-  document.getElementById('community-list-view').style.display = 'block';
+  const chatView = document.getElementById('community-chat-view');
+  const listView = document.getElementById('community-list-view');
+  if(chatView) chatView.style.display = 'none';
+  if(listView) listView.style.display = 'block';
 }
 
 async function loadMessages(){
