@@ -1226,6 +1226,7 @@
       <div class="coach-messages" id="coach-messages">
         <div class="msg coach" id="coach-greeting">Hey. Ask me anything about your training, nutrition, sleep or recovery — I've got your full protocol context.</div>
       </div>
+      <div id="coach-suggested-prompts" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0"></div>
       <div class="coach-input-wrap">
         <textarea class="coach-input" id="coach-input" placeholder="Ask something..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
         <button class="coach-send" id="coach-send" onclick="sendMessage()">Send</button>
@@ -2305,6 +2306,7 @@ function switchTab(tab){
   if(tab==='progress') { setTimeout(()=>renderMilestones(), 50); }
   if(tab==='move') { setTimeout(()=>initMove(), 50); return; }
   if(tab==='community') { setTimeout(()=>initCommunity(), 50); return; }
+  if(tab==='coach') { setTimeout(()=>{ resumeCoachSession(); renderCoachSuggestedPrompts(); }, 50); }
   // Show onboarding on first visit if not yet done
   const obTabs=['habits','train','eat','progress','coach'];
   if(obTabs.includes(tab) && !isOnboarded(tab)){
@@ -4297,9 +4299,11 @@ async function sendMessage(){
     const d=await res.json();
     const reply=d.reply||d.error||'Something went wrong — try again.';
     coachHistory.push({role:'assistant',content:reply});
+    const replyIdx = coachHistory.length-1;
     _persistCoachSession();
     document.getElementById('coach-loading')?.remove();
-    msgs.innerHTML+=`<div class="msg coach">${escHtml(stripMd(reply)).replace(/\n/g,'<br>')}</div>`;
+    msgs.innerHTML+=`<div class="msg coach">${escHtml(stripMd(reply)).replace(/\n/g,'<br>')}</div>
+      <button onclick="saveCoachReplyAsHabit(${replyIdx})" style="font-size:10px;color:var(--dim);background:none;border:none;cursor:pointer;padding:2px 0 8px;text-decoration:underline">Save as habit →</button>`;
   }catch(e){
     document.getElementById('coach-loading')?.remove();
     msgs.innerHTML+=`<div class="msg coach" style="color:var(--dim)">Couldn't reach the coach right now. Try again in a moment.</div>`;
@@ -7514,6 +7518,73 @@ function checkPbOnInput(input, exName) {
    COACH HISTORY
 ════════════════════════════════════════ */
 const _COACH_HIST_KEY = () => `jpt_coach_hist_${USER?.id||'guest'}`;
+
+// Coach history was only ever written to localStorage, never read back into
+// the active coachHistory array — meaning the context sent to the API reset
+// to empty on every reload even the same day, and the visible chat always
+// restarted blank despite a "History" sheet showing the conversation was
+// technically saved. Resumes today's session into both the array (so the
+// model actually remembers) and the DOM (so the user sees it too).
+let _coachResumed = false;
+// "A simple way to implement advice within each function" — rather than
+// trying to parse arbitrary AI text for actionability (unreliable), this
+// hands the reply to the Habits tab's existing add-habit input so the user
+// reviews/edits before it's actually added. Deliberately not automatic.
+function saveCoachReplyAsHabit(idx){
+  const msg = coachHistory[idx];
+  if(!msg) return;
+  const summary = stripMd(msg.content).replace(/\n/g,' ').trim().slice(0,70);
+  switchTab('habits');
+  setTimeout(()=>{
+    const input = document.getElementById('habit-add-input');
+    if(input){
+      input.value = summary;
+      input.focus();
+      input.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+    showToast('Edit if needed, then tap + Add');
+  }, 350);
+}
+
+const COACH_SUGGESTED_PROMPTS = [
+  'What should I eat today?',
+  'Am I on track with my goals this week?',
+  'Explain today\'s training session',
+  'What should I focus on improving right now?',
+];
+function renderCoachSuggestedPrompts(){
+  const el = document.getElementById('coach-suggested-prompts');
+  if(!el) return;
+  el.innerHTML = COACH_SUGGESTED_PROMPTS.map(p=>
+    `<button onclick="useCoachPrompt('${escHtml(p).replace(/'/g,"\\'")}')" style="font-size:11px;padding:6px 10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);cursor:pointer">${escHtml(p)}</button>`
+  ).join('');
+}
+function useCoachPrompt(text){
+  const input = document.getElementById('coach-input');
+  if(!input) return;
+  input.value = text;
+  sendMessage();
+}
+
+function resumeCoachSession(){
+  if(_coachResumed) return; // only do this once per page load, not every tab switch
+  _coachResumed = true;
+  try {
+    const hist = JSON.parse(localStorage.getItem(_COACH_HIST_KEY()) || '[]');
+    const today = hist.find(s => s.date === TODAY);
+    if(!today?.messages?.length) return;
+    coachHistory.length = 0;
+    coachHistory.push(...today.messages);
+    const msgs = document.getElementById('coach-messages');
+    if(!msgs) return;
+    msgs.innerHTML = today.messages.filter(m=>m.role==='user'||m.role==='assistant').map(m =>
+      m.role === 'user'
+        ? `<div class="msg user">${escHtml(m.content)}</div>`
+        : `<div class="msg coach">${escHtml(stripMd(m.content)).replace(/\n/g,'<br>')}</div>`
+    ).join('');
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) {}
+}
 
 function _persistCoachSession() {
   try {
