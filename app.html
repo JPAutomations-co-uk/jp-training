@@ -997,7 +997,11 @@
       </div>
 
       <div id="overview-card-wrap"></div>
-      <div style="margin-top:16px" id="habits-list"></div>
+      <div style="display:flex;gap:6px;margin-top:16px">
+        <button id="habit-filter-all" onclick="setHabitFilter(false)" style="flex:1;padding:8px;font-size:11px;font-family:var(--B);letter-spacing:.04em;cursor:pointer;border:1px solid var(--teal);background:var(--teal);color:#000">All</button>
+        <button id="habit-filter-priority" onclick="setHabitFilter(true)" style="flex:1;padding:8px;font-size:11px;font-family:var(--B);letter-spacing:.04em;cursor:pointer;border:1px solid var(--border);background:var(--s1);color:var(--muted)">Top Priority</button>
+      </div>
+      <div style="margin-top:10px" id="habits-list"></div>
       <div id="quests-section"></div>
       <div class="habit-add-wrap">
         <input class="habit-add-input" id="habit-add-input"
@@ -1836,6 +1840,14 @@ const TODAY=new Date().toISOString().split('T')[0];
 let OB={};
 let EAT_DATE=TODAY;
 let HABIT_DATE=TODAY;   // habits + steps can be logged for any past day
+// Declared this early (not down in the EAT section where it's used) because
+// getHabits() references it for the live "Followed Meal Plan" progress
+// readout, and getHabits() is invoked eagerly at script load — same
+// temporal-dead-zone risk as JP_USER_ID above if declared later.
+let foods=[];
+
+// Time-bucket sort order for chronological grouping in the Habits list.
+const HABIT_TIME_ORDER = ['Morning','Pre-Training','Post-Training','Evening','Anytime'];
 
 function getHabits(){
   const h=OB.habits||{};
@@ -1843,47 +1855,59 @@ function getHabits(){
   const highStress=h.stress_level&&h.stress_level.startsWith('High')||h.stress_level&&h.stress_level.startsWith('Very');
   const poorSleep=h.sleep_quality&&(h.sleep_quality.startsWith('Very poor')||h.sleep_quality.startsWith('Poor'));
   const drinksAlcohol=h.alcohol&&h.alcohol!=='Never'&&h.alcohol!=='Rarely';
-  const custom = (OB.custom_habits||[]).map(ch=>({
-    key:'custom_'+ch.key,
-    name:ch.name,
-    desc:ch.desc||'Your custom habit',
-    custom:true
-  }));
+  const custom = (OB.custom_habits||[]).map(ch=>{
+    const key = 'custom_'+ch.key;
+    let desc = ch.desc||'Your custom habit';
+    // "Followed Meal Plan" gets a live progress readout instead of static
+    // text — recomputed on every getHabits() call so it's always current
+    // with whatever's logged in Eat, without needing a separate data path.
+    if (ch.key === 'meal_plan' && USER?.id === JP_USER_ID && OB.nutritionPlan && HABIT_DATE === TODAY && typeof foods !== 'undefined') {
+      const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+      const targets = OB.nutritionPlan[dayName]?.targets;
+      if (targets) {
+        const cal = foods.reduce((a,f)=>a+(+f.calories||0), 0);
+        const prot = foods.reduce((a,f)=>a+(+f.protein_g||0), 0);
+        const pct = Math.round(((cal/targets.calories) + (prot/targets.protein)) / 2 * 100);
+        desc = `${Math.min(pct,999)}% to target — ${Math.round(cal)}/${targets.calories} kcal, ${Math.round(prot)}/${targets.protein}g protein. Auto-ticks at 90-110% on both.`;
+      }
+    }
+    return { key, name:ch.name, desc, custom:true, time: ch.time||'Anytime', priority: !!ch.priority };
+  });
   const base = [
-    {key:'sunlight',
+    {key:'sunlight', time:'Morning', priority:false,
      name:'Morning Sunlight',
      desc: USER?.id === JP_USER_ID
        ? `Natural light within 1hr of waking${h.wake_time?' ('+h.wake_time+')':''} + a Bible chapter — triggers your cortisol peak, anchors your circadian clock, sets melatonin timing for that night`
        : `Natural light within 1hr of waking${h.wake_time?' ('+h.wake_time+')':''} — triggers your cortisol peak, anchors your circadian clock, and sets melatonin timing for that night`},
-    {key:'training',
+    {key:'training', time:'Post-Training', priority:true,
      name:'Complete Training Session',
      desc:'Log today\'s session in the Train tab — compound strength training is the single highest-leverage driver of testosterone, GH, and metabolic health'},
-    {key:'steps',
+    {key:'steps', time:'Anytime', priority:false,
      name:'Steps / Zone 2 Movement',
      desc: USER?.id === JP_USER_ID
        ? `${h.steps_goal?'Hit '+Number(h.steps_goal).toLocaleString():'Target 8,000–10,000'} steps — 3 checkpoints so it's not sporadic: morning walk ~07:45 (~2,500), post-lunch walk ~12:15 (~1,500 — also blunts the post-meal glucose spike), then top up any gap by 20:00 before wind-down`
        : `${h.steps_goal?'Hit '+Number(h.steps_goal).toLocaleString()+' steps today':'Target 8,000–10,000 steps'} — cardiovascular fitness, insulin sensitivity, cortisol clearance, VO2 max`},
-    {key:'sleep',
+    {key:'sleep', time:'Evening', priority:true,
      name:'In Bed on Time',
      desc:`Lights out by ${h.sleep_time||'10:30pm'}${poorSleep?' — your sleep quality needs fixing: this is the first lever':' — testosterone and GH peak in the first 90 min of deep sleep'}`},
-    {key:'cold',
+    {key:'cold', time:'Morning', priority:false,
      name:'Cold Exposure',
      desc: USER?.id === JP_USER_ID
        ? 'Cold shower (2–3 min) — norepinephrine reset, accelerated recovery. Timing matters: NOT within 4h of a lift (cold blunts the hypertrophy signal), so keep it to mornings or well clear of training.'
        : 'Cold shower (2–3 min) or immersion — norepinephrine +530%, dopamine baseline reset, accelerated recovery, reduced inflammation'},
-    {key:'supplements',
+    {key:'supplements', time:'Morning', priority:false,
      name:'Morning Stack',
      desc:`Vitamin D3+K2, Magnesium Glycinate, Zinc, Omega-3${c.hormones&&c.hormones.includes('testosterone')?' — directly support testosterone synthesis':'  — the hormonal and inflammatory foundation everything else runs on'}`},
-    {key:'stress',
+    {key:'stress', time:'Anytime', priority:false,
      name:'Stress Protocol',
      desc:`${highStress?'Your cortisol is elevated — ':''}10 min of breathwork, NSDR, or a phone-free walk — cortisol and testosterone are inversely related; chronic stress kills gains`},
-    {key:'no_phone',
+    {key:'no_phone', time:'Evening', priority:false,
      name:'No Phone 1hr Before Bed',
      desc:'Blue light suppresses melatonin by up to 50% and keeps cortisol elevated — one of the most impactful habits for sleep quality and hormone recovery'},
-    {key:'no_alcohol',
+    {key:'no_alcohol', time:'Anytime', priority:false,
      name:'Alcohol-Free',
      desc:`${drinksAlcohol?'You\'re drinking '+h.alcohol.toLowerCase()+' — this is worth addressing: ':''}Even 2 drinks suppresses testosterone, fragments REM, and spikes cortisol through the night`},
-    {key:'hydration',
+    {key:'hydration', time:'Anytime', priority:false,
      name:'Hydration',
      desc:'2.5–3L water today — every hormone, enzyme, and neurotransmitter in the body depends on adequate hydration; performance and cognition drop before thirst kicks in'},
   ];
@@ -2618,6 +2642,49 @@ async function initHabits(){
     renderHabits();
   }
   renderQuests().catch(()=>{});
+  loadHabitStreaks().catch(()=>{});
+}
+
+let _habitFilterPriority = false;
+function setHabitFilter(priorityOnly){
+  _habitFilterPriority = priorityOnly;
+  document.getElementById('habit-filter-all').style.background = priorityOnly ? 'var(--s1)' : 'var(--teal)';
+  document.getElementById('habit-filter-all').style.color = priorityOnly ? 'var(--muted)' : '#000';
+  document.getElementById('habit-filter-all').style.borderColor = priorityOnly ? 'var(--border)' : 'var(--teal)';
+  document.getElementById('habit-filter-priority').style.background = priorityOnly ? 'var(--teal)' : 'var(--s1)';
+  document.getElementById('habit-filter-priority').style.color = priorityOnly ? '#000' : 'var(--muted)';
+  document.getElementById('habit-filter-priority').style.borderColor = priorityOnly ? 'var(--teal)' : 'var(--border)';
+  renderHabits();
+}
+
+function toggleHabitWhy(el){
+  const desc = el.parentElement.querySelector('.habit-desc');
+  if(!desc) return;
+  const open = desc.style.display === 'block';
+  desc.style.display = open ? 'none' : 'block';
+  el.textContent = open ? 'why →' : 'why ▾';
+}
+
+// Per-habit streaks — consecutive completed days ending today. Computed once
+// per Habits-tab load (not per render) to avoid hammering habit_log.
+let habitStreaks = {};
+async function loadHabitStreaks(){
+  if(!USER) return;
+  const from = new Date(TODAY+'T00:00:00'); from.setDate(from.getDate()-30);
+  const fromStr = from.toISOString().split('T')[0];
+  const { data, error } = await sb.from('habit_log')
+    .select('habit_name,date,completed').eq('user_id',USER.id).eq('completed',true).gte('date',fromStr);
+  if(error || !data) return;
+  const byHabit = {};
+  data.forEach(r => { (byHabit[r.habit_name] = byHabit[r.habit_name] || new Set()).add(r.date); });
+  const streaks = {};
+  Object.keys(byHabit).forEach(key=>{
+    let streak=0, d=new Date(TODAY+'T00:00:00');
+    while(byHabit[key].has(d.toISOString().split('T')[0])){ streak++; d.setDate(d.getDate()-1); }
+    if(streak>0) streaks[key]=streak;
+  });
+  habitStreaks = streaks;
+  renderHabits();
 }
 
 function renderHabits(){
@@ -2629,15 +2696,39 @@ function renderHabits(){
   if(restoreWrap) restoreWrap.style.display = (OB.hidden_habits?.length) ? 'block' : 'none';
 
   const list=document.getElementById('habits-list');
-  const allHabits=getHabits();
-  list.innerHTML=allHabits.map(h=>`
+  let allHabits=getHabits();
+  if(_habitFilterPriority) allHabits = allHabits.filter(h=>h.priority);
+
+  // Group by time bucket, in chronological order, so the list maps to the
+  // actual shape of the day rather than an arbitrary fixed order.
+  const groups = {};
+  allHabits.forEach(h=>{
+    const t = HABIT_TIME_ORDER.includes(h.time) ? h.time : 'Anytime';
+    (groups[t] = groups[t] || []).push(h);
+  });
+
+  if(!allHabits.length){
+    list.innerHTML = `<p style="font-size:12px;color:var(--dim);text-align:center;padding:16px 0">${_habitFilterPriority?'No top-priority habits right now.':'No habits yet.'}</p>`;
+    return;
+  }
+
+  list.innerHTML = HABIT_TIME_ORDER.filter(t=>groups[t]?.length).map(t => `
+    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:14px 0 6px">${t}</div>
+    ${groups[t].map(h=>{
+      const streak = habitStreaks[h.key] || 0;
+      return `
     <div class="habit-item ${habitState[h.key]?'done':''}" onclick="toggleHabit('${h.key}')">
       <div class="habit-check">
         <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div class="habit-info">
-        <div class="habit-name">${escHtml(h.name)}</div>
-        <div class="habit-desc">${escHtml(h.desc)}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="habit-name">${escHtml(h.name)}</div>
+          ${h.priority?`<span style="font-size:9px;color:var(--teal);border:1px solid rgba(44,212,196,.3);padding:1px 5px;letter-spacing:.06em;text-transform:uppercase">Priority</span>`:''}
+          ${streak>1?`<span style="font-size:10px;color:#fb923c">🔥${streak}</span>`:''}
+        </div>
+        <button onclick="event.stopPropagation();toggleHabitWhy(this)" style="background:none;border:none;color:var(--dim);font-size:10px;padding:0;cursor:pointer;font-family:var(--B)">why →</button>
+        <div class="habit-desc" style="display:none">${escHtml(h.desc)}</div>
       </div>
       ${HABIT_PROTOCOLS[h.key]?`<button class="habit-expand" onclick="event.stopPropagation();showHabitDetail('${h.key}')">Guide →</button>`:''}
       ${h.custom
@@ -2645,6 +2736,7 @@ function renderHabits(){
         : `<button class="habit-del" title="Hide" onclick="event.stopPropagation();hideBuiltInHabit('${h.key}')">–</button>`
       }
     </div>
+  `;}).join('')}
   `).join('');
 }
 
@@ -3056,7 +3148,6 @@ async function saveWorkout(asToday){
 /* ════════════════════════════════════════
    EAT
 ════════════════════════════════════════ */
-let foods=[];
 
 async function initEat(){
   updateEatDateUI();
@@ -4266,26 +4357,26 @@ function applyJPRealProtocol() {
   // take effect immediately without leaving stale entries behind.
   // Sauna excluded — no access currently (JP's call, not a gap).
   const JP_CUSTOM_HABITS = [
-    { key: 'neck_training',    name: 'Neck Training',              desc: '4-way isometric holds — 2×20-30 sec each direction, plus the neck stretch right after. Muay Thai prep.', days: [1,3] },
-    { key: 'pnf_prep',         name: 'PNF Prep',                    desc: 'Hip flexor + adductor PNF, 10 min pre-Muay Thai — kick height & groin injury prevention.', days: [1,3] },
-    { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before plyometrics — the single highest injury-risk moment in your week if skipped.', days: [2,5] },
-    { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: [1,2,3,4,5,6] },
-    { key: 'sport_mobility',   name: 'Sport-Matched Mobility',      desc: 'Whichever routine matches today\'s sport (football/basketball/rugby/squash) — see the Move tab.', days: [0] },
-    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, cat-cow, wall slides, chin tucks, child\'s pose — 10 min, evening. Real 1-3cm functional height payoff, needs daily consistency to work.', days: [0,1,2,3,4,5,6] },
-    { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: [0,1,2,3,4,5,6] },
-    { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: [0,1,2,3,4,5,6] },
-    { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: [0,1,2,3,4,5,6] },
-    { key: 'prebed_stack',     name: 'Pre-Bed Stack',               desc: 'Magnesium glycinate 200mg + L-theanine 200mg, 21:00 — sleep quality, feeds directly into the recovery/height/muscle levers.', days: [0,1,2,3,4,5,6] },
-    { key: 'red_light',        name: 'Red Light Therapy',           desc: 'Needs a device you don\'t have yet — leave unticked until you\'re set up. Real mechanism (mitochondrial cytochrome c oxidase), modest recovery/testosterone benefit.', days: [0,1,2,3,4,5,6] },
-    { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: [0,1,2,3,4,5,6] },
-    { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: [0,1,2,3,4,5,6] },
-    { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: [0,1,2,3,4,5,6] },
+    { key: 'neck_training',    name: 'Neck Training',              desc: '4-way isometric holds — 2×20-30 sec each direction, plus the neck stretch right after. Muay Thai prep.', days: [1,3], time:'Post-Training', priority:false },
+    { key: 'pnf_prep',         name: 'PNF Prep',                    desc: 'Hip flexor + adductor PNF, 10 min pre-Muay Thai — kick height & groin injury prevention.', days: [1,3], time:'Evening', priority:true },
+    { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before plyometrics — the single highest injury-risk moment in your week if skipped.', days: [2,5], time:'Pre-Training', priority:true },
+    { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: [1,2,3,4,5,6], time:'Post-Training', priority:false },
+    { key: 'sport_mobility',   name: 'Sport-Matched Mobility',      desc: 'Whichever routine matches today\'s sport (football/basketball/rugby/squash) — see the Move tab.', days: [0], time:'Pre-Training', priority:false },
+    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, cat-cow, wall slides, chin tucks, child\'s pose — 10 min, evening. Real 1-3cm functional height payoff, needs daily consistency to work.', days: [0,1,2,3,4,5,6], time:'Evening', priority:true },
+    { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: [0,1,2,3,4,5,6], time:'Post-Training', priority:true },
+    { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: [0,1,2,3,4,5,6], time:'Anytime', priority:false },
+    { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: [0,1,2,3,4,5,6], time:'Anytime', priority:false },
+    { key: 'prebed_stack',     name: 'Pre-Bed Stack',               desc: 'Magnesium glycinate 200mg + L-theanine 200mg, 21:00 — sleep quality, feeds directly into the recovery/height/muscle levers.', days: [0,1,2,3,4,5,6], time:'Evening', priority:false },
+    { key: 'red_light',        name: 'Red Light Therapy',           desc: 'Needs a device you don\'t have yet — leave unticked until you\'re set up. Real mechanism (mitochondrial cytochrome c oxidase), modest recovery/testosterone benefit.', days: [0,1,2,3,4,5,6], time:'Evening', priority:false },
+    { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: [0,1,2,3,4,5,6], time:'Evening', priority:false },
+    { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: [0,1,2,3,4,5,6], time:'Anytime', priority:false },
+    { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: [0,1,2,3,4,5,6], time:'Evening', priority:true },
   ];
   const todayDow = new Date().getDay();
   const jpCustomKeys = new Set(JP_CUSTOM_HABITS.map(h => h.key));
   OB.custom_habits = (OB.custom_habits || []).filter(h => !jpCustomKeys.has(h.key));
   JP_CUSTOM_HABITS.forEach(h => {
-    if (h.days.includes(todayDow)) OB.custom_habits.push({ key: h.key, name: h.name, desc: h.desc });
+    if (h.days.includes(todayDow)) OB.custom_habits.push({ key: h.key, name: h.name, desc: h.desc, time: h.time, priority: h.priority });
   });
 }
 
