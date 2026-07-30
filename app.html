@@ -32,7 +32,25 @@
       --white:#FFF;--muted:#888;--dim:#444;
       --D:'Barlow Condensed',sans-serif;--B:'Poppins',sans-serif;
     }
+    /* Light theme — same variable set, built on the existing var(--...)
+       architecture already used everywhere. Honest limitation: a handful of
+       hardcoded inline colours elsewhere in the app (not using these vars)
+       won't flip — this covers the large majority, not literally every pixel. */
+    html[data-theme="light"]{
+      --black:#FAFAFA;--s1:#FFF;--s2:#F2F2F2;--border:#E2E2E2;
+      --teal:#0E9E8F;--teal-lo:rgba(14,158,143,.08);--teal-mid:rgba(14,158,143,.18);
+      --white:#0A0A0A;--muted:#555;--dim:#999;
+    }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    /* Reusable utility classes for the most-repeated inline patterns added
+       this pass (mobility/nutrition/progress cards, section labels, small
+       badges) — a real starting point toward less inline styling, not a
+       full retrofit of the whole file. Retroactively converting every
+       existing inline style across ~7,500 lines is a separate, much larger
+       and riskier job than this pass, and wasn't attempted. */
+    .section-card{border:1px solid var(--border);background:rgba(255,255,255,.02);padding:14px;margin-bottom:12px}
+    .section-label{font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em}
+    .mini-badge{font-size:9px;color:var(--teal);border:1px solid rgba(44,212,196,.3);padding:1px 5px;letter-spacing:.06em;text-transform:uppercase;display:inline-block}
     html,body{height:100%;overflow:hidden;background:var(--black);color:var(--white);
       font-family:var(--B);-webkit-font-smoothing:antialiased}
 
@@ -885,6 +903,8 @@
         <svg viewBox="0 0 36 36"><circle class="xp-ring-bg" cx="18" cy="18" r="15.9"/><circle class="xp-ring-fill" id="xp-ring" cx="18" cy="18" r="15.9"/></svg>
         <div class="tb-avatar-init" id="tb-avatar-init">?</div>
       </div>
+      <button onclick="openGlobalSearch()" title="Search" style="background:none;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">🔍</button>
+      <button onclick="toggleAppTheme()" id="theme-toggle-btn" title="Toggle light/dark" style="background:none;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">🌙</button>
       <button class="tb-signout" onclick="signOut()">Sign out</button>
     </div>
   </div>
@@ -1791,23 +1811,58 @@
       <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       <span>Progress</span>
     </button>
-    <button class="bn-tab" data-tab="coach" onclick="switchTab('coach')">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-      <span>Coach</span>
-    </button>
-    <button class="bn-tab" data-tab="lab" onclick="switchTab('lab')">
-      <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
-      <span>Lab</span>
-    </button>
-    <button class="bn-tab" data-tab="move" onclick="switchTab('move')">
-      <svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="5" r="2"/><path d="M12 7v5l-3 4m3-4l3 4M9 10H6m12 0h-3"/></svg>
-      <span>Move</span>
-    </button>
-    <button class="bn-tab" data-tab="community" onclick="switchTab('community')">
-      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-      <span>Community</span>
+    <button class="bn-tab" id="bn-more-btn" onclick="toggleMoreMenu()">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      <span>More</span>
     </button>
   </nav>
+
+  <!-- WHAT'S NEW -->
+  <div id="whats-new-modal" onclick="if(event.target===this)closeWhatsNew()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:570;align-items:flex-end">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:75vh;overflow-y:auto;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">WHAT'S NEW</div>
+        <button onclick="closeWhatsNew()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div id="whats-new-body"></div>
+      <button onclick="closeWhatsNew()" style="margin-top:14px;width:100%;padding:10px;background:var(--teal);border:none;color:#000;font-weight:600;font-size:13px;cursor:pointer">Got it</button>
+    </div>
+  </div>
+
+  <!-- GLOBAL SEARCH -->
+  <div id="global-search-modal" onclick="if(event.target===this)closeGlobalSearch()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:560;align-items:flex-start">
+    <div style="background:var(--black);border-bottom:1px solid var(--border);width:100%;max-height:80vh;overflow-y:auto;padding:16px 20px 20px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <input id="global-search-input" placeholder="Search habits, today's exercises, mobility…" oninput="runGlobalSearch(this.value)" style="flex:1;background:var(--s1);border:1px solid var(--border);padding:10px 12px;color:#fff;font-size:14px">
+        <button onclick="closeGlobalSearch()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div id="global-search-results"></div>
+    </div>
+  </div>
+
+  <!-- MORE MENU — Coach/Lab/Move/Community moved here to keep the bottom
+       nav to 5 thumb-reachable tabs instead of 8. Nothing removed, just
+       one tap further away for the less-daily-use ones. -->
+  <div id="more-menu" onclick="if(event.target===this)toggleMoreMenu()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:550;align-items:flex-end">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">MORE</div>
+        <button onclick="toggleMoreMenu()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <button class="bn-more-item" data-tab="coach" onclick="switchTab('coach');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Coach
+      </button>
+      <button class="bn-more-item" data-tab="lab" onclick="switchTab('lab');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg> Lab
+      </button>
+      <button class="bn-more-item" data-tab="move" onclick="switchTab('move');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><circle cx="12" cy="5" r="2"/><path d="M12 7v5l-3 4m3-4l3 4M9 10H6m12 0h-3"/></svg> Move
+      </button>
+      <button class="bn-more-item" data-tab="community" onclick="switchTab('community');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> Community
+      </button>
+    </div>
+  </div>
 
 </div>
 
@@ -1876,6 +1931,115 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ── THEME ── applied as early as possible in this script to minimise the
+   flash of the wrong theme before it kicks in. */
+(function(){
+  try {
+    const saved = localStorage.getItem('jpt_theme');
+    if(saved === 'light') document.documentElement.setAttribute('data-theme','light');
+  } catch(e){}
+})();
+// Lightweight in-memory search over what's actually loaded right now — tab
+// names, today's habits, today's exercises, today's mobility drills. Not a
+// full-content index (would need indexing every day's data across every
+// tab), but covers the things worth jumping to directly.
+function buildSearchIndex(){
+  const idx = [];
+  const TABS = [
+    {tab:'habits',label:'Habits'}, {tab:'train',label:'Train'}, {tab:'eat',label:'Eat'},
+    {tab:'progress',label:'Progress'}, {tab:'coach',label:'Coach'}, {tab:'lab',label:'Lab'},
+    {tab:'move',label:'Move'}, {tab:'community',label:'Community'},
+  ];
+  TABS.forEach(t=>idx.push({ type:'Tab', label:t.label, tab:t.tab }));
+  try {
+    (getHabits()||[]).forEach(h=>idx.push({ type:'Habit', label:h.name, tab:'habits' }));
+  } catch(e){}
+  try {
+    const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+    const today = (_weeklyPlan||[]).find(d=>d.day===todayName);
+    (today?.exercises||[]).forEach(ex=>idx.push({ type:'Exercise (today)', label:ex.name, tab:'train' }));
+  } catch(e){}
+  try {
+    if(typeof JP_MOBILITY_PLAN !== 'undefined' && USER?.id === JP_USER_ID){
+      const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+      const m = JP_MOBILITY_PLAN[todayName];
+      (m?.warmup?.drills||[]).forEach(d=>idx.push({ type:'Mobility (today)', label:d, tab:'train' }));
+      (m?.staticStretch?.drills||[]).forEach(d=>idx.push({ type:'Mobility (today)', label:d, tab:'train' }));
+    }
+  } catch(e){}
+  return idx;
+}
+function openGlobalSearch(){
+  document.getElementById('global-search-modal').style.display = 'flex';
+  document.getElementById('global-search-input').value = '';
+  document.getElementById('global-search-results').innerHTML = '';
+  setTimeout(()=>document.getElementById('global-search-input')?.focus(), 50);
+}
+function closeGlobalSearch(){
+  document.getElementById('global-search-modal').style.display = 'none';
+}
+function jumpToSearchResult(tab){
+  closeGlobalSearch();
+  switchTab(tab);
+}
+function runGlobalSearch(query){
+  const el = document.getElementById('global-search-results');
+  const q = query.trim().toLowerCase();
+  if(!q){ el.innerHTML = ''; return; }
+  const results = buildSearchIndex().filter(r => r.label.toLowerCase().includes(q)).slice(0,25);
+  el.innerHTML = results.length
+    ? results.map(r=>`<div onclick="jumpToSearchResult('${r.tab}')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border);cursor:pointer">
+        <span style="font-size:13px;color:var(--white)">${escHtml(r.label)}</span>
+        <span style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">${escHtml(r.type)}</span>
+      </div>`).join('')
+    : '<p style="font-size:12px;color:var(--dim);padding:8px 4px">No matches.</p>';
+}
+
+// Bump this string whenever shipping something worth a callout — compared
+// against what each user's last seen (per-user, in localStorage) to decide
+// whether to show the "What's New" sheet. Update APP_CHANGELOG alongside it.
+const CURRENT_APP_VERSION = '2026-07-30';
+const APP_CHANGELOG = [
+  'New "Full Programme" view in Train — see your whole year, with deload weeks marked (Train → Full Programme →)',
+  'Every habit now groups by time of day, shows streaks, and has a Top Priority filter',
+  'Move tab now has a "which sport today" selector and real PNF/warm-up/yoga content',
+  'Progress tab: real strength charts, body composition tracking, and an adherence-vs-wellbeing view',
+  'Search (🔍, top right) and a light/dark theme toggle (🌙, top right)',
+];
+function checkForNewFeatures(){
+  if(!USER) return;
+  const key = `jpt_last_seen_version_${USER.id}`;
+  const seen = localStorage.getItem(key);
+  if(seen === CURRENT_APP_VERSION) return;
+  document.getElementById('whats-new-body').innerHTML = APP_CHANGELOG.map(item=>
+    `<div style="display:flex;gap:10px;padding:8px 0;font-size:13px;color:var(--muted);line-height:1.5"><span style="color:var(--teal);flex-shrink:0">•</span><span>${escHtml(item)}</span></div>`
+  ).join('');
+  document.getElementById('whats-new-modal').style.display = 'flex';
+  localStorage.setItem(key, CURRENT_APP_VERSION);
+}
+function closeWhatsNew(){
+  document.getElementById('whats-new-modal').style.display = 'none';
+}
+
+function toggleMoreMenu(){
+  const el = document.getElementById('more-menu');
+  if(!el) return;
+  const open = el.style.display === 'flex';
+  el.style.display = open ? 'none' : 'flex';
+}
+
+function toggleAppTheme(){
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if(isLight){ document.documentElement.removeAttribute('data-theme'); localStorage.setItem('jpt_theme','dark'); }
+  else { document.documentElement.setAttribute('data-theme','light'); localStorage.setItem('jpt_theme','light'); }
+  const btn = document.getElementById('theme-toggle-btn');
+  if(btn) btn.textContent = isLight ? '🌙' : '☀️';
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  const btn = document.getElementById('theme-toggle-btn');
+  if(btn && document.documentElement.getAttribute('data-theme')==='light') btn.textContent = '☀️';
+});
+
 /* ── INIT ── */
 const SUPA_URL='https://uzzcvrduoswjsrvuopgv.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6emN2cmR1b3N3anNydnVvcGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDQyNDcsImV4cCI6MjA5NzUyMDI0N30.5tD1xhZdSJaZFnNWfDXozPsvHceeqHl682pClUppUFo';
@@ -2176,6 +2340,7 @@ function renderXPUI() {
   renderXPUI();
   initAll();
   if (!isIntakeComplete()) showIntake();
+  checkForNewFeatures();
 })();
 
 function initAll() {
@@ -2293,7 +2458,9 @@ function switchTab(tab){
   // only ran if the user explicitly backed out. Guard it here instead so
   // any way of leaving the tab tears it down.
   if(tab!=='community' && communityRealtimeSub){ closeChannelView(); }
+  const overflowTabs = ['coach','lab','move','community'];
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.getElementById('bn-more-btn')?.classList.toggle('active', overflowTabs.includes(tab));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+tab));
   document.getElementById('content').scrollTop=0;
   if(tab==='lab'){
@@ -4858,7 +5025,7 @@ function renderMobilityCard(dayName) {
     else if (e.label.includes('Sport-matched')) key = 'custom_sport_mobility';
     sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">${escHtml(e.label)}${key?mobCheckbox(key):''}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${escHtml(e.detail)}</div></div>`);
   });
-  return `<div style="border:1px solid var(--border);background:rgba(255,255,255,.02);padding:14px;margin-bottom:12px">
+  return `<div class="section-card">
     <div style="font-size:12px;font-weight:700;color:var(--white);margin-bottom:8px">Mobility & Stretching</div>
     ${sections.join('')}
   </div>`;
