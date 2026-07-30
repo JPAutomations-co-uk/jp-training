@@ -3662,6 +3662,31 @@ function initCoach(){
   const sAvg = stepsWeeklyAvg();
   if(sAvg) parts.push(`7-day step average: ${sAvg.toLocaleString()} steps/day`);
 
+  // JP's account: the generic onboarding-questionnaire fields above (t.programme,
+  // e.protein_g etc.) are a DIFFERENT, stale data path from his real protocol
+  // (OB.train.weeklyPlan / OB.nutritionPlan / JP_MOBILITY_PLAN / OB.custom_habits)
+  // — Coach was answering questions with zero knowledge of his actual training
+  // split, nutrition targets, or any of the research conclusions already
+  // established in this protocol. Injected directly here so every surface that
+  // calls initCoach() first (main Coach tab, Train tab's inline chat) picks it
+  // up automatically.
+  if (USER?.id === JP_USER_ID) {
+    const todayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+    const todayTrain = (OB.train?.weeklyPlan || JP_TRAINING_PLAN).find(d => d.day === todayName);
+    const todayNutrition = (OB.nutritionPlan || JP_NUTRITION_PLAN)[todayName];
+    const jpParts = [
+      `This is JP — 18, 5'10", ~13% BF. Goals: height maximisation, maximum muscle growth, injury prevention.`,
+      `Today (${todayName})'s real session: ${todayTrain ? (todayTrain.type==='rest' ? todayTrain.keyLifts : `${todayTrain.sessionName} — ${(todayTrain.exercises||[]).map(e=>e.name).join(', ')}`) : 'unknown'}`,
+      todayNutrition ? `Today's real nutrition target: ${todayNutrition.label} — ${todayNutrition.targets.calories}kcal, ${todayNutrition.targets.protein}p/${todayNutrition.targets.carbs}c/${todayNutrition.targets.fat}f` : '',
+      `Organ meats (liver/heart): ${OB.hasOrganMeats ? 'in stock, real protocol active' : 'OUT of stock — beef substitute active for those meals, do not suggest liver/heart-specific advice as if he has it'}`,
+      `Taurine: removed from his stack, not currently stocked — do not recommend it as if he's taking it.`,
+      `Active custom habits today: ${(OB.custom_habits||[]).map(h=>h.name).join(', ') || 'none'}`,
+      `Established research conclusions — do not contradict these: (1) he is already at or near genetic-peak natural testosterone (age 17-20 peak) — T-boosting supplements (zinc/ashwagandha/boron) are very likely redundant, don't recommend them as if he's deficient. (2) Height: growth plates likely closing/closed at 18.5, real window status unconfirmed without a bone-age X-ray — the only real levers are sleep, no caloric deficit, and plyometrics (with an honest caveat that the evidence is strongest in much younger prepubertal kids); stretching/hanging/decompression is NOT a growth mechanism, only posture recovery (1-3cm functional, not skeletal). (3) Heavy compound lifting does NOT stunt growth — this is a myth, no need to hold back training intensity. (4) Diet is animal-first but nuts/seeds ARE approved in moderation (~10-40g) — not banned, this was a real bug already fixed once. (5) He's actively cutting down cannabis and nicotine pouches — support this, don't lecture.`,
+    ].filter(Boolean);
+    window._coachContext = `${jpParts.join('\n\n')}\n\n${parts.length ? `Additional onboarding profile:\n${parts.map(p=>`- ${p}`).join('\n')}` : ''}`;
+    return;
+  }
+
   window._coachContext=parts.length
     ? `This client's full profile:\n${parts.map(p=>`- ${p}`).join('\n')}`
     : null;
