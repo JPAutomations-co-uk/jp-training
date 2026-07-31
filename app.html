@@ -3518,18 +3518,20 @@ async function saveWorkout(asToday){
   // manual tap for each associated habit was pure double bookkeeping.
   // Scoped honestly: only habits genuinely part of THIS session (warm-up
   // before it, stretch after it, creatine post-workout) auto-complete here.
-  // PNF (pre-Muay-Thai, hours later) and Postural Protocol (evening,
-  // unrelated to session timing) are deliberately NOT included — they're
-  // separate events, not part of finishing the lift.
+  // PNF (pre-Speed/Power Session, hours later) and Postural Protocol
+  // (evening, unrelated to session timing) are deliberately NOT included —
+  // they're separate events, not part of finishing the lift.
   if(saveDate === TODAY) {
     autoCompleteHabit('training');
-    if(exercises.some(ex => ex.name === '4-Way Neck Isometric Holds')) autoCompleteHabit('custom_neck_training');
-    // Any non-rest day reaching this point is Mon-Sat by definition, which
-    // is exactly static_stretch's schedule — safe to always fire here.
+    // Every day of the week now has a real trackable session (Sunday's
+    // Athletic Development session replaced the old rest+sport slot), so
+    // static_stretch fires for any non-rest day reaching this point.
     autoCompleteHabit('custom_static_stretch');
     autoCompleteHabit('custom_creatine');
     const saveDow = new Date(saveDate+'T00:00:00').getDay();
-    if(saveDow === 2 || saveDow === 5) autoCompleteHabit('custom_explosive_warmup'); // Tue/Fri only
+    // Explosive/plyo warm-up now covers every session with a jump/sprint
+    // component: Mon (Speed), Tue (plyo legs), Wed (Power), Fri (plyo legs), Sun (Athletic Development).
+    if([1,2,3,5,0].includes(saveDow)) autoCompleteHabit('custom_explosive_warmup');
   }
   // Bonus: all sets ticked
   const allDone = document.querySelectorAll('.set-done');
@@ -5042,15 +5044,21 @@ const OB_DEFS = {
 // /api/programme and /api/food on demand (a real, deliberate design for a
 // multi-client coaching product). JP is both the coach and his own athlete,
 const JP_TRAINING_PLAN = [
-  { day: 'Monday', type: 'push', sessionName: 'Push A — Upper Chest Priority + Muay Thai 18:30', exercises: [
+  { day: 'Monday', type: 'push', sessionName: 'Push A — Upper Chest Priority + Speed Session 18:00', exercises: [
     { name: 'Incline Barbell Press', sets: 4, reps: '3-4 top / 8-10 back-off', load: '80kg / 65kg', notes: 'Add load once all back-off sets hit the top of the rep range' },
     { name: 'Weighted Dips', sets: 3, reps: '3-4 top / 10-12 back-off', load: '45kg / 25-30kg', notes: 'Add weight once both back-off sets hit 12 clean' },
     { name: 'Incline DB Press', sets: 3, reps: '10-12', load: '25-27.5kg each', notes: 'Double progression — reps first, then weight' },
     { name: 'Cable Lateral Raise', sets: 4, reps: '12-15', load: '10kg', notes: 'Strict form over load — side delt priority day' },
     { name: 'Overhead Cable Tricep Extension', sets: 3, reps: '10-12', load: '20kg', notes: 'Double progression' },
     { name: 'Face Pull', sets: 3, reps: '15', load: '12.5kg', notes: 'Rear delt/rotator cuff health — keep light, high rep' },
-    { name: '4-Way Neck Isometric Holds', sets: 2, reps: '20-30 sec each direction', load: 'Bodyweight', notes: 'Flexion/extension/left/right lateral flexion — Muay Thai prep' },
-  ], keyLifts: 'Incline Barbell Press, Weighted Dips' },
+    { name: 'A-Skip', sets: 3, reps: '20m', load: 'Bodyweight', notes: 'Evening Speed Session, 18:00 — high knee, dorsiflexed ankle. Warm-up already covered by the mobility card below.' },
+    { name: 'B-Skip', sets: 3, reps: '20m', load: 'Bodyweight', notes: '' },
+    { name: 'Wall Drives', sets: 3, reps: '8 sec each leg', load: 'Bodyweight', notes: 'Fast leg cycling against the wall, hips tall' },
+    { name: '3-Point Stance Starts', sets: 4, reps: '10m', load: 'Bodyweight', notes: 'Full recovery — 90 sec rest between reps' },
+    { name: 'Acceleration Sprints', sets: 4, reps: '20m', load: 'Bodyweight', notes: 'Max intent, full recovery — 2 min rest between reps' },
+    { name: 'Horizontal Bounds', sets: 3, reps: '6', load: 'Bodyweight', notes: '90 sec rest' },
+    { name: 'Split Squat Wall Hold', sets: 3, reps: '30 sec each leg', load: 'Bodyweight', notes: 'Cooldown — 30 sec rest' },
+  ], keyLifts: 'Incline Barbell Press, Weighted Dips, Acceleration Sprints' },
   { day: 'Tuesday', type: 'legs', sessionName: 'Legs A — Quad + Upper Glute', exercises: [
     { name: 'Box Jump', sets: 4, reps: '5', load: 'Bodyweight', notes: 'Step down, don\'t jump down. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
     { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Max horizontal distance, full reset between reps' },
@@ -5062,15 +5070,20 @@ const JP_TRAINING_PLAN = [
     { name: 'Seated Leg Curl', sets: 3, reps: '10-12', load: '82.5-90kg', notes: 'Double progression' },
     { name: 'Single-Leg Calf Raise', sets: 3, reps: '12-15 each', load: 'BW or +10kg', notes: 'Full stretch at the bottom' },
   ], keyLifts: 'Hack Squat, Bulgarian Split Squat' },
-  { day: 'Wednesday', type: 'pull', sessionName: 'Pull A — Lat Width + Muay Thai 17:30', exercises: [
+  { day: 'Wednesday', type: 'pull', sessionName: 'Pull A — Lat Width + Power Session 17:30', exercises: [
     { name: 'Weighted Pull-Ups', sets: 3, reps: '2-3 top / 8-10 back-off', load: '37.5kg / 15kg', notes: 'Add weight once back-off sets hit 10' },
     { name: 'Neutral/Mag Grip Pulldown', sets: 3, reps: '10-12', load: '90-95kg', notes: 'Double progression' },
     { name: 'Machine Row', sets: 3, reps: '4-5 top / 10-12 back-off', load: '145kg / 90kg', notes: 'Add load once back-off hits 12' },
     { name: 'Incline DB Curl', sets: 3, reps: '10-12', load: '17.5-20kg', notes: 'Double progression' },
     { name: 'Hammer Curl', sets: 3, reps: '12-15', load: '17.5kg', notes: 'Double progression' },
     { name: 'DB Lateral Raise', sets: 3, reps: '12-15', load: 'new — start ~7.5-10kg', notes: 'Different resistance curve than cable — genuine second angle of stimulus, not just more volume' },
-    { name: '4-Way Neck Isometric Holds', sets: 2, reps: '20-30 sec each direction', load: 'Bodyweight', notes: 'Muay Thai prep' },
-  ], keyLifts: 'Weighted Pull-Ups, Machine Row' },
+    { name: 'Depth Drop → Vertical Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Evening Power Session, 17:30 — step off box, land and explode immediately. 2 min rest.' },
+    { name: 'Box Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: '90 sec rest' },
+    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Max horizontal distance, full reset — 90 sec rest' },
+    { name: 'Lateral Bounds', sets: 3, reps: '8 each side', load: 'Bodyweight', notes: 'Glute-driven push-off, stick the landing — 60 sec rest' },
+    { name: 'Single-Leg Hop for Distance', sets: 3, reps: '5 each leg', load: 'Bodyweight', notes: '60 sec rest' },
+    { name: 'Spanish Squat Hold', sets: 3, reps: '30 sec', load: 'Bodyweight', notes: 'Cooldown — 30 sec rest' },
+  ], keyLifts: 'Weighted Pull-Ups, Machine Row, Depth Drop → Vertical Jump' },
   { day: 'Thursday', type: 'push', sessionName: 'Push B — Side Delt Priority', exercises: [
     { name: 'Sprint Protocol (pre-lift)', sets: 1, reps: '5×10m starts, 4×20m accel, 3×40m top speed, 3× flying sprints', load: '—', notes: 'Full recovery between every set — speed work, not conditioning' },
     { name: 'Machine Shoulder Press', sets: 3, reps: '3-4 top / 8-10 back-off', load: '60kg/side / 45kg/side', notes: 'Add load once back-off hits 10' },
@@ -5103,8 +5116,16 @@ const JP_TRAINING_PLAN = [
     { name: 'Face Pull', sets: 2, reps: '15', load: '12.5kg', notes: 'Rear delt/rotator cuff health' },
     { name: 'Pallof Press', sets: 3, reps: '12-15 each side', load: 'light cable stack', notes: 'Anti-rotation core — deliberately low fatigue cost given Zone 2 + full Pull session' },
   ], keyLifts: 'Weighted Pull-Ups, Meadows Row' },
-  { day: 'Sunday', type: 'rest', sessionName: 'Rest AM + Sport ~12:00', exercises: [],
-    keyLifts: 'No lifting — football/basketball/squash (rotating) ~12:00-13:30, plus mobility work positioned around the session.' },
+  { day: 'Sunday', type: 'athletic', sessionName: 'Athletic Development — Speed, Power & Agility ~12:00', exercises: [
+    { name: 'Multi-Directional Sprints', sets: 4, reps: 'variable, max effort', load: 'Bodyweight', notes: '2 min rest — forward, backward, lateral shuffle into sprint' },
+    { name: 'Acceleration Ladder', sets: 3, reps: 'full ladder length', load: 'Bodyweight', notes: '90 sec rest' },
+    { name: 'Resisted Bounds', sets: 3, reps: '6', load: 'Bodyweight', notes: 'Band or partner resistance if available — 90 sec rest' },
+    { name: 'Box Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: '90 sec rest' },
+    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: '90 sec rest' },
+    { name: 'Lateral Bound', sets: 3, reps: '6 each side', load: 'Bodyweight', notes: '60 sec rest' },
+    { name: 'Single-Leg Wall Sit', sets: 3, reps: '30 sec each leg', load: 'Bodyweight', notes: '30 sec rest' },
+    { name: 'Copenhagen Plank', sets: 3, reps: '20 sec each side', load: 'Bodyweight', notes: 'Adductor/groin strength — 30 sec rest' },
+  ], keyLifts: 'Multi-Directional Sprints, Box Jump, Broad Jump — plus a rotating PB test (sprint/vertical jump/broad jump/agility shuttle, one per week on a 4-week cycle).' },
 ];
 
 // v20 nutrition protocol — dark chocolate removed, espresso→yerba mate,
@@ -5118,16 +5139,25 @@ const JP_TRAINING_PLAN = [
 // exact figure for an item (banana, avocado, carrot, seasoning), a reasonable
 // standard-portion estimate is used and marked with "~" rather than presented
 // as an exact figure it isn't.
+// MMA-removal rebuild (31 Jul 2026): Muay Thai dropped from Mon/Wed, replaced
+// by Speed/Power sessions that finish earlier — Monday's dinner reverted to
+// the standard non-lean version (the old lean-dinner constraint existed only
+// because Muay Thai ending at 20:00 compressed the sleep gap), Wednesday's
+// dinner note retimed, Sunday's sport slot became a fixed Athletic
+// Development session. Calorie/carb targets deliberately unchanged — real
+// energy expenditure for short-burst max-intent work with full recovery
+// between reps isn't obviously higher than the old continuous-effort
+// sessions it replaced, so this wasn't treated as a reason to re-tier fuelling.
 const JP_NUTRITION_PLAN = {
-  Monday: { label: 'Push A + Muay Thai — full carb', targets: { calories: 5100, protein: 350, carbs: 340, fat: 160 }, meals: [
+  Monday: { label: 'Push A + Speed Session — full carb', targets: { calories: 5100, protein: 350, carbs: 340, fat: 160 }, meals: [
     { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
     { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
     { time: '12:00', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 100g mixed berries + 80g pineapple; 250ml beetroot juice' },
     { time: '13:00', name: '1 tbsp raw honey (~21g); 1 banana (~120g); yerba mate (1 mug, ~5g dry leaf/250ml water); taurine 1.5g' },
     { time: '15:30', name: '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g)' },
     { time: '16:45', name: '1 medium sweet potato (~200g), roasted in 5g butter; 200ml coconut water' },
-    { time: '17:30', name: '1 banana (~120g); 1 tbsp honey (~21g); 1/2 tsp salt (~2.5g) dissolved in 500ml water (pre-Muay Thai)' },
-    { time: '20:00', name: '300g lean beef; 150g boiled potato in 5g butter; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g) — lighter, post-Muay Thai' },
+    { time: '17:30', name: '1 banana (~120g); 1 tbsp honey (~21g); 1/2 tsp salt (~2.5g) dissolved in 500ml water (pre-Speed Session)' },
+    { time: '19:30', name: '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g) — post-Speed Session, standard dinner (session now ends earlier than Muay Thai did, no need for a lighter version)' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
     { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
   ] },
@@ -5142,15 +5172,15 @@ const JP_NUTRITION_PLAN = {
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
     { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
   ] },
-  Wednesday: { label: 'Pull A + Muay Thai — matched to Monday\'s fuelling', targets: { calories: 5100, protein: 350, carbs: 340, fat: 160 }, meals: [
+  Wednesday: { label: 'Pull A + Power Session — matched to Monday\'s fuelling', targets: { calories: 5100, protein: 350, carbs: 340, fat: 160 }, meals: [
     { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
     { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
     { time: '12:00', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 150g pineapple; 250ml beetroot juice' },
     { time: '13:00', name: '1 tbsp raw honey (~21g); 1 banana (~120g); yerba mate (1 mug, ~5g dry leaf/250ml water); taurine 1.5g' },
     { time: '15:30', name: '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g)' },
     { time: '16:45', name: '1 medium sweet potato (~200g), roasted in 5g butter; 200ml coconut water' },
-    { time: '17:00', name: '1 banana (~120g); 1 tbsp honey (~21g); 1/2 tsp salt (~2.5g) dissolved in 500ml water (pre-Muay Thai)' },
-    { time: '19:00', name: '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g) — post-Muay Thai' },
+    { time: '17:00', name: '1 banana (~120g); 1 tbsp honey (~21g); 1/2 tsp salt (~2.5g) dissolved in 500ml water (pre-Power Session)' },
+    { time: '19:00', name: '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g) — post-Power Session' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
     { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
   ] },
@@ -5187,29 +5217,31 @@ const JP_NUTRITION_PLAN = {
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
     { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
   ] },
-  Sunday: { label: 'Rest AM + Sport — moderate carb', targets: { calories: 4600, protein: 350, carbs: 270, fat: 160 }, meals: [
+  Sunday: { label: 'Athletic Development — moderate carb', targets: { calories: 4600, protein: 350, carbs: 270, fat: 160 }, meals: [
     { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
     { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
-    { time: '10:45', name: '1 banana (~120g); 1 tbsp honey (~21g) — pre-sport' },
-    { time: '13:30', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 150g pineapple — post-sport' },
-    { time: '15:30', name: '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g) — post-sport recovery' },
+    { time: '10:45', name: '1 banana (~120g); 1 tbsp honey (~21g) — pre-session' },
+    { time: '13:30', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 150g pineapple — post-session' },
+    { time: '15:30', name: '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g)' },
     { time: '19:00', name: '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g)' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
     { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
   ] },
 };
 
-// v5 stretching rebuild — day-specific dynamic warm-up, PNF (Mon/Wed pre-Muay
-// Thai), formalised static stretch sets, daily Postural Protocol, sport-matched
-// Sunday mobility. Reference/informational only — not sets×reps×load work, so
-// it isn't pushed through the session_sets tracking pipeline like the lifts.
+// v6 stretching rebuild (31 Jul 2026) — day-specific dynamic warm-up, PNF
+// (Mon/Wed pre-Speed/Power Session), formalised static stretch sets, daily
+// Postural Protocol, Sunday's Athletic Development warm-up/cooldown replacing
+// the old sport-matched selector. Reference/informational only — not
+// sets×reps×load work, so it isn't pushed through the session_sets tracking
+// pipeline like the lifts.
 const JP_MOBILITY_PLAN = {
   Monday: {
     warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
     staticStretch: { label: 'Chest/shoulders, 2×30-45s', drills: ['Doorway pec stretch', 'Cross-body rear delt', 'Overhead tricep', 'Anterior shoulder'] },
     extras: [
-      { label: 'Neck stretch', detail: 'Right after neck training — lateral flexion 2×20s each side, flexion 2×20s, extension 2×15s' },
-      { label: 'PNF hip flexor + adductor — 10 min, pre-Muay Thai', detail: 'Hip Flexor CRAC 3 sets each side, Adductor 3 sets — kick height & hip mobility' },
+      { label: 'Pre-Speed-Session warm-up — 10 min, before 18:00', detail: 'Walking hip circles ×10 each direction, leg swings front-back + lateral ×10 each leg, high knees 20m ×2, walking heel flicks 20m ×2, 2 build-up strides @ 50%/75% effort' },
+      { label: 'PNF hip flexor + adductor — 10 min, pre-Speed Session', detail: 'Hip Flexor CRAC 3 sets each side, Adductor 3 sets — sprint stride length & hip mobility' },
     ],
   },
   Tuesday: {
@@ -5223,8 +5255,8 @@ const JP_MOBILITY_PLAN = {
     warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
     staticStretch: { label: 'Lats/biceps, 2×30-45s', drills: ['Lat overhead stretch', 'Cross-body rear delt', 'Bicep wall stretch', 'Thoracic rotation'] },
     extras: [
-      { label: 'Neck stretch', detail: 'Right after neck training — lateral flexion 2×20s each side, flexion 2×20s, extension 2×15s' },
-      { label: 'PNF hip flexor + adductor — 10 min, pre-Muay Thai', detail: 'Hip Flexor CRAC 3 sets each side, Adductor 3 sets — kick height & hip mobility' },
+      { label: 'Pre-Power-Session warm-up — 10-12 min, before 17:30', detail: 'Walking hip circles ×10 each direction, leg swings front-back + lateral ×10 each leg, bodyweight squat-to-stand ×10, lateral band walk ×10 each direction, 2 build-up jumps @ 50%/75% effort' },
+      { label: 'PNF hip flexor + adductor — 10 min, pre-Power Session', detail: 'Hip Flexor CRAC 3 sets each side, Adductor 3 sets — jump mechanics & hip mobility' },
     ],
   },
   Thursday: {
@@ -5250,15 +5282,9 @@ const JP_MOBILITY_PLAN = {
     ],
   },
   Sunday: {
-    warmup: null,
-    staticStretch: null,
-    extras: [
-      { label: 'Sport-matched mobility — pick whichever matches today\'s sport, positioned around the session', detail:
-        'Football: Couch stretch 2×60s each side · Standing hamstring 2×45s each side · Copenhagen split/adductor 2×30s each side · Seated thoracic rotation 2×10 each direction · Calf stretch 2×45s each.  '
-        + 'Basketball: Kneeling hip flexor + quad 2×45s each side · Figure-4 2×60s each side · Wall ankle dorsiflexion 2×10 reps×3s each side · Sleeper stretch 2×45s each side · Thoracic extension over foam roller 2 min.  '
-        + 'Rugby: Deep squat hold 2×45s · Thread-the-needle rotation 2×8 each side · Neck lateral flexion 2×20s each direction · Seated figure-4 + forward lean 2×45s each side · Couch stretch 2×60s each side.  '
-        + 'Squash: Lateral lunge hold 2×45s each side · Wall ankle dorsiflexion 2×10 reps×3s each side · Cross-body posterior shoulder 2×45s each side · Standing quad stretch 2×45s each side · Seated thoracic rotation 2×10 each direction.' },
-    ],
+    warmup: { label: 'Athletic Development warm-up (10-12 min)', drills: ['Walking hip circles ×10 each direction', 'Leg swings front-back + lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', '2-3 build-up strides/jumps @ 50%/75% effort'] },
+    staticStretch: { label: 'Full-body, 2×30-45s — post-session', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Standing quad stretch', 'Seated thoracic rotation ×10 each direction'] },
+    extras: [],
   },
 };
 
@@ -5271,40 +5297,34 @@ const JP_MOBILITY_PLAN = {
 // Postural Protocol, daily walking, and an honest height-protocol summary
 // rather than the generic fallback's overstated "dead hangs decompress the
 // spine" / "explosive jumps are the growth stimulus" framing.
-// Structured per-sport mobility (same content as Train's Sunday extras text,
-// just structured here so Move can offer an actual "which sport today"
-// selector instead of dumping all four routines at once).
-const JP_SPORT_MOBILITY = {
-  Football:   ['Couch stretch 2×60s each side', 'Standing hamstring 2×45s each side', 'Copenhagen split/adductor 2×30s each side', 'Seated thoracic rotation 2×10 each direction', 'Calf stretch 2×45s each'],
-  Basketball: ['Kneeling hip flexor + quad 2×45s each side', 'Figure-4 2×60s each side', 'Wall ankle dorsiflexion 2×10 reps×3s each side', 'Sleeper stretch 2×45s each side', 'Thoracic extension over foam roller 2 min'],
-  Rugby:      ['Deep squat hold 2×45s', 'Thread-the-needle rotation 2×8 each side', 'Neck lateral flexion 2×20s each direction', 'Seated figure-4 + forward lean 2×45s each side', 'Couch stretch 2×60s each side'],
-  Squash:     ['Lateral lunge hold 2×45s each side', 'Wall ankle dorsiflexion 2×10 reps×3s each side', 'Cross-body posterior shoulder 2×45s each side', 'Standing quad stretch 2×45s each side', 'Seated thoracic rotation 2×10 each direction'],
+// Sunday's rotating team-sport slot was replaced by a single fixed Athletic
+// Development session (v21 MMA-removal rebuild) — no "which sport today"
+// selector needed any more, so this is now a static before/after display of
+// the same mobility that lives in Train's Sunday mobility card, surfaced
+// here too since Move is meant to be the full movement picture.
+const JP_ATHLETIC_MOBILITY = {
+  before: ['Walking hip circles ×10 each direction', 'Leg swings front-back + lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', '2-3 build-up strides/jumps @ 50%/75% effort'],
+  after: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Standing quad stretch', 'Seated thoracic rotation ×10 each direction'],
 };
 
-function selectMoveSport(sport){
-  OB.currentSport = sport;
-  localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data:{ onboarding: OB } }).catch(()=>{});
-  renderMoveSportPanel();
-}
 function renderMoveSportPanel(){
   const el = document.getElementById('move-sport-panel');
   if(!el) return;
-  const sport = OB.currentSport || null;
   el.innerHTML = `
-    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Sport-Matched Mobility — which sport today?</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-      ${Object.keys(JP_SPORT_MOBILITY).map(s=>`<button onclick="selectMoveSport('${s}')" style="font-size:11px;padding:6px 12px;background:${sport===s?'var(--teal)':'var(--s1)'};color:${sport===s?'#000':'var(--muted)'};border:1px solid ${sport===s?'var(--teal)':'var(--border)'};cursor:pointer">${s}</button>`).join('')}
-    </div>
-    ${sport ? `<ul style="margin:0;padding-left:16px;font-size:12px;color:var(--muted)">${JP_SPORT_MOBILITY[sport].map(d=>`<li style="margin-bottom:3px">${escHtml(d)}</li>`).join('')}</ul>${mobCheckbox('custom_sport_mobility')}` : `<p style="font-size:12px;color:var(--dim)">Pick today's sport to see just that routine, positioned around the session.</p>`}
+    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Sunday — Athletic Development Mobility</div>
+    <div style="font-size:11px;font-weight:700;color:var(--white);margin-bottom:4px">Before</div>
+    <ul style="margin:0 0 10px;padding-left:16px;font-size:12px;color:var(--muted)">${JP_ATHLETIC_MOBILITY.before.map(d=>`<li style="margin-bottom:3px">${escHtml(d)}</li>`).join('')}</ul>
+    <div style="font-size:11px;font-weight:700;color:var(--white);margin-bottom:4px">After</div>
+    <ul style="margin:0;padding-left:16px;font-size:12px;color:var(--muted)">${JP_ATHLETIC_MOBILITY.after.map(d=>`<li style="margin-bottom:3px">${escHtml(d)}</li>`).join('')}</ul>
+    ${mobCheckbox('custom_explosive_warmup')}
   `;
 }
 
 const JP_MOVE_RESULTS = {
-  summary: 'Your day-specific static stretching still lives in the Train tab, matched to whatever session you\'re doing. This page covers what stays constant regardless of the day — daily posture correction, daily walking, the two Muay-Thai injury-prevention blocks, a real yoga/NSDR option, sport-matched Sunday mobility, and the honest version of what actually moves your height goal.',
+  summary: 'Your day-specific static stretching still lives in the Train tab, matched to whatever session you\'re doing. This page covers what stays constant regardless of the day — daily posture correction, daily walking, the Speed/Power-session injury-prevention blocks, a real yoga/NSDR option, Sunday\'s Athletic Development mobility, and the honest version of what actually moves your height goal.',
   key_focus: 'The daily Postural Protocol is the one item here with a real, measurable payoff (1-3cm of functional height from correcting compressed posture) — everything else is either injury-prevention, baseline movement, or an honest account of what is and isn\'t actually driving the height goal.',
   morning_routine: [
-    { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your lifting/Muay Thai/sprint days don\'t otherwise cover.' },
+    { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your lifting/speed/power/sprint days don\'t otherwise cover.' },
   ],
   desk_breaks: [],
   // PNF and Explosive Warm-Up were previously only visible in Train's
@@ -5312,7 +5332,7 @@ const JP_MOVE_RESULTS = {
   // movement picture, and these are arguably the two most injury-relevant
   // items in the whole protocol.
   evening_routine: [
-    { name: 'PNF Hip Flexor + Adductor (Mon/Wed, pre-Muay Thai)', duration: '10 min', how_to: 'Contract-relax: half-kneeling, contract rear hip flexor into floor 65-70% × 8 sec → relax → fire glute, drive hips forward → hold 25-30 sec. 3 sets each side. Same for adductors, seated straddle.', why: 'Kick height and hip mobility — direct performance lever for Muay Thai, not just injury prevention.', habitKey:'custom_pnf_prep' },
+    { name: 'PNF Hip Flexor + Adductor (Mon/Wed, pre-Speed/Power Session)', duration: '10 min', how_to: 'Contract-relax: half-kneeling, contract rear hip flexor into floor 65-70% × 8 sec → relax → fire glute, drive hips forward → hold 25-30 sec. 3 sets each side. Same for adductors, seated straddle.', why: 'Sprint stride length and jump mechanics — direct performance lever for the Speed/Power sessions, not just injury prevention.', habitKey:'custom_pnf_prep' },
     { name: 'Yoga Flow', duration: '10-15 min, evening — real content, not a placeholder', how_to: 'Cat-cow (10 reps) → downward dog (45 sec) → low lunge each side (45 sec) → pigeon pose each side (60 sec) → seated forward fold (60 sec) → supine spinal twist each side (45 sec).', why: 'Hip-opening and spinal mobility sequence, directly relevant to kick height and general flexibility goals — you said you wanted to explore this further, this is the first real routine rather than a vague "NSDR or yoga" placeholder.', habitKey:'custom_nsdr_yoga' },
     { name: 'NSDR / Yoga Nidra (alternative to the flow above)', duration: '10-20 min', how_to: 'Guided body-scan audio (search "NSDR" or "Yoga Nidra" — Huberman\'s or any 10-20 min guided track works), lying still, eyes closed.', why: 'Real, evidenced dopamine reset (Kjaer 2002, +65%) and nervous-system recovery — use this OR the yoga flow above, not required to do both.', habitKey:'custom_nsdr_yoga' },
   ],
@@ -5329,7 +5349,7 @@ const JP_MOVE_RESULTS = {
   // section in mobRenderResults() rather than force-fit somewhere it doesn't
   // belong.
   injury_prevention: [
-    { name: 'Explosive Warm-Up (Tue/Fri, before plyometrics)', duration: '10-12 min', how_to: 'Hip circles, leg swings (front-back + lateral), hip flexor lunge + rotation, walking quad stretch, squat-to-stand, lateral band walk, walking high knees/heel flicks, build-up jumps at 50%/75% effort.', why: 'The single highest injury-risk moment in your week — jumping cold before plyometrics. Full detail in Train\'s mobility card.', habitKey:'custom_explosive_warmup', readOnce:false },
+    { name: 'Explosive Warm-Up (Mon/Tue/Wed/Fri/Sun, before any sprint/jump/plyo work)', duration: '10-12 min', how_to: 'Hip circles, leg swings (front-back + lateral), hip flexor lunge + rotation, walking quad stretch, squat-to-stand, lateral band walk, walking high knees/heel flicks, build-up strides/jumps at 50%/75% effort.', why: 'The single highest injury-risk moment in your week — sprinting or jumping cold. Full detail in Train\'s mobility card.', habitKey:'custom_explosive_warmup', readOnce:false },
   ],
   height_protocol: [
     { name: 'The honest ceiling', duration: 'Read once, keep in mind', how_to: 'At 18.5, growth plates in the height-critical bones (femur/tibia) are likely closing or closed — real window status is unconfirmed without a bone-age X-ray.', why: 'Nothing below overrides biology — this is "do everything legitimate on the chance a window remains," not a guarantee.', readOnce:true },
@@ -5358,7 +5378,7 @@ function renderMobilityCard(dayName) {
   const drillList = drills => `<ul style="margin:4px 0 0;padding-left:16px;font-size:12px;color:var(--muted)">${drills.map(d=>`<li style="margin-bottom:2px">${escHtml(d)}</li>`).join('')}</ul>`;
   const sections = [];
   if (m.warmup) {
-    const isExplosive = dayName === 'Tuesday' || dayName === 'Friday';
+    const isExplosive = dayName === 'Tuesday' || dayName === 'Friday' || dayName === 'Sunday';
     sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}${isExplosive?mobCheckbox('custom_explosive_warmup'):''}</div>${drillList(m.warmup.drills)}</div>`);
   }
   if (m.staticStretch) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">After — ${escHtml(m.staticStretch.label)}${mobCheckbox('custom_static_stretch')}</div>${drillList(m.staticStretch.drills)}</div>`);
@@ -5366,7 +5386,7 @@ function renderMobilityCard(dayName) {
     let key = null;
     if (e.label.includes('PNF')) key = 'custom_pnf_prep';
     else if (e.label.includes('Postural Protocol')) key = 'custom_postural_protocol';
-    else if (e.label.includes('Sport-matched')) key = 'custom_sport_mobility';
+    else if (e.label.includes('Pre-Speed-Session warm-up') || e.label.includes('Pre-Power-Session warm-up')) key = 'custom_explosive_warmup';
     sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">${escHtml(e.label)}${key?mobCheckbox(key):''}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${escHtml(e.detail)}</div></div>`);
   });
   return `<div class="section-card">
@@ -5391,7 +5411,7 @@ function loadOnboardingData() {
 // then behaves like any other user's plan — editable through the app's own
 // swapExercise() flow without this function silently discarding it on the
 // next page load, which unconditional overwriting-every-load would do.
-const JP_PROTOCOL_VERSION = 'v20-nutrition-v3-training';
+const JP_PROTOCOL_VERSION = 'v21-mma-removal-athletic-rebuild';
 
 function applyJPRealProtocol() {
   if (USER?.id !== JP_USER_ID) return;
@@ -5401,6 +5421,25 @@ function applyJPRealProtocol() {
     OB.train._protocolVersion = JP_PROTOCOL_VERSION;
   }
   OB.train_done = true;
+  // Sunday's PB test rotates on a 4-week cycle — rebuilt fresh from the
+  // JP_TRAINING_PLAN source of truth every load (not version-gated),
+  // since which test applies depends on the current week number, not a
+  // one-time protocol seed. Always reconstructs from JP_TRAINING_PLAN
+  // rather than mutating OB.train.weeklyPlan in place, so this never
+  // accumulates duplicate test entries across reloads.
+  if (OB.train.weeklyPlan) {
+    const SUN_PB_TESTS = [
+      { name: '30m Sprint Test', sets: 1, reps: 'max effort × 2', load: 'Bodyweight', notes: 'Rotating PB test (week 1 of 4) — best of 2 attempts, full recovery between' },
+      { name: 'Standing Vertical Jump Test', sets: 1, reps: 'max effort × 3', load: 'Bodyweight', notes: 'Rotating PB test (week 2 of 4) — best of 3 attempts, full recovery between' },
+      { name: 'Standing Broad Jump Test', sets: 1, reps: 'max effort × 3', load: 'Bodyweight', notes: 'Rotating PB test (week 3 of 4) — best of 3 attempts, full recovery between' },
+      { name: '5-10-5 Pro Agility Shuttle', sets: 1, reps: 'max effort × 2', load: 'Bodyweight', notes: 'Rotating PB test (week 4 of 4) — best of 2 attempts, full recovery between' },
+    ];
+    const baseSunday = JP_TRAINING_PLAN.find(d => d.day === 'Sunday');
+    const testIdx = (getProgramWeekInfo().weekNumber - 1) % 4;
+    OB.train.weeklyPlan = OB.train.weeklyPlan.map(d =>
+      d.day === 'Sunday' ? { ...baseSunday, exercises: [...baseSunday.exercises, SUN_PB_TESTS[testIdx]] } : d
+    );
+  }
   if (OB._nutritionPlanVersion !== JP_PROTOCOL_VERSION) {
     OB.nutritionPlan = JP_NUTRITION_PLAN;
     OB._nutritionPlanVersion = JP_PROTOCOL_VERSION;
@@ -5424,11 +5463,9 @@ function applyJPRealProtocol() {
     { key: 'make_bed',         name: 'Make Bed / Tidy Room',        desc: 'One fully-finished task before anything else — real behavioural-science basis (keystone habit: momentum + lower activation energy for the rest of the day), not tidiness for its own sake. First 5 min after waking.', days: [0,1,2,3,4,5,6], time:'Morning', priority:false },
     { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: [0,1,2,3,4,5,6], time:'Morning', priority:true },
     { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: [0,1,2,3,4,5,6], time:'Evening', priority:false },
-    { key: 'neck_training',    name: 'Neck Training',              desc: '4-way isometric holds — 2×20-30 sec each direction, plus the neck stretch right after. Muay Thai prep.', days: [1,3], time:'Post-Training', priority:false },
-    { key: 'pnf_prep',         name: 'PNF Prep',                    desc: 'Hip flexor + adductor PNF, 10 min pre-Muay Thai — kick height & groin injury prevention.', days: [1,3], time:'Evening', priority:true },
-    { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before plyometrics — the single highest injury-risk moment in your week if skipped.', days: [2,5], time:'Pre-Training', priority:true },
-    { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: [1,2,3,4,5,6], time:'Post-Training', priority:false },
-    { key: 'sport_mobility',   name: 'Sport-Matched Mobility',      desc: 'Whichever routine matches today\'s sport (football/basketball/rugby/squash) — see the Move tab.', days: [0], time:'Pre-Training', priority:false },
+    { key: 'pnf_prep',         name: 'PNF Prep',                    desc: 'Hip flexor + adductor PNF, 10 min pre-Speed/Power Session — sprint stride length, jump mechanics & groin injury prevention.', days: [1,3], time:'Evening', priority:true },
+    { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Monday (Speed), Tuesday (plyo legs), Wednesday (Power), Friday (plyo legs), Sunday (Athletic Development).', days: [0,1,2,3,5], time:'Pre-Training', priority:true },
+    { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: [0,1,2,3,4,5,6], time:'Post-Training', priority:false },
     { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, cat-cow, wall slides, chin tucks, child\'s pose — 10 min, evening. Real 1-3cm functional height payoff, needs daily consistency to work.', days: [0,1,2,3,4,5,6], time:'Evening', priority:true },
     { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: [0,1,2,3,4,5,6], time:'Post-Training', priority:true },
     { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: [0,1,2,3,4,5,6], time:'Anytime', priority:false },
