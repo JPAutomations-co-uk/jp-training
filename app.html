@@ -3513,14 +3513,23 @@ async function saveWorkout(asToday){
     _saveQuestState(qs);
     renderQuests().catch(()=>{});
   } catch(e) {}
-  // Auto-complete the "Complete Training Session" habit — the habit literally
-  // says "log today's session in the Train tab", so having just done exactly
-  // that and still requiring a separate manual tap in the Habits tab was pure
-  // double bookkeeping. Same for neck training on the days it's programmed —
-  // if it was part of the session just saved, it's done, no extra tap needed.
+  // Auto-complete every habit that's actually tied to the training session
+  // itself — logging the session already proves it happened, so a separate
+  // manual tap for each associated habit was pure double bookkeeping.
+  // Scoped honestly: only habits genuinely part of THIS session (warm-up
+  // before it, stretch after it, creatine post-workout) auto-complete here.
+  // PNF (pre-Muay-Thai, hours later) and Postural Protocol (evening,
+  // unrelated to session timing) are deliberately NOT included — they're
+  // separate events, not part of finishing the lift.
   if(saveDate === TODAY) {
     autoCompleteHabit('training');
     if(exercises.some(ex => ex.name === '4-Way Neck Isometric Holds')) autoCompleteHabit('custom_neck_training');
+    // Any non-rest day reaching this point is Mon-Sat by definition, which
+    // is exactly static_stretch's schedule — safe to always fire here.
+    autoCompleteHabit('custom_static_stretch');
+    autoCompleteHabit('custom_creatine');
+    const saveDow = new Date(saveDate+'T00:00:00').getDay();
+    if(saveDow === 2 || saveDow === 5) autoCompleteHabit('custom_explosive_warmup'); // Tue/Fri only
   }
   // Bonus: all sets ticked
   const allDone = document.querySelectorAll('.set-done');
@@ -5412,6 +5421,9 @@ function applyJPRealProtocol() {
   // take effect immediately without leaving stale entries behind.
   // Sauna excluded — no access currently (JP's call, not a gap).
   const JP_CUSTOM_HABITS = [
+    { key: 'make_bed',         name: 'Make Bed / Tidy Room',        desc: 'One fully-finished task before anything else — real behavioural-science basis (keystone habit: momentum + lower activation energy for the rest of the day), not tidiness for its own sake. First 5 min after waking.', days: [0,1,2,3,4,5,6], time:'Morning', priority:false },
+    { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: [0,1,2,3,4,5,6], time:'Morning', priority:true },
+    { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: [0,1,2,3,4,5,6], time:'Evening', priority:false },
     { key: 'neck_training',    name: 'Neck Training',              desc: '4-way isometric holds — 2×20-30 sec each direction, plus the neck stretch right after. Muay Thai prep.', days: [1,3], time:'Post-Training', priority:false },
     { key: 'pnf_prep',         name: 'PNF Prep',                    desc: 'Hip flexor + adductor PNF, 10 min pre-Muay Thai — kick height & groin injury prevention.', days: [1,3], time:'Evening', priority:true },
     { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before plyometrics — the single highest injury-risk moment in your week if skipped.', days: [2,5], time:'Pre-Training', priority:true },
@@ -5422,7 +5434,7 @@ function applyJPRealProtocol() {
     { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: [0,1,2,3,4,5,6], time:'Anytime', priority:false },
     { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: [0,1,2,3,4,5,6], time:'Anytime', priority:false },
     { key: 'prebed_stack',     name: 'Pre-Bed Stack',               desc: 'Magnesium glycinate 200mg + L-theanine 200mg, 21:00 — sleep quality, feeds directly into the recovery/height/muscle levers.', days: [0,1,2,3,4,5,6], time:'Evening', priority:false },
-    { key: 'red_light',        name: 'Red Light Therapy',           desc: 'Needs a device you don\'t have yet — leave unticked until you\'re set up. Real mechanism (mitochondrial cytochrome c oxidase), modest recovery/testosterone benefit.', days: [0,1,2,3,4,5,6], time:'Evening', priority:false },
+    { key: 'red_light',        name: 'Red Light Therapy',           desc: '10-20 min, mask — real mechanism for skin/inflammation (collagen synthesis, cytochrome c oxidase), directly relevant given your acne history. Not a meaningful testosterone lever from a face mask specifically (that evidence is from direct-to-body application) — check your mask actually runs 630-670nm red / 810-850nm NIR, efficacy is uncertain if unspecified.', days: [0,1,2,3,4,5,6], time:'Morning', priority:false },
     { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: [0,1,2,3,4,5,6], time:'Evening', priority:false },
     { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: [0,1,2,3,4,5,6], time:'Anytime', priority:false },
     { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: [0,1,2,3,4,5,6], time:'Evening', priority:true },
