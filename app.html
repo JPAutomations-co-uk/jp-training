@@ -7624,15 +7624,22 @@ async function loadTrainingHistory() {
   if(!USER) return;
   try {
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
-    const { data: sessions } = await sb.from('workout_sessions')
-      .select('id,date,session_type')
-      .eq('user_id',USER.id)
-      .gte('date',cutoff.toISOString().slice(0,10))
-      .order('date',{ascending:false});
-    if(!sessions?.length) return;
-
-    _loggedSessionDates = new Set(sessions.map(s=>s.date));
+    const cutoffStr = cutoff.toISOString().slice(0,10);
+    const [{ data: sessions }, { data: trainedHabitDays }] = await Promise.all([
+      sb.from('workout_sessions').select('id,date,session_type').eq('user_id',USER.id).gte('date',cutoffStr).order('date',{ascending:false}),
+      sb.from('habit_log').select('date').eq('user_id',USER.id).eq('habit_name','training').eq('completed',true).gte('date',cutoffStr),
+    ]);
+    // A day counts as trained if EITHER a real Save-Session row exists OR the
+    // "Complete Training Session" habit was ticked directly from the Habits
+    // tab — these are two independent ways to mark a day done, and the
+    // day-tab dot shouldn't show a day as missed just because one path was
+    // used instead of the other.
+    _loggedSessionDates = new Set([
+      ...(sessions||[]).map(s=>s.date),
+      ...(trainedHabitDays||[]).map(h=>h.date),
+    ]);
     renderDayTabIndicators();
+    if(!sessions?.length) return;
 
     const { data: sets } = await sb.from('session_sets')
       .select('session_id,exercise_name,set_number,reps,weight_kg')
