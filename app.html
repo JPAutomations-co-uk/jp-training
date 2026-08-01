@@ -54,6 +54,16 @@
     .section-card{border:1px solid var(--border);background:rgba(255,255,255,.02);padding:14px;margin-bottom:12px}
     .section-label{font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em}
     .mini-badge{font-size:9px;color:var(--teal);border:1px solid rgba(44,212,196,.3);padding:1px 5px;letter-spacing:.06em;text-transform:uppercase;display:inline-block}
+
+    /* Member map — Leaflet generates its own popup chrome (wrapper/tip),
+       which inline styles on the bindPopup() HTML can't reach, so it's
+       restyled here to match the app instead of showing Leaflet's default
+       white box. Built on the same var(--...) set so it themes correctly. */
+    .jpt-map-popup .leaflet-popup-content-wrapper{background:var(--s1);color:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    .jpt-map-popup .leaflet-popup-content{margin:0;width:auto!important}
+    .jpt-map-popup .leaflet-popup-tip{background:var(--s1);border:1px solid var(--border)}
+    .jpt-map-popup a.leaflet-popup-close-button{color:var(--dim)}
+    .jpt-map-marker{border-radius:50%;border:2px solid var(--teal);object-fit:cover;background:var(--s1);box-shadow:0 2px 6px rgba(0,0,0,.4)}
     html,body{height:100%;overflow:hidden;background:var(--black);color:var(--white);
       font-family:var(--B);-webkit-font-smoothing:antialiased}
 
@@ -3489,11 +3499,28 @@ async function loadMemberMap(){
   _memberMapMarkers = [];
 
   membersWithLocation.forEach(m => {
-    const marker = L.marker([m.location_lat, m.location_lng]).addTo(_memberMapInstance);
+    const icon = m.avatar_url
+      ? L.divIcon({
+          html: `<img src="${escHtml(m.avatar_url)}" class="jpt-map-marker" style="width:38px;height:38px">`,
+          className: '', iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -19],
+        })
+      : L.divIcon({
+          html: `<div class="jpt-map-marker" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>`,
+          className: '', iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -19],
+        });
+    const marker = L.marker([m.location_lat, m.location_lng], { icon }).addTo(_memberMapInstance);
     const avatarHtml = m.avatar_url
-      ? `<img src="${escHtml(m.avatar_url)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px">`
-      : '';
-    marker.bindPopup(`<div style="text-align:center">${avatarHtml}<div style="font-weight:700">${escHtml(m.display_name||'Member')}</div><div style="font-size:11px;color:#666">${escHtml(m.location_name||'')}</div><a href="#" onclick="openProfileView('${m.id}');return false" style="font-size:11px">View profile</a></div>`);
+      ? `<img src="${escHtml(m.avatar_url)}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-bottom:8px;border:2px solid var(--teal)">`
+      : `<div style="width:56px;height:56px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 8px">👤</div>`;
+    marker.bindPopup(
+      `<div onclick="openProfileView('${m.id}')" style="text-align:center;padding:12px;cursor:pointer;min-width:140px">
+        ${avatarHtml}
+        <div style="font-family:var(--B);font-weight:700;font-size:14px;color:var(--white)">${escHtml(m.display_name||'Member')}</div>
+        ${m.location_name ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${escHtml(m.location_name)}</div>` : ''}
+        <div style="font-size:11px;color:var(--teal);margin-top:8px;font-weight:600">View profile →</div>
+      </div>`,
+      { className: 'jpt-map-popup', closeButton: true }
+    );
     _memberMapMarkers.push(marker);
   });
 }
@@ -3519,6 +3546,7 @@ async function openProfileView(userId){
   document.getElementById('community-profile-view').style.display = 'block';
   const body = document.getElementById('community-profile-body');
   if(!body) return;
+  body.dataset.userId = userId;
   body.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
 
   let m = _communityMembersFull.find(x => x.id === userId);
@@ -3608,6 +3636,7 @@ function _renderPostCard(post){
   const liked = !!post._liked;
   const likeCount = post._likeCount || 0;
   const replyCount = post._replyCount || 0;
+  const isMine = post.user_id === USER.id;
   let media = '';
   if(post.media_url && post.media_type === 'video'){
     media = `<video src="${escHtml(post.media_url)}" controls style="width:100%;border-radius:10px;margin-top:8px;max-height:400px;background:#000"></video>`;
@@ -3617,10 +3646,11 @@ function _renderPostCard(post){
   return `<div onclick="openPostThread('${post.id}')" style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       ${avatar ? `<img src="${escHtml(avatar)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:32px;height:32px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>`}
-      <div>
+      <div style="flex:1">
         <div style="font-weight:700;font-size:13px">${escHtml(author)}</div>
         <div style="font-size:10px;color:var(--dim)">${time}</div>
       </div>
+      ${isMine ? `<button onclick="event.stopPropagation();deletePost('${post.id}')" style="background:none;border:none;color:var(--dim);font-size:15px;cursor:pointer;padding:4px" title="Delete post">🗑️</button>` : ''}
     </div>
     ${post.body ? `<div style="font-size:14px;white-space:pre-wrap">${_highlightMentions(post.body)}</div>` : ''}
     ${media}
@@ -3629,6 +3659,26 @@ function _renderPostCard(post){
       <span style="font-size:12px;color:var(--dim)">💬 ${replyCount}</span>
     </div>
   </div>`;
+}
+
+// Deletes a post the current user owns (RLS also enforces this server-side —
+// the .eq('user_id', USER.id) here is a UX-speed shortcut, not the real guard).
+// Cascades to replies + likes via the FK ON DELETE CASCADE set up in migration 0009.
+async function deletePost(postId){
+  if(!confirm('Delete this post? This can\'t be undone.')) return;
+  const { error } = await sb.from('posts').delete().eq('id', postId).eq('user_id', USER.id);
+  if(error){ showToast('Failed to delete: ' + (error.message || 'unknown error')); return; }
+  showToast('Post deleted');
+  if(_activePostThreadId === postId){
+    closePostThread();
+  } else if(_activePostThreadId){
+    await loadPostThread(_activePostThreadId);
+  } else if(document.getElementById('community-profile-view')?.style.display !== 'none'){
+    const viewedId = document.getElementById('community-profile-body')?.dataset.userId || USER.id;
+    await openProfileView(viewedId);
+  } else {
+    await loadFeed();
+  }
 }
 
 // Attaches _likeCount/_liked/_replyCount to each post in-place — shared by
