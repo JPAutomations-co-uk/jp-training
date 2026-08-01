@@ -6052,14 +6052,22 @@ async function loadOnboardingData() {
   if(dbOB && Object.keys(dbOB).length){
     OB = { ...local, ...dbOB };
   } else {
-    // No user_state row yet — one-time migration from user_metadata (if
-    // there's anything there), then actively clear it out of
-    // user_metadata so an already-bloated token actually shrinks back
-    // down on next refresh, instead of just freezing at its current size.
+    // No row in user_state yet — either first migration, or an earlier
+    // attempt ran before that table existed and silently failed to save.
+    // Build OB from whatever's available (localStorage always has a full
+    // copy from every prior save) and write it into the table now.
     OB = { ...local, ...meta };
+    await saveOB();
     if(Object.keys(meta).length){
-      await saveOB();
-      sb.auth.updateUser({ data: { onboarding: null } }).catch(()=>{});
+      // Clearing user_metadata server-side does NOT retroactively shrink
+      // a token that's already been issued — a JWT is a self-contained,
+      // already-signed blob, so the client keeps using the old bloated
+      // one until a genuinely new token is minted. updateUser() alone
+      // doesn't force that — refreshSession() does.
+      try {
+        await sb.auth.updateUser({ data: { onboarding: null } });
+        await sb.auth.refreshSession();
+      } catch(e) {}
     }
   }
   applyJPRealProtocol();
