@@ -2699,53 +2699,8 @@ async function loadChannels(){
     return;
   }
   if(error){
-    // A bare "Bad Request" with no error.code (not the usual 42P01/42501
-    // structured PostgREST error) most often means the request itself was
-    // malformed — commonly an .order() on a column that doesn't exist, which
-    // PostgREST rejects as 400 before it even gets to RLS/table checks.
-    // Retry with a bare select (no order) to isolate whether that's it —
-    // this tells us in one round-trip whether it's specifically the
-    // `position` column or something deeper (missing table/RLS).
-    const { data: retryData, error: retryError } = await sb.from('community_channels').select('*');
-    if(!retryError){
-      communityChannelsCache = (retryData||[]).slice();
-      list.innerHTML = `<div style="color:#fbbf24;font-size:12px;margin-bottom:8px">Loaded, but the channels table has no working "position" column — sort order isn't applied. Fix: add a position column (integer) or remove the .order() call.</div>` + _renderChannelListHtml();
-      return;
-    }
-    // Still failing without .order() too, and the supabase-js error object
-    // has nothing beyond a bare "Bad Request" (no code/details/hint) — that
-    // client-side normalisation is clearly swallowing whatever PostgREST
-    // actually said. Run TWO raw fetches side by side, bypassing the client
-    // entirely: one against this table, one against `profiles` (known to
-    // work everywhere else in the app) as a control — using the exact same
-    // request shape for both. If the control also fails the same way, this
-    // is a systemic auth/gateway problem, not anything about this specific
-    // table. If only this table fails, that's real proof it's isolated to
-    // this table specifically (corrupted catalog entry, orphaned publication
-    // reference, etc.) — not a guess about *why*, but a controlled test of
-    // *whether it's table-specific or systemic*.
-    let rawDiag = '';
-    try {
-      const { data: { session } } = await sb.auth.getSession();
-      const authHeaders = { apikey: SUPA_KEY, Authorization: `Bearer ${session?.access_token || SUPA_KEY}` };
-      const [targetRaw, controlRaw] = await Promise.all([
-        fetch(`${SUPA_URL}/rest/v1/community_channels?select=*`, { headers: authHeaders }),
-        fetch(`${SUPA_URL}/rest/v1/profiles?select=id&limit=1`, { headers: authHeaders }),
-      ]);
-      const [targetText, controlText] = await Promise.all([targetRaw.text(), controlRaw.text()]);
-      rawDiag = `Target (community_channels): HTTP ${targetRaw.status} — ${targetText.slice(0, 300)} | Control (profiles): HTTP ${controlRaw.status} — ${controlText.slice(0, 150)}`;
-    } catch(rawErr) {
-      rawDiag = `Raw fetch comparison failed: ${String(rawErr?.message||rawErr)}`;
-    }
-    const e = retryError;
-    const code = e.code || '';
-    const hint = code === '42P01'
-      ? 'The channels table doesn\'t exist yet — create it in Supabase.'
-      : (code === '42501' || /row-level security|RLS/i.test(e.message||''))
-        ? 'A Row-Level Security policy is blocking reads on the channels table — check its RLS policies in Supabase.'
-        : '';
-    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels${code?` (${escHtml(code)})`:''}: ${escHtml(e.message||'unknown error')}${e.details?` — ${escHtml(e.details)}`:''}${e.hint?` (hint: ${escHtml(e.hint)})`:''}.${hint?` ${escHtml(hint)}`:''} <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>
-      <div style="color:var(--dim);font-size:10px;margin-top:6px;word-break:break-all">${escHtml(rawDiag)}</div>`;
+    const code = error.code || '';
+    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels${code?` (${escHtml(code)})`:''}: ${escHtml(error.message||'unknown error')}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
     return;
   }
   communityChannelsCache = data || [];
