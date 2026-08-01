@@ -3436,7 +3436,7 @@ async function openProfileView(userId){
   const linkChips = (m.links || '').split('\n').map(l => l.trim()).filter(Boolean);
 
   const { data: posts } = await sb.from('posts')
-    .select('*, author:profiles(display_name,avatar_url)')
+    .select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)')
     .eq('user_id', userId)
     .is('parent_post_id', null)
     .order('created_at', { ascending: false })
@@ -3528,7 +3528,7 @@ async function loadFeed(){
   if(!list) return;
   list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
   const { data, error } = await sb.from('posts')
-    .select('*, author:profiles(display_name,avatar_url)')
+    .select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)')
     .is('parent_post_id', null)
     .order('created_at', { ascending: false })
     .limit(30);
@@ -3564,9 +3564,9 @@ async function loadPostThread(postId){
   const body = document.getElementById('community-post-thread-body');
   if(!body) return;
   body.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
-  const { data: post, error } = await sb.from('posts').select('*, author:profiles(display_name,avatar_url)').eq('id', postId).maybeSingle();
+  const { data: post, error } = await sb.from('posts').select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)').eq('id', postId).maybeSingle();
   if(error || !post){ body.innerHTML = _communityErrorHtml('Failed to load post', error||{message:'Post not found'}); return; }
-  const { data: replies } = await sb.from('posts').select('*, author:profiles(display_name,avatar_url)').eq('parent_post_id', postId).order('created_at', { ascending: true });
+  const { data: replies } = await sb.from('posts').select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)').eq('parent_post_id', postId).order('created_at', { ascending: true });
   const allPosts = [post, ...(replies||[])];
   await _attachPostMeta(allPosts);
   body.innerHTML = _renderPostCard(post) +
