@@ -2693,7 +2693,7 @@ async function loadChannels(){
   list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
   let data, error;
   try {
-    ({ data, error } = await sb.from('channels').select('*').order('position', { ascending: true }));
+    ({ data, error } = await sb.from('community_channels').select('*').order('position', { ascending: true }));
   } catch(err) {
     list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels — ${escHtml(String(err?.message||err))}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
     return;
@@ -2706,7 +2706,7 @@ async function loadChannels(){
     // Retry with a bare select (no order) to isolate whether that's it —
     // this tells us in one round-trip whether it's specifically the
     // `position` column or something deeper (missing table/RLS).
-    const { data: retryData, error: retryError } = await sb.from('channels').select('*');
+    const { data: retryData, error: retryError } = await sb.from('community_channels').select('*');
     if(!retryError){
       communityChannelsCache = (retryData||[]).slice();
       list.innerHTML = `<div style="color:#fbbf24;font-size:12px;margin-bottom:8px">Loaded, but the channels table has no working "position" column — sort order isn't applied. Fix: add a position column (integer) or remove the .order() call.</div>` + _renderChannelListHtml();
@@ -2721,7 +2721,7 @@ async function loadChannels(){
     let rawDiag = '';
     try {
       const { data: { session } } = await sb.auth.getSession();
-      const raw = await fetch(`${SUPA_URL}/rest/v1/channels?select=*`, {
+      const raw = await fetch(`${SUPA_URL}/rest/v1/community_channels?select=*`, {
         headers: { apikey: SUPA_KEY, Authorization: `Bearer ${session?.access_token || SUPA_KEY}` }
       });
       const rawText = await raw.text();
