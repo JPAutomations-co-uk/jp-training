@@ -1795,7 +1795,8 @@
         <div style="font-family:var(--D);font-size:26px;font-weight:900;letter-spacing:-.02em">THE STANDARD</div>
         <div style="display:flex;gap:8px">
           <button onclick="openEvents()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">📅</button>
-          <button id="community-admin-btn" onclick="openAdmin()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">⚙️</button>
+          <button id="community-admin-btn" onclick="openCreateChannel()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">＋</button>
+          <button id="community-settings-btn" onclick="openAdmin()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">⚙️</button>
         </div>
       </div>
       <div id="community-channels"></div>
@@ -1809,11 +1810,32 @@
         </div>
       </div>
       <div id="community-messages" style="flex:1;overflow-y:auto;padding:16px 20px"></div>
-      <div id="community-composer" style="display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--border)">
-        <input id="community-input" placeholder="Message..." style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--white);font-family:var(--B);font-size:14px" onkeydown="if(event.key==='Enter')sendCommunityMessage()">
+      <div id="community-reply-preview" style="display:none;padding:8px 20px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);align-items:center;justify-content:space-between">
+        <div>Replying to <span id="community-reply-preview-text" style="color:var(--teal)"></span></div>
+        <button onclick="cancelReply()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:0 4px">✕</button>
+      </div>
+      <div id="community-mention-list" style="display:none;max-height:140px;overflow-y:auto;border-top:1px solid var(--border);background:var(--s1)"></div>
+      <div id="community-composer" style="display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--border);position:relative">
+        <input id="community-input" placeholder="Message... (@ to mention)" style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--white);font-family:var(--B);font-size:14px" oninput="onCommunityInput(this.value)" onkeydown="if(event.key==='Enter')sendCommunityMessage()">
         <button onclick="sendCommunityMessage()" style="background:var(--teal);border:none;border-radius:8px;padding:0 16px;color:#000;font-weight:700;cursor:pointer">Send</button>
       </div>
       <div id="community-readonly-note" style="display:none;padding:12px 20px;text-align:center;font-size:12px;color:var(--muted)">Only JP can post here.</div>
+    </div>
+  </div>
+
+  <!-- ══ CREATE CHANNEL MODAL (admin only) ══ -->
+  <div id="create-channel-modal" onclick="if(event.target===this)closeCreateChannel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">NEW CHANNEL</div>
+        <button onclick="closeCreateChannel()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <input id="cc-name" placeholder="Channel name" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:10px;box-sizing:border-box">
+      <input id="cc-description" placeholder="Description (optional)" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:10px;box-sizing:border-box">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:16px;cursor:pointer">
+        <input type="checkbox" id="cc-admin-only">Announcement channel (only admins can post)
+      </label>
+      <button onclick="createChannel()" style="width:100%;background:var(--teal);border:none;border-radius:8px;padding:14px;color:#000;font-weight:700;cursor:pointer;font-family:var(--D);letter-spacing:.04em;text-transform:uppercase">Create Channel</button>
     </div>
   </div>
 
@@ -2676,8 +2698,10 @@ let communityRealtimeSub = null;
 const COMMUNITY_TABLE = 'standard_channels';
 
 async function initCommunity(){
-  const adminBtn = document.getElementById('community-admin-btn');
-  if(adminBtn) adminBtn.style.display = PROFILE?.is_admin ? 'flex' : 'none';
+  const createBtn = document.getElementById('community-admin-btn');
+  const settingsBtn = document.getElementById('community-settings-btn');
+  if(createBtn) createBtn.style.display = PROFILE?.is_admin ? 'flex' : 'none';
+  if(settingsBtn) settingsBtn.style.display = PROFILE?.is_admin ? 'flex' : 'none';
   await loadChannels();
 }
 
@@ -2709,37 +2733,27 @@ async function loadChannels(){
     r => r, e => ({ data: null, error: e })
   );
   if(result.error){
-    // Direct curl to this exact endpoint with a valid service-role token
-    // returns a clean 200 with real data — table/RLS/PostgREST are all
-    // confirmed fine server-side. So if this is still failing, the most
-    // likely remaining explanation is this specific browser session's own
-    // auth token — show its actual state directly rather than needing dev
-    // tools to check it.
-    let sessionDiag = 'no session info available';
-    try {
-      const { data: { session } } = await sb.auth.getSession();
-      if(!session) sessionDiag = 'No active session at all — sb.auth.getSession() returned null.';
-      else {
-        const exp = session.expires_at ? new Date(session.expires_at * 1000) : null;
-        const isExpired = exp ? exp.getTime() < Date.now() : 'unknown';
-        const tokenPreview = session.access_token ? `${session.access_token.slice(0,12)}...${session.access_token.slice(-6)} (${session.access_token.length} chars)` : 'MISSING';
-        sessionDiag = `Session present. Token: ${tokenPreview}. Expires: ${exp ? exp.toISOString() : 'unknown'} — expired: ${isExpired}.`;
-      }
-    } catch(diagErr) {
-      sessionDiag = `Could not read session: ${String(diagErr?.message||diagErr)}`;
-    }
-    list.innerHTML = _communityErrorHtml('Failed to load channels', result.error) +
-      `<div style="color:var(--dim);font-size:10px;margin-top:6px;word-break:break-all">${escHtml(sessionDiag)}</div>`;
+    list.innerHTML = _communityErrorHtml('Failed to load channels', result.error);
     return;
   }
   communityChannelsCache = result.data || [];
   list.innerHTML = _renderChannelListHtml();
 }
 
+// Approved-member directory — fetched once per channel-open, reused for
+// both @mention autocomplete and highlighting mentions in rendered
+// messages, rather than a separate query for each.
+let _communityMembersCache = [];
+async function _loadCommunityMembers(){
+  const { data } = await sb.from('profiles').select('id,display_name').eq('status', 'approved');
+  _communityMembersCache = data || [];
+}
+
 async function openChannel(channelId){
   const ch = communityChannelsCache.find(c => c.id === channelId);
   if(!ch) return;
   communityActiveChannel = ch;
+  cancelReply();
   const listView = document.getElementById('community-list-view');
   const chatView = document.getElementById('community-chat-view');
   if(listView) listView.style.display = 'none';
@@ -2754,6 +2768,7 @@ async function openChannel(channelId){
   if(composerEl) composerEl.style.display = canPost ? 'flex' : 'none';
   if(readonlyEl) readonlyEl.style.display = canPost ? 'none' : 'block';
 
+  await _loadCommunityMembers();
   await loadMessages();
 
   if(communityRealtimeSub){ sb.removeChannel(communityRealtimeSub); communityRealtimeSub = null; }
@@ -2761,6 +2776,7 @@ async function openChannel(channelId){
     communityRealtimeSub = sb.channel('channel_messages:' + channelId)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, loadMessages)
       .subscribe();
   } catch(err) {
     // Realtime failing to subscribe shouldn't block reading/posting —
@@ -2771,10 +2787,26 @@ async function openChannel(channelId){
 function closeChannelView(){
   if(communityRealtimeSub){ sb.removeChannel(communityRealtimeSub); communityRealtimeSub = null; }
   communityActiveChannel = null;
+  cancelReply();
   const chatView = document.getElementById('community-chat-view');
   const listView = document.getElementById('community-list-view');
   if(chatView) chatView.style.display = 'none';
   if(listView) listView.style.display = 'block';
+}
+
+const COMMUNITY_REACTIONS = ['👍','❤️','🔥','💪','😂'];
+
+// Highlights @Name for any known approved member — cheap client-side
+// pass over the members cache rather than storing mention data separately,
+// since Phase 1 is visual mentions only (no notifications yet).
+function _highlightMentions(text){
+  let out = escHtml(text);
+  _communityMembersCache.forEach(m => {
+    if(!m.display_name) return;
+    const safe = escHtml(m.display_name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    out = out.replace(new RegExp('@' + safe + '\\b', 'g'), `<span style="color:var(--teal);font-weight:600">@${escHtml(m.display_name)}</span>`);
+  });
+  return out;
 }
 
 async function loadMessages(){
@@ -2789,16 +2821,107 @@ async function loadMessages(){
   if(error){ box.innerHTML = _communityErrorHtml('Failed to load messages', error); return; }
   const msgs = (data || []).slice().reverse();
   if(msgs.length === 0){ box.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;margin-top:20px">Nobody\'s posted here yet.</div>'; return; }
+
+  const byId = {}; msgs.forEach(m => byId[m.id] = m);
+  const { data: reactions } = await sb.from('message_reactions').select('*').in('message_id', msgs.map(m => m.id));
+  const reactionsByMsg = {};
+  (reactions || []).forEach(r => {
+    reactionsByMsg[r.message_id] = reactionsByMsg[r.message_id] || {};
+    reactionsByMsg[r.message_id][r.emoji] = reactionsByMsg[r.message_id][r.emoji] || { count: 0, mine: false };
+    reactionsByMsg[r.message_id][r.emoji].count++;
+    if(r.user_id === USER.id) reactionsByMsg[r.message_id][r.emoji].mine = true;
+  });
+
   box.innerHTML = msgs.map(m => {
     const time = new Date(m.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     const author = m.author?.display_name || 'Member';
     if(m.deleted_at) return `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span></div><div style="font-size:13px;color:var(--dim);font-style:italic">Message removed</div></div>`;
+
     const flagBtn = PROFILE?.is_admin
       ? `<button onclick="toggleCaseStudyFlag('${m.id}',${!!m.case_study_flagged})" title="${m.case_study_flagged ? 'Unflag case study' : 'Flag as case study'}" style="background:none;border:none;cursor:pointer;padding:0;font-size:12px;opacity:${m.case_study_flagged ? '1' : '.35'}">⭐</button>`
       : '';
-    return `<div style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span>${flagBtn}</div><div style="font-size:14px">${escHtml(m.body)}</div></div>`;
+
+    const replyMsg = m.reply_to_id ? byId[m.reply_to_id] : null;
+    const replyHtml = m.reply_to_id
+      ? `<div style="font-size:11px;color:var(--dim);border-left:2px solid var(--border);padding-left:8px;margin-bottom:4px">↳ ${replyMsg ? `<b>${escHtml(replyMsg.author?.display_name||'Member')}</b>: ${escHtml((replyMsg.body||'').slice(0,60))}` : 'an earlier message'}</div>`
+      : '';
+
+    const myReactions = reactionsByMsg[m.id] || {};
+    const reactionRow = COMMUNITY_REACTIONS.map(e => {
+      const r = myReactions[e];
+      if(!r) return '';
+      return `<span onclick="toggleReaction('${m.id}','${e}')" style="cursor:pointer;font-size:11px;padding:2px 6px;border-radius:10px;background:${r.mine?'rgba(44,212,196,.15)':'var(--s1)'};border:1px solid ${r.mine?'var(--teal)':'var(--border)'};margin-right:4px">${e} ${r.count}</span>`;
+    }).join('');
+
+    return `<div style="margin-bottom:16px" data-msg-id="${m.id}">
+      ${replyHtml}
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span>${flagBtn}</div>
+      <div style="font-size:14px;margin:2px 0 4px">${_highlightMentions(m.body)}</div>
+      <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+        ${reactionRow}
+        <span onclick="showReactionPicker('${m.id}', this)" style="cursor:pointer;font-size:11px;color:var(--dim);padding:2px 6px">+</span>
+        <span onclick="startReply('${m.id}','${escHtml(author).replace(/'/g,"\\'")}','${escHtml((m.body||'').slice(0,40)).replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:11px;color:var(--dim);padding:2px 6px">Reply</span>
+      </div>
+    </div>`;
   }).join('');
   box.scrollTop = box.scrollHeight;
+}
+
+function showReactionPicker(messageId, el){
+  document.querySelectorAll('.community-reaction-picker').forEach(p => p.remove());
+  const picker = document.createElement('div');
+  picker.className = 'community-reaction-picker';
+  picker.style.cssText = 'display:inline-flex;gap:4px;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:4px 6px;margin-left:4px';
+  picker.innerHTML = COMMUNITY_REACTIONS.map(e => `<span onclick="toggleReaction('${messageId}','${e}');this.parentElement.remove()" style="cursor:pointer;font-size:14px">${e}</span>`).join('');
+  el.insertAdjacentElement('afterend', picker);
+}
+
+async function toggleReaction(messageId, emoji){
+  const { data: existing } = await sb.from('message_reactions').select('id').eq('message_id', messageId).eq('user_id', USER.id).eq('emoji', emoji).maybeSingle();
+  if(existing){
+    await sb.from('message_reactions').delete().eq('id', existing.id);
+  } else {
+    await sb.from('message_reactions').insert({ message_id: messageId, user_id: USER.id, emoji });
+  }
+  await loadMessages();
+}
+
+let _communityReplyTo = null;
+function startReply(messageId, authorName, bodyPreview){
+  _communityReplyTo = messageId;
+  const preview = document.getElementById('community-reply-preview');
+  const textEl = document.getElementById('community-reply-preview-text');
+  if(textEl) textEl.textContent = `${authorName}: ${bodyPreview}`;
+  if(preview) preview.style.display = 'flex';
+  document.getElementById('community-input')?.focus();
+}
+function cancelReply(){
+  _communityReplyTo = null;
+  const preview = document.getElementById('community-reply-preview');
+  if(preview) preview.style.display = 'none';
+}
+
+// @mention autocomplete — simple trailing-token match (checks the end of
+// the current input value, not true cursor position — a reasonable
+// simplification for a single-line composer where the cursor is
+// overwhelmingly at the end while typing).
+function onCommunityInput(value){
+  const match = value.match(/@([a-zA-Z ]{0,20})$/);
+  const list = document.getElementById('community-mention-list');
+  if(!list) return;
+  if(!match){ list.style.display = 'none'; return; }
+  const partial = match[1].trim().toLowerCase();
+  const matches = _communityMembersCache.filter(m => m.display_name && m.display_name.toLowerCase().includes(partial)).slice(0, 6);
+  if(!matches.length){ list.style.display = 'none'; return; }
+  list.style.display = 'block';
+  list.innerHTML = matches.map(m => `<div onclick="selectMention('${escHtml(m.display_name).replace(/'/g,"\\'")}')" style="padding:8px 14px;font-size:13px;color:var(--white);cursor:pointer;border-bottom:1px solid var(--border)">@${escHtml(m.display_name)}</div>`).join('');
+}
+function selectMention(name){
+  const input = document.getElementById('community-input');
+  if(!input) return;
+  input.value = input.value.replace(/@([a-zA-Z ]{0,20})$/, `@${name} `);
+  document.getElementById('community-mention-list').style.display = 'none';
+  input.focus();
 }
 
 async function sendCommunityMessage(){
@@ -2806,7 +2929,11 @@ async function sendCommunityMessage(){
   const body = input?.value.trim();
   if(!body || !communityActiveChannel) return;
   input.value = '';
-  const { error } = await sb.from('channel_messages').insert({ channel_id: communityActiveChannel.id, user_id: USER.id, body });
+  document.getElementById('community-mention-list').style.display = 'none';
+  const payload = { channel_id: communityActiveChannel.id, user_id: USER.id, body };
+  if(_communityReplyTo) payload.reply_to_id = _communityReplyTo;
+  const { error } = await sb.from('channel_messages').insert(payload);
+  cancelReply();
   if(error){ showToast('Failed to send: ' + (error.message || error.code || 'unknown error')); return; }
   await loadMessages();
 }
@@ -2816,6 +2943,30 @@ async function toggleCaseStudyFlag(messageId, currentlyFlagged){
   const { error } = await sb.from('channel_messages').update({ case_study_flagged: !currentlyFlagged }).eq('id', messageId);
   if(error){ showToast('Failed to update: ' + (error.message || error.code || 'unknown error')); return; }
   await loadMessages();
+}
+
+/* ── CREATE CHANNEL (admin) ── */
+function openCreateChannel(){
+  if(!PROFILE?.is_admin) return;
+  document.getElementById('create-channel-modal').style.display = 'flex';
+  document.getElementById('cc-name').value = '';
+  document.getElementById('cc-description').value = '';
+  document.getElementById('cc-admin-only').checked = false;
+}
+function closeCreateChannel(){
+  document.getElementById('create-channel-modal').style.display = 'none';
+}
+async function createChannel(){
+  const name = document.getElementById('cc-name')?.value.trim();
+  if(!name) { showToast('Name it something first'); return; }
+  const description = document.getElementById('cc-description')?.value.trim() || null;
+  const adminOnly = !!document.getElementById('cc-admin-only')?.checked;
+  const position = communityChannelsCache.length;
+  const { error } = await sb.from(COMMUNITY_TABLE).insert({ name, description, admin_only_post: adminOnly, position });
+  if(error){ showToast('Failed to create channel: ' + (error.message || error.code || 'unknown error')); return; }
+  closeCreateChannel();
+  showToast('Channel created');
+  await loadChannels();
 }
 
 /* ── EVENTS ── */
