@@ -574,6 +574,48 @@
     .confirm-sub{text-align:center;font-size:11px;color:var(--dim);margin-top:12px}
     .confirm-sub a{color:var(--dim);text-decoration:none}
     .confirm-sub a:hover{color:var(--muted)}
+
+    /* ── FUTURE SELF INTAKE OVERLAY — same visual language as the main
+       intake overlay above, kept as a fully separate ID set deliberately:
+       lower risk of a shared refactor breaking the primary onboarding flow
+       every new user depends on. Reuses the shared .im/.confirm-* classes. */
+    #fsi-overlay{position:fixed;inset:0;z-index:300;background:var(--black);
+      display:flex;flex-direction:column}
+    #fsi-overlay.hidden{display:none}
+    #fsi-header{padding:16px 20px;border-bottom:1px solid var(--border);
+      flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+    #fsi-chat{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    #fsi-messages{flex:1;overflow-y:auto;padding:20px;display:flex;
+      flex-direction:column;gap:12px}
+    #fsi-bottom{display:flex;flex-direction:column;flex-shrink:0}
+    #fsi-input-wrap{display:flex;border-top:1px solid var(--border)}
+    #fsi-input{flex:1;background:rgba(255,255,255,.03);border:none;
+      color:var(--white);font-family:var(--B);font-size:14px;font-weight:300;
+      padding:16px 18px;resize:none;max-height:120px;overflow-y:auto;
+      border-right:1px solid var(--border)}
+    #fsi-input:focus{outline:none;background:rgba(255,255,255,.05)}
+    #fsi-send{padding:16px 24px;background:var(--teal);color:#000;
+      font-family:var(--D);font-size:16px;font-weight:800;letter-spacing:.06em;
+      text-transform:uppercase;border:none;cursor:pointer;flex-shrink:0;
+      transition:background .2s;min-width:80px}
+    #fsi-send:hover{background:#3eeade}
+    #fsi-send:disabled{opacity:.4;cursor:not-allowed}
+    #fsi-skip-link{text-align:center;padding:10px 20px;font-size:11px;color:var(--dim)}
+    #fsi-skip-link a{color:var(--dim);text-decoration:none}
+    #fsi-skip-link a:hover{color:var(--muted)}
+    #fsi-confirm{flex:1;overflow-y:auto;padding:24px 20px;
+      display:none;flex-direction:column;gap:0}
+    #fsi-confirm.active{display:flex}
+    #fsi-cta{width:100%;padding:18px;background:var(--teal);color:#000;
+      font-family:var(--D);font-size:17px;font-weight:800;letter-spacing:.08em;
+      text-transform:uppercase;border:none;cursor:pointer;transition:background .2s}
+    #fsi-cta:hover{background:#3eeade}
+    #fsi-cta:disabled{opacity:.5;cursor:not-allowed}
+    .fs-tf-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+    .fs-tf-tab{font-size:11px;padding:6px 12px;background:var(--s1);color:var(--muted);
+      border:1px solid var(--border);cursor:pointer;font-family:var(--B)}
+    .fs-tf-tab.active{background:var(--teal);color:#000;border-color:var(--teal)}
+
     /* Overview card */
     .overview-card{background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.18);
       padding:16px;margin-bottom:16px}
@@ -1275,14 +1317,15 @@
           <p class="sh-sub">The version of you who already hit it — career, physique, mentality, lifestyle. Ask them anything.</p>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:8px">
-          <button class="ob-edit-btn" onclick="showOnboarding('future_self')">Edit vision</button>
+          <button class="ob-edit-btn" onclick="showFutureSelfIntake()">Redefine vision</button>
           <button class="ob-edit-btn" onclick="openFutureSelfHistory()">History</button>
         </div>
       </div>
       <div id="future-self-not-set" style="display:none;text-align:center;padding:24px 16px">
         <p style="font-size:13px;color:var(--muted);margin-bottom:12px">You haven't described who you're becoming yet — this only works if it's specific.</p>
-        <button class="btn-primary" onclick="showOnboarding('future_self')">Define your future self →</button>
+        <button class="btn-primary" onclick="showFutureSelfIntake()">Define your future self →</button>
       </div>
+      <div class="fs-tf-tabs" id="fs-tf-tabs"></div>
       <div class="coach-messages" id="future-self-messages">
         <div class="msg coach" id="future-self-greeting">Set up your future self first — tap "Define your future self" above.</div>
       </div>
@@ -1958,6 +2001,38 @@
   </div>
 </div>
 
+<!-- FUTURE SELF INTAKE OVERLAY -->
+<div id="fsi-overlay" class="hidden">
+  <div id="fsi-header">
+    <div>
+      <div class="intake-logo">Future <em>Self</em></div>
+      <div class="intake-tagline">Defining who you're becoming — 1, 3, 5 and 10 years out</div>
+    </div>
+  </div>
+  <div id="fsi-chat">
+    <div id="fsi-messages"></div>
+    <div id="fsi-bottom">
+      <div id="fsi-input-wrap">
+        <textarea id="fsi-input" placeholder="Type your answer…" rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendFutureSelfIntakeMsg()}"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button id="fsi-send" onclick="sendFutureSelfIntakeMsg()">Send</button>
+      </div>
+      <div id="fsi-skip-link">
+        <a href="#" onclick="skipFutureSelfIntake();return false;">Cancel</a>
+      </div>
+    </div>
+  </div>
+  <div id="fsi-confirm">
+    <div class="confirm-title">WHO YOU'RE<br><span>BECOMING.</span></div>
+    <div class="confirm-summary" id="fsi-summary"></div>
+    <div class="confirm-actions">
+      <button id="fsi-cta" onclick="completeFutureSelfIntake()">That's them — let's talk</button>
+      <div class="confirm-sub"><a href="#" onclick="skipFutureSelfIntake();return false;">Start over</a></div>
+    </div>
+  </div>
+</div>
+
 <!-- ONBOARDING MODAL -->
 <div id="ob-overlay">
   <div id="ob-modal">
@@ -2556,7 +2631,7 @@ function switchTab(tab){
   if(tab==='move') { setTimeout(()=>initMove(), 50); return; }
   if(tab==='community') { setTimeout(()=>initCommunity(), 50); return; }
   if(tab==='coach') { setTimeout(()=>{ resumeCoachSession(); renderCoachSuggestedPrompts(); }, 50); }
-  if(tab==='future-self') { setTimeout(()=>{ initFutureSelf(); resumeFutureSelfSession(); }, 50); return; }
+  if(tab==='future-self') { setTimeout(()=>{ initFutureSelf(); resumeFutureSelfSession(); _fsEnsureGreeting(); }, 50); return; }
   // Show onboarding on first visit if not yet done
   const obTabs=['habits','train','eat','progress','coach'];
   if(obTabs.includes(tab) && !isOnboarded(tab)){
@@ -4929,33 +5004,65 @@ async function sendMessage(){
    one invented from scratch — just a different persona and system prompt.
 ════════════════════════════════════════ */
 const futureSelfHistory=[];
+let _fsTimeframe = null;
+const FS_TIMEFRAMES = [
+  { key:'one_year',   label:'1 Year' },
+  { key:'three_year', label:'3 Years' },
+  { key:'five_year',  label:'5 Years' },
+  { key:'ten_year',   label:'10 Years' },
+];
+function _fsHasContent(p){ return !!(p && (p.career_position || p.physique_target || p.lifestyle)); }
 
-// Builds window._futureSelfContext: the target-persona description (from
-// OB.future_self, captured via the onboarding form) plus a snapshot of
-// real current-state data, so the persona can speak to the actual gap
-// between where the user is today and where they're headed — not generic
+// Builds window._futureSelfContext: the target-persona description for the
+// currently SELECTED horizon (OB.future_self[_fsTimeframe], captured via
+// the adaptive future-self-intake chat) plus a snapshot of real
+// current-state data, so the persona can speak to the actual gap between
+// where the user is today and where they're headed — not generic
 // motivational text disconnected from their real numbers.
 function initFutureSelf(){
   const fs = OB.future_self || {};
   const notSet = document.getElementById('future-self-not-set');
   const inputWrap = document.getElementById('future-self-input-wrap');
-  const hasVision = !!(fs.career_position || fs.physique_target || fs.lifestyle);
+  const tfTabs = document.getElementById('fs-tf-tabs');
+  const setTimeframes = FS_TIMEFRAMES.filter(tf => _fsHasContent(fs[tf.key]));
+  const hasVision = setTimeframes.length > 0;
   if(notSet) notSet.style.display = hasVision ? 'none' : '';
   if(inputWrap) inputWrap.style.display = hasVision ? '' : 'none';
   if(!hasVision){
     window._futureSelfContext = null;
+    if(tfTabs){ tfTabs.style.display = 'none'; tfTabs.innerHTML = ''; }
     return;
   }
+  // Default to the nearest defined horizon the first time it's needed; keep
+  // whatever's already selected across re-renders (e.g. after sending a msg).
+  if(!_fsTimeframe || !setTimeframes.some(tf=>tf.key===_fsTimeframe)){
+    _fsTimeframe = setTimeframes[0].key;
+  }
+  if(tfTabs){
+    tfTabs.style.display = '';
+    tfTabs.innerHTML = setTimeframes.map(tf=>
+      `<button class="fs-tf-tab${tf.key===_fsTimeframe?' active':''}" onclick="selectFutureSelfTimeframe('${tf.key}')">${tf.label}</button>`
+    ).join('');
+  }
 
+  const persona = fs[_fsTimeframe] || {};
+  const tfLabel = (FS_TIMEFRAMES.find(t=>t.key===_fsTimeframe)||{}).label || 'some years';
   const name=(USER?.user_metadata?.display_name||'').split(' ')[0]||'';
   const parts = [
-    `You are ${name || 'this person'}'s own future self, ${fs.timeframe || 'some years from now'} — the version of them who already became who they set out to be. Speak in first person, as them, from that vantage point. Never break character or refer to yourself as an AI.`,
-    fs.career_position ? `Career/business position: ${fs.career_position}` : '',
-    fs.income_target ? `Income: ${fs.income_target}` : '',
-    fs.physique_target ? `Physique: ${fs.physique_target}` : '',
-    (fs.mentality_traits && fs.mentality_traits.length) ? `Character traits now fully developed: ${(Array.isArray(fs.mentality_traits)?fs.mentality_traits:[fs.mentality_traits]).join(', ')}` : '',
-    fs.lifestyle ? `Lifestyle: ${fs.lifestyle}` : '',
+    `You are ${name || 'this person'}'s own future self, ${tfLabel} from now — the version of them who already became who they set out to be at that point. Speak in first person, as them, from that vantage point. Never break character or refer to yourself as an AI.`,
+    persona.career_position ? `Career/business position: ${persona.career_position}` : '',
+    persona.income_target ? `Income: ${persona.income_target}` : '',
+    persona.physique_target ? `Physique: ${persona.physique_target}` : '',
+    (persona.mentality_traits && persona.mentality_traits.length) ? `Character traits now fully developed: ${(Array.isArray(persona.mentality_traits)?persona.mentality_traits:[persona.mentality_traits]).join(', ')}` : '',
+    persona.lifestyle ? `Lifestyle: ${persona.lifestyle}` : '',
   ].filter(Boolean);
+
+  // Awareness of the OTHER horizons too, so it can speak with real
+  // continuity ("I remember thinking the 1-year version would be enough")
+  // instead of only knowing its own single point in time.
+  const otherHorizons = FS_TIMEFRAMES.filter(tf=>tf.key!==_fsTimeframe && _fsHasContent(fs[tf.key]))
+    .map(tf=>`${tf.label}: ${[fs[tf.key].career_position,fs[tf.key].physique_target].filter(Boolean).join(' — ')}`);
+  if(otherHorizons.length) parts.push(`Other points on this same journey (context only — you are NOT speaking as these):\n${otherHorizons.map(p=>`- ${p}`).join('\n')}`);
 
   // Real present-day snapshot, so guidance is grounded in what's actually
   // true today, not just the aspirational target.
@@ -4969,6 +5076,29 @@ function initFutureSelf(){
   if(today.length) parts.push(`Their real present-day snapshot:\n${today.map(p=>`- ${p}`).join('\n')}`);
 
   window._futureSelfContext = parts.join('\n\n');
+}
+
+function selectFutureSelfTimeframe(tf){
+  if(tf === _fsTimeframe) return;
+  _fsTimeframe = tf;
+  futureSelfHistory.length = 0;
+  _futureSelfResumed = false;
+  const msgs = document.getElementById('future-self-messages');
+  if(msgs) msgs.innerHTML = '';
+  initFutureSelf();
+  resumeFutureSelfSession();
+  _fsEnsureGreeting();
+}
+
+// Called after resumeFutureSelfSession() at every call site — if that left
+// the messages panel empty (no saved history for this horizon yet), shows
+// a real greeting instead of nothing or a stale "set up your future self"
+// placeholder from before a vision existed.
+function _fsEnsureGreeting(){
+  const msgs = document.getElementById('future-self-messages');
+  if(!msgs || msgs.children.length || !window._futureSelfContext) return;
+  const tfLabel = (FS_TIMEFRAMES.find(t=>t.key===_fsTimeframe)||{}).label || 'some years';
+  msgs.innerHTML = `<div class="msg coach">Hey. It's you, ${escHtml(tfLabel.toLowerCase())} from now. Ask me anything.</div>`;
 }
 
 async function sendFutureSelfMessage(){
@@ -5008,7 +5138,7 @@ async function sendFutureSelfMessage(){
   msgs.scrollTop=msgs.scrollHeight;
 }
 
-const _FUTURE_SELF_HIST_KEY = () => `jpt_futureself_hist_${USER?.id||'guest'}`;
+const _FUTURE_SELF_HIST_KEY = () => `jpt_futureself_hist_${USER?.id||'guest'}_${_fsTimeframe||'default'}`;
 let _futureSelfResumed = false;
 
 function resumeFutureSelfSession(){
@@ -5070,6 +5200,144 @@ function openFutureSelfHistory() {
   } catch(e) {
     body.innerHTML = '<div style="padding:20px;color:var(--dim);font-size:13px">Could not load history.</div>';
   }
+}
+
+/* ── FUTURE SELF INTAKE — adaptive, conversational, covers all four
+   horizons (1/3/5/10yr) as one connected vision. Mirrors the main
+   intake flow's architecture (api/future-self-intake.js returns reply +
+   structured profile + done, same as api/intake.js) but kept as fully
+   separate state/functions — lower risk than branching the primary
+   onboarding intake every new user depends on. ── */
+let futureSelfIntakeMessages = [];
+let futureSelfIntakeProfile = { one_year:{}, three_year:{}, five_year:{}, ten_year:{} };
+
+function showFutureSelfIntake(){
+  document.getElementById('fsi-overlay').classList.remove('hidden');
+  document.getElementById('fsi-messages').innerHTML = '';
+  document.getElementById('fsi-confirm').classList.remove('active');
+  document.getElementById('fsi-chat').style.display = '';
+  futureSelfIntakeMessages = [];
+  futureSelfIntakeProfile = { one_year:{}, three_year:{}, five_year:{}, ten_year:{} };
+  doFutureSelfIntakeExchange();
+}
+
+function skipFutureSelfIntake(){
+  document.getElementById('fsi-overlay').classList.add('hidden');
+}
+
+function sendFutureSelfIntakeMsg(){
+  const input = document.getElementById('fsi-input');
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value = '';
+  input.style.height = 'auto';
+  addFutureSelfIntakeMsg('user', msg);
+  futureSelfIntakeMessages.push({ role:'user', content: msg });
+  doFutureSelfIntakeExchange();
+}
+
+function addFutureSelfIntakeMsg(role, text){
+  const wrap = document.getElementById('fsi-messages');
+  const el = document.createElement('div');
+  el.className = 'im ' + role;
+  el.textContent = text;
+  wrap.appendChild(el);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+async function doFutureSelfIntakeExchange(){
+  const sendBtn = document.getElementById('fsi-send');
+  const input = document.getElementById('fsi-input');
+  if(sendBtn) sendBtn.disabled = true;
+  if(input) input.disabled = true;
+
+  const wrap = document.getElementById('fsi-messages');
+  const loading = document.createElement('div');
+  loading.className = 'im loading';
+  loading.id = 'fsi-loading';
+  loading.textContent = 'Thinking...';
+  wrap.appendChild(loading);
+  wrap.scrollTop = wrap.scrollHeight;
+
+  try{
+    const res = await fetch('/api/future-self-intake', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ messages: futureSelfIntakeMessages })
+    });
+    const d = await res.json();
+    document.getElementById('fsi-loading')?.remove();
+
+    if(d.profile){
+      Object.keys(d.profile).forEach(tf=>{
+        const incoming = d.profile[tf];
+        if(!incoming) return;
+        futureSelfIntakeProfile[tf] = futureSelfIntakeProfile[tf] || {};
+        Object.keys(incoming).forEach(k=>{
+          const v = incoming[k];
+          if(v !== null && v !== undefined){
+            if(Array.isArray(v) && v.length===0 && Array.isArray(futureSelfIntakeProfile[tf][k])) return;
+            futureSelfIntakeProfile[tf][k] = v;
+          }
+        });
+      });
+    }
+
+    if(d.reply){
+      addFutureSelfIntakeMsg('ai', stripMd(d.reply));
+      futureSelfIntakeMessages.push({ role:'assistant', content: d.reply });
+    }
+
+    if(d.done){
+      showFutureSelfIntakeConfirm();
+    } else {
+      if(sendBtn) sendBtn.disabled = false;
+      if(input) { input.disabled = false; input.focus(); }
+    }
+  } catch(e){
+    document.getElementById('fsi-loading')?.remove();
+    addFutureSelfIntakeMsg('ai', 'Connection issue — tap Send to try again.');
+    if(sendBtn) sendBtn.disabled = false;
+    if(input) input.disabled = false;
+  }
+}
+
+function showFutureSelfIntakeConfirm(){
+  document.getElementById('fsi-chat').style.display = 'none';
+  const confirm = document.getElementById('fsi-confirm');
+  confirm.classList.add('active');
+
+  const lines = [];
+  FS_TIMEFRAMES.forEach(tf=>{
+    const p = futureSelfIntakeProfile[tf.key];
+    if(!_fsHasContent(p)) return;
+    lines.push(tf.label.toUpperCase());
+    if(p.career_position) lines.push(`  Career: ${p.career_position}`);
+    if(p.income_target) lines.push(`  Income: ${p.income_target}`);
+    if(p.physique_target) lines.push(`  Physique: ${p.physique_target}`);
+    if(p.mentality_traits?.length) lines.push(`  Mentality: ${p.mentality_traits.join(', ')}`);
+    if(p.lifestyle) lines.push(`  Lifestyle: ${p.lifestyle}`);
+    lines.push('');
+  });
+  document.getElementById('fsi-summary').textContent = lines.join('\n').trim();
+}
+
+async function completeFutureSelfIntake(){
+  OB.future_self = futureSelfIntakeProfile;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await sb.auth.updateUser({ data:{ onboarding: OB } }); } catch(e){}
+  document.getElementById('fsi-overlay').classList.add('hidden');
+  // Let initFutureSelf() pick the nearest defined horizon fresh, and clear
+  // any in-progress chat so the newly (re)defined vision starts clean.
+  _fsTimeframe = null;
+  futureSelfHistory.length = 0;
+  _futureSelfResumed = false;
+  const msgs = document.getElementById('future-self-messages');
+  if(msgs) msgs.innerHTML = '';
+  initFutureSelf();
+  resumeFutureSelfSession();
+  _fsEnsureGreeting();
+  showToast('Future self defined');
 }
 
 function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -5281,26 +5549,11 @@ const OB_DEFS = {
       { id: 'about',            label: 'In your own words — what do you want and why?', type: 'textarea',
         placeholder: 'e.g. I\'m 41, run my own business, two kids. I\'ve put on 15kg in 5 years, my energy is terrible by 2pm, and I haven\'t trained properly in 3 years. I want to feel like myself again.' },
     ]
-  },
-  future_self: {
-    label: 'Future Self',
-    title: 'Who are you becoming?',
-    sub: 'The more specific this is, the more useful every conversation with them will be — vague answers get vague guidance back.',
-    steps: [
-      { id: 'timeframe',        label: 'How far out is this version of you?',            type: 'select',
-        options: ['1 year from now','3 years from now','5 years from now','10 years from now'] },
-      { id: 'career_position',  label: 'What does "made it" look like in your career/business? Be specific.', type: 'textarea',
-        placeholder: 'e.g. Running a 12-person agency doing £200k/month, I work 25 hours a week by choice, my team runs the day-to-day operations...' },
-      { id: 'income_target',    label: 'Target income',                                  type: 'text',
-        placeholder: 'e.g. £50,000/month' },
-      { id: 'physique_target',  label: 'Describe your target physique in detail',         type: 'textarea',
-        placeholder: 'e.g. 90kg, ~10% body fat, visible abs year-round, can deadlift 200kg for reps...' },
-      { id: 'mentality_traits', label: 'Which traits does this version of you have that you don\'t fully have yet?', type: 'multicheck',
-        options: ['Unshakeable confidence','Calm under pressure','Relentless discipline','Full emotional control','Decisive, no second-guessing','Patient with the process','Resilient after setbacks','Generous, not scarcity-minded','Present, not anxious about the future'] },
-      { id: 'lifestyle',        label: 'Describe a typical day in their life',            type: 'textarea',
-        placeholder: 'e.g. Wakes at 6am without an alarm, trains, breakfast with family, works from a home office, no commute, evenings are actually free...' },
-    ]
   }
+  // future_self used to be a static multi-field form here — replaced by the
+  // adaptive future-self-intake chat (showFutureSelfIntake(), api/future-
+  // self-intake.js) so the questions actually react to each answer and cover
+  // all four time horizons as one connected vision, not a single flat form.
 };
 
 // ════════════════════════════════════════
@@ -5921,7 +6174,6 @@ async function submitOnboarding() {
   if (section === 'eat')      initEat();
   if (section === 'progress') initProgress();
   if (section === 'coach')    initCoach();
-  if (section === 'future_self') initFutureSelf();
 }
 
 /* ── HABIT DETAIL ── */
