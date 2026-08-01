@@ -2464,7 +2464,18 @@ function renderXPUI() {
     sb.from('profiles').update({ display_name: authName }).eq('id', USER.id).then(()=>{});
   }
 
-  if(!prof||prof.status==='pending'||prof.status===null){
+  // JP's own account always bypasses the approval gate — he's the app
+  // owner/developer and needs to be able to test his own product regardless
+  // of whatever profiles.status happens to be set to. Everyone else keeps
+  // the real approval flow untouched. This is unrelated to APP_LAUNCH_DATE
+  // (nothing in this codebase gates overall app access by date — that
+  // constant only floors which historical data counts toward progress
+  // views, see applyV1LaunchReset() below) — profiles.status is a
+  // completely separate field, set outside this codebase (Supabase
+  // dashboard or a DB trigger on the applications table), not by anything
+  // here.
+  const isJPAccount = USER.id === JP_USER_ID;
+  if(!isJPAccount && (!prof||prof.status==='pending'||prof.status===null)){
     // Show pending screen only
     document.querySelectorAll('.bn-tab').forEach(b=>b.style.display='none');
     document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
@@ -2472,12 +2483,12 @@ function renderXPUI() {
     return;
   }
 
-  // Approved — load onboarding data then init tabs
+  // Approved (or JP bypassing) — load onboarding data then init tabs
   loadOnboardingData();
-  XP_STATE.xp = prof.xp || 0;
-  XP_STATE.level = prof.level || 1;
-  XP_STATE.streak_days = prof.streak_days || 0;
-  XP_STATE.last_active_date = prof.last_active_date || null;
+  XP_STATE.xp = prof?.xp || 0;
+  XP_STATE.level = prof?.level || 1;
+  XP_STATE.streak_days = prof?.streak_days || 0;
+  XP_STATE.last_active_date = prof?.last_active_date || null;
   await applyV1LaunchReset();
   renderXPUI();
   initAll();
