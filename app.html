@@ -615,6 +615,13 @@
     .fs-tf-tab{font-size:11px;padding:6px 12px;background:var(--s1);color:var(--muted);
       border:1px solid var(--border);cursor:pointer;font-family:var(--B)}
     .fs-tf-tab.active{background:var(--teal);color:#000;border-color:var(--teal)}
+    .fs-belief-card{background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.2);
+      padding:10px 12px;margin-bottom:8px}
+    .fs-belief-label{font-size:9px;font-weight:700;color:var(--teal);text-transform:uppercase;
+      letter-spacing:.08em;margin-bottom:4px}
+    .fs-belief-old{font-size:12px;color:var(--dim);font-style:italic;margin-bottom:4px}
+    .fs-belief-new{font-size:13px;color:var(--white);line-height:1.5}
+    .fs-belief-action{font-size:11px;color:var(--teal);margin-top:6px}
 
     /* Overview card */
     .overview-card{background:rgba(44,212,196,.04);border:1px solid rgba(44,212,196,.18);
@@ -1326,6 +1333,7 @@
         <button class="btn-primary" onclick="showFutureSelfIntake()">Define your future self →</button>
       </div>
       <div class="fs-tf-tabs" id="fs-tf-tabs"></div>
+      <div id="fs-beliefs-list" style="display:none;margin-bottom:10px"></div>
       <div class="coach-messages" id="future-self-messages">
         <div class="msg coach" id="future-self-greeting">Set up your future self first — tap "Define your future self" above.</div>
       </div>
@@ -5075,7 +5083,14 @@ function initFutureSelf(){
   ].filter(Boolean);
   if(today.length) parts.push(`Their real present-day snapshot:\n${today.map(p=>`- ${p}`).join('\n')}`);
 
+  // Limiting beliefs already identified/reshifted in past conversations
+  // (any horizon) — gives the model real continuity across sessions
+  // instead of every chat re-litigating the same block from scratch.
+  const pastBeliefs = (OB.future_self_beliefs||[]).slice(0,8);
+  if(pastBeliefs.length) parts.push(`Limiting beliefs already identified and reshifted in past conversations — check in on whether they've actually shifted, don't just repeat the same reshift:\n${pastBeliefs.map(b=>`- Belief: "${b.belief}" → Reshift given: ${b.reframe}`).join('\n')}`);
+
   window._futureSelfContext = parts.join('\n\n');
+  renderFutureSelfBeliefs();
 }
 
 function selectFutureSelfTimeframe(tf){
@@ -5130,12 +5145,56 @@ async function sendFutureSelfMessage(){
     _persistFutureSelfSession();
     document.getElementById('future-self-loading')?.remove();
     msgs.innerHTML+=`<div class="msg coach">${escHtml(stripMd(reply)).replace(/\n/g,'<br>')}</div>`;
+    // Belief reshift happened this turn — save it (persistent, spaced-
+    // repetition-style reinforcement is what actually shifts a subconscious
+    // pattern, not a single conversation) and show it as a distinct card.
+    if(d.belief && d.belief.belief){
+      _saveFutureSelfBelief(d.belief);
+      msgs.innerHTML+=`<div class="fs-belief-card">
+        <div class="fs-belief-label">Belief Reshift</div>
+        <div class="fs-belief-old">"${escHtml(d.belief.belief)}"</div>
+        <div class="fs-belief-new">${escHtml(d.belief.reframe||'')}</div>
+        ${d.belief.action ? `<div class="fs-belief-action">Next → ${escHtml(d.belief.action)}</div>` : ''}
+      </div>`;
+      renderFutureSelfBeliefs();
+    }
   }catch(e){
     document.getElementById('future-self-loading')?.remove();
     msgs.innerHTML+=`<div class="msg coach" style="color:var(--dim)">Couldn't reach them right now. Try again in a moment.</div>`;
   }
   document.getElementById('future-self-send').disabled=false;
   msgs.scrollTop=msgs.scrollHeight;
+}
+
+// Persistent log of limiting beliefs identified + reshifted across every
+// Future Self conversation — the actual "stay on path" mechanism: real
+// belief change comes from repeated disconfirming evidence, not a single
+// conversation, so this gives both the user (visible list) and the model
+// (injected back into context, see initFutureSelf()) something to keep
+// returning to rather than each chat starting from zero.
+function _saveFutureSelfBelief(b){
+  OB.future_self_beliefs = OB.future_self_beliefs || [];
+  OB.future_self_beliefs.unshift({ date: TODAY, timeframe: _fsTimeframe, belief: b.belief, reframe: b.reframe||'', action: b.action||'' });
+  OB.future_self_beliefs = OB.future_self_beliefs.slice(0, 20);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  sb.auth.updateUser({ data:{ onboarding: OB } }).catch(()=>{});
+}
+
+function renderFutureSelfBeliefs(){
+  const el = document.getElementById('fs-beliefs-list');
+  if(!el) return;
+  const beliefs = OB.future_self_beliefs || [];
+  if(!beliefs.length){ el.innerHTML=''; el.style.display='none'; return; }
+  el.style.display='';
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Beliefs You're Rewiring</div>
+    ${beliefs.slice(0,5).map(b=>`
+      <div class="fs-belief-card">
+        <div class="fs-belief-old">"${escHtml(b.belief)}"</div>
+        <div class="fs-belief-new">${escHtml(b.reframe)}</div>
+      </div>
+    `).join('')}
+  `;
 }
 
 const _FUTURE_SELF_HIST_KEY = () => `jpt_futureself_hist_${USER?.id||'guest'}_${_fsTimeframe||'default'}`;
