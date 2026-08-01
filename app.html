@@ -2659,18 +2659,32 @@ function switchTab(tab){
 }
 
 /* ── COMMUNITY (THE STANDARD) ── */
+/* ════════════════════════════════════════
+   COMMUNITY — channels + messages
+   Rebuilt (2 Aug 2026) after a long diagnosis chain: table rebuilt clean
+   twice under two different never-before-queried names, both failed
+   identically, live-server source confirmed up to date byte-for-byte.
+   That rules out the table/RLS/schema and rules out a stale deploy — so
+   this rewrite focuses on making every failure mode visible and
+   independently retry-able rather than assuming the fetch pattern itself
+   was ever wrong (it wasn't: same sb.from()/select()/insert() shape used
+   correctly everywhere else in this app).
+════════════════════════════════════════ */
 let communityChannelsCache = [];
 let communityActiveChannel = null;
 let communityRealtimeSub = null;
+const COMMUNITY_TABLE = 'standard_channels';
 
 async function initCommunity(){
-  // Defensive null check — if this element lookup ever fails, it used to
-  // throw synchronously and loadChannels() below would never run at all,
-  // leaving the pane stuck on its initial empty state with no visible
-  // error and no way to tell why.
   const adminBtn = document.getElementById('community-admin-btn');
   if(adminBtn) adminBtn.style.display = PROFILE?.is_admin ? 'flex' : 'none';
   await loadChannels();
+}
+
+function _communityErrorHtml(action, err){
+  const code = err?.code ? ` (${escHtml(err.code)})` : '';
+  const msg = escHtml(err?.message || String(err) || 'unknown error');
+  return `<div style="color:var(--muted);font-size:13px">${escHtml(action)} failed${code}: ${msg}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
 }
 
 function _renderChannelListHtml(){
@@ -2691,49 +2705,66 @@ async function loadChannels(){
   const list = document.getElementById('community-channels');
   if(!list) return;
   list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
-  let data, error;
-  try {
-    ({ data, error } = await sb.from('standard_channels').select('*').order('position', { ascending: true }));
-  } catch(err) {
-    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels — ${escHtml(String(err?.message||err))}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
+  const result = await sb.from(COMMUNITY_TABLE).select('*').order('position', { ascending: true }).then(
+    r => r, e => ({ data: null, error: e })
+  );
+  if(result.error){
+    // Direct curl to this exact endpoint with a valid service-role token
+    // returns a clean 200 with real data — table/RLS/PostgREST are all
+    // confirmed fine server-side. So if this is still failing, the most
+    // likely remaining explanation is this specific browser session's own
+    // auth token — show its actual state directly rather than needing dev
+    // tools to check it.
+    let sessionDiag = 'no session info available';
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if(!session) sessionDiag = 'No active session at all — sb.auth.getSession() returned null.';
+      else {
+        const exp = session.expires_at ? new Date(session.expires_at * 1000) : null;
+        const isExpired = exp ? exp.getTime() < Date.now() : 'unknown';
+        const tokenPreview = session.access_token ? `${session.access_token.slice(0,12)}...${session.access_token.slice(-6)} (${session.access_token.length} chars)` : 'MISSING';
+        sessionDiag = `Session present. Token: ${tokenPreview}. Expires: ${exp ? exp.toISOString() : 'unknown'} — expired: ${isExpired}.`;
+      }
+    } catch(diagErr) {
+      sessionDiag = `Could not read session: ${String(diagErr?.message||diagErr)}`;
+    }
+    list.innerHTML = _communityErrorHtml('Failed to load channels', result.error) +
+      `<div style="color:var(--dim);font-size:10px;margin-top:6px;word-break:break-all">${escHtml(sessionDiag)}</div>`;
     return;
   }
-  if(error){
-    const code = error.code || '';
-    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels${code?` (${escHtml(code)})`:''}: ${escHtml(error.message||'unknown error')}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
-    return;
-  }
-  communityChannelsCache = data || [];
+  communityChannelsCache = result.data || [];
   list.innerHTML = _renderChannelListHtml();
 }
 
 async function openChannel(channelId){
   const ch = communityChannelsCache.find(c => c.id === channelId);
   if(!ch) return;
-  // Wrapped end-to-end: this does 6 DOM lookups before reaching the
-  // realtime subscribe call — any one throwing used to abort silently
-  // partway through, sometimes leaving the chat view visible but with no
-  // messages loaded and no subscription set up (looks identical to
-  // "broken" from the outside, with nothing in the UI explaining why).
+  communityActiveChannel = ch;
+  const listView = document.getElementById('community-list-view');
+  const chatView = document.getElementById('community-chat-view');
+  if(listView) listView.style.display = 'none';
+  if(chatView) chatView.style.display = 'flex';
+  const titleEl = document.getElementById('community-chat-title');
+  const descEl = document.getElementById('community-chat-desc');
+  if(titleEl) titleEl.textContent = ch.name;
+  if(descEl) descEl.textContent = ch.description || '';
+  const canPost = !ch.admin_only_post || PROFILE?.is_admin;
+  const composerEl = document.getElementById('community-composer');
+  const readonlyEl = document.getElementById('community-readonly-note');
+  if(composerEl) composerEl.style.display = canPost ? 'flex' : 'none';
+  if(readonlyEl) readonlyEl.style.display = canPost ? 'none' : 'block';
+
+  await loadMessages();
+
+  if(communityRealtimeSub){ sb.removeChannel(communityRealtimeSub); communityRealtimeSub = null; }
   try {
-    communityActiveChannel = ch;
-    document.getElementById('community-list-view').style.display = 'none';
-    const chatView = document.getElementById('community-chat-view');
-    chatView.style.display = 'flex';
-    document.getElementById('community-chat-title').textContent = ch.name;
-    document.getElementById('community-chat-desc').textContent = ch.description || '';
-    const canPost = !ch.admin_only_post || PROFILE?.is_admin;
-    document.getElementById('community-composer').style.display = canPost ? 'flex' : 'none';
-    document.getElementById('community-readonly-note').style.display = canPost ? 'none' : 'block';
-    await loadMessages();
-    if(communityRealtimeSub) sb.removeChannel(communityRealtimeSub);
     communityRealtimeSub = sb.channel('channel_messages:' + channelId)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'channel_messages', filter: 'channel_id=eq.' + channelId }, loadMessages)
       .subscribe();
   } catch(err) {
-    showToast('Failed to open channel');
-    closeChannelView();
+    // Realtime failing to subscribe shouldn't block reading/posting —
+    // messages just won't live-update until the next manual reload.
   }
 }
 
@@ -2748,22 +2779,20 @@ function closeChannelView(){
 
 async function loadMessages(){
   if(!communityActiveChannel) return;
+  const box = document.getElementById('community-messages');
+  if(!box) return;
   const { data, error } = await sb.from('channel_messages')
     .select('*, author:profiles(id,display_name)')
     .eq('channel_id', communityActiveChannel.id)
     .order('created_at', { ascending: false })
     .limit(50);
-  const box = document.getElementById('community-messages');
-  if(error){ box.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load messages.</div>'; return; }
+  if(error){ box.innerHTML = _communityErrorHtml('Failed to load messages', error); return; }
   const msgs = (data || []).slice().reverse();
   if(msgs.length === 0){ box.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;margin-top:20px">Nobody\'s posted here yet.</div>'; return; }
   box.innerHTML = msgs.map(m => {
     const time = new Date(m.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     const author = m.author?.display_name || 'Member';
     if(m.deleted_at) return `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span></div><div style="font-size:13px;color:var(--dim);font-style:italic">Message removed</div></div>`;
-    // Admin-only case-study flag toggle — ties real member results (#wins
-    // or anywhere) into the content pipeline. Not shown to regular
-    // members, and toggling it never touches the message body itself.
     const flagBtn = PROFILE?.is_admin
       ? `<button onclick="toggleCaseStudyFlag('${m.id}',${!!m.case_study_flagged})" title="${m.case_study_flagged ? 'Unflag case study' : 'Flag as case study'}" style="background:none;border:none;cursor:pointer;padding:0;font-size:12px;opacity:${m.case_study_flagged ? '1' : '.35'}">⭐</button>`
       : '';
@@ -2774,18 +2803,18 @@ async function loadMessages(){
 
 async function sendCommunityMessage(){
   const input = document.getElementById('community-input');
-  const body = input.value.trim();
+  const body = input?.value.trim();
   if(!body || !communityActiveChannel) return;
   input.value = '';
   const { error } = await sb.from('channel_messages').insert({ channel_id: communityActiveChannel.id, user_id: USER.id, body });
-  if(error){ showToast('Failed to send'); return; }
+  if(error){ showToast('Failed to send: ' + (error.message || error.code || 'unknown error')); return; }
   await loadMessages();
 }
 
 async function toggleCaseStudyFlag(messageId, currentlyFlagged){
   if(!PROFILE?.is_admin) return;
   const { error } = await sb.from('channel_messages').update({ case_study_flagged: !currentlyFlagged }).eq('id', messageId);
-  if(error){ showToast('Failed to update'); return; }
+  if(error){ showToast('Failed to update: ' + (error.message || error.code || 'unknown error')); return; }
   await loadMessages();
 }
 
