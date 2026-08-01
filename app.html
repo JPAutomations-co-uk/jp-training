@@ -2693,7 +2693,7 @@ async function loadChannels(){
   list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
   let data, error;
   try {
-    ({ data, error } = await sb.from('community_channels').select('*').order('position', { ascending: true }));
+    ({ data, error } = await sb.from('standard_channels').select('*').order('position', { ascending: true }));
   } catch(err) {
     list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels — ${escHtml(String(err?.message||err))}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
     return;
