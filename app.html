@@ -6058,17 +6058,24 @@ async function loadOnboardingData() {
     // copy from every prior save) and write it into the table now.
     OB = { ...local, ...meta };
     await saveOB();
-    if(Object.keys(meta).length){
-      // Clearing user_metadata server-side does NOT retroactively shrink
-      // a token that's already been issued — a JWT is a self-contained,
-      // already-signed blob, so the client keeps using the old bloated
-      // one until a genuinely new token is minted. updateUser() alone
-      // doesn't force that — refreshSession() does.
-      try {
-        await sb.auth.updateUser({ data: { onboarding: null } });
-        await sb.auth.refreshSession();
-      } catch(e) {}
-    }
+  }
+
+  // Runs on EVERY load, independent of the branch above — not nested
+  // inside "no user_state row yet". Once user_state gets populated even
+  // once, dbOB stops being empty on future loads, which meant this check
+  // never ran again and an already-bloated user_metadata just sat there
+  // untouched forever. This has to check "is user_metadata still bloated
+  // right now" every time, not just during the one-time migration.
+  if(Object.keys(meta).length){
+    // Clearing user_metadata server-side does NOT retroactively shrink a
+    // token that's already been issued — a JWT is a self-contained,
+    // already-signed blob, so the client keeps using the old bloated one
+    // until a genuinely new token is minted. updateUser() alone doesn't
+    // force that — refreshSession() does.
+    try {
+      await sb.auth.updateUser({ data: { onboarding: null } });
+      await sb.auth.refreshSession();
+    } catch(e) {}
   }
   applyJPRealProtocol();
 }
