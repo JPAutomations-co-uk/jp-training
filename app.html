@@ -1794,12 +1794,27 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div style="font-family:var(--D);font-size:26px;font-weight:900;letter-spacing:-.02em">THE STANDARD</div>
         <div style="display:flex;gap:8px">
+          <button onclick="openMembersView()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">👥</button>
           <button onclick="openEvents()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">📅</button>
           <button id="community-admin-btn" onclick="openCreateChannel()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">＋</button>
           <button id="community-settings-btn" onclick="openAdmin()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">⚙️</button>
         </div>
       </div>
       <div id="community-channels"></div>
+    </div>
+    <div id="community-members-view" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="closeMembersView()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0">←</button>
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">MEMBERS</div>
+      </div>
+      <div id="community-members-list"></div>
+    </div>
+    <div id="community-profile-view" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="closeProfileView()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0">←</button>
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">PROFILE</div>
+      </div>
+      <div id="community-profile-body"></div>
     </div>
     <div id="community-chat-view" style="display:none;margin:-24px -20px;height:70vh;flex-direction:column">
       <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border)">
@@ -1836,6 +1851,26 @@
         <input type="checkbox" id="cc-admin-only">Announcement channel (only admins can post)
       </label>
       <button onclick="createChannel()" style="width:100%;background:var(--teal);border:none;border-radius:8px;padding:14px;color:#000;font-weight:700;cursor:pointer;font-family:var(--D);letter-spacing:.04em;text-transform:uppercase">Create Channel</button>
+    </div>
+  </div>
+
+  <!-- ══ EDIT MY PROFILE MODAL ══ -->
+  <div id="edit-profile-modal" onclick="if(event.target===this)closeEditProfile()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">EDIT PROFILE</div>
+        <button onclick="closeEditProfile()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <img id="ep-avatar-preview" src="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--s1);display:none">
+        <div id="ep-avatar-placeholder" style="width:64px;height:64px;border-radius:50%;background:var(--s1);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--dim)">👤</div>
+        <div>
+          <input type="file" id="ep-avatar-file" accept="image/*" style="display:none" onchange="onAvatarFileChosen(event)">
+          <button onclick="document.getElementById('ep-avatar-file').click()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px">Change photo</button>
+        </div>
+      </div>
+      <textarea id="ep-bio" placeholder="What do you do? What are you working on?" rows="3" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:14px;box-sizing:border-box;resize:vertical"></textarea>
+      <button onclick="saveMyProfile()" id="ep-save-btn" style="width:100%;background:var(--teal);border:none;border-radius:8px;padding:14px;color:#000;font-weight:700;cursor:pointer;font-family:var(--D);letter-spacing:.04em;text-transform:uppercase">Save</button>
     </div>
   </div>
 
@@ -2654,8 +2689,14 @@ function switchTab(tab){
   // tab instead of the chat's back button) previously left the realtime
   // subscription running indefinitely in the background — closeChannelView
   // only ran if the user explicitly backed out. Guard it here instead so
-  // any way of leaving the tab tears it down.
-  if(tab!=='community' && communityRealtimeSub){ closeChannelView(); }
+  // any way of leaving the tab tears it down. Same idea for the members/
+  // profile sub-views (no realtime involved there, but leaving one open
+  // would show it instead of the channel list next time Community opens).
+  if(tab!=='community'){
+    if(communityRealtimeSub) closeChannelView();
+    closeMembersView();
+    closeProfileView();
+  }
   const overflowTabs = ['coach','lab','move','community','future-self'];
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.getElementById('bn-more-btn')?.classList.toggle('active', overflowTabs.includes(tab));
@@ -2967,6 +3008,149 @@ async function createChannel(){
   closeCreateChannel();
   showToast('Channel created');
   await loadChannels();
+}
+
+/* ── MEMBERS DIRECTORY & PROFILES ── */
+let _communityMembersFull = [];
+
+function openMembersView(){
+  document.getElementById('community-list-view').style.display = 'none';
+  document.getElementById('community-members-view').style.display = 'block';
+  loadMembersList();
+}
+function closeMembersView(){
+  const view = document.getElementById('community-members-view');
+  if(view) view.style.display = 'none';
+  const listView = document.getElementById('community-list-view');
+  if(listView) listView.style.display = 'block';
+}
+
+async function loadMembersList(){
+  const list = document.getElementById('community-members-list');
+  if(!list) return;
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data, error } = await sb.from('profiles')
+    .select('id,display_name,avatar_url,bio,streak_days')
+    .eq('status', 'approved')
+    .order('display_name', { ascending: true });
+  if(error){ list.innerHTML = _communityErrorHtml('Failed to load members', error); return; }
+  _communityMembersFull = data || [];
+  if(_communityMembersFull.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No members yet.</div>'; return; }
+  list.innerHTML = _communityMembersFull.map(m => `
+    <div onclick="openProfileView('${m.id}')" style="display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+      ${m.avatar_url ? `<img src="${escHtml(m.avatar_url)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:40px;height:40px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">👤</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px">${escHtml(m.display_name || 'Member')}</div>
+        ${m.bio ? `<div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(m.bio)}</div>` : ''}
+      </div>
+      ${m.streak_days > 0 ? `<div style="font-size:11px;color:var(--teal);flex-shrink:0">🔥 ${m.streak_days}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function openProfileView(userId){
+  document.getElementById('community-members-view').style.display = 'none';
+  document.getElementById('community-list-view').style.display = 'none';
+  document.getElementById('community-profile-view').style.display = 'block';
+  const body = document.getElementById('community-profile-body');
+  if(!body) return;
+  body.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+
+  let m = _communityMembersFull.find(x => x.id === userId);
+  if(!m){
+    const { data } = await sb.from('profiles').select('id,display_name,avatar_url,bio,streak_days').eq('id', userId).maybeSingle();
+    m = data;
+  }
+  if(!m){ body.innerHTML = '<div style="color:var(--muted);font-size:13px">Member not found.</div>'; return; }
+
+  const isMe = userId === USER.id;
+  body.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px">
+      ${m.avatar_url ? `<img src="${escHtml(m.avatar_url)}" style="width:88px;height:88px;border-radius:50%;object-fit:cover;margin-bottom:12px">` : `<div style="width:88px;height:88px;border-radius:50%;background:var(--s1);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px">👤</div>`}
+      <div style="font-family:var(--D);font-size:22px;font-weight:900">${escHtml(m.display_name || 'Member')}</div>
+      ${m.bio ? `<div style="font-size:13px;color:var(--muted);margin-top:8px;max-width:280px;margin-left:auto;margin-right:auto">${escHtml(m.bio)}</div>` : ''}
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:20px">
+      <div style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+        <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--teal)">${m.streak_days || 0}</div>
+        <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Day Streak</div>
+      </div>
+    </div>
+    ${isMe ? `<button onclick="openEditProfile()" style="width:100%;background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:14px;border-radius:8px;cursor:pointer;font-weight:700">Edit My Profile</button>` : ''}
+  `;
+}
+
+function closeProfileView(){
+  const view = document.getElementById('community-profile-view');
+  if(view) view.style.display = 'none';
+  const listView = document.getElementById('community-list-view');
+  if(listView) listView.style.display = 'block';
+}
+
+/* ── EDIT MY PROFILE (bio + avatar) ── */
+let _pendingAvatarFile = null;
+
+function openEditProfile(){
+  document.getElementById('edit-profile-modal').style.display = 'flex';
+  document.getElementById('ep-bio').value = PROFILE?.bio || '';
+  const preview = document.getElementById('ep-avatar-preview');
+  const placeholder = document.getElementById('ep-avatar-placeholder');
+  if(PROFILE?.avatar_url){
+    preview.src = PROFILE.avatar_url;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    preview.style.display = 'none';
+    placeholder.style.display = 'flex';
+  }
+  _pendingAvatarFile = null;
+}
+function closeEditProfile(){
+  document.getElementById('edit-profile-modal').style.display = 'none';
+}
+function onAvatarFileChosen(event){
+  const file = event.target.files?.[0];
+  if(!file) return;
+  _pendingAvatarFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('ep-avatar-preview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('ep-avatar-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+async function saveMyProfile(){
+  const btn = document.getElementById('ep-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const bio = document.getElementById('ep-bio')?.value.trim() || null;
+  let avatar_url = PROFILE?.avatar_url || null;
+
+  if(_pendingAvatarFile){
+    const ext = (_pendingAvatarFile.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${USER.id}/avatar.${ext}`;
+    const { error: uploadError } = await sb.storage.from('avatars').upload(path, _pendingAvatarFile, { upsert: true });
+    if(uploadError){
+      showToast('Failed to upload photo: ' + (uploadError.message || 'unknown error'));
+      btn.disabled = false; btn.textContent = 'Save';
+      return;
+    }
+    const { data: pub } = sb.storage.from('avatars').getPublicUrl(path);
+    // Cache-bust — the path is fixed per user (avatar.<ext>) so the URL
+    // never changes across re-uploads; without this the browser/CDN would
+    // keep showing the old cached image after replacing it.
+    avatar_url = pub?.publicUrl ? `${pub.publicUrl}?t=${Date.now()}` : avatar_url;
+  }
+
+  const { error } = await sb.from('profiles').update({ bio, avatar_url }).eq('id', USER.id);
+  btn.disabled = false; btn.textContent = 'Save';
+  if(error){ showToast('Failed to save: ' + (error.message || error.code || 'unknown error')); return; }
+
+  PROFILE = { ...(PROFILE||{}), bio, avatar_url };
+  closeEditProfile();
+  showToast('Profile updated');
+  if(document.getElementById('community-profile-view')?.style.display !== 'none') await openProfileView(USER.id);
 }
 
 /* ── EVENTS ── */
