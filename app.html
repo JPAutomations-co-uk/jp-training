@@ -2712,9 +2712,23 @@ async function loadChannels(){
       list.innerHTML = `<div style="color:#fbbf24;font-size:12px;margin-bottom:8px">Loaded, but the channels table has no working "position" column — sort order isn't applied. Fix: add a position column (integer) or remove the .order() call.</div>` + _renderChannelListHtml();
       return;
     }
-    // Still failing even without .order() — show every field Supabase gave
-    // us so the real cause (missing table, RLS, something else) is visible
-    // instead of guessed at again.
+    // Still failing without .order() too, and the supabase-js error object
+    // has nothing beyond a bare "Bad Request" (no code/details/hint) — that
+    // client-side normalisation is clearly swallowing whatever PostgREST
+    // actually said. Bypass the client entirely with a raw fetch straight
+    // to the REST endpoint so the real HTTP status and response body are
+    // visible, unfiltered.
+    let rawDiag = '';
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      const raw = await fetch(`${SUPA_URL}/rest/v1/channels?select=*`, {
+        headers: { apikey: SUPA_KEY, Authorization: `Bearer ${session?.access_token || SUPA_KEY}` }
+      });
+      const rawText = await raw.text();
+      rawDiag = `HTTP ${raw.status} ${raw.statusText} — ${rawText.slice(0, 500)}`;
+    } catch(rawErr) {
+      rawDiag = `Raw fetch also failed: ${String(rawErr?.message||rawErr)}`;
+    }
     const e = retryError;
     const code = e.code || '';
     const hint = code === '42P01'
@@ -2722,7 +2736,8 @@ async function loadChannels(){
       : (code === '42501' || /row-level security|RLS/i.test(e.message||''))
         ? 'A Row-Level Security policy is blocking reads on the channels table — check its RLS policies in Supabase.'
         : '';
-    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels${code?` (${escHtml(code)})`:''}: ${escHtml(e.message||'unknown error')}${e.details?` — ${escHtml(e.details)}`:''}${e.hint?` (hint: ${escHtml(e.hint)})`:''}.${hint?` ${escHtml(hint)}`:''} <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
+    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels${code?` (${escHtml(code)})`:''}: ${escHtml(e.message||'unknown error')}${e.details?` — ${escHtml(e.details)}`:''}${e.hint?` (hint: ${escHtml(e.hint)})`:''}.${hint?` ${escHtml(hint)}`:''} <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>
+      <div style="color:var(--dim);font-size:10px;margin-top:6px;word-break:break-all">${escHtml(rawDiag)}</div>`;
     return;
   }
   communityChannelsCache = data || [];
