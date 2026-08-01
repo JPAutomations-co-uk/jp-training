@@ -2484,7 +2484,7 @@ function renderXPUI() {
   }
 
   // Approved (or JP bypassing) — load onboarding data then init tabs
-  loadOnboardingData();
+  await loadOnboardingData();
   XP_STATE.xp = prof?.xp || 0;
   XP_STATE.level = prof?.level || 1;
   XP_STATE.streak_days = prof?.streak_days || 0;
@@ -2516,7 +2516,7 @@ async function applyV1LaunchReset(){
   XP_STATE = { xp: 0, level: 1, streak_days: 0, last_active_date: null };
   OB.v1LaunchReset = true;
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e) {}
+  try { await saveOB(); } catch(e) {}
 }
 
 function initAll() {
@@ -3346,7 +3346,7 @@ function getProgramWeekInfo(){
   if(!OB.train.programStartDate){
     OB.train.programStartDate = TODAY;
     localStorage.setItem('jpt_ob', JSON.stringify(OB));
-    sb.auth.updateUser({ data:{ onboarding: OB } }).catch(()=>{});
+    saveOB().catch(()=>{});
   }
   const start = new Date(OB.train.programStartDate+'T00:00:00');
   const now = new Date(TODAY+'T00:00:00');
@@ -3363,7 +3363,7 @@ async function resetProgrammeStart(){
   OB.train = OB.train || {};
   OB.train.programStartDate = TODAY;
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await sb.auth.updateUser({ data:{ onboarding: OB } }); } catch(e){}
+  try { await saveOB(); } catch(e){}
   showToast('Week count restarted from today');
   openProgrammeCalendar();
   renderDeloadBanner();
@@ -3373,7 +3373,7 @@ function setDeloadCadence(n){
   OB.train = OB.train || {};
   OB.train.deloadCadence = +n;
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data:{ onboarding: OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   renderProgrammeCalendar();
   renderDeloadBanner();
 }
@@ -3958,7 +3958,7 @@ const JP_ORGAN_SUBS = {
 async function toggleOrganMeats(){
   OB.hasOrganMeats = !OB.hasOrganMeats;
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e){}
+  try { await saveOB(); } catch(e){}
   showToast(OB.hasOrganMeats ? 'Liver/heart back in — plan restored' : 'Switched to beef substitute until restocked');
   renderNutritionPlan();
 }
@@ -3976,13 +3976,13 @@ async function addUnavailableIngredient(){
   if(!OB.unavailableIngredients.includes(val)) OB.unavailableIngredients.push(val);
   inp.value = '';
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e){}
+  try { await saveOB(); } catch(e){}
   renderNutritionPlan();
 }
 async function removeUnavailableIngredient(val){
   OB.unavailableIngredients = (OB.unavailableIngredients||[]).filter(v=>v!==val);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e){}
+  try { await saveOB(); } catch(e){}
   renderNutritionPlan();
 }
 async function suggestMealSubstitute(mealText, ingredient, btn){
@@ -4611,7 +4611,7 @@ async function logBodyComp(){
   OB.bodyCompLog.sort((a,b)=>a.date.localeCompare(b.date));
   if(OB.bodyCompLog.length > 90) OB.bodyCompLog = OB.bodyCompLog.slice(-90);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await sb.auth.updateUser({ data:{ onboarding: OB } }); } catch(e){}
+  try { await saveOB(); } catch(e){}
   document.getElementById('bc-weight-input').value = '';
   document.getElementById('bc-bf-input').value = '';
   showToast('Logged');
@@ -5222,7 +5222,7 @@ function _saveFutureSelfBelief(b){
   OB.future_self_beliefs.unshift({ date: TODAY, timeframe: _fsTimeframe, belief: b.belief, reframe: b.reframe||'', action: b.action||'' });
   OB.future_self_beliefs = OB.future_self_beliefs.slice(0, 20);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data:{ onboarding: OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
 }
 
 function renderFutureSelfBeliefs(){
@@ -5429,7 +5429,7 @@ function showFutureSelfIntakeConfirm(){
 async function completeFutureSelfIntake(){
   OB.future_self = futureSelfIntakeProfile;
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await sb.auth.updateUser({ data:{ onboarding: OB } }); } catch(e){}
+  try { await saveOB(); } catch(e){}
   document.getElementById('fsi-overlay').classList.add('hidden');
   // Let initFutureSelf() pick the nearest defined horizon fresh, and clear
   // any in-progress chat so the newly (re)defined vision starts clean.
@@ -6018,13 +6018,50 @@ function renderMobilityCard(dayName) {
   </div>`;
 }
 
-function loadOnboardingData() {
+// Persists OB to the user_state table instead of auth user_metadata.
+// user_metadata is embedded directly in the JWT on every request — OB
+// (training/nutrition/mobility/habits/future-self/beliefs, everything
+// saveOnboardingSection() and friends write) grew large enough for JP's
+// account specifically to bloat his access token to ~50KB, past what
+// Supabase's gateway allows in an Authorization header, silently breaking
+// any request that used it before it ever reached PostgREST. Always
+// resolves (errors swallowed) to match every previous fire-and-forget
+// sb.auth.updateUser call site this replaces — safe to call without
+// awaiting, but returns a promise so `await saveOB()` also works where
+// the old code awaited.
+function saveOB(){
+  if(!USER) return Promise.resolve();
+  return sb.from('user_state')
+    .upsert({ user_id: USER.id, onboarding: OB, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+    .then(()=>{}, ()=>{});
+}
+
+async function loadOnboardingData() {
   const meta = USER?.user_metadata?.onboarding || {};
   // Only use localStorage if it was written by this exact user
   const localRaw = JSON.parse(localStorage.getItem('jpt_ob') || '{}');
   const localUid = localStorage.getItem('jpt_uid');
   const local = localUid === USER.id ? localRaw : {};
-  OB = { ...local, ...meta }; // metadata wins
+
+  let dbOB = null;
+  try {
+    const { data } = await sb.from('user_state').select('onboarding').eq('user_id', USER.id).maybeSingle();
+    dbOB = data?.onboarding || null;
+  } catch(e) {}
+
+  if(dbOB && Object.keys(dbOB).length){
+    OB = { ...local, ...dbOB };
+  } else {
+    // No user_state row yet — one-time migration from user_metadata (if
+    // there's anything there), then actively clear it out of
+    // user_metadata so an already-bloated token actually shrinks back
+    // down on next refresh, instead of just freezing at its current size.
+    OB = { ...local, ...meta };
+    if(Object.keys(meta).length){
+      await saveOB();
+      sb.auth.updateUser({ data: { onboarding: null } }).catch(()=>{});
+    }
+  }
   applyJPRealProtocol();
 }
 
@@ -6050,7 +6087,7 @@ function jpSplitAnchorDate(){
     // just reads the persisted value; only jpRealignSplit() moves it again.
     OB.train.splitAnchorDate = '2026-07-30';
     localStorage.setItem('jpt_ob', JSON.stringify(OB));
-    sb.auth.updateUser({ data:{ onboarding: OB } }).catch(()=>{});
+    saveOB().catch(()=>{});
   }
   return OB.train.splitAnchorDate;
 }
@@ -6089,7 +6126,7 @@ function jpRealignSplit(dayName){
   const d = new Date(TODAY + 'T00:00:00'); d.setDate(d.getDate() - targetIdx);
   OB.train.splitAnchorDate = d.toISOString().split('T')[0];
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data:{ onboarding: OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   showToast(`Split realigned — today is ${dayName}`);
   applyJPRealProtocol();
   if (OB.train.weeklyPlan) renderWeeklyCalendar(OB.train.weeklyPlan);
@@ -6184,9 +6221,9 @@ async function saveOnboardingSection(section, data) {
   // Persist to localStorage immediately (stamped with user ID)
   localStorage.setItem('jpt_uid', USER.id);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  // Sync to Supabase user_metadata
+  // Sync to the user_state table (not user_metadata — see saveOB())
   try {
-    await sb.auth.updateUser({ data: { onboarding: OB } });
+    await saveOB();
     // Also refresh user
     const { data: { user } } = await sb.auth.getUser();
     if (user) USER = user;
@@ -6310,7 +6347,7 @@ function addCustomHabit(){
   OB.custom_habits.push({ key, name, desc: '' });
   localStorage.setItem('jpt_uid', USER.id);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   input.value = '';
   initHabits();
 }
@@ -6319,7 +6356,7 @@ function removeCustomHabit(fullKey){
   OB.custom_habits = (OB.custom_habits||[]).filter(h=>'custom_'+h.key!==fullKey);
   localStorage.setItem('jpt_uid', USER.id);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   delete habitState[fullKey];
   initHabits();
 }
@@ -6333,7 +6370,7 @@ async function saveProgramme(){
   OB.train_done = true;
   localStorage.setItem('jpt_uid', USER.id);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   initCoach();
   showToast('Programme saved');
 
@@ -6361,7 +6398,7 @@ async function saveProgramme(){
       OB.train.analysis = d.analysis;
       OB.train.improvements = d.improvements;
       localStorage.setItem('jpt_ob', JSON.stringify(OB));
-      sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+      saveOB().catch(()=>{});
       renderWeeklyCalendar(d.weeklyPlan);
     }
     // renderProgrammeAnalysis kept for compat but hidden in UI
@@ -6566,7 +6603,7 @@ async function applyTrainChatPlan(btn) {
       OB.train.analysis = d.analysis;
       OB.train.improvements = d.improvements;
       localStorage.setItem('jpt_ob', JSON.stringify(OB));
-      sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+      saveOB().catch(()=>{});
       renderWeeklyCalendar(d.weeklyPlan);
       showToast("Plan updated — calendar refreshed");
     } else {
@@ -6622,7 +6659,7 @@ async function generateOverview() {
       .filter(l => l.length > 20 && l.length < 200);
       OB._overview = lines.slice(0, 7);
       localStorage.setItem('jpt_ob', JSON.stringify(OB));
-      try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e) {}
+      try { await saveOB(); } catch(e) {}
       renderOverviewCard();
     }
   } catch(e) { /* silent — overview is non-critical */ }
@@ -6648,7 +6685,7 @@ function skipIntake() {
   document.getElementById('intake-overlay').classList.add('hidden');
   OB._intake_done = true;
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data: { onboarding: OB } }).catch(() => {});
+  saveOB().catch(() => {});
 }
 
 function sendIntakeMsg() {
@@ -6817,7 +6854,7 @@ async function completeIntake() {
 
   localStorage.setItem('jpt_uid', USER.id);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e) {}
+  try { await saveOB(); } catch(e) {}
 
   document.getElementById('intake-overlay').classList.add('hidden');
   initAll();
@@ -6933,7 +6970,7 @@ function labSave(results) {
   if(OB) {
     OB.hormone_lab = { savedAt: saved.savedAt, dataSnapshot: saved.dataSnapshot, selectedPains: saved.selectedPains, answers: saved.answers };
     localStorage.setItem('jpt_ob', JSON.stringify(OB));
-    sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+    saveOB().catch(()=>{});
   }
 }
 
@@ -6947,7 +6984,7 @@ function labLoad() {
 
 function labClearSaved() {
   try { localStorage.removeItem(labStorageKey()); } catch(e) {}
-  if(OB) { delete OB.hormone_lab; localStorage.setItem('jpt_ob', JSON.stringify(OB)); sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{}); }
+  if(OB) { delete OB.hormone_lab; localStorage.setItem('jpt_ob', JSON.stringify(OB)); saveOB().catch(()=>{}); }
 }
 
 function checkLabStale() {
@@ -7893,7 +7930,7 @@ function alAddToDay(dayName) {
   OB.train = OB.train || {};
   OB.train.weeklyPlan = _weeklyPlan;
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data: { onboarding: OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
 
   renderWeeklyCalendar(_weeklyPlan);
   showToast(`Added "${name}" to ${dayName}`);
@@ -8577,7 +8614,7 @@ function savePlanBuilderPlan() {
   OB.train.weeklyPlan = JSON.parse(JSON.stringify(_pbBuilderPlan));
   _savePlanSnapshot();
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   renderWeeklyCalendar(OB.train.weeklyPlan);
   const es = document.getElementById('train-empty-state');
   if(es) es.style.display = 'none';
@@ -8654,7 +8691,7 @@ function addExFromLib(exId) {
       OB.train = OB.train||{};
       OB.train.weeklyPlan = _weeklyPlan;
       localStorage.setItem('jpt_ob', JSON.stringify(OB));
-      sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+      saveOB().catch(()=>{});
       document.getElementById('train-day-detail').innerHTML = renderDayDetail(dayObj, false);
     }
     _swapTarget = null;
@@ -8946,7 +8983,7 @@ function restorePlanSnapshot(idx) {
     OB.train = OB.train||{};
     OB.train.weeklyPlan = JSON.parse(JSON.stringify(hist[idx].plan));
     localStorage.setItem('jpt_ob', JSON.stringify(OB));
-    sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+    saveOB().catch(()=>{});
     renderWeeklyCalendar(OB.train.weeklyPlan);
     closePlanHistory();
     showToast('Plan restored');
@@ -9081,14 +9118,14 @@ function hideBuiltInHabit(key) {
   OB.hidden_habits = OB.hidden_habits || [];
   if(!OB.hidden_habits.includes(key)) OB.hidden_habits.push(key);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   initHabits();
 }
 
 function restoreAllHabits() {
   OB.hidden_habits = [];
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   initHabits();
 }
 
@@ -9099,7 +9136,7 @@ function editCustomHabit(fullKey) {
   if(!newName?.trim()) return;
   h.name = newName.trim();
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   initHabits();
 }
 
@@ -9136,7 +9173,7 @@ function confirmAddExToDay(dayName) {
   OB.train = OB.train || {};
   OB.train.weeklyPlan = _weeklyPlan;
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data:{ onboarding:OB } }).catch(()=>{});
+  saveOB().catch(()=>{});
   nameInput.value = '';
   if(nameInput) nameInput.value = '';
   const cfg = document.getElementById('ex-qcfg-' + dayName);
@@ -9215,7 +9252,7 @@ async function mobRunAnalysis() {
     MOB_STATE.results = data;
     OB.mobility = { state: MOB_STATE, results: data, ts: Date.now() };
     localStorage.setItem('jpt_ob', JSON.stringify(OB));
-    sb.auth.updateUser({ data: { onboarding: OB } }).catch(() => {});
+    saveOB().catch(() => {});
     mobRenderResults(data);
     mobShowPhase(7);
   } catch(e) {
@@ -9224,7 +9261,7 @@ async function mobRunAnalysis() {
     MOB_STATE.results = data;
     OB.mobility = { state: MOB_STATE, results: data, ts: Date.now() };
     try { localStorage.setItem('jpt_ob', JSON.stringify(OB)); } catch(_) {}
-    sb.auth.updateUser({ data: { onboarding: OB } }).catch(() => {});
+    saveOB().catch(() => {});
     mobRenderResults(data);
     mobShowPhase(7);
     showToast('Protocol ready');
@@ -9363,7 +9400,7 @@ async function mobAddHabits() {
 
   if(!added) { showToast('These habits are already in your tracker'); return; }
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  sb.auth.updateUser({ data: { onboarding: OB } }).catch(() => {});
+  saveOB().catch(() => {});
   btn.textContent = `✓ ${added} habit${added>1?'s':''} added to Habits tab`;
   btn.disabled = true;
   showToast(`Added ${added} mobility habit${added>1?'s':''}`);
