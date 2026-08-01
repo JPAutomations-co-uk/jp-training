@@ -2673,38 +2673,9 @@ async function initCommunity(){
   await loadChannels();
 }
 
-async function loadChannels(){
-  const list = document.getElementById('community-channels');
-  if(!list) return;
-  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
-  let data, error;
-  try {
-    ({ data, error } = await sb.from('channels').select('*').order('position', { ascending: true }));
-  } catch(err) {
-    // A genuine thrown exception (network layer, not a resolved {error})
-    // used to leave this stuck on "Loading..." forever with no way to
-    // recover short of reloading the whole page.
-    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels — ${escHtml(String(err?.message||err))}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
-    return;
-  }
-  if(error){
-    // Surface the real Postgres/PostgREST error instead of a generic
-    // message — 42P01 means the table doesn't exist yet (needs creating in
-    // Supabase), anything else (typically 42501/PGRST301) usually means an
-    // RLS policy is blocking the read. Same "show the real code" pattern
-    // already used for progress_checkins' missing-table case.
-    const code = error.code || '';
-    const hint = code === '42P01'
-      ? 'The channels table doesn\'t exist yet — create it in Supabase.'
-      : (code === '42501' || /row-level security|RLS/i.test(error.message||''))
-        ? 'A Row-Level Security policy is blocking reads on the channels table — check its RLS policies in Supabase.'
-        : '';
-    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels${code?` (${escHtml(code)})`:''}: ${escHtml(error.message||'unknown error')}.${hint?` ${escHtml(hint)}`:''} <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
-    return;
-  }
-  communityChannelsCache = data || [];
-  if(communityChannelsCache.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No channels yet.</div>'; return; }
-  list.innerHTML = communityChannelsCache.map(ch => `
+function _renderChannelListHtml(){
+  if(communityChannelsCache.length === 0) return '<div style="color:var(--muted);font-size:13px">No channels yet.</div>';
+  return communityChannelsCache.map(ch => `
     <div onclick="openChannel('${ch.id}')" style="display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer">
       <div style="font-size:16px">${ch.admin_only_post ? '📢' : '#'}</div>
       <div style="flex:1">
@@ -2714,6 +2685,48 @@ async function loadChannels(){
       <div style="color:var(--dim)">›</div>
     </div>
   `).join('');
+}
+
+async function loadChannels(){
+  const list = document.getElementById('community-channels');
+  if(!list) return;
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  let data, error;
+  try {
+    ({ data, error } = await sb.from('channels').select('*').order('position', { ascending: true }));
+  } catch(err) {
+    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels — ${escHtml(String(err?.message||err))}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
+    return;
+  }
+  if(error){
+    // A bare "Bad Request" with no error.code (not the usual 42P01/42501
+    // structured PostgREST error) most often means the request itself was
+    // malformed — commonly an .order() on a column that doesn't exist, which
+    // PostgREST rejects as 400 before it even gets to RLS/table checks.
+    // Retry with a bare select (no order) to isolate whether that's it —
+    // this tells us in one round-trip whether it's specifically the
+    // `position` column or something deeper (missing table/RLS).
+    const { data: retryData, error: retryError } = await sb.from('channels').select('*');
+    if(!retryError){
+      communityChannelsCache = (retryData||[]).slice();
+      list.innerHTML = `<div style="color:#fbbf24;font-size:12px;margin-bottom:8px">Loaded, but the channels table has no working "position" column — sort order isn't applied. Fix: add a position column (integer) or remove the .order() call.</div>` + _renderChannelListHtml();
+      return;
+    }
+    // Still failing even without .order() — show every field Supabase gave
+    // us so the real cause (missing table, RLS, something else) is visible
+    // instead of guessed at again.
+    const e = retryError;
+    const code = e.code || '';
+    const hint = code === '42P01'
+      ? 'The channels table doesn\'t exist yet — create it in Supabase.'
+      : (code === '42501' || /row-level security|RLS/i.test(e.message||''))
+        ? 'A Row-Level Security policy is blocking reads on the channels table — check its RLS policies in Supabase.'
+        : '';
+    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels${code?` (${escHtml(code)})`:''}: ${escHtml(e.message||'unknown error')}${e.details?` — ${escHtml(e.details)}`:''}${e.hint?` (hint: ${escHtml(e.hint)})`:''}.${hint?` ${escHtml(hint)}`:''} <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
+    return;
+  }
+  communityChannelsCache = data || [];
+  list.innerHTML = _renderChannelListHtml();
 }
 
 async function openChannel(channelId){
