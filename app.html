@@ -2684,10 +2684,24 @@ async function loadChannels(){
     // A genuine thrown exception (network layer, not a resolved {error})
     // used to leave this stuck on "Loading..." forever with no way to
     // recover short of reloading the whole page.
-    list.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load channels. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>';
+    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels — ${escHtml(String(err?.message||err))}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
     return;
   }
-  if(error){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load channels. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>'; return; }
+  if(error){
+    // Surface the real Postgres/PostgREST error instead of a generic
+    // message — 42P01 means the table doesn't exist yet (needs creating in
+    // Supabase), anything else (typically 42501/PGRST301) usually means an
+    // RLS policy is blocking the read. Same "show the real code" pattern
+    // already used for progress_checkins' missing-table case.
+    const code = error.code || '';
+    const hint = code === '42P01'
+      ? 'The channels table doesn\'t exist yet — create it in Supabase.'
+      : (code === '42501' || /row-level security|RLS/i.test(error.message||''))
+        ? 'A Row-Level Security policy is blocking reads on the channels table — check its RLS policies in Supabase.'
+        : '';
+    list.innerHTML = `<div style="color:var(--muted);font-size:13px">Failed to load channels${code?` (${escHtml(code)})`:''}: ${escHtml(error.message||'unknown error')}.${hint?` ${escHtml(hint)}`:''} <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
+    return;
+  }
   communityChannelsCache = data || [];
   if(communityChannelsCache.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No channels yet.</div>'; return; }
   list.innerHTML = communityChannelsCache.map(ch => `
