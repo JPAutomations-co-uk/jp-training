@@ -2080,6 +2080,13 @@ const JP_USER_ID = 'cfa880cb-bdf4-4ffa-a7ca-7b9c918984ea'; // jamesharvey51@hotm
 
 let USER=null, PROFILE=null;
 const TODAY=new Date().toISOString().split('T')[0];
+// v1 launch date — "The Standard"'s real app, live from this date. Every
+// account's progress (XP/level/streaks, training/habit history, progress
+// charts) is scoped to start counting from here, for every user, not just
+// JP — nothing before this date is ever deleted, it's just excluded from
+// every progress view and summary counter from here on. See
+// applyV1LaunchReset() for the one-time per-user counter reset this drives.
+const APP_LAUNCH_DATE = '2026-08-03';
 let OB={};
 let EAT_DATE=TODAY;
 let HABIT_DATE=TODAY;   // habits + steps can be logged for any past day
@@ -2359,11 +2366,35 @@ function renderXPUI() {
   XP_STATE.level = prof.level || 1;
   XP_STATE.streak_days = prof.streak_days || 0;
   XP_STATE.last_active_date = prof.last_active_date || null;
+  await applyV1LaunchReset();
   renderXPUI();
   initAll();
   if (!isIntakeComplete()) showIntake();
   checkForNewFeatures();
 })();
+
+// One-time per-user reset for the v1 launch (APP_LAUNCH_DATE) — every
+// account's own first load on or after that date. Doesn't touch xp_log/
+// habit_log/workout_sessions/nutrition_logs at all; those stay exactly as
+// they are, fully intact and auditable. Only zeroes the *persisted summary
+// counters* on profiles (xp/level/streak_days) that earnXP()/updateStreak()
+// increment client-side — those aren't recomputed from history on load,
+// they're running totals that would otherwise just keep counting straight
+// through launch day. Idempotent via OB.v1LaunchReset (onboarding metadata,
+// not a new DB column — no migration needed), so it only ever fires once
+// per account even though the date check itself stays true forever after.
+async function applyV1LaunchReset(){
+  if (!USER || !PROFILE) return;
+  if (TODAY < APP_LAUNCH_DATE) return;
+  if (OB.v1LaunchReset) return;
+  try {
+    await sb.from('profiles').update({ xp: 0, level: 1, streak_days: 0, last_active_date: null }).eq('id', USER.id);
+  } catch(e) {}
+  XP_STATE = { xp: 0, level: 1, streak_days: 0, last_active_date: null };
+  OB.v1LaunchReset = true;
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await sb.auth.updateUser({ data: { onboarding: OB } }); } catch(e) {}
+}
 
 function initAll() {
   loadStepsHistory();
@@ -2918,7 +2949,9 @@ let habitStreaks = {};
 async function loadHabitStreaks(){
   if(!USER) return;
   const from = new Date(TODAY+'T00:00:00'); from.setDate(from.getDate()-30);
-  const fromStr = from.toISOString().split('T')[0];
+  // Never reach further back than the v1 launch date — streaks only ever
+  // reflect post-launch activity.
+  const fromStr = from.toISOString().split('T')[0] > APP_LAUNCH_DATE ? from.toISOString().split('T')[0] : APP_LAUNCH_DATE;
   const { data, error } = await sb.from('habit_log')
     .select('habit_name,date,completed').eq('user_id',USER.id).eq('completed',true).gte('date',fromStr);
   if(error || !data) return;
@@ -4296,11 +4329,13 @@ let _charts = {};
 
 async function loadProgressCharts(){
   const d = new Date(); d.setDate(d.getDate()-6);
-  const from = d.toISOString().split('T')[0];
+  // Never reach further back than the v1 launch date — the 7-day window
+  // otherwise still dips into pre-launch days for the first week after launch.
+  const from = d.toISOString().split('T')[0] > APP_LAUNCH_DATE ? d.toISOString().split('T')[0] : APP_LAUNCH_DATE;
 
   const [{ data: habitData }, { data: checkinData }, { data: calData }] = await Promise.all([
     sb.from('habit_log').select('date,completed').eq('user_id',USER.id).gte('date',from),
-    sb.from('progress_checkins').select('*').eq('user_id',USER.id).order('date',{ascending:true}).limit(10),
+    sb.from('progress_checkins').select('*').eq('user_id',USER.id).gte('date',APP_LAUNCH_DATE).order('date',{ascending:true}).limit(10),
     sb.from('nutrition_logs').select('date,calories').eq('user_id',USER.id).gte('date',from),
   ]);
 
@@ -4586,7 +4621,8 @@ async function renderHabitCategoryBreakdown(){
   const el = document.getElementById('habit-category-breakdown');
   if(!el || !USER) return;
   const from = new Date(); from.setDate(from.getDate()-6);
-  const { data } = await sb.from('habit_log').select('habit_name,completed').eq('user_id',USER.id).gte('date',from.toISOString().slice(0,10));
+  const fromStr = from.toISOString().slice(0,10) > APP_LAUNCH_DATE ? from.toISOString().slice(0,10) : APP_LAUNCH_DATE;
+  const { data } = await sb.from('habit_log').select('habit_name,completed').eq('user_id',USER.id).gte('date',fromStr);
   if(!data?.length){ el.innerHTML = '<p style="font-size:12px;color:var(--dim)">Log a few days of habits to see this.</p>'; return; }
   const buckets = {};
   data.forEach(r=>{
@@ -4610,7 +4646,7 @@ async function renderAdherenceCorrelation(){
   const el = document.getElementById('adherence-correlation');
   if(!el || !USER) return;
   const from = new Date(); from.setDate(from.getDate()-28);
-  const fromStr = from.toISOString().slice(0,10);
+  const fromStr = from.toISOString().slice(0,10) > APP_LAUNCH_DATE ? from.toISOString().slice(0,10) : APP_LAUNCH_DATE;
   const [{data:habitData}, {data:checkinData}] = await Promise.all([
     sb.from('habit_log').select('date,completed').eq('user_id',USER.id).gte('date',fromStr),
     sb.from('progress_checkins').select('date,energy,mood,sleep_q').eq('user_id',USER.id).gte('date',fromStr).order('date',{ascending:true}),
@@ -4661,7 +4697,7 @@ async function submitCheckin(){
 
 async function loadCheckinHistory(){
   const{data,error}=await sb.from('progress_checkins')
-    .select('*').eq('user_id',USER.id)
+    .select('*').eq('user_id',USER.id).gte('date',APP_LAUNCH_DATE)
     .order('date',{ascending:false}).limit(6);
   const hist=document.getElementById('checkin-history');
   if(error?.code==='42P01'){
@@ -7725,7 +7761,10 @@ async function loadTrainingHistory() {
   if(!USER) return;
   try {
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
-    const cutoffStr = cutoff.toISOString().slice(0,10);
+    // Never reach further back than the v1 launch date — day-tab dots and
+    // training history only ever reflect post-launch activity, for every
+    // user, without deleting any of the underlying rows.
+    const cutoffStr = cutoff.toISOString().slice(0,10) > APP_LAUNCH_DATE ? cutoff.toISOString().slice(0,10) : APP_LAUNCH_DATE;
     const [{ data: sessions }, { data: trainedHabitDays }] = await Promise.all([
       sb.from('workout_sessions').select('id,date,session_type').eq('user_id',USER.id).gte('date',cutoffStr).order('date',{ascending:false}),
       sb.from('habit_log').select('date').eq('user_id',USER.id).eq('habit_name','training').eq('completed',true).gte('date',cutoffStr),
