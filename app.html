@@ -988,6 +988,17 @@
   <!-- CONTENT -->
   <div id="content">
 
+    <!-- Global milestone banner — sits outside the pane system so it stays
+         visible regardless of which tab triggered it (streak updates can
+         happen from anywhere habits get marked done). -->
+    <div id="wins-banner" style="display:none;align-items:center;justify-content:space-between;gap:10px;background:rgba(44,212,196,.08);border-bottom:1px solid rgba(44,212,196,.25);padding:10px 20px;font-size:13px">
+      <div id="wins-banner-text" style="color:var(--teal);font-weight:600"></div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button onclick="shareWinNow()" style="background:var(--teal);border:none;border-radius:6px;padding:6px 12px;color:#000;font-weight:700;cursor:pointer;font-size:12px">Share</button>
+        <button onclick="dismissWinsBanner()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:0 4px">✕</button>
+      </div>
+    </div>
+
     <!-- PENDING -->
     <div id="pane-pending" class="pane">
       <div class="pending-icon">
@@ -1794,6 +1805,8 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div style="font-family:var(--D);font-size:26px;font-weight:900;letter-spacing:-.02em">THE STANDARD</div>
         <div style="display:flex;gap:8px">
+          <button onclick="openNotifications()" style="position:relative;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">🔔<span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#f87171;color:#000;font-size:9px;font-weight:800;border-radius:50%;min-width:16px;height:16px;align-items:center;justify-content:center;padding:0 3px"></span></button>
+          <button onclick="openDmList()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">💬</button>
           <button onclick="openMembersView()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">👥</button>
           <button onclick="openEvents()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">📅</button>
           <button id="community-admin-btn" onclick="openCreateChannel()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">＋</button>
@@ -1801,6 +1814,31 @@
         </div>
       </div>
       <div id="community-channels"></div>
+    </div>
+    <div id="community-notifications-view" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="closeNotifications()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0">←</button>
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">NOTIFICATIONS</div>
+      </div>
+      <div id="community-notifications-list"></div>
+    </div>
+    <div id="community-dm-list-view" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="closeDmList()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0">←</button>
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">MESSAGES</div>
+      </div>
+      <div id="community-dm-conversations"></div>
+    </div>
+    <div id="community-dm-chat-view" style="display:none;margin:-24px -20px;height:70vh;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border)">
+        <button onclick="closeDmChat()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0">←</button>
+        <div id="community-dm-chat-title" style="font-family:var(--D);font-size:20px;font-weight:900"></div>
+      </div>
+      <div id="community-dm-messages" style="flex:1;overflow-y:auto;padding:16px 20px"></div>
+      <div style="display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--border)">
+        <input id="community-dm-input" placeholder="Message..." style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--white);font-family:var(--B);font-size:14px" onkeydown="if(event.key==='Enter')sendDmMessage()">
+        <button onclick="sendDmMessage()" style="background:var(--teal);border:none;border-radius:8px;padding:0 16px;color:#000;font-weight:700;cursor:pointer">Send</button>
+      </div>
     </div>
     <div id="community-members-view" style="display:none">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
@@ -2418,6 +2456,7 @@ async function updateStreak() {
   XP_STATE.last_active_date = TODAY;
   await sb.from('profiles').update({ streak_days: XP_STATE.streak_days, last_active_date: TODAY }).eq('id', USER.id);
   renderXPUI();
+  checkWinsAutoSuggest(XP_STATE.streak_days);
 }
 
 async function earnXP(actionType, actionKey, baseXP) {
@@ -2683,8 +2722,12 @@ function switchTab(tab){
   // they got left open.
   const eventsModal = document.getElementById('events-modal');
   const adminModal  = document.getElementById('admin-modal');
+  const createChannelModal = document.getElementById('create-channel-modal');
+  const editProfileModal = document.getElementById('edit-profile-modal');
   if(eventsModal) eventsModal.style.display = 'none';
   if(adminModal)  adminModal.style.display  = 'none';
+  if(createChannelModal) createChannelModal.style.display = 'none';
+  if(editProfileModal) editProfileModal.style.display = 'none';
   // Leaving Community with a channel open (e.g. tapping another bottom-nav
   // tab instead of the chat's back button) previously left the realtime
   // subscription running indefinitely in the background — closeChannelView
@@ -2694,8 +2737,11 @@ function switchTab(tab){
   // would show it instead of the channel list next time Community opens).
   if(tab!=='community'){
     if(communityRealtimeSub) closeChannelView();
+    if(dmRealtimeSub) closeDmChat();
     closeMembersView();
     closeProfileView();
+    closeNotifications();
+    closeDmList();
   }
   const overflowTabs = ['coach','lab','move','community','future-self'];
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
@@ -2744,6 +2790,8 @@ async function initCommunity(){
   if(createBtn) createBtn.style.display = PROFILE?.is_admin ? 'flex' : 'none';
   if(settingsBtn) settingsBtn.style.display = PROFILE?.is_admin ? 'flex' : 'none';
   await loadChannels();
+  await loadNotifBadge();
+  _subscribeNotifRealtime();
 }
 
 function _communityErrorHtml(action, err){
@@ -2752,18 +2800,26 @@ function _communityErrorHtml(action, err){
   return `<div style="color:var(--muted);font-size:13px">${escHtml(action)} failed${code}: ${msg}. <span style="color:var(--teal);cursor:pointer" onclick="loadChannels()">Retry</span></div>`;
 }
 
+// Map of channel_id -> last_read_at for the current user, used to derive
+// the unread dot in _renderChannelListHtml(). Populated in loadChannels().
+let _channelReadsCache = {};
+
 function _renderChannelListHtml(){
   if(communityChannelsCache.length === 0) return '<div style="color:var(--muted);font-size:13px">No channels yet.</div>';
-  return communityChannelsCache.map(ch => `
+  return communityChannelsCache.map(ch => {
+    const lastRead = _channelReadsCache[ch.id];
+    const isUnread = ch.last_message_at && (!lastRead || new Date(ch.last_message_at) > new Date(lastRead));
+    return `
     <div onclick="openChannel('${ch.id}')" style="display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer">
       <div style="font-size:16px">${ch.admin_only_post ? '📢' : '#'}</div>
       <div style="flex:1">
-        <div style="font-weight:700;font-size:14px">${escHtml(ch.name)}</div>
+        <div style="font-weight:700;font-size:14px">${escHtml(ch.name)}${isUnread ? ' <span style="color:var(--teal);font-size:8px;vertical-align:middle">●</span>' : ''}</div>
         ${ch.description ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${escHtml(ch.description)}</div>` : ''}
       </div>
       <div style="color:var(--dim)">›</div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 async function loadChannels(){
@@ -2778,6 +2834,9 @@ async function loadChannels(){
     return;
   }
   communityChannelsCache = result.data || [];
+  const { data: reads } = await sb.from('channel_reads').select('channel_id,last_read_at').eq('user_id', USER.id);
+  _channelReadsCache = {};
+  (reads || []).forEach(r => { _channelReadsCache[r.channel_id] = r.last_read_at; });
   list.innerHTML = _renderChannelListHtml();
 }
 
@@ -2811,6 +2870,10 @@ async function openChannel(channelId){
 
   await _loadCommunityMembers();
   await loadMessages();
+
+  // Mark read — fire and forget, shouldn't block opening the channel.
+  _channelReadsCache[channelId] = new Date().toISOString();
+  sb.from('channel_reads').upsert({ user_id: USER.id, channel_id: channelId, last_read_at: new Date().toISOString() }, { onConflict: 'user_id,channel_id' }).then(()=>{}, ()=>{});
 
   if(communityRealtimeSub){ sb.removeChannel(communityRealtimeSub); communityRealtimeSub = null; }
   try {
@@ -2901,7 +2964,7 @@ async function loadMessages(){
       <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
         ${reactionRow}
         <span onclick="showReactionPicker('${m.id}', this)" style="cursor:pointer;font-size:11px;color:var(--dim);padding:2px 6px">+</span>
-        <span onclick="startReply('${m.id}','${escHtml(author).replace(/'/g,"\\'")}','${escHtml((m.body||'').slice(0,40)).replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:11px;color:var(--dim);padding:2px 6px">Reply</span>
+        <span onclick="startReply('${m.id}','${m.user_id}','${escHtml(author).replace(/'/g,"\\'")}','${escHtml((m.body||'').slice(0,40)).replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:11px;color:var(--dim);padding:2px 6px">Reply</span>
       </div>
     </div>`;
   }).join('');
@@ -2928,8 +2991,10 @@ async function toggleReaction(messageId, emoji){
 }
 
 let _communityReplyTo = null;
-function startReply(messageId, authorName, bodyPreview){
+let _communityReplyToAuthor = null;
+function startReply(messageId, authorId, authorName, bodyPreview){
   _communityReplyTo = messageId;
+  _communityReplyToAuthor = authorId;
   const preview = document.getElementById('community-reply-preview');
   const textEl = document.getElementById('community-reply-preview-text');
   if(textEl) textEl.textContent = `${authorName}: ${bodyPreview}`;
@@ -2938,6 +3003,7 @@ function startReply(messageId, authorName, bodyPreview){
 }
 function cancelReply(){
   _communityReplyTo = null;
+  _communityReplyToAuthor = null;
   const preview = document.getElementById('community-reply-preview');
   if(preview) preview.style.display = 'none';
 }
@@ -2972,10 +3038,27 @@ async function sendCommunityMessage(){
   input.value = '';
   document.getElementById('community-mention-list').style.display = 'none';
   const payload = { channel_id: communityActiveChannel.id, user_id: USER.id, body };
+  const replyToAuthor = _communityReplyToAuthor;
   if(_communityReplyTo) payload.reply_to_id = _communityReplyTo;
-  const { error } = await sb.from('channel_messages').insert(payload);
+  const { data: sent, error } = await sb.from('channel_messages').insert(payload).select().single();
   cancelReply();
   if(error){ showToast('Failed to send: ' + (error.message || error.code || 'unknown error')); return; }
+
+  // Notifications — fire and forget, shouldn't block the send finishing.
+  // Mentions: match @Name in the body against known approved members.
+  // Reply: notify the original author, if it isn't the sender themselves.
+  const notifRows = [];
+  _communityMembersCache.forEach(m => {
+    if(m.id === USER.id || !m.display_name) return;
+    if(body.includes('@' + m.display_name)) {
+      notifRows.push({ user_id: m.id, type: 'mention', channel_id: communityActiveChannel.id, message_id: sent.id, actor_id: USER.id });
+    }
+  });
+  if(replyToAuthor && replyToAuthor !== USER.id && !notifRows.some(n => n.user_id === replyToAuthor)){
+    notifRows.push({ user_id: replyToAuthor, type: 'reply', channel_id: communityActiveChannel.id, message_id: sent.id, actor_id: USER.id });
+  }
+  if(notifRows.length) sb.from('notifications').insert(notifRows).then(()=>{}, ()=>{});
+
   await loadMessages();
 }
 
@@ -2984,6 +3067,217 @@ async function toggleCaseStudyFlag(messageId, currentlyFlagged){
   const { error } = await sb.from('channel_messages').update({ case_study_flagged: !currentlyFlagged }).eq('id', messageId);
   if(error){ showToast('Failed to update: ' + (error.message || error.code || 'unknown error')); return; }
   await loadMessages();
+}
+
+/* ── NOTIFICATIONS (mentions + replies to your own posts) ── */
+let notifRealtimeSub = null;
+
+async function loadNotifBadge(){
+  const badge = document.getElementById('notif-badge');
+  if(!badge || !USER) return;
+  const { count } = await sb.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', USER.id).eq('read', false);
+  if(count > 0){
+    badge.textContent = count > 9 ? '9+' : String(count);
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function _subscribeNotifRealtime(){
+  if(notifRealtimeSub) return;
+  notifRealtimeSub = sb.channel('notifications:' + USER.id)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'user_id=eq.' + USER.id }, loadNotifBadge)
+    .subscribe();
+}
+
+async function openNotifications(){
+  document.getElementById('community-list-view').style.display = 'none';
+  document.getElementById('community-notifications-view').style.display = 'block';
+  const list = document.getElementById('community-notifications-list');
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data, error } = await sb.from('notifications')
+    .select('*, actor:profiles!notifications_actor_id_fkey(display_name), channel:standard_channels(name)')
+    .eq('user_id', USER.id)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  if(error){ list.innerHTML = _communityErrorHtml('Failed to load notifications', error); return; }
+  if(!data || data.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">Nothing yet.</div>'; return; }
+  list.innerHTML = data.map(n => {
+    const actor = n.actor?.display_name || 'Someone';
+    const channelName = n.channel?.name || 'a channel';
+    const verb = n.type === 'mention' ? 'mentioned you in' : 'replied to you in';
+    const time = new Date(n.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return `<div onclick="openNotification('${n.id}','${n.channel_id||''}')" style="background:${n.read?'var(--s1)':'rgba(44,212,196,.06)'};border:1px solid ${n.read?'var(--border)':'rgba(44,212,196,.25)'};border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+      <div style="font-size:13px">${escHtml(actor)} ${verb} <b>#${escHtml(channelName)}</b></div>
+      <div style="font-size:11px;color:var(--dim);margin-top:2px">${time}</div>
+    </div>`;
+  }).join('');
+  // Mark all as read once the list is actually viewed.
+  sb.from('notifications').update({ read: true }).eq('user_id', USER.id).eq('read', false).then(()=>loadNotifBadge(), ()=>{});
+}
+function closeNotifications(){
+  const view = document.getElementById('community-notifications-view');
+  if(view) view.style.display = 'none';
+  const listView = document.getElementById('community-list-view');
+  if(listView) listView.style.display = 'block';
+}
+function openNotification(notifId, channelId){
+  closeNotifications();
+  if(channelId) openChannel(channelId);
+}
+
+// ── Wins auto-surfacing — real streak milestones only, nothing fabricated.
+// Called from updateStreak() whenever the streak actually changes. Uses a
+// dismissible banner (showToast() is plain text with no click handler, not
+// suitable for an actionable prompt) — persisted per-user via localStorage
+// so it survives a reload until acted on or dismissed, but never repeats
+// once handled.
+const WINS_MILESTONES = [7, 30, 60, 100, 365];
+function checkWinsAutoSuggest(streakDays){
+  if(!WINS_MILESTONES.includes(streakDays)) return;
+  const key = `jpt_win_shown_${USER?.id||'x'}_${streakDays}`;
+  if(localStorage.getItem(key)) return;
+  localStorage.setItem(key, '1');
+  const banner = document.getElementById('wins-banner');
+  if(!banner) return;
+  document.getElementById('wins-banner-text').textContent = `🔥 ${streakDays}-day streak! Share it in #Wins`;
+  banner.dataset.streak = streakDays;
+  banner.style.display = 'flex';
+}
+function dismissWinsBanner(){
+  const banner = document.getElementById('wins-banner');
+  if(banner) banner.style.display = 'none';
+}
+async function shareWinNow(){
+  const banner = document.getElementById('wins-banner');
+  const streakDays = banner?.dataset.streak;
+  dismissWinsBanner();
+  switchTab('community');
+  if(!communityChannelsCache.length) await loadChannels();
+  const winsChannel = communityChannelsCache.find(c => c.name === 'Wins');
+  if(!winsChannel) return;
+  await openChannel(winsChannel.id);
+  const input = document.getElementById('community-input');
+  if(input) input.value = `Just hit a ${streakDays}-day streak 🔥`;
+}
+
+/* ── DIRECT MESSAGES ── */
+let dmConversationsCache = [];
+let dmActiveConversation = null;
+let dmRealtimeSub = null;
+
+async function openDmList(){
+  document.getElementById('community-list-view').style.display = 'none';
+  document.getElementById('community-dm-list-view').style.display = 'block';
+  await loadDmConversations();
+}
+function closeDmList(){
+  const view = document.getElementById('community-dm-list-view');
+  if(view) view.style.display = 'none';
+  const listView = document.getElementById('community-list-view');
+  if(listView) listView.style.display = 'block';
+}
+
+async function loadDmConversations(){
+  const list = document.getElementById('community-dm-conversations');
+  if(!list) return;
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data, error } = await sb.from('dm_conversations')
+    .select('*, a:profiles!dm_conversations_user_a_fkey(id,display_name,avatar_url), b:profiles!dm_conversations_user_b_fkey(id,display_name,avatar_url)')
+    .or(`user_a.eq.${USER.id},user_b.eq.${USER.id}`)
+    .order('created_at', { ascending: false });
+  if(error){ list.innerHTML = _communityErrorHtml('Failed to load messages', error); return; }
+  dmConversationsCache = data || [];
+  if(dmConversationsCache.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No conversations yet — start one from a member\'s profile.</div>'; return; }
+  list.innerHTML = dmConversationsCache.map(c => {
+    const other = c.a?.id === USER.id ? c.b : c.a;
+    return `<div onclick="openDmChat('${c.id}')" style="display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+      ${other?.avatar_url ? `<img src="${escHtml(other.avatar_url)}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:36px;height:36px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>`}
+      <div style="font-weight:700;font-size:14px">${escHtml(other?.display_name || 'Member')}</div>
+    </div>`;
+  }).join('');
+}
+
+// Finds an existing conversation between the current user and otherUserId,
+// or creates one. Enforces a consistent (user_a, user_b) ordering via
+// string sort so the unique(user_a,user_b) constraint catches duplicates
+// regardless of who initiates.
+async function openDmWithUser(otherUserId, otherUserName){
+  const [a, b] = [USER.id, otherUserId].sort();
+  let { data: convo } = await sb.from('dm_conversations').select('id').eq('user_a', a).eq('user_b', b).maybeSingle();
+  if(!convo){
+    const { data: created, error } = await sb.from('dm_conversations').insert({ user_a: a, user_b: b }).select().single();
+    if(error){ showToast('Failed to start conversation: ' + (error.message||'unknown error')); return; }
+    convo = created;
+  }
+  closeProfileView();
+  closeMembersView();
+  await openDmChat(convo.id, otherUserName);
+}
+
+async function openDmChat(conversationId, otherUserName){
+  dmActiveConversation = conversationId;
+  document.getElementById('community-list-view').style.display = 'none';
+  document.getElementById('community-dm-list-view').style.display = 'none';
+  document.getElementById('community-dm-chat-view').style.display = 'flex';
+  const titleEl = document.getElementById('community-dm-chat-title');
+  if(titleEl && otherUserName) titleEl.textContent = otherUserName;
+  else if(titleEl){
+    const c = dmConversationsCache.find(x => x.id === conversationId);
+    const other = c ? (c.a?.id === USER.id ? c.b : c.a) : null;
+    titleEl.textContent = other?.display_name || 'Conversation';
+  }
+  await loadDmMessages();
+  if(dmRealtimeSub){ sb.removeChannel(dmRealtimeSub); dmRealtimeSub = null; }
+  try {
+    dmRealtimeSub = sb.channel('dm_messages:' + conversationId)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dm_messages', filter: 'conversation_id=eq.' + conversationId }, loadDmMessages)
+      .subscribe();
+  } catch(err) {}
+}
+function closeDmChat(){
+  if(dmRealtimeSub){ sb.removeChannel(dmRealtimeSub); dmRealtimeSub = null; }
+  dmActiveConversation = null;
+  document.getElementById('community-dm-chat-view').style.display = 'none';
+  document.getElementById('community-dm-list-view').style.display = 'block';
+}
+
+async function loadDmMessages(){
+  if(!dmActiveConversation) return;
+  const box = document.getElementById('community-dm-messages');
+  if(!box) return;
+  const { data, error } = await sb.from('dm_messages')
+    .select('*, sender:profiles(display_name)')
+    .eq('conversation_id', dmActiveConversation)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if(error){ box.innerHTML = _communityErrorHtml('Failed to load messages', error); return; }
+  const msgs = (data || []).slice().reverse();
+  if(msgs.length === 0){ box.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;margin-top:20px">Say hello.</div>'; return; }
+  box.innerHTML = msgs.map(m => {
+    const time = new Date(m.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const mine = m.sender_id === USER.id;
+    return `<div style="margin-bottom:12px;text-align:${mine?'right':'left'}">
+      <div style="display:inline-block;max-width:75%;background:${mine?'rgba(44,212,196,.12)':'var(--s1)'};border:1px solid ${mine?'rgba(44,212,196,.3)':'var(--border)'};border-radius:10px;padding:8px 12px;text-align:left">
+        <div style="font-size:14px">${escHtml(m.body)}</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:2px">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+  // Mark incoming messages read
+  sb.from('dm_messages').update({ read: true }).eq('conversation_id', dmActiveConversation).neq('sender_id', USER.id).eq('read', false).then(()=>{}, ()=>{});
+}
+
+async function sendDmMessage(){
+  const input = document.getElementById('community-dm-input');
+  const body = input?.value.trim();
+  if(!body || !dmActiveConversation) return;
+  input.value = '';
+  const { error } = await sb.from('dm_messages').insert({ conversation_id: dmActiveConversation, sender_id: USER.id, body });
+  if(error){ showToast('Failed to send: ' + (error.message || error.code || 'unknown error')); return; }
+  await loadDmMessages();
 }
 
 /* ── CREATE CHANNEL (admin) ── */
@@ -3076,7 +3370,9 @@ async function openProfileView(userId){
         <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Day Streak</div>
       </div>
     </div>
-    ${isMe ? `<button onclick="openEditProfile()" style="width:100%;background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:14px;border-radius:8px;cursor:pointer;font-weight:700">Edit My Profile</button>` : ''}
+    ${isMe
+      ? `<button onclick="openEditProfile()" style="width:100%;background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:14px;border-radius:8px;cursor:pointer;font-weight:700">Edit My Profile</button>`
+      : `<button onclick="openDmWithUser('${m.id}','${escHtml(m.display_name||'Member').replace(/'/g,"\\'")}')" style="width:100%;background:var(--teal);border:none;color:#000;padding:14px;border-radius:8px;cursor:pointer;font-weight:700">Message</button>`}
   `;
 }
 
