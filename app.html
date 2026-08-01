@@ -1266,6 +1266,32 @@
       </div>
     </div>
 
+    <!-- FUTURE SELF -->
+    <div id="pane-future-self" class="pane">
+      <div class="sh" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="sh-label">Future Self</div>
+          <div class="sh-title">Talk to<br><span style="color:var(--teal)">Future You</span></div>
+          <p class="sh-sub">The version of you who already hit it — career, physique, mentality, lifestyle. Ask them anything.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:8px">
+          <button class="ob-edit-btn" onclick="showOnboarding('future_self')">Edit vision</button>
+          <button class="ob-edit-btn" onclick="openFutureSelfHistory()">History</button>
+        </div>
+      </div>
+      <div id="future-self-not-set" style="display:none;text-align:center;padding:24px 16px">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">You haven't described who you're becoming yet — this only works if it's specific.</p>
+        <button class="btn-primary" onclick="showOnboarding('future_self')">Define your future self →</button>
+      </div>
+      <div class="coach-messages" id="future-self-messages">
+        <div class="msg coach" id="future-self-greeting">Set up your future self first — tap "Define your future self" above.</div>
+      </div>
+      <div class="coach-input-wrap" id="future-self-input-wrap">
+        <textarea class="coach-input" id="future-self-input" placeholder="Ask them something..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendFutureSelfMessage()}"></textarea>
+        <button class="coach-send" id="future-self-send" onclick="sendFutureSelfMessage()">Send</button>
+      </div>
+    </div>
+
     <!-- LAB -->
     <div id="pane-lab" class="pane">
       <div class="sh">
@@ -1873,6 +1899,9 @@
       </div>
       <button class="bn-more-item" data-tab="coach" onclick="switchTab('coach');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Coach
+      </button>
+      <button class="bn-more-item" data-tab="future-self" onclick="switchTab('future-self');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/><path d="M19 8l1.5 1.5L23 7"/></svg> Future Self
       </button>
       <button class="bn-more-item" data-tab="lab" onclick="switchTab('lab');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg> Lab
@@ -2511,7 +2540,7 @@ function switchTab(tab){
   // only ran if the user explicitly backed out. Guard it here instead so
   // any way of leaving the tab tears it down.
   if(tab!=='community' && communityRealtimeSub){ closeChannelView(); }
-  const overflowTabs = ['coach','lab','move','community'];
+  const overflowTabs = ['coach','lab','move','community','future-self'];
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.getElementById('bn-more-btn')?.classList.toggle('active', overflowTabs.includes(tab));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+tab));
@@ -2527,6 +2556,7 @@ function switchTab(tab){
   if(tab==='move') { setTimeout(()=>initMove(), 50); return; }
   if(tab==='community') { setTimeout(()=>initCommunity(), 50); return; }
   if(tab==='coach') { setTimeout(()=>{ resumeCoachSession(); renderCoachSuggestedPrompts(); }, 50); }
+  if(tab==='future-self') { setTimeout(()=>{ initFutureSelf(); resumeFutureSelfSession(); }, 50); return; }
   // Show onboarding on first visit if not yet done
   const obTabs=['habits','train','eat','progress','coach'];
   if(obTabs.includes(tab) && !isOnboarded(tab)){
@@ -4891,6 +4921,157 @@ async function sendMessage(){
   msgs.scrollTop=msgs.scrollHeight;
 }
 
+/* ════════════════════════════════════════
+   FUTURE SELF — talk to who you're becoming
+   General feature, every user, not JP-gated. Mirrors the Coach chat's
+   architecture (history array, same-day localStorage persistence, shared
+   history sheet) so it's the same reliable pattern rather than a second
+   one invented from scratch — just a different persona and system prompt.
+════════════════════════════════════════ */
+const futureSelfHistory=[];
+
+// Builds window._futureSelfContext: the target-persona description (from
+// OB.future_self, captured via the onboarding form) plus a snapshot of
+// real current-state data, so the persona can speak to the actual gap
+// between where the user is today and where they're headed — not generic
+// motivational text disconnected from their real numbers.
+function initFutureSelf(){
+  const fs = OB.future_self || {};
+  const notSet = document.getElementById('future-self-not-set');
+  const inputWrap = document.getElementById('future-self-input-wrap');
+  const hasVision = !!(fs.career_position || fs.physique_target || fs.lifestyle);
+  if(notSet) notSet.style.display = hasVision ? 'none' : '';
+  if(inputWrap) inputWrap.style.display = hasVision ? '' : 'none';
+  if(!hasVision){
+    window._futureSelfContext = null;
+    return;
+  }
+
+  const name=(USER?.user_metadata?.display_name||'').split(' ')[0]||'';
+  const parts = [
+    `You are ${name || 'this person'}'s own future self, ${fs.timeframe || 'some years from now'} — the version of them who already became who they set out to be. Speak in first person, as them, from that vantage point. Never break character or refer to yourself as an AI.`,
+    fs.career_position ? `Career/business position: ${fs.career_position}` : '',
+    fs.income_target ? `Income: ${fs.income_target}` : '',
+    fs.physique_target ? `Physique: ${fs.physique_target}` : '',
+    (fs.mentality_traits && fs.mentality_traits.length) ? `Character traits now fully developed: ${(Array.isArray(fs.mentality_traits)?fs.mentality_traits:[fs.mentality_traits]).join(', ')}` : '',
+    fs.lifestyle ? `Lifestyle: ${fs.lifestyle}` : '',
+  ].filter(Boolean);
+
+  // Real present-day snapshot, so guidance is grounded in what's actually
+  // true today, not just the aspirational target.
+  const t=OB.train||{}, e=OB.eat||{};
+  const today = [
+    XP_STATE.streak_days ? `Current streak: ${XP_STATE.streak_days} days` : null,
+    t.goal ? `Current training goal: ${t.goal}` : null,
+    e.goal ? `Current nutrition goal: ${e.goal}` : null,
+    typeof todaySteps!=='undefined' && todaySteps>0 ? `Steps today: ${todaySteps.toLocaleString()}` : null,
+  ].filter(Boolean);
+  if(today.length) parts.push(`Their real present-day snapshot:\n${today.map(p=>`- ${p}`).join('\n')}`);
+
+  window._futureSelfContext = parts.join('\n\n');
+}
+
+async function sendFutureSelfMessage(){
+  const input=document.getElementById('future-self-input');
+  const msg=input.value.trim();
+  if(!msg)return;
+  input.value='';
+
+  const msgs=document.getElementById('future-self-messages');
+  msgs.innerHTML+=`<div class="msg user">${escHtml(msg)}</div>`;
+  msgs.innerHTML+=`<div class="msg loading" id="future-self-loading">Thinking...</div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+
+  document.getElementById('future-self-send').disabled=true;
+  futureSelfHistory.push({role:'user',content:msg});
+
+  try{
+    const res=await fetch('/api/future-self',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        messages:futureSelfHistory,
+        futureSelfContext:window._futureSelfContext||null
+      })
+    });
+    const d=await res.json();
+    const reply=d.reply||d.error||'Something went wrong — try again.';
+    futureSelfHistory.push({role:'assistant',content:reply});
+    _persistFutureSelfSession();
+    document.getElementById('future-self-loading')?.remove();
+    msgs.innerHTML+=`<div class="msg coach">${escHtml(stripMd(reply)).replace(/\n/g,'<br>')}</div>`;
+  }catch(e){
+    document.getElementById('future-self-loading')?.remove();
+    msgs.innerHTML+=`<div class="msg coach" style="color:var(--dim)">Couldn't reach them right now. Try again in a moment.</div>`;
+  }
+  document.getElementById('future-self-send').disabled=false;
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+const _FUTURE_SELF_HIST_KEY = () => `jpt_futureself_hist_${USER?.id||'guest'}`;
+let _futureSelfResumed = false;
+
+function resumeFutureSelfSession(){
+  if(_futureSelfResumed) return;
+  _futureSelfResumed = true;
+  try {
+    const hist = JSON.parse(localStorage.getItem(_FUTURE_SELF_HIST_KEY()) || '[]');
+    const today = hist.find(s => s.date === TODAY);
+    if(!today?.messages?.length) return;
+    futureSelfHistory.length = 0;
+    futureSelfHistory.push(...today.messages);
+    const msgs = document.getElementById('future-self-messages');
+    if(!msgs) return;
+    msgs.innerHTML = today.messages.filter(m=>m.role==='user'||m.role==='assistant').map(m =>
+      m.role === 'user'
+        ? `<div class="msg user">${escHtml(m.content)}</div>`
+        : `<div class="msg coach">${escHtml(stripMd(m.content)).replace(/\n/g,'<br>')}</div>`
+    ).join('');
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) {}
+}
+
+function _persistFutureSelfSession() {
+  try {
+    const raw = localStorage.getItem(_FUTURE_SELF_HIST_KEY()) || '[]';
+    const hist = JSON.parse(raw);
+    const todayIdx = hist.findIndex(s => s.date === TODAY);
+    const msgs = futureSelfHistory.map(m => ({ role: m.role, content: m.content }));
+    if(todayIdx >= 0) { hist[todayIdx].messages = msgs; } else { hist.unshift({ date: TODAY, messages: msgs }); }
+    localStorage.setItem(_FUTURE_SELF_HIST_KEY(), JSON.stringify(hist.slice(0, 30)));
+  } catch(e) {}
+}
+
+// Reuses Coach's history sheet (#coach-hist-sheet/#ch-body) rather than
+// building a second modal — same shared component, different source key.
+function openFutureSelfHistory() {
+  document.getElementById('coach-hist-sheet')?.classList.add('open');
+  const body = document.getElementById('ch-body');
+  if(!body) return;
+  try {
+    const raw = localStorage.getItem(_FUTURE_SELF_HIST_KEY()) || '[]';
+    const hist = JSON.parse(raw);
+    if(!hist.length) {
+      body.innerHTML = '<div style="padding:28px 16px;text-align:center;color:var(--dim);font-size:13px">No past conversations yet.</div>';
+      return;
+    }
+    body.innerHTML = hist.map(session => {
+      const msgs = (session.messages || []).filter(m => m.role === 'user' || m.role === 'assistant');
+      if(!msgs.length) return '';
+      return `
+        <div class="ch-session">
+          <div class="ch-date">${escHtml(session.date)}</div>
+          ${msgs.map(m => m.role === 'user'
+            ? `<div class="ch-msg-u">${escHtml(m.content)}</div>`
+            : `<div class="ch-msg-a">${escHtml(stripMd(m.content)).replace(/\n/g,'<br>')}</div>`
+          ).join('')}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    body.innerHTML = '<div style="padding:20px;color:var(--dim);font-size:13px">Could not load history.</div>';
+  }
+}
+
 function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function stripMd(s){
@@ -5099,6 +5280,25 @@ const OB_DEFS = {
         options: ['Nothing — first time doing this properly','Generic gym programmes','Personal trainer','Calorie counting apps','Keto or low-carb diets','Various supplements','Multiple approaches — nothing stuck'] },
       { id: 'about',            label: 'In your own words — what do you want and why?', type: 'textarea',
         placeholder: 'e.g. I\'m 41, run my own business, two kids. I\'ve put on 15kg in 5 years, my energy is terrible by 2pm, and I haven\'t trained properly in 3 years. I want to feel like myself again.' },
+    ]
+  },
+  future_self: {
+    label: 'Future Self',
+    title: 'Who are you becoming?',
+    sub: 'The more specific this is, the more useful every conversation with them will be — vague answers get vague guidance back.',
+    steps: [
+      { id: 'timeframe',        label: 'How far out is this version of you?',            type: 'select',
+        options: ['1 year from now','3 years from now','5 years from now','10 years from now'] },
+      { id: 'career_position',  label: 'What does "made it" look like in your career/business? Be specific.', type: 'textarea',
+        placeholder: 'e.g. Running a 12-person agency doing £200k/month, I work 25 hours a week by choice, my team runs the day-to-day operations...' },
+      { id: 'income_target',    label: 'Target income',                                  type: 'text',
+        placeholder: 'e.g. £50,000/month' },
+      { id: 'physique_target',  label: 'Describe your target physique in detail',         type: 'textarea',
+        placeholder: 'e.g. 90kg, ~10% body fat, visible abs year-round, can deadlift 200kg for reps...' },
+      { id: 'mentality_traits', label: 'Which traits does this version of you have that you don\'t fully have yet?', type: 'multicheck',
+        options: ['Unshakeable confidence','Calm under pressure','Relentless discipline','Full emotional control','Decisive, no second-guessing','Patient with the process','Resilient after setbacks','Generous, not scarcity-minded','Present, not anxious about the future'] },
+      { id: 'lifestyle',        label: 'Describe a typical day in their life',            type: 'textarea',
+        placeholder: 'e.g. Wakes at 6am without an alarm, trains, breakfast with family, works from a home office, no commute, evenings are actually free...' },
     ]
   }
 };
@@ -5721,6 +5921,7 @@ async function submitOnboarding() {
   if (section === 'eat')      initEat();
   if (section === 'progress') initProgress();
   if (section === 'coach')    initCoach();
+  if (section === 'future_self') initFutureSelf();
 }
 
 /* ── HABIT DETAIL ── */
