@@ -1799,19 +1799,46 @@
     </div>
   </div>
 
-  <!-- ══ PANE: COMMUNITY (channels + chat) ══ -->
+  <!-- ══ PANE: COMMUNITY — reorganised (2 Aug 2026) into a Skool/Circle-style
+       shell: persistent header (title + personal inbox icons), a tab bar for
+       the four content sections (Feed/Channels/Members/Events), and
+       drill-down sub-views (chat/profile/notifications/DMs) reached by
+       tapping into something, not top-level tabs themselves. ══ -->
   <div id="pane-community" class="pane">
-    <div id="community-list-view">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <div style="font-family:var(--D);font-size:26px;font-weight:900;letter-spacing:-.02em">THE STANDARD</div>
-        <div style="display:flex;gap:8px">
-          <button onclick="openNotifications()" style="position:relative;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">🔔<span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#f87171;color:#000;font-size:9px;font-weight:800;border-radius:50%;min-width:16px;height:16px;align-items:center;justify-content:center;padding:0 3px"></span></button>
-          <button onclick="openDmList()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">💬</button>
-          <button onclick="openMembersView()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">👥</button>
-          <button onclick="openEvents()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">📅</button>
-          <button id="community-admin-btn" onclick="openCreateChannel()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">＋</button>
-          <button id="community-settings-btn" onclick="openAdmin()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">⚙️</button>
-        </div>
+    <div id="community-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-family:var(--D);font-size:26px;font-weight:900;letter-spacing:-.02em">THE STANDARD</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="openNotifications()" style="position:relative;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">🔔<span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#f87171;color:#000;font-size:9px;font-weight:800;border-radius:50%;min-width:16px;height:16px;align-items:center;justify-content:center;padding:0 3px"></span></button>
+        <button onclick="openDmList()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">💬</button>
+        <button id="community-settings-btn" onclick="openAdmin()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">⚙️</button>
+      </div>
+    </div>
+    <div id="community-tab-bar" style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:10px">
+      <button class="community-tab-btn active" data-tab="feed" onclick="switchCommunityTab('feed')" style="flex:1;background:none;border:none;color:var(--teal);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid var(--teal)">Feed</button>
+      <button class="community-tab-btn" data-tab="channels" onclick="switchCommunityTab('channels')" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Channels</button>
+      <button class="community-tab-btn" data-tab="members" onclick="switchCommunityTab('members')" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Members</button>
+      <button class="community-tab-btn" data-tab="events" onclick="openEvents()" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Events</button>
+    </div>
+
+    <!-- FEED TAB -->
+    <div id="community-feed-view">
+      <button onclick="openComposer()" style="width:100%;text-align:left;background:var(--s1);border:1px solid var(--border);color:var(--dim);padding:12px 14px;border-radius:10px;cursor:pointer;font-family:var(--B);font-size:14px;margin-bottom:14px">What's on your mind?</button>
+      <div id="community-feed-list"></div>
+    </div>
+
+    <!-- POST THREAD (drill-down) -->
+    <div id="community-post-thread-view" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="closePostThread()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0">←</button>
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">POST</div>
+      </div>
+      <div id="community-post-thread-body"></div>
+    </div>
+
+    <!-- CHANNELS TAB -->
+    <div id="community-list-view" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button id="community-admin-btn" onclick="openCreateChannel()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">＋ New Channel</button>
       </div>
       <div id="community-channels"></div>
     </div>
@@ -1907,8 +1934,28 @@
           <button onclick="document.getElementById('ep-avatar-file').click()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px">Change photo</button>
         </div>
       </div>
-      <textarea id="ep-bio" placeholder="What do you do? What are you working on?" rows="3" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:14px;box-sizing:border-box;resize:vertical"></textarea>
+      <textarea id="ep-bio" placeholder="What do you do? What are you working on?" rows="3" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:10px;box-sizing:border-box;resize:vertical"></textarea>
+      <textarea id="ep-links" placeholder="Links — one per line (website, socials, etc.)" rows="2" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:14px;box-sizing:border-box;resize:vertical"></textarea>
       <button onclick="saveMyProfile()" id="ep-save-btn" style="width:100%;background:var(--teal);border:none;border-radius:8px;padding:14px;color:#000;font-weight:700;cursor:pointer;font-family:var(--D);letter-spacing:.04em;text-transform:uppercase">Save</button>
+    </div>
+  </div>
+
+  <!-- ══ COMPOSER MODAL (new post / reply) ══ -->
+  <div id="composer-modal" onclick="if(event.target===this)closeComposer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
+    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div id="composer-title" style="font-family:var(--D);font-size:20px;font-weight:900">NEW POST</div>
+        <button onclick="closeComposer()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <textarea id="composer-body" placeholder="What's on your mind?" rows="5" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:10px;box-sizing:border-box;resize:vertical"></textarea>
+      <div id="composer-media-preview" style="display:none;margin-bottom:10px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <input type="file" id="composer-media-file" accept="image/*,video/*" style="display:none" onchange="onComposerMediaChosen(event)">
+          <button onclick="document.getElementById('composer-media-file').click()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px">📎 Photo/video</button>
+        </div>
+        <button onclick="submitPost()" id="composer-submit-btn" style="background:var(--teal);border:none;border-radius:8px;padding:10px 22px;color:#000;font-weight:700;cursor:pointer">Post</button>
+      </div>
     </div>
   </div>
 
@@ -2724,10 +2771,12 @@ function switchTab(tab){
   const adminModal  = document.getElementById('admin-modal');
   const createChannelModal = document.getElementById('create-channel-modal');
   const editProfileModal = document.getElementById('edit-profile-modal');
+  const composerModal = document.getElementById('composer-modal');
   if(eventsModal) eventsModal.style.display = 'none';
   if(adminModal)  adminModal.style.display  = 'none';
   if(createChannelModal) createChannelModal.style.display = 'none';
   if(editProfileModal) editProfileModal.style.display = 'none';
+  if(composerModal) composerModal.style.display = 'none';
   // Leaving Community with a channel open (e.g. tapping another bottom-nav
   // tab instead of the chat's back button) previously left the realtime
   // subscription running indefinitely in the background — closeChannelView
@@ -2742,6 +2791,7 @@ function switchTab(tab){
     closeProfileView();
     closeNotifications();
     closeDmList();
+    closePostThread();
   }
   const overflowTabs = ['coach','lab','move','community','future-self'];
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
@@ -2789,9 +2839,31 @@ async function initCommunity(){
   const settingsBtn = document.getElementById('community-settings-btn');
   if(createBtn) createBtn.style.display = PROFILE?.is_admin ? 'flex' : 'none';
   if(settingsBtn) settingsBtn.style.display = PROFILE?.is_admin ? 'flex' : 'none';
-  await loadChannels();
+  switchCommunityTab('feed');
   await loadNotifBadge();
   _subscribeNotifRealtime();
+}
+
+// Single source of truth for which of the 3 persistent tab views (Feed/
+// Channels/Members) is showing — Events is deliberately not one of these,
+// it stays a modal (openEvents()) reached from the same tab bar for
+// discoverability, not a 4th persistent view.
+function switchCommunityTab(tab){
+  const views = { feed: 'community-feed-view', channels: 'community-list-view', members: 'community-members-view' };
+  Object.entries(views).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = key === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.community-tab-btn').forEach(btn => {
+    const active = btn.dataset.tab === tab;
+    btn.style.color = active ? 'var(--teal)' : 'var(--muted)';
+    btn.style.borderBottomColor = active ? 'var(--teal)' : 'transparent';
+  });
+  const tabBar = document.getElementById('community-tab-bar');
+  if(tabBar) tabBar.style.display = 'flex';
+  if(tab === 'feed') loadFeed();
+  if(tab === 'channels') loadChannels();
+  if(tab === 'members') loadMembersList();
 }
 
 function _communityErrorHtml(action, err){
@@ -2849,14 +2921,28 @@ async function _loadCommunityMembers(){
   _communityMembersCache = data || [];
 }
 
+// Every drill-down view (chat/profile/notifications/DMs/post-thread) hides
+// all 3 persistent tab views + the tab bar itself, since each drill-down
+// has its own back-button header — showing both would be a cluttered
+// double-header. Centralised here since this exact hide-3-views logic was
+// previously duplicated (and, in a few spots, incompletely applied) across
+// every open*() function.
+function _hideCommunityTabs(){
+  ['community-feed-view','community-list-view','community-members-view'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+  const tabBar = document.getElementById('community-tab-bar');
+  if(tabBar) tabBar.style.display = 'none';
+}
+
 async function openChannel(channelId){
   const ch = communityChannelsCache.find(c => c.id === channelId);
   if(!ch) return;
   communityActiveChannel = ch;
   cancelReply();
-  const listView = document.getElementById('community-list-view');
+  _hideCommunityTabs();
   const chatView = document.getElementById('community-chat-view');
-  if(listView) listView.style.display = 'none';
   if(chatView) chatView.style.display = 'flex';
   const titleEl = document.getElementById('community-chat-title');
   const descEl = document.getElementById('community-chat-desc');
@@ -2893,9 +2979,8 @@ function closeChannelView(){
   communityActiveChannel = null;
   cancelReply();
   const chatView = document.getElementById('community-chat-view');
-  const listView = document.getElementById('community-list-view');
   if(chatView) chatView.style.display = 'none';
-  if(listView) listView.style.display = 'block';
+  switchCommunityTab('channels');
 }
 
 const COMMUNITY_REACTIONS = ['👍','❤️','🔥','💪','😂'];
@@ -3092,7 +3177,7 @@ function _subscribeNotifRealtime(){
 }
 
 async function openNotifications(){
-  document.getElementById('community-list-view').style.display = 'none';
+  _hideCommunityTabs();
   document.getElementById('community-notifications-view').style.display = 'block';
   const list = document.getElementById('community-notifications-list');
   list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
@@ -3119,8 +3204,7 @@ async function openNotifications(){
 function closeNotifications(){
   const view = document.getElementById('community-notifications-view');
   if(view) view.style.display = 'none';
-  const listView = document.getElementById('community-list-view');
-  if(listView) listView.style.display = 'block';
+  switchCommunityTab('feed');
 }
 function openNotification(notifId, channelId){
   closeNotifications();
@@ -3168,15 +3252,14 @@ let dmActiveConversation = null;
 let dmRealtimeSub = null;
 
 async function openDmList(){
-  document.getElementById('community-list-view').style.display = 'none';
+  _hideCommunityTabs();
   document.getElementById('community-dm-list-view').style.display = 'block';
   await loadDmConversations();
 }
 function closeDmList(){
   const view = document.getElementById('community-dm-list-view');
   if(view) view.style.display = 'none';
-  const listView = document.getElementById('community-list-view');
-  if(listView) listView.style.display = 'block';
+  switchCommunityTab('feed');
 }
 
 async function loadDmConversations(){
@@ -3211,14 +3294,12 @@ async function openDmWithUser(otherUserId, otherUserName){
     if(error){ showToast('Failed to start conversation: ' + (error.message||'unknown error')); return; }
     convo = created;
   }
-  closeProfileView();
-  closeMembersView();
   await openDmChat(convo.id, otherUserName);
 }
 
 async function openDmChat(conversationId, otherUserName){
   dmActiveConversation = conversationId;
-  document.getElementById('community-list-view').style.display = 'none';
+  _hideCommunityTabs();
   document.getElementById('community-dm-list-view').style.display = 'none';
   document.getElementById('community-dm-chat-view').style.display = 'flex';
   const titleEl = document.getElementById('community-dm-chat-title');
@@ -3307,16 +3388,11 @@ async function createChannel(){
 /* ── MEMBERS DIRECTORY & PROFILES ── */
 let _communityMembersFull = [];
 
-function openMembersView(){
-  document.getElementById('community-list-view').style.display = 'none';
-  document.getElementById('community-members-view').style.display = 'block';
-  loadMembersList();
-}
+// Members is now a persistent tab (switchCommunityTab('members')), not a
+// drill-down — this is kept only as a reset target for switchTab()'s
+// cross-pane cleanup guard, which needs some safe default to fall back to.
 function closeMembersView(){
-  const view = document.getElementById('community-members-view');
-  if(view) view.style.display = 'none';
-  const listView = document.getElementById('community-list-view');
-  if(listView) listView.style.display = 'block';
+  switchCommunityTab('feed');
 }
 
 async function loadMembersList(){
@@ -3343,26 +3419,37 @@ async function loadMembersList(){
 }
 
 async function openProfileView(userId){
-  document.getElementById('community-members-view').style.display = 'none';
-  document.getElementById('community-list-view').style.display = 'none';
+  _hideCommunityTabs();
   document.getElementById('community-profile-view').style.display = 'block';
   const body = document.getElementById('community-profile-body');
   if(!body) return;
   body.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
 
   let m = _communityMembersFull.find(x => x.id === userId);
-  if(!m){
-    const { data } = await sb.from('profiles').select('id,display_name,avatar_url,bio,streak_days').eq('id', userId).maybeSingle();
+  if(!m || m.links === undefined){
+    const { data } = await sb.from('profiles').select('id,display_name,avatar_url,bio,streak_days,links').eq('id', userId).maybeSingle();
     m = data;
   }
   if(!m){ body.innerHTML = '<div style="color:var(--muted);font-size:13px">Member not found.</div>'; return; }
 
   const isMe = userId === USER.id;
+  const linkChips = (m.links || '').split('\n').map(l => l.trim()).filter(Boolean);
+
+  const { data: posts } = await sb.from('posts')
+    .select('*, author:profiles(display_name,avatar_url)')
+    .eq('user_id', userId)
+    .is('parent_post_id', null)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  const postList = posts || [];
+  await _attachPostMeta(postList);
+
   body.innerHTML = `
     <div style="text-align:center;margin-bottom:20px">
       ${m.avatar_url ? `<img src="${escHtml(m.avatar_url)}" style="width:88px;height:88px;border-radius:50%;object-fit:cover;margin-bottom:12px">` : `<div style="width:88px;height:88px;border-radius:50%;background:var(--s1);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px">👤</div>`}
       <div style="font-family:var(--D);font-size:22px;font-weight:900">${escHtml(m.display_name || 'Member')}</div>
       ${m.bio ? `<div style="font-size:13px;color:var(--muted);margin-top:8px;max-width:280px;margin-left:auto;margin-right:auto">${escHtml(m.bio)}</div>` : ''}
+      ${linkChips.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px">${linkChips.map(l => `<a href="${escHtml(l)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--teal);background:rgba(44,212,196,.08);border:1px solid rgba(44,212,196,.25);padding:4px 10px;border-radius:12px;text-decoration:none">${escHtml(l.replace(/^https?:\/\//,'').replace(/\/$/,''))}</a>`).join('')}</div>` : ''}
     </div>
     <div style="display:flex;gap:10px;margin-bottom:20px">
       <div style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
@@ -3371,16 +3458,217 @@ async function openProfileView(userId){
       </div>
     </div>
     ${isMe
-      ? `<button onclick="openEditProfile()" style="width:100%;background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:14px;border-radius:8px;cursor:pointer;font-weight:700">Edit My Profile</button>`
-      : `<button onclick="openDmWithUser('${m.id}','${escHtml(m.display_name||'Member').replace(/'/g,"\\'")}')" style="width:100%;background:var(--teal);border:none;color:#000;padding:14px;border-radius:8px;cursor:pointer;font-weight:700">Message</button>`}
+      ? `<button onclick="openEditProfile()" style="width:100%;background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:14px;border-radius:8px;cursor:pointer;font-weight:700;margin-bottom:20px">Edit My Profile</button>`
+      : `<button onclick="openDmWithUser('${m.id}','${escHtml(m.display_name||'Member').replace(/'/g,"\\'")}')" style="width:100%;background:var(--teal);border:none;color:#000;padding:14px;border-radius:8px;cursor:pointer;font-weight:700;margin-bottom:20px">Message</button>`}
+    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Posts</div>
+    ${postList.length ? postList.map(_renderPostCard).join('') : '<div style="color:var(--muted);font-size:13px">No posts yet.</div>'}
   `;
 }
 
 function closeProfileView(){
   const view = document.getElementById('community-profile-view');
   if(view) view.style.display = 'none';
-  const listView = document.getElementById('community-list-view');
-  if(listView) listView.style.display = 'block';
+  switchCommunityTab('feed');
+}
+
+/* ── FEED & POSTS (X-style — separate content model from channels) ── */
+const COMMUNITY_MAX_VIDEO_BYTES = 250 * 1024 * 1024;
+const COMMUNITY_MAX_VIDEO_SECONDS = 300;
+const COMMUNITY_MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+
+function _renderPostCard(post){
+  const author = post.author?.display_name || 'Member';
+  const avatar = post.author?.avatar_url;
+  const time = new Date(post.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const liked = !!post._liked;
+  const likeCount = post._likeCount || 0;
+  const replyCount = post._replyCount || 0;
+  let media = '';
+  if(post.media_url && post.media_type === 'video'){
+    media = `<video src="${escHtml(post.media_url)}" controls style="width:100%;border-radius:10px;margin-top:8px;max-height:400px;background:#000"></video>`;
+  } else if(post.media_url && post.media_type === 'image'){
+    media = `<img src="${escHtml(post.media_url)}" style="width:100%;border-radius:10px;margin-top:8px;max-height:400px;object-fit:cover">`;
+  }
+  return `<div onclick="openPostThread('${post.id}')" style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      ${avatar ? `<img src="${escHtml(avatar)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:32px;height:32px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>`}
+      <div>
+        <div style="font-weight:700;font-size:13px">${escHtml(author)}</div>
+        <div style="font-size:10px;color:var(--dim)">${time}</div>
+      </div>
+    </div>
+    ${post.body ? `<div style="font-size:14px;white-space:pre-wrap">${_highlightMentions(post.body)}</div>` : ''}
+    ${media}
+    <div style="display:flex;gap:16px;margin-top:10px" onclick="event.stopPropagation()">
+      <span onclick="togglePostLike('${post.id}')" style="cursor:pointer;font-size:12px;color:${liked?'var(--teal)':'var(--dim)'}">${liked?'❤️':'🤍'} ${likeCount}</span>
+      <span style="font-size:12px;color:var(--dim)">💬 ${replyCount}</span>
+    </div>
+  </div>`;
+}
+
+// Attaches _likeCount/_liked/_replyCount to each post in-place — shared by
+// the feed, a post thread, and a profile's Posts tab so the like/reply
+// counting logic only lives in one place.
+async function _attachPostMeta(postList){
+  if(!postList.length) return;
+  const ids = postList.map(p => p.id);
+  const [{ data: likes }, { data: replyRows }] = await Promise.all([
+    sb.from('post_likes').select('post_id,user_id').in('post_id', ids),
+    sb.from('posts').select('parent_post_id').in('parent_post_id', ids),
+  ]);
+  postList.forEach(p => {
+    p._likeCount = (likes||[]).filter(l => l.post_id === p.id).length;
+    p._liked = (likes||[]).some(l => l.post_id === p.id && l.user_id === USER.id);
+    p._replyCount = (replyRows||[]).filter(r => r.parent_post_id === p.id).length;
+  });
+}
+
+async function loadFeed(){
+  const list = document.getElementById('community-feed-list');
+  if(!list) return;
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data, error } = await sb.from('posts')
+    .select('*, author:profiles(display_name,avatar_url)')
+    .is('parent_post_id', null)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  if(error){ list.innerHTML = _communityErrorHtml('Failed to load feed', error); return; }
+  const posts = data || [];
+  if(posts.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;margin-top:20px">Nobody\'s posted yet — be first.</div>'; return; }
+  await _attachPostMeta(posts);
+  list.innerHTML = posts.map(_renderPostCard).join('');
+}
+
+async function togglePostLike(postId){
+  const { data: existing } = await sb.from('post_likes').select('post_id').eq('post_id', postId).eq('user_id', USER.id).maybeSingle();
+  if(existing) await sb.from('post_likes').delete().eq('post_id', postId).eq('user_id', USER.id);
+  else await sb.from('post_likes').insert({ post_id: postId, user_id: USER.id });
+  if(_activePostThreadId) await loadPostThread(_activePostThreadId);
+  else await loadFeed();
+}
+
+let _activePostThreadId = null;
+async function openPostThread(postId){
+  _activePostThreadId = postId;
+  _hideCommunityTabs();
+  document.getElementById('community-post-thread-view').style.display = 'block';
+  await loadPostThread(postId);
+}
+function closePostThread(){
+  _activePostThreadId = null;
+  const view = document.getElementById('community-post-thread-view');
+  if(view) view.style.display = 'none';
+  switchCommunityTab('feed');
+}
+async function loadPostThread(postId){
+  const body = document.getElementById('community-post-thread-body');
+  if(!body) return;
+  body.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data: post, error } = await sb.from('posts').select('*, author:profiles(display_name,avatar_url)').eq('id', postId).maybeSingle();
+  if(error || !post){ body.innerHTML = _communityErrorHtml('Failed to load post', error||{message:'Post not found'}); return; }
+  const { data: replies } = await sb.from('posts').select('*, author:profiles(display_name,avatar_url)').eq('parent_post_id', postId).order('created_at', { ascending: true });
+  const allPosts = [post, ...(replies||[])];
+  await _attachPostMeta(allPosts);
+  body.innerHTML = _renderPostCard(post) +
+    `<button onclick="openComposer('${postId}')" style="width:100%;background:none;border:1px solid var(--border);color:var(--dim);padding:10px;border-radius:8px;cursor:pointer;font-size:13px;margin:4px 0 14px">Reply</button>` +
+    (replies||[]).map(_renderPostCard).join('');
+}
+
+/* ── COMPOSER (new post / reply) ── */
+let _composerReplyTo = null;
+let _composerMediaFile = null;
+let _composerMediaType = null;
+
+function openComposer(replyToId){
+  _composerReplyTo = replyToId || null;
+  _composerMediaFile = null;
+  _composerMediaType = null;
+  document.getElementById('composer-title').textContent = replyToId ? 'REPLY' : 'NEW POST';
+  document.getElementById('composer-body').value = '';
+  const preview = document.getElementById('composer-media-preview');
+  preview.style.display = 'none';
+  preview.innerHTML = '';
+  document.getElementById('composer-media-file').value = '';
+  document.getElementById('composer-modal').style.display = 'flex';
+}
+function closeComposer(){
+  document.getElementById('composer-modal').style.display = 'none';
+}
+
+function onComposerMediaChosen(event){
+  const file = event.target.files?.[0];
+  if(!file) return;
+  const isVideo = file.type.startsWith('video/');
+  const maxBytes = isVideo ? COMMUNITY_MAX_VIDEO_BYTES : COMMUNITY_MAX_IMAGE_BYTES;
+  if(file.size > maxBytes){
+    showToast(isVideo ? 'Video too large — 250MB max' : 'Image too large — 15MB max');
+    event.target.value = '';
+    return;
+  }
+  if(!isVideo){
+    _composerMediaFile = file;
+    _composerMediaType = 'image';
+    _showComposerMediaPreview(file, false);
+    return;
+  }
+  // Duration can't be checked from file size alone — probe it via a
+  // hidden <video> element's loaded metadata before accepting the file.
+  const url = URL.createObjectURL(file);
+  const probe = document.createElement('video');
+  probe.preload = 'metadata';
+  probe.onloadedmetadata = () => {
+    URL.revokeObjectURL(url);
+    if(probe.duration > COMMUNITY_MAX_VIDEO_SECONDS){
+      showToast('Video too long — 5 minutes max');
+      document.getElementById('composer-media-file').value = '';
+      return;
+    }
+    _composerMediaFile = file;
+    _composerMediaType = 'video';
+    _showComposerMediaPreview(file, true);
+  };
+  probe.src = url;
+}
+function _showComposerMediaPreview(file, isVideo){
+  const preview = document.getElementById('composer-media-preview');
+  const url = URL.createObjectURL(file);
+  preview.innerHTML = isVideo
+    ? `<video src="${url}" style="width:100%;border-radius:8px;max-height:200px" controls></video>`
+    : `<img src="${url}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover">`;
+  preview.style.display = 'block';
+}
+
+async function submitPost(){
+  const body = document.getElementById('composer-body')?.value.trim();
+  if(!body && !_composerMediaFile){ showToast('Write something or attach media'); return; }
+  const btn = document.getElementById('composer-submit-btn');
+  btn.disabled = true; btn.textContent = 'Posting...';
+
+  let media_url = null, media_type = null;
+  if(_composerMediaFile){
+    const ext = (_composerMediaFile.name.split('.').pop() || (_composerMediaType==='video'?'mp4':'jpg')).toLowerCase();
+    const path = `${USER.id}/${Date.now()}.${ext}`;
+    const { error: uploadError } = await sb.storage.from('post-media').upload(path, _composerMediaFile);
+    if(uploadError){
+      showToast('Failed to upload media: ' + (uploadError.message||'unknown error'));
+      btn.disabled = false; btn.textContent = 'Post';
+      return;
+    }
+    const { data: pub } = sb.storage.from('post-media').getPublicUrl(path);
+    media_url = pub?.publicUrl || null;
+    media_type = _composerMediaType;
+  }
+
+  const payload = { user_id: USER.id, body: body || null, media_url, media_type };
+  const replyTo = _composerReplyTo;
+  if(replyTo) payload.parent_post_id = replyTo;
+  const { error } = await sb.from('posts').insert(payload);
+  btn.disabled = false; btn.textContent = 'Post';
+  if(error){ showToast('Failed to post: ' + (error.message||'unknown error')); return; }
+  closeComposer();
+  showToast('Posted');
+  if(replyTo) await loadPostThread(replyTo);
+  else await loadFeed();
 }
 
 /* ── EDIT MY PROFILE (bio + avatar) ── */
@@ -3389,6 +3677,7 @@ let _pendingAvatarFile = null;
 function openEditProfile(){
   document.getElementById('edit-profile-modal').style.display = 'flex';
   document.getElementById('ep-bio').value = PROFILE?.bio || '';
+  document.getElementById('ep-links').value = PROFILE?.links || '';
   const preview = document.getElementById('ep-avatar-preview');
   const placeholder = document.getElementById('ep-avatar-placeholder');
   if(PROFILE?.avatar_url){
@@ -3421,6 +3710,7 @@ async function saveMyProfile(){
   const btn = document.getElementById('ep-save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
   const bio = document.getElementById('ep-bio')?.value.trim() || null;
+  const links = document.getElementById('ep-links')?.value.trim() || null;
   let avatar_url = PROFILE?.avatar_url || null;
 
   if(_pendingAvatarFile){
@@ -3439,11 +3729,11 @@ async function saveMyProfile(){
     avatar_url = pub?.publicUrl ? `${pub.publicUrl}?t=${Date.now()}` : avatar_url;
   }
 
-  const { error } = await sb.from('profiles').update({ bio, avatar_url }).eq('id', USER.id);
+  const { error } = await sb.from('profiles').update({ bio, links, avatar_url }).eq('id', USER.id);
   btn.disabled = false; btn.textContent = 'Save';
   if(error){ showToast('Failed to save: ' + (error.message || error.code || 'unknown error')); return; }
 
-  PROFILE = { ...(PROFILE||{}), bio, avatar_url };
+  PROFILE = { ...(PROFILE||{}), bio, links, avatar_url };
   closeEditProfile();
   showToast('Profile updated');
   if(document.getElementById('community-profile-view')?.style.display !== 'none') await openProfileView(USER.id);
