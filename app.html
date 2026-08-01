@@ -3531,12 +3531,18 @@ async function openProfileView(userId){
   const isMe = userId === USER.id;
   const linkChips = (m.links || '').split('\n').map(l => l.trim()).filter(Boolean);
 
-  const { data: posts } = await sb.from('posts')
-    .select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)')
-    .eq('user_id', userId)
-    .is('parent_post_id', null)
-    .order('created_at', { ascending: false })
-    .limit(20);
+  const [{ data: posts }, { count: postCount }] = await Promise.all([
+    sb.from('posts')
+      .select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)')
+      .eq('user_id', userId)
+      .is('parent_post_id', null)
+      .order('created_at', { ascending: false })
+      .limit(60),
+    sb.from('posts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('parent_post_id', null),
+  ]);
   const postList = posts || [];
   await _attachPostMeta(postList);
 
@@ -3549,6 +3555,10 @@ async function openProfileView(userId){
     </div>
     <div style="display:flex;gap:10px;margin-bottom:20px">
       <div style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+        <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--teal)">${postCount || 0}</div>
+        <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Posts</div>
+      </div>
+      <div style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
         <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--teal)">${m.streak_days || 0}</div>
         <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Day Streak</div>
       </div>
@@ -3557,8 +3567,27 @@ async function openProfileView(userId){
       ? `<button onclick="openEditProfile()" style="width:100%;background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:14px;border-radius:8px;cursor:pointer;font-weight:700;margin-bottom:20px">Edit My Profile</button>`
       : `<button onclick="openDmWithUser('${m.id}','${escHtml(m.display_name||'Member').replace(/'/g,"\\'")}')" style="width:100%;background:var(--teal);border:none;color:#000;padding:14px;border-radius:8px;cursor:pointer;font-weight:700;margin-bottom:20px">Message</button>`}
     <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Posts</div>
-    ${postList.length ? postList.map(_renderPostCard).join('') : '<div style="color:var(--muted);font-size:13px">No posts yet.</div>'}
+    ${postList.length ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px">${postList.map(_renderProfileGridTile).join('')}</div>` : '<div style="color:var(--muted);font-size:13px">No posts yet.</div>'}
   `;
+}
+
+// Instagram-style profile grid tile — photos/videos render as square
+// thumbnails, text-only posts render as a readable text card so they stay
+// part of the same grid instead of being dropped from it.
+function _renderProfileGridTile(post){
+  let inner;
+  if(post.media_url && post.media_type === 'image'){
+    inner = `<img src="${escHtml(post.media_url)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">`;
+  } else if(post.media_url && post.media_type === 'video'){
+    inner = `<video src="${escHtml(post.media_url)}#t=0.1" preload="metadata" muted playsinline style="width:100%;height:100%;object-fit:cover;display:block"></video>
+      <div style="position:absolute;top:6px;right:6px;font-size:15px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))">▶️</div>`;
+  } else {
+    const text = (post.body || '').slice(0, 100);
+    inner = `<div style="width:100%;height:100%;background:var(--s1);display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box">
+      <div style="font-size:12px;font-weight:600;line-height:1.35;text-align:center;color:var(--white);overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical">${escHtml(text)}</div>
+    </div>`;
+  }
+  return `<div onclick="openPostThread('${post.id}')" style="position:relative;aspect-ratio:1;overflow:hidden;cursor:pointer;background:var(--s1);border:1px solid var(--border)">${inner}</div>`;
 }
 
 function closeProfileView(){
