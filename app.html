@@ -25,6 +25,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <!-- Member map: Leaflet + OpenStreetMap tiles — free, no API key, no vendor lock-in -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root{
       --black:#000;--s1:#0C0C0C;--s2:#111;--border:#1A1A1A;
@@ -1810,6 +1813,7 @@
       <div style="display:flex;gap:8px">
         <button onclick="openNotifications()" style="position:relative;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">🔔<span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#f87171;color:#000;font-size:9px;font-weight:800;border-radius:50%;min-width:16px;height:16px;align-items:center;justify-content:center;padding:0 3px"></span></button>
         <button onclick="openDmList()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">💬</button>
+        <button onclick="openMyProfile()" style="background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">👤</button>
         <button id="community-settings-btn" onclick="openAdmin()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px">⚙️</button>
       </div>
     </div>
@@ -1817,6 +1821,7 @@
       <button class="community-tab-btn active" data-tab="feed" onclick="switchCommunityTab('feed')" style="flex:1;background:none;border:none;color:var(--teal);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid var(--teal)">Feed</button>
       <button class="community-tab-btn" data-tab="channels" onclick="switchCommunityTab('channels')" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Channels</button>
       <button class="community-tab-btn" data-tab="members" onclick="switchCommunityTab('members')" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Members</button>
+      <button class="community-tab-btn" data-tab="map" onclick="switchCommunityTab('map')" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Map</button>
       <button class="community-tab-btn" data-tab="events" onclick="openEvents()" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Events</button>
     </div>
 
@@ -1841,6 +1846,12 @@
         <button id="community-admin-btn" onclick="openCreateChannel()" style="display:none;background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">＋ New Channel</button>
       </div>
       <div id="community-channels"></div>
+    </div>
+    <div id="community-map-view" style="display:none">
+      <div id="community-map-empty-note" style="display:none;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;font-size:13px;color:var(--muted)">
+        Nobody's shared a location yet. <a href="#" onclick="openMyProfile();return false" style="color:var(--teal)">Add yours</a> to help others find where the community actually is — completely optional.
+      </div>
+      <div id="community-map-container" style="height:60vh;border-radius:12px;overflow:hidden;border:1px solid var(--border)"></div>
     </div>
     <div id="community-notifications-view" style="display:none">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
@@ -1935,7 +1946,9 @@
         </div>
       </div>
       <textarea id="ep-bio" placeholder="What do you do? What are you working on?" rows="3" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:10px;box-sizing:border-box;resize:vertical"></textarea>
-      <textarea id="ep-links" placeholder="Links — one per line (website, socials, etc.)" rows="2" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:14px;box-sizing:border-box;resize:vertical"></textarea>
+      <textarea id="ep-links" placeholder="Links — one per line (website, socials, etc.)" rows="2" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:10px;box-sizing:border-box;resize:vertical"></textarea>
+      <input id="ep-location" placeholder="City, Country (optional — shows on the member Map)" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:6px;box-sizing:border-box">
+      <div style="font-size:11px;color:var(--dim);margin-bottom:14px">Completely optional. Only a rough city-level location is used — never your exact address, never tracked automatically.</div>
       <button onclick="saveMyProfile()" id="ep-save-btn" style="width:100%;background:var(--teal);border:none;border-radius:8px;padding:14px;color:#000;font-weight:700;cursor:pointer;font-family:var(--D);letter-spacing:.04em;text-transform:uppercase">Save</button>
     </div>
   </div>
@@ -2777,14 +2790,17 @@ function switchTab(tab){
   if(createChannelModal) createChannelModal.style.display = 'none';
   if(editProfileModal) editProfileModal.style.display = 'none';
   if(composerModal) composerModal.style.display = 'none';
-  // Leaving Community with a channel open (e.g. tapping another bottom-nav
-  // tab instead of the chat's back button) previously left the realtime
-  // subscription running indefinitely in the background — closeChannelView
-  // only ran if the user explicitly backed out. Guard it here instead so
-  // any way of leaving the tab tears it down. Same idea for the members/
-  // profile sub-views (no realtime involved there, but leaving one open
-  // would show it instead of the channel list next time Community opens).
-  if(tab!=='community'){
+  // Leaving Community with a channel/DM/profile/etc. open previously left
+  // stray state (realtime subs, stale drill-down views) behind. This used
+  // to run unconditionally on EVERY tab switch anywhere in the app (Habits
+  // -> Train, Train -> Eat, everything) — real bug: expensive (each close*
+  // fires its own Supabase query) and, worse, closeDmChat() had no
+  // null-guard on its DOM lookups, so any throw there would halt this
+  // function before it ever reached the pane-switching code below,
+  // leaving the UI stuck on whatever pane was active. Gated behind
+  // wasInCommunity now — only runs when actually leaving Community.
+  const wasInCommunity = document.getElementById('pane-community')?.classList.contains('active');
+  if(wasInCommunity && tab!=='community'){
     if(communityRealtimeSub) closeChannelView();
     if(dmRealtimeSub) closeDmChat();
     closeMembersView();
@@ -2849,7 +2865,7 @@ async function initCommunity(){
 // it stays a modal (openEvents()) reached from the same tab bar for
 // discoverability, not a 4th persistent view.
 function switchCommunityTab(tab){
-  const views = { feed: 'community-feed-view', channels: 'community-list-view', members: 'community-members-view' };
+  const views = { feed: 'community-feed-view', channels: 'community-list-view', members: 'community-members-view', map: 'community-map-view' };
   Object.entries(views).forEach(([key, id]) => {
     const el = document.getElementById(id);
     if(el) el.style.display = key === tab ? 'block' : 'none';
@@ -2864,6 +2880,7 @@ function switchCommunityTab(tab){
   if(tab === 'feed') loadFeed();
   if(tab === 'channels') loadChannels();
   if(tab === 'members') loadMembersList();
+  if(tab === 'map') loadMemberMap();
 }
 
 function _communityErrorHtml(action, err){
@@ -2928,7 +2945,7 @@ async function _loadCommunityMembers(){
 // previously duplicated (and, in a few spots, incompletely applied) across
 // every open*() function.
 function _hideCommunityTabs(){
-  ['community-feed-view','community-list-view','community-members-view'].forEach(id => {
+  ['community-feed-view','community-list-view','community-members-view','community-map-view'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.style.display = 'none';
   });
@@ -3320,8 +3337,10 @@ async function openDmChat(conversationId, otherUserName){
 function closeDmChat(){
   if(dmRealtimeSub){ sb.removeChannel(dmRealtimeSub); dmRealtimeSub = null; }
   dmActiveConversation = null;
-  document.getElementById('community-dm-chat-view').style.display = 'none';
-  document.getElementById('community-dm-list-view').style.display = 'block';
+  const chatView = document.getElementById('community-dm-chat-view');
+  const listView = document.getElementById('community-dm-list-view');
+  if(chatView) chatView.style.display = 'none';
+  if(listView) listView.style.display = 'block';
 }
 
 async function loadDmMessages(){
@@ -3416,6 +3435,83 @@ async function loadMembersList(){
       ${m.streak_days > 0 ? `<div style="font-size:11px;color:var(--teal);flex-shrink:0">🔥 ${m.streak_days}</div>` : ''}
     </div>
   `).join('');
+}
+
+// One-tap entry to your own profile — previously only reachable by finding
+// yourself in the Members list, which is exactly why JP couldn't find the
+// avatar/bio/posts editing that already existed.
+function openMyProfile(){
+  openProfileView(USER.id);
+}
+
+/* ── MEMBER MAP — opt-in, coarse (city-level) location only ──
+   Geocoded once via OpenStreetMap Nominatim (free, no API key) when a
+   member types a location into their profile. Never browser GPS, never
+   automatic — a member who leaves this blank simply never appears here. */
+let _memberMapInstance = null;
+let _memberMapMarkers = [];
+
+async function loadMemberMap(){
+  const container = document.getElementById('community-map-container');
+  const emptyNote = document.getElementById('community-map-empty-note');
+  if(!container) return;
+
+  const { data, error } = await sb.from('profiles')
+    .select('id,display_name,avatar_url,location_name,location_lat,location_lng')
+    .eq('status', 'approved')
+    .not('location_lat', 'is', null)
+    .not('location_lng', 'is', null);
+
+  if(error){
+    container.innerHTML = `<div style="padding:20px;color:var(--muted);font-size:13px">Failed to load map: ${escHtml(error.message||'unknown error')}</div>`;
+    return;
+  }
+
+  const membersWithLocation = data || [];
+  if(emptyNote) emptyNote.style.display = membersWithLocation.length === 0 ? 'block' : 'none';
+
+  // Initialise once, reuse on every subsequent visit to this tab — Leaflet
+  // throws if L.map() is called twice on the same container.
+  if(!_memberMapInstance){
+    _memberMapInstance = L.map('community-map-container', { worldCopyJump: true }).setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 18,
+    }).addTo(_memberMapInstance);
+  } else {
+    // The container sits at display:none while this tab isn't active —
+    // Leaflet's cached size goes stale while hidden, so force a recompute
+    // now that it's visible again, after the display change has painted.
+    setTimeout(() => _memberMapInstance.invalidateSize(), 50);
+  }
+
+  _memberMapMarkers.forEach(m => _memberMapInstance.removeLayer(m));
+  _memberMapMarkers = [];
+
+  membersWithLocation.forEach(m => {
+    const marker = L.marker([m.location_lat, m.location_lng]).addTo(_memberMapInstance);
+    const avatarHtml = m.avatar_url
+      ? `<img src="${escHtml(m.avatar_url)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-bottom:4px">`
+      : '';
+    marker.bindPopup(`<div style="text-align:center">${avatarHtml}<div style="font-weight:700">${escHtml(m.display_name||'Member')}</div><div style="font-size:11px;color:#666">${escHtml(m.location_name||'')}</div><a href="#" onclick="openProfileView('${m.id}');return false" style="font-size:11px">View profile</a></div>`);
+    _memberMapMarkers.push(marker);
+  });
+}
+
+// Free-text "City, Country" -> {lat,lng} via Nominatim. Runs once, only
+// when a user explicitly saves a new/changed location on their own
+// profile — an occasional interactive lookup, not bulk/automated, which is
+// what Nominatim's usage policy is actually there to prevent.
+async function _geocodeLocation(query){
+  if(!query) return null;
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
+    const results = await res.json();
+    if(!results || !results.length) return null;
+    return { lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) };
+  } catch(e) {
+    return null;
+  }
 }
 
 async function openProfileView(userId){
@@ -3678,6 +3774,7 @@ function openEditProfile(){
   document.getElementById('edit-profile-modal').style.display = 'flex';
   document.getElementById('ep-bio').value = PROFILE?.bio || '';
   document.getElementById('ep-links').value = PROFILE?.links || '';
+  document.getElementById('ep-location').value = PROFILE?.location_name || '';
   const preview = document.getElementById('ep-avatar-preview');
   const placeholder = document.getElementById('ep-avatar-placeholder');
   if(PROFILE?.avatar_url){
@@ -3711,7 +3808,29 @@ async function saveMyProfile(){
   btn.disabled = true; btn.textContent = 'Saving...';
   const bio = document.getElementById('ep-bio')?.value.trim() || null;
   const links = document.getElementById('ep-links')?.value.trim() || null;
+  const location_name = document.getElementById('ep-location')?.value.trim() || null;
   let avatar_url = PROFILE?.avatar_url || null;
+  let location_lat = PROFILE?.location_lat ?? null;
+  let location_lng = PROFILE?.location_lng ?? null;
+
+  if(!location_name){
+    // Cleared — remove from the map entirely, don't leave stale coordinates.
+    location_lat = null;
+    location_lng = null;
+  } else if(location_name !== (PROFILE?.location_name || null)){
+    // Only re-geocode when the text actually changed — avoids a needless
+    // lookup (and needless load on Nominatim's free service) every time
+    // someone just edits their bio without touching location.
+    btn.textContent = 'Finding location...';
+    const geo = await _geocodeLocation(location_name);
+    if(!geo){
+      showToast('Couldn\'t find that location — try a bigger city or check spelling');
+      btn.disabled = false; btn.textContent = 'Save';
+      return;
+    }
+    location_lat = geo.lat;
+    location_lng = geo.lng;
+  }
 
   if(_pendingAvatarFile){
     const ext = (_pendingAvatarFile.name.split('.').pop() || 'jpg').toLowerCase();
@@ -3729,11 +3848,11 @@ async function saveMyProfile(){
     avatar_url = pub?.publicUrl ? `${pub.publicUrl}?t=${Date.now()}` : avatar_url;
   }
 
-  const { error } = await sb.from('profiles').update({ bio, links, avatar_url }).eq('id', USER.id);
+  const { error } = await sb.from('profiles').update({ bio, links, avatar_url, location_name, location_lat, location_lng }).eq('id', USER.id);
   btn.disabled = false; btn.textContent = 'Save';
   if(error){ showToast('Failed to save: ' + (error.message || error.code || 'unknown error')); return; }
 
-  PROFILE = { ...(PROFILE||{}), bio, links, avatar_url };
+  PROFILE = { ...(PROFILE||{}), bio, links, avatar_url, location_name, location_lat, location_lng };
   closeEditProfile();
   showToast('Profile updated');
   if(document.getElementById('community-profile-view')?.style.display !== 'none') await openProfileView(USER.id);
