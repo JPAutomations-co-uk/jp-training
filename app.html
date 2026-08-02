@@ -96,8 +96,8 @@
        to do blind in a single diff on a file this size). ── */
     .card{border:1px solid var(--glass-border);background:var(--card-grad),var(--s1);
       border-radius:var(--radius-md);box-shadow:var(--shadow-ambient),var(--shadow-contact);
-      transition:box-shadow .2s,border-color .2s,transform .15s}
-    .card:active{transform:scale(.985)}
+      transition:box-shadow .2s,border-color .2s,transform .15s;transform-style:preserve-3d}
+    .card:active{transform:perspective(600px) rotateX(2deg) scale(.985)}
 
     /* ── Glow utility — soft teal glow for active/important elements,
        replacing plain color-only active states. ── */
@@ -110,7 +110,7 @@
        padding, max-height, flex layout). ── */
     .sheet-panel{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
       border-top:1px solid var(--glass-border);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
-      box-shadow:var(--shadow-ambient)}
+      box-shadow:var(--shadow-ambient);animation:sheetIn .38s cubic-bezier(.2,.8,.3,1);transform-origin:bottom center}
 
     /* Member map — Leaflet generates its own popup chrome (wrapper/tip),
        which inline styles on the bindPopup() HTML can't reach, so it's
@@ -165,6 +165,17 @@
     #levelup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:var(--z-critical);
       display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
     #levelup-overlay.show{display:flex}
+    /* The rarest, highest-drama moment in the app — worth the most elaborate
+       treatment precisely because it only fires once per level, not
+       something a user sees dozens of times a day like a pane switch. */
+    @keyframes badge3DIn{
+      0%{opacity:0;transform:perspective(900px) rotateY(-140deg) scale(.4)}
+      55%{opacity:1;transform:perspective(900px) rotateY(20deg) scale(1.08)}
+      75%{transform:perspective(900px) rotateY(-8deg) scale(1)}
+      100%{transform:perspective(900px) rotateY(0) scale(1)}
+    }
+    #levelup-overlay.show #levelup-name{animation:badge3DIn .8s cubic-bezier(.2,.8,.3,1);
+      text-shadow:0 0 30px rgba(44,212,196,.6);transform-style:preserve-3d}
     .tb-signout{font-size:11px;color:var(--dim);cursor:pointer;background:none;border:none;
       font-family:var(--B);transition:color .2s;padding:4px}
     .tb-signout:hover{color:var(--muted)}
@@ -217,16 +228,23 @@
 
     /* ── PANES ── */
     .pane{display:none;padding:24px 20px;padding-bottom:40px;min-height:100%}
-    .pane.active{display:block;animation:paneIn .28s ease}
-    @keyframes paneIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .pane.active{display:block;animation:paneIn .38s cubic-bezier(.2,.8,.3,1);transform-style:preserve-3d;perspective:1000px}
+    @keyframes paneIn{from{opacity:0;transform:perspective(1000px) rotateX(4deg) translateY(14px)}to{opacity:1;transform:perspective(1000px) rotateX(0) translateY(0)}}
 
     /* ── Motion system utilities (Phase 2) ── */
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-    .fade-in{animation:fadeIn .3s ease}
-    @keyframes staggerIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .stagger-in{opacity:0;animation:staggerIn .35s ease forwards}
-    .tap-target{transition:transform .15s,box-shadow .15s;cursor:pointer}
-    .tap-target:active{transform:scale(.98)}
+    @keyframes fadeIn{from{opacity:0;transform:perspective(800px) rotateX(3deg) translateY(10px)}to{opacity:1;transform:perspective(800px) rotateX(0) translateY(0)}}
+    .fade-in{animation:fadeIn .32s cubic-bezier(.2,.8,.3,1)}
+    @keyframes sheetIn{from{opacity:0;transform:perspective(900px) rotateX(-6deg) translateY(28px)}to{opacity:1;transform:perspective(900px) rotateX(0) translateY(0)}}
+    @keyframes staggerIn{from{opacity:0;transform:perspective(700px) rotateX(6deg) translateY(10px)}to{opacity:1;transform:perspective(700px) rotateX(0) translateY(0)}}
+    .stagger-in{opacity:0;animation:staggerIn .4s cubic-bezier(.2,.8,.3,1) forwards;transform-style:preserve-3d}
+    .tap-target{transition:transform .15s,box-shadow .15s;cursor:pointer;transform-style:preserve-3d}
+    .tap-target:active{transform:perspective(600px) rotateX(3deg) scale(.98)}
+    /* Signature 3D flip-in for the profile grid — a distinctive alternative
+       to the plain fade used everywhere else, reserved for the Instagram-
+       style grid specifically so it reads as a deliberate moment, not
+       overused into meaninglessness by being everywhere. */
+    @keyframes gridFlipIn{from{opacity:0;transform:perspective(600px) rotateY(-70deg)}to{opacity:1;transform:perspective(600px) rotateY(0)}}
+    .grid-flip-in{opacity:0;animation:gridFlipIn .5s cubic-bezier(.2,.8,.3,1) forwards;transform-style:preserve-3d;backface-visibility:hidden}
     @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
     .skeleton{background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);
       background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:var(--radius-sm)}
@@ -887,6 +905,13 @@
     .food-ctx-chip{padding:7px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--B);font-size:11px;cursor:pointer;transition:all .15s;user-select:none}
     .food-ctx-chip:active{transform:scale(.97)}
     .food-ctx-chip.sel{background:var(--teal);border-color:var(--teal);color:#000;font-weight:600;box-shadow:var(--glow-teal-sm)}
+    /* Same segmented-toggle idea as .food-ctx-chip, applied to the habit
+       list's All/Top-Priority filter — was manually flipping 3 inline
+       style props per click instead of toggling a class. */
+    .habit-filter-btn{flex:1;padding:8px;font-size:11px;font-family:var(--B);letter-spacing:.04em;cursor:pointer;
+      border:1px solid var(--border);background:var(--s1);color:var(--muted);border-radius:var(--radius-sm);
+      transition:all .15s}
+    .habit-filter-btn.sel{border-color:var(--teal);background:var(--teal);color:#000;box-shadow:var(--glow-teal-sm)}
     .mob-radio-group{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
     .mob-radio{padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--B);font-size:13px;cursor:pointer;transition:all .15s;text-align:left;display:block}
     .mob-radio:active{transform:scale(.99)}
@@ -1250,8 +1275,8 @@
 
       <div id="overview-card-wrap"></div>
       <div style="display:flex;gap:6px;margin-top:16px">
-        <button id="habit-filter-all" onclick="setHabitFilter(false)" style="flex:1;padding:8px;font-size:11px;font-family:var(--B);letter-spacing:.04em;cursor:pointer;border:1px solid var(--teal);background:var(--teal);color:#000">All</button>
-        <button id="habit-filter-priority" onclick="setHabitFilter(true)" style="flex:1;padding:8px;font-size:11px;font-family:var(--B);letter-spacing:.04em;cursor:pointer;border:1px solid var(--border);background:var(--s1);color:var(--muted)">Top Priority</button>
+        <button id="habit-filter-all" class="habit-filter-btn sel" onclick="setHabitFilter(false)">All</button>
+        <button id="habit-filter-priority" class="habit-filter-btn" onclick="setHabitFilter(true)">Top Priority</button>
       </div>
       <div style="margin-top:10px" id="habits-list"></div>
       <div id="quests-section"></div>
@@ -1308,7 +1333,6 @@
       <!-- Hidden — kept for saveProgramme compat -->
       <textarea id="programme-input" style="display:none"></textarea>
       <div id="programme-analysis" style="display:none"></div>
-      <div id="train-content" style="display:none"></div>
     </div>
 
     <!-- EAT -->
@@ -3990,7 +4014,7 @@ function _renderProfileGridTile(post, i){
     </div>`;
   }
   const staggerStyle = Number.isInteger(i) ? `;animation-delay:${Math.min(i,11)*30}ms` : '';
-  return `<div onclick="openPostThread('${post.id}')" class="tap-target stagger-in" style="position:relative;aspect-ratio:1;overflow:hidden;background:var(--s1);border:1px solid var(--border)${staggerStyle}">${inner}</div>`;
+  return `<div onclick="openPostThread('${post.id}')" class="tap-target grid-flip-in" style="position:relative;aspect-ratio:1;overflow:hidden;background:var(--s1);border:1px solid var(--border)${staggerStyle}">${inner}</div>`;
 }
 
 function closeProfileView(){
@@ -4611,12 +4635,8 @@ async function initHabits(){
 let _habitFilterPriority = false;
 function setHabitFilter(priorityOnly){
   _habitFilterPriority = priorityOnly;
-  document.getElementById('habit-filter-all').style.background = priorityOnly ? 'var(--s1)' : 'var(--teal)';
-  document.getElementById('habit-filter-all').style.color = priorityOnly ? 'var(--muted)' : '#000';
-  document.getElementById('habit-filter-all').style.borderColor = priorityOnly ? 'var(--border)' : 'var(--teal)';
-  document.getElementById('habit-filter-priority').style.background = priorityOnly ? 'var(--teal)' : 'var(--s1)';
-  document.getElementById('habit-filter-priority').style.color = priorityOnly ? '#000' : 'var(--muted)';
-  document.getElementById('habit-filter-priority').style.borderColor = priorityOnly ? 'var(--teal)' : 'var(--border)';
+  document.getElementById('habit-filter-all').classList.toggle('sel', !priorityOnly);
+  document.getElementById('habit-filter-priority').classList.toggle('sel', priorityOnly);
   renderHabits();
 }
 
@@ -5076,8 +5096,13 @@ function renderDayDetail(day, isToday) {
       ? `Last: ${lastData.sets.length}×${lastData.sets.map(s=>s.reps).join('/')} @ ${Math.max(...lastData.sets.map(s=>s.weight_kg))}kg`
       : '';
     const total = exercises.length;
-    // Reorder / swap / delete controls stay available on non-today (planning) days.
-    const controls = isToday ? '' : `<div class="ex-controls">
+    // Reorder/swap/delete used to only be available on non-today (planning)
+    // days — backwards for the pane's most common real use case, since
+    // today is the one day you're most likely to actually need to adjust
+    // something (injury, no equipment, ran out of time). Neither
+    // moveExercise/removeExercise/swapExercise has any date restriction of
+    // its own — this was purely a UI-level gate.
+    const controls = `<div class="ex-controls">
             <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},-1)"${ei===0?' disabled':''}>↑</button>
             <button class="ex-ctrl-btn" onclick="moveExercise('${escHtml(day.day)}',${ei},1)"${ei===total-1?' disabled':''}>↓</button>
             <button class="ex-ctrl-btn ex-swap-btn" onclick="swapExercise('${escHtml(day.day)}',${ei})" title="Swap">⇄</button>
@@ -5138,54 +5163,11 @@ function renderDayDetail(day, isToday) {
       <button class="ex-quick-cfg-confirm" onclick="confirmAddExToDay('${escHtml(day.day)}')">Add →</button>
     </div>
     ${isToday
-      ? `<button class="btn-primary" onclick="saveWorkout()" style="margin-top:14px">Save Session</button>`
-      : `<button class="btn-primary" onclick="saveWorkout(true)" style="margin-top:14px">Do This Session Today →</button>
-         <button class="btn-primary" onclick="saveWorkout(false)" style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--muted)">Backfill for ${escHtml(_DAY_SHORT[day.day]||day.day)} instead</button>`
+      ? `<button class="btn-primary" id="save-workout-btn" onclick="saveWorkout()" style="margin-top:14px">Save Session</button>`
+      : `<button class="btn-primary" id="save-workout-today-btn" onclick="saveWorkout(true)" style="margin-top:14px">Do This Session Today →</button>
+         <button class="btn-primary" id="save-workout-backfill-btn" onclick="saveWorkout(false)" style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--muted)">Backfill for ${escHtml(_DAY_SHORT[day.day]||day.day)} instead</button>`
     }
   </div>`;
-}
-
-function renderTodaySession(weeklyPlan) {
-  const todayName = effectiveDayName(TODAY);
-  const todayDay = weeklyPlan.find(d => d.day === todayName);
-
-  if(!todayDay || todayDay.type === 'rest') {
-    document.getElementById('train-sub').textContent = 'Rest Day';
-    document.getElementById('train-content').innerHTML = `<div class="card"><p style="font-size:13px;color:var(--muted);text-align:center;padding:12px 0">${escHtml(todayDay?.keyLifts||'Full recovery — sleep, nutrition, walk.')}</p></div>`;
-    _activeSession = null;
-    return;
-  }
-
-  _activeSession = { name: todayDay.sessionName, exercises: todayDay.exercises || [] };
-  document.getElementById('train-sub').textContent = todayDay.sessionName;
-  document.getElementById('train-content').innerHTML = `
-    ${todayDay.exercises.map((ex,ei)=>`
-      <div class="workout-ex">
-        <div class="ex-name">${escHtml(ex.name)}</div>
-        ${ex.notes?`<div style="font-size:11px;color:var(--dim);margin:-4px 0 6px">${escHtml(ex.notes)}</div>`:''}
-        <div class="ex-sets">
-          <div class="set-row" style="margin-bottom:4px">
-            <span class="set-num"></span>
-            <span style="flex:1;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:center">Reps (target: ${escHtml(ex.reps)})</span>
-            <span class="set-unit" style="text-align:center">kg</span>
-            <span class="set-unit"></span>
-          </div>
-          ${Array.from({length:+ex.sets||3},(_,si)=>`
-            <div class="set-row">
-              <span class="set-num">${si+1}</span>
-              <input class="set-field" type="number" min="0" placeholder="${String(ex.reps).split('–')[0].split('-')[0].replace(/[^0-9]/,'')||'—'}" id="reps-${ei}-${si}">
-              <input class="set-field" type="number" min="0" step="2.5" placeholder="${String(ex.load||'').replace(/[^0-9.]/g,'')||'0'}" id="wt-${ei}-${si}">
-              <button class="set-done" id="sd-${ei}-${si}" onclick="checkSet('${ei}-${si}')">
-                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              </button>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `).join('')}
-    <button class="btn-primary" onclick="saveWorkout()">Save Session</button>
-    <p style="font-size:11px;color:var(--dim);text-align:center;margin-top:8px">Rest as prescribed between sets on main compounds.</p>
-  `;
 }
 
 function checkSet(id){
@@ -5194,6 +5176,13 @@ function checkSet(id){
 }
 
 async function saveWorkout(asToday){
+  // Matching submitCheckin()/addFood()'s existing disabled+"Saving..." pattern
+  // — previously this button had no saving state at all, so a double-tap on
+  // a slow connection could insert duplicate workout_sessions rows.
+  const btnId = asToday === true ? 'save-workout-today-btn' : asToday === false ? 'save-workout-backfill-btn' : 'save-workout-btn';
+  const saveBtn = document.getElementById(btnId);
+  const saveBtnLabel = saveBtn?.textContent;
+  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
   let sessionName, exercises, saveDate;
   // Save whichever day is currently selected. Default (asToday undefined,
   // i.e. the tab you're viewing IS today) saves under today's date as
@@ -5222,7 +5211,7 @@ async function saveWorkout(asToday){
   const{data:ws}=await sb.from('workout_sessions').insert({
     user_id:USER.id,date:saveDate,session_type:sessionName
   }).select().single();
-  if(!ws)return;
+  if(!ws){ if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = saveBtnLabel; } return; }
   const sets=[];
   exercises.forEach((ex)=>{
     const ei=ex._idx;
@@ -5299,6 +5288,7 @@ async function saveWorkout(asToday){
     await earnXP('workout_full_send', TODAY, 50);
   }
   await checkPerfectDay();
+  if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = saveBtnLabel; }
 }
 
 /* ════════════════════════════════════════
@@ -5616,14 +5606,18 @@ function renderNutritionPlan(){
 // Pre-fills the existing log form with a planned meal's exact text rather
 // than a locked one-tap log — the amounts are editable before submitting,
 // same form, same "Add & Rate" flow, just saves re-typing the whole thing.
+// Was a 2-tap flow (pre-fill the form, then a separate manual "Add & Rate"
+// tap) for something the app already knows the exact text/time for. Now
+// logs directly — the form still gets pre-filled first so the brief
+// scroll-into-view shows what's being logged before addFood()'s own
+// "Analysing..." state takes over, rather than logging invisibly.
 function logPlannedMeal(text, time){
   const nameEl = document.getElementById('f-name');
   const timeEl = document.getElementById('f-time');
   if(nameEl) nameEl.value = text;
   if(timeEl && time) timeEl.value = time;
   nameEl?.scrollIntoView({behavior:'smooth', block:'center'});
-  nameEl?.focus();
-  showToast('Pre-filled — edit amounts if needed, then Add & Rate');
+  addFood();
 }
 
 // Weekly shopping list — parses "NUMBERunit ingredient" patterns out of every
@@ -5769,6 +5763,10 @@ function renderFoods(){
     const t = f.meal_time || foodRatings[f.id]?.mealTime;
     return t ? `<span style="font-size:10px;color:var(--dim);margin-left:6px">${String(t).slice(0,5)}</span>` : '';
   };
+  if(!foods.length){
+    document.getElementById('food-list').innerHTML = '<p style="font-size:12px;color:var(--dim);text-align:center;padding:16px 0">No foods logged yet today.</p>';
+    return;
+  }
   document.getElementById('food-list').innerHTML = foods.map((f,i) => {
     const r = foodRatings[f.id];
     const hasRating = r != null && r.score != null;
@@ -5988,7 +5986,10 @@ async function getMealSuggestion(){
     const d = await res.json();
     wrap.innerHTML = `<div class="card"><div class="card-title" style="margin-bottom:8px">Today's Meal Plan</div>
       <div style="font-size:13px;color:var(--muted);line-height:1.8">${escHtml(stripMd(d.reply||'')).replace(/\n/g,'<br>')}</div></div>`;
-  }catch(e){wrap.innerHTML='';}
+  }catch(e){
+    wrap.innerHTML = '<p style="font-size:12px;color:var(--dim);padding:8px 0">Couldn\'t build a meal plan right now — try again.</p>';
+    showToast('Failed to build meal plan: ' + (e.message || 'unknown error'));
+  }
 }
 
 // Flat key→time lookup covering both base and JP's custom habits, for the
@@ -6268,7 +6269,7 @@ function renderNutrientTracker(){
       </div>
       <div style="height:5px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${Math.min(100,pct)}%;background:${barColor}"></div></div>
     </div>`;
-  }).join('') || '<p style="font-size:12px;color:var(--dim)">Log some food to see this.</p>';
+  }).join('') || '<p class="chart-empty">Log some food to see this.</p>';
 }
 
 // Nutrients below 70% of target today (only Tier 1 — the ones with a real
@@ -7927,6 +7928,24 @@ async function submitOnboarding() {
     }
   });
 
+  // Basic validation before submit — previously bad/empty input only
+  // surfaced as wrong-looking data downstream after the modal had already
+  // closed. Scoped to what's actually checkable generically: number fields
+  // must be real numbers, text/textarea fields can't be blank. Selects/time
+  // always carry a value from their default, and multicheck is legitimately
+  // optional, so neither needs a check here.
+  for(const f of def.steps){
+    const val = data[f.id];
+    if(f.type === 'number' && (val === '' || val == null || !Number.isFinite(+val))){
+      showToast(`Enter a valid number for "${f.label}"`);
+      return;
+    }
+    if((f.type === 'text' || f.type === 'textarea') && !val){
+      showToast(`"${f.label}" can't be blank`);
+      return;
+    }
+  }
+
   const btn = document.getElementById('ob-save');
   btn.disabled = true; btn.textContent = 'Saving...';
 
@@ -7980,6 +7999,10 @@ function addCustomHabit(){
   initHabits();
 }
 function removeCustomHabit(fullKey){
+  // Was one instant, irreversible tap — more destructive than the built-in
+  // habit "hide" (reversible via "Restore hidden habits") for what a user
+  // experiences as the same conceptual "remove" gesture.
+  if(!confirm('Delete this habit? This can\'t be undone.')) return;
   const key = fullKey.replace('custom_','');
   OB.custom_habits = (OB.custom_habits||[]).filter(h=>'custom_'+h.key!==fullKey);
   localStorage.setItem('jpt_uid', USER.id);
@@ -8132,9 +8155,6 @@ function renderProgrammeAnalysis(d){
     ${impHtml}
     ${plan.length ? `<div class="sh-label" style="margin-bottom:10px">Weekly plan</div><div class="week-cal">${calHtml}</div>` : ''}
   `;
-
-  // Update today's workout tracker from the AI plan
-  if(plan.length) renderTodaySession(plan);
 
   // Show training coach chat for refinement
   initTrainChat(analysis, improvements);
