@@ -217,7 +217,30 @@
 
     /* ── PANES ── */
     .pane{display:none;padding:24px 20px;padding-bottom:40px;min-height:100%}
-    .pane.active{display:block}
+    .pane.active{display:block;animation:paneIn .28s ease}
+    @keyframes paneIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── Motion system utilities (Phase 2) ── */
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .fade-in{animation:fadeIn .3s ease}
+    @keyframes staggerIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .stagger-in{opacity:0;animation:staggerIn .35s ease forwards}
+    .tap-target{transition:transform .15s,box-shadow .15s;cursor:pointer}
+    .tap-target:active{transform:scale(.98)}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    .skeleton{background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);
+      background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:var(--radius-sm)}
+    .skeleton-line{height:12px;margin-bottom:8px}
+    .skeleton-line:last-child{margin-bottom:0;width:60%}
+    @keyframes heartPop{0%{transform:scale(1)}35%{transform:scale(1.5)}60%{transform:scale(.85)}100%{transform:scale(1)}}
+    .pop-in{animation:heartPop .4s ease}
+    @keyframes checkPop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+    .check-pop{animation:checkPop .35s ease}
+    @keyframes confettiBurst{0%{transform:translate(0,0) rotate(0deg);opacity:1}100%{transform:translate(var(--tx),var(--ty)) rotate(var(--tr));opacity:0}}
+    .confetti-piece{position:absolute;top:50%;left:50%;width:7px;height:7px;pointer-events:none;
+      animation:confettiBurst var(--dur,900ms) cubic-bezier(.2,.7,.3,1) forwards}
+    .reveal-on-scroll{opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease}
+    .reveal-on-scroll.revealed{opacity:1;transform:translateY(0)}
 
     /* ── PENDING ── */
     #pane-pending{display:none;padding:60px 20px;text-align:center;align-items:center;justify-content:center;flex-direction:column;gap:20px;min-height:100%}
@@ -1111,6 +1134,7 @@
 
   <!-- LEVEL-UP OVERLAY -->
   <div id="levelup-overlay">
+    <div id="levelup-confetti" style="position:absolute;inset:0;overflow:hidden;pointer-events:none"></div>
     <div style="padding:32px">
       <div style="font-size:11px;color:var(--dim);letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px">Level Up</div>
       <div id="levelup-name" style="font-family:var(--D);font-size:56px;font-weight:900;color:var(--teal);text-transform:uppercase;letter-spacing:.04em;line-height:1"></div>
@@ -1376,13 +1400,13 @@
 
       <!-- MILESTONES ROADMAP -->
       <div class="sh-label" style="margin-bottom:12px">Milestones</div>
-      <div id="milestones-wrap"></div>
+      <div id="milestones-wrap" class="reveal-on-scroll"></div>
       <div class="divider"></div>
 
       <!-- STRENGTH PROGRESS -->
       <div class="sh-label" style="margin-bottom:6px">Strength Progress</div>
       <select id="pr-exercise-select" onchange="renderStrengthChart(this.value)" style="width:100%;padding:8px 10px;margin-bottom:8px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px"></select>
-      <div class="chart-card">
+      <div class="chart-card reveal-on-scroll">
         <canvas id="chart-strength" height="110"></canvas>
         <div id="chart-strength-empty" class="chart-empty" style="display:none">Log a few sessions for this exercise to see progression.</div>
       </div>
@@ -1395,7 +1419,7 @@
         <input id="bc-bf-input" type="number" step="0.1" placeholder="Body fat (%)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
         <button onclick="logBodyComp()" style="padding:8px 14px;background:var(--teal);border:none;color:#000;font-weight:600;font-size:12px;cursor:pointer">Log</button>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal-on-scroll">
         <canvas id="chart-bodycomp" height="110"></canvas>
         <div id="chart-bodycomp-empty" class="chart-empty" style="display:none">Log your weight/body fat a few times to see the trend.</div>
       </div>
@@ -1410,32 +1434,32 @@
         <button id="nutrient-tab-other" onclick="setNutrientView('other')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Fats/Fibre</button>
         <button id="nutrient-tab-extra" onclick="setNutrientView('extra')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Other</button>
       </div>
-      <div id="nutrient-tracker-body"></div>
+      <div id="nutrient-tracker-body" class="reveal-on-scroll"></div>
       <button onclick="askCoachAboutGaps()" style="margin-top:10px;width:100%;padding:9px;font-size:12px;background:transparent;border:1px solid rgba(44,212,196,.3);color:var(--teal);cursor:pointer">Ask Coach how to close today's gaps →</button>
       <div class="divider"></div>
 
       <!-- HABIT CATEGORY BREAKDOWN -->
       <div class="sh-label" style="margin-bottom:6px">Habit Completion by Time of Day</div>
-      <div id="habit-category-breakdown" style="margin-bottom:4px"></div>
+      <div id="habit-category-breakdown" class="reveal-on-scroll" style="margin-bottom:4px"></div>
       <div class="divider"></div>
 
       <!-- ADHERENCE vs OUTCOMES -->
       <div class="sh-label" style="margin-bottom:6px">Adherence vs. Wellbeing</div>
       <p class="sh-sub" style="margin-bottom:10px">Weekly habit completion next to your check-in scores — does higher adherence actually track with feeling better?</p>
-      <div id="adherence-correlation"></div>
+      <div id="adherence-correlation" class="reveal-on-scroll"></div>
       <div class="divider"></div>
 
-      <div class="chart-card">
+      <div class="chart-card reveal-on-scroll">
         <div class="chart-lbl">Habit Completion — Last 7 Days</div>
         <canvas id="chart-habits" height="110"></canvas>
         <div id="chart-habits-empty" class="chart-empty" style="display:none">Log habits for a few days to see your trend.</div>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal-on-scroll">
         <div class="chart-lbl">Wellbeing — Check-in Scores</div>
         <canvas id="chart-checkin" height="110"></canvas>
         <div id="chart-checkin-empty" class="chart-empty" style="display:none">Submit a few check-ins to see your trend.</div>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal-on-scroll">
         <div class="chart-lbl">Daily Calories — Last 7 Days</div>
         <canvas id="chart-cals" height="110"></canvas>
         <div id="chart-cals-empty" class="chart-empty" style="display:none">Log meals in the Eat tab to track calories.</div>
@@ -2777,8 +2801,36 @@ function showLevelUp(levelData) {
   document.getElementById('levelup-name').textContent = levelData.name;
   document.getElementById('levelup-num').textContent = `Level ${levelData.level}`;
   document.getElementById('levelup-overlay').classList.add('show');
+  spawnConfetti('levelup-confetti');
 }
 
+// Pure-CSS confetti burst — a handful of small divs given a randomized
+// angle/distance/duration via CSS custom properties, animated by the one
+// shared @keyframes confettiBurst rule. No canvas, no library — reserved
+// for genuinely rare celebratory moments (level-up, streak milestones) so
+// it doesn't wear out its welcome.
+const CONFETTI_COLORS = ['var(--teal)', '#fbbf24', '#f87171', '#818cf8', '#fff'];
+function spawnConfetti(containerId, count = 28){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  container.innerHTML = '';
+  for(let i = 0; i < count; i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 80 + Math.random() * 160;
+    piece.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+    piece.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+    piece.style.setProperty('--tr', `${(Math.random() - 0.5) * 720}deg`);
+    piece.style.setProperty('--dur', `${700 + Math.random() * 500}ms`);
+    piece.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    container.appendChild(piece);
+  }
+  setTimeout(() => { container.innerHTML = ''; }, 1300);
+}
+
+let _lastRenderedXP = null;
 function renderXPUI() {
   const { current, next } = getLevelData(XP_STATE.xp);
   const progress = next
@@ -2799,7 +2851,9 @@ function renderXPUI() {
     card.style.display = '';
     document.getElementById('xp-level-num').textContent = current.level;
     document.getElementById('xp-level-name').textContent = current.name;
-    document.getElementById('xp-total').textContent = XP_STATE.xp.toLocaleString() + ' XP';
+    const xpTotalEl = document.getElementById('xp-total');
+    animateCountUp(xpTotalEl, _lastRenderedXP ?? XP_STATE.xp, XP_STATE.xp, 700, v => Math.round(v).toLocaleString() + ' XP');
+    _lastRenderedXP = XP_STATE.xp;
     document.getElementById('xp-to-next').textContent = next
       ? `${(next.min - XP_STATE.xp).toLocaleString()} to ${next.name}` : 'Max level';
     const streak = XP_STATE.streak_days;
@@ -2808,6 +2862,22 @@ function renderXPUI() {
     document.getElementById('xp-bar').style.width = progress + '%';
   }
 }
+
+// Progress is a long stack of 8 sections dumped on one continuous scroll —
+// fade each .reveal-on-scroll section up as it enters view instead, via
+// IntersectionObserver (native, no library). display:none panes have no
+// layout box so this naturally does nothing until a pane becomes active;
+// once unobserved after its first reveal, an element won't re-hide on
+// scroll-away (a one-time entrance, not a repeating scroll gimmick).
+const _revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      entry.target.classList.add('revealed');
+      _revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal-on-scroll').forEach(el => _revealObserver.observe(el));
 
 /* ── BOOT ── */
 (async()=>{
@@ -3076,7 +3146,13 @@ function switchCommunityTab(tab){
   const views = { feed: 'community-feed-view', channels: 'community-list-view', members: 'community-members-view', map: 'community-map-view' };
   Object.entries(views).forEach(([key, id]) => {
     const el = document.getElementById(id);
-    if(el) el.style.display = key === tab ? 'block' : 'none';
+    if(!el) return;
+    if(key === tab){
+      el.style.display = 'block';
+      el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in');
+    } else {
+      el.style.display = 'none';
+    }
   });
   document.querySelectorAll('.community-tab-btn').forEach(btn => {
     const active = btn.dataset.tab === tab;
@@ -3103,11 +3179,11 @@ let _channelReadsCache = {};
 
 function _renderChannelListHtml(){
   if(communityChannelsCache.length === 0) return '<div style="color:var(--muted);font-size:13px">No channels yet.</div>';
-  return communityChannelsCache.map(ch => {
+  return communityChannelsCache.map((ch, i) => {
     const lastRead = _channelReadsCache[ch.id];
     const isUnread = ch.last_message_at && (!lastRead || new Date(ch.last_message_at) > new Date(lastRead));
     return `
-    <div onclick="openChannel('${ch.id}')" style="display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer">
+    <div onclick="openChannel('${ch.id}')" class="card tap-target stagger-in" style="display:flex;align-items:center;gap:10px;padding:14px;margin-bottom:8px;animation-delay:${Math.min(i,8)*40}ms">
       <div style="font-size:16px">${ch.admin_only_post ? '📢' : '#'}</div>
       <div style="flex:1">
         <div style="font-weight:700;font-size:14px">${escHtml(ch.name)}${isUnread ? ' <span style="color:var(--teal);font-size:8px;vertical-align:middle">●</span>' : ''}</div>
@@ -3122,7 +3198,7 @@ function _renderChannelListHtml(){
 async function loadChannels(){
   const list = document.getElementById('community-channels');
   if(!list) return;
-  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  list.innerHTML = skeletonRows(4);
   const result = await sb.from(COMMUNITY_TABLE).select('*').order('position', { ascending: true }).then(
     r => r, e => ({ data: null, error: e })
   );
@@ -3168,7 +3244,7 @@ async function openChannel(channelId){
   cancelReply();
   _hideCommunityTabs();
   const chatView = document.getElementById('community-chat-view');
-  if(chatView) chatView.style.display = 'flex';
+  _showWithFade(chatView, 'flex');
   const titleEl = document.getElementById('community-chat-title');
   const descEl = document.getElementById('community-chat-desc');
   if(titleEl) titleEl.textContent = ch.name;
@@ -3480,7 +3556,7 @@ function _subscribeNotifRealtime(){
 
 async function openNotifications(){
   _hideCommunityTabs();
-  document.getElementById('community-notifications-view').style.display = 'block';
+  _showWithFade(document.getElementById('community-notifications-view'), 'block');
   const list = document.getElementById('community-notifications-list');
   list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
   const { data, error } = await sb.from('notifications')
@@ -3530,6 +3606,8 @@ function checkWinsAutoSuggest(streakDays){
   document.getElementById('wins-banner-text').textContent = `🔥 ${streakDays}-day streak! Share it in #Wins`;
   banner.dataset.streak = streakDays;
   banner.style.display = 'flex';
+  banner.style.boxShadow = 'var(--glow-teal)';
+  banner.classList.remove('pop-in'); void banner.offsetWidth; banner.classList.add('pop-in');
 }
 function dismissWinsBanner(){
   const banner = document.getElementById('wins-banner');
@@ -3555,7 +3633,7 @@ let dmRealtimeSub = null;
 
 async function openDmList(){
   _hideCommunityTabs();
-  document.getElementById('community-dm-list-view').style.display = 'block';
+  _showWithFade(document.getElementById('community-dm-list-view'), 'block');
   await loadDmConversations();
 }
 function closeDmList(){
@@ -3603,7 +3681,7 @@ async function openDmChat(conversationId, otherUserName){
   dmActiveConversation = conversationId;
   _hideCommunityTabs();
   document.getElementById('community-dm-list-view').style.display = 'none';
-  document.getElementById('community-dm-chat-view').style.display = 'flex';
+  _showWithFade(document.getElementById('community-dm-chat-view'), 'flex');
   const titleEl = document.getElementById('community-dm-chat-title');
   if(titleEl && otherUserName) titleEl.textContent = otherUserName;
   else if(titleEl){
@@ -3702,7 +3780,7 @@ function closeMembersView(){
 async function loadMembersList(){
   const list = document.getElementById('community-members-list');
   if(!list) return;
-  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  list.innerHTML = skeletonRows(4);
   const { data, error } = await sb.from('profiles')
     .select('id,display_name,avatar_url,bio,streak_days')
     .eq('status', 'approved')
@@ -3710,8 +3788,8 @@ async function loadMembersList(){
   if(error){ list.innerHTML = _communityErrorHtml('Failed to load members', error); return; }
   _communityMembersFull = data || [];
   if(_communityMembersFull.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No members yet.</div>'; return; }
-  list.innerHTML = _communityMembersFull.map(m => `
-    <div onclick="openProfileView('${m.id}')" style="display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+  list.innerHTML = _communityMembersFull.map((m, i) => `
+    <div onclick="openProfileView('${m.id}')" class="card tap-target stagger-in" style="display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;animation-delay:${Math.min(i,8)*40}ms">
       ${m.avatar_url ? `<img src="${escHtml(m.avatar_url)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:40px;height:40px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">👤</div>`}
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;font-size:14px">${escHtml(m.display_name || 'Member')}</div>
@@ -3740,6 +3818,13 @@ async function loadMemberMap(){
   const container = document.getElementById('community-map-container');
   const emptyNote = document.getElementById('community-map-empty-note');
   if(!container) return;
+
+  // Leaflet takes over this container on init, so only show a loading
+  // placeholder on the very first load (before L.map() has touched it) —
+  // previously this tab showed nothing at all while the fetch was in flight.
+  if(!_memberMapInstance){
+    container.innerHTML = `<div class="skeleton" style="width:100%;height:100%"></div>`;
+  }
 
   const { data, error } = await sb.from('profiles')
     .select('id,display_name,avatar_url,location_name,location_lat,location_lng')
@@ -3818,7 +3903,7 @@ async function _geocodeLocation(query){
 
 async function openProfileView(userId){
   _hideCommunityTabs();
-  document.getElementById('community-profile-view').style.display = 'block';
+  _showWithFade(document.getElementById('community-profile-view'), 'block');
   const body = document.getElementById('community-profile-body');
   if(!body) return;
   body.dataset.userId = userId;
@@ -3864,7 +3949,7 @@ async function openProfileView(userId){
       <div class="card" style="flex:1;padding:14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px">
         <div style="position:relative;width:44px;height:44px">
           ${ringSVG('profile-streak-ring')}
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:13px;font-weight:900;color:var(--teal)">${m.streak_days || 0}</div>
+          <div id="profile-streak-num" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:13px;font-weight:900;color:var(--teal)">0</div>
         </div>
         <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Day Streak</div>
       </div>
@@ -3882,13 +3967,16 @@ async function openProfileView(userId){
   // animates in from 0 instead of snapping straight to its resting value.
   const streak = m.streak_days || 0;
   const nextMilestone = streak < 7 ? 7 : streak < 30 ? 30 : streak < 90 ? 90 : streak || 1;
-  requestAnimationFrame(() => setRingProgress('profile-streak-ring', (streak / nextMilestone) * 100));
+  requestAnimationFrame(() => {
+    setRingProgress('profile-streak-ring', (streak / nextMilestone) * 100);
+    animateCountUp(document.getElementById('profile-streak-num'), 0, streak, 700);
+  });
 }
 
 // Instagram-style profile grid tile — photos/videos render as square
 // thumbnails, text-only posts render as a readable text card so they stay
 // part of the same grid instead of being dropped from it.
-function _renderProfileGridTile(post){
+function _renderProfileGridTile(post, i){
   let inner;
   if(post.media_url && post.media_type === 'image'){
     inner = `<img src="${escHtml(post.media_url)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">`;
@@ -3901,7 +3989,8 @@ function _renderProfileGridTile(post){
       <div style="font-size:12px;font-weight:600;line-height:1.35;text-align:center;color:var(--white);overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical">${escHtml(text)}</div>
     </div>`;
   }
-  return `<div onclick="openPostThread('${post.id}')" style="position:relative;aspect-ratio:1;overflow:hidden;cursor:pointer;background:var(--s1);border:1px solid var(--border)">${inner}</div>`;
+  const staggerStyle = Number.isInteger(i) ? `;animation-delay:${Math.min(i,11)*30}ms` : '';
+  return `<div onclick="openPostThread('${post.id}')" class="tap-target stagger-in" style="position:relative;aspect-ratio:1;overflow:hidden;background:var(--s1);border:1px solid var(--border)${staggerStyle}">${inner}</div>`;
 }
 
 function closeProfileView(){
@@ -3916,7 +4005,7 @@ const COMMUNITY_MAX_VIDEO_BYTES = 250 * 1024 * 1024;
 const COMMUNITY_MAX_VIDEO_SECONDS = 300;
 const COMMUNITY_MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 
-function _renderPostCard(post){
+function _renderPostCard(post, i){
   const author = post.author?.display_name || 'Member';
   const avatar = post.author?.avatar_url;
   const time = new Date(post.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -3924,6 +4013,7 @@ function _renderPostCard(post){
   const likeCount = post._likeCount || 0;
   const replyCount = post._replyCount || 0;
   const isMine = post.user_id === USER.id;
+  const staggerStyle = Number.isInteger(i) ? `;animation-delay:${Math.min(i,8)*40}ms` : '';
   const channelBadge = post.channel?.name
     ? `<span onclick="event.stopPropagation();openChannel('${post.channel_id}').then(()=>switchChannelSubTab('posts'))" style="font-size:10px;color:var(--teal);background:rgba(44,212,196,.08);border:1px solid rgba(44,212,196,.25);padding:2px 8px;border-radius:10px;cursor:pointer;white-space:nowrap;flex-shrink:0">#${escHtml(post.channel.name)}</span>`
     : '';
@@ -3933,7 +4023,7 @@ function _renderPostCard(post){
   } else if(post.media_url && post.media_type === 'image'){
     media = `<img src="${escHtml(post.media_url)}" style="width:100%;border-radius:10px;margin-top:8px;max-height:400px;object-fit:cover">`;
   }
-  return `<div onclick="openPostThread('${post.id}')" style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer">
+  return `<div onclick="openPostThread('${post.id}')" class="card tap-target stagger-in" style="padding:14px;margin-bottom:10px${staggerStyle}">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       ${avatar ? `<img src="${escHtml(avatar)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:32px;height:32px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>`}
       <div style="flex:1">
@@ -3946,7 +4036,7 @@ function _renderPostCard(post){
     ${post.body ? `<div style="font-size:14px;white-space:pre-wrap">${_highlightMentions(post.body)}</div>` : ''}
     ${media}
     <div style="display:flex;gap:16px;margin-top:10px" onclick="event.stopPropagation()">
-      <span onclick="togglePostLike('${post.id}')" style="cursor:pointer;font-size:12px;color:${liked?'var(--teal)':'var(--dim)'}">${liked?'❤️':'🤍'} ${likeCount}</span>
+      <span onclick="togglePostLike('${post.id}')" style="cursor:pointer;font-size:12px;color:${liked?'var(--teal)':'var(--dim)'}"><span id="post-like-${post.id}" style="display:inline-block">${liked?'❤️':'🤍'}</span> ${likeCount}</span>
       <span style="font-size:12px;color:var(--dim)">💬 ${replyCount}</span>
     </div>
   </div>`;
@@ -3994,7 +4084,7 @@ async function _attachPostMeta(postList){
 async function loadFeed(){
   const list = document.getElementById('community-feed-list');
   if(!list) return;
-  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  list.innerHTML = skeletonRows(3);
   const { data, error } = await sb.from('posts')
     .select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url), channel:standard_channels(name)')
     .is('parent_post_id', null)
@@ -4009,18 +4099,23 @@ async function loadFeed(){
 
 async function togglePostLike(postId){
   const { data: existing } = await sb.from('post_likes').select('post_id').eq('post_id', postId).eq('user_id', USER.id).maybeSingle();
+  const wasLiking = !existing; // liking, not unliking
   if(existing) await sb.from('post_likes').delete().eq('post_id', postId).eq('user_id', USER.id);
   else await sb.from('post_likes').insert({ post_id: postId, user_id: USER.id });
   if(_activePostThreadId) await loadPostThread(_activePostThreadId);
   else if(document.getElementById('community-channel-posts-view')?.style.display !== 'none' && communityActiveChannel) await loadChannelPosts(communityActiveChannel.id);
   else await loadFeed();
+  // Targeted pop on just the heart that was actually tapped — not every
+  // already-liked post in the list, which a class baked into the render
+  // function itself would replay on every unrelated reload/re-render.
+  if(wasLiking) document.getElementById('post-like-' + postId)?.classList.add('pop-in');
 }
 
 let _activePostThreadId = null;
 async function openPostThread(postId){
   _activePostThreadId = postId;
   _hideCommunityTabs();
-  document.getElementById('community-post-thread-view').style.display = 'block';
+  _showWithFade(document.getElementById('community-post-thread-view'), 'block');
   await loadPostThread(postId);
 }
 function closePostThread(){
@@ -4587,7 +4682,7 @@ function renderHabits(){
     ${groups[t].map(h=>{
       const streak = habitStreaks[h.key] || 0;
       return `
-    <div class="habit-item ${habitState[h.key]?'done':''}" onclick="toggleHabit('${h.key}')">
+    <div class="habit-item ${habitState[h.key]?'done':''}" data-key="${h.key}" onclick="toggleHabit('${h.key}')">
       <div class="habit-check">
         <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
@@ -4614,6 +4709,16 @@ async function toggleHabit(key){
   const _d = HABIT_DATE;
   habitState[key]=!habitState[key];
   renderHabits();
+  // Targeted (not "every done item on every render") pop feedback — only
+  // the item that was just actually toggled on animates, via a fresh
+  // querySelector after the re-render rather than baking the animation
+  // class into renderHabits() itself, which would replay it for every
+  // already-done habit on any unrelated re-render (filter toggle, initial
+  // load) too.
+  if(habitState[key]){
+    const checkEl = document.querySelector(`.habit-item[data-key="${key}"] .habit-check`);
+    if(checkEl) checkEl.classList.add('check-pop');
+  }
   // Persist to localStorage immediately so reloads survive DB failure
   try{ localStorage.setItem(`jpt_habits_${USER.id}_${_d}`, JSON.stringify(habitState)); }catch(e){}
 
@@ -6894,6 +6999,22 @@ function ringSVG(id, size = 44, strokeWidth = 3){
     <circle class="ring-fill" id="${id}" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${strokeWidth}" stroke-dasharray="${c}" stroke-dashoffset="${c}"/>
   </svg>`;
 }
+
+// Animates a numeric text node counting up (or down) between two values via
+// requestAnimationFrame — no library, just eased interpolation. formatFn
+// lets callers keep their existing display formatting (e.g. toLocaleString()
+// + " XP") instead of this helper assuming plain integers everywhere.
+function animateCountUp(el, from, to, duration = 700, formatFn = Math.round){
+  if(!el || from === to){ if(el) el.textContent = formatFn(to); return; }
+  const start = performance.now();
+  function tick(now){
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+    el.textContent = formatFn(from + (to - from) * eased);
+    if(t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
 // Chart.js configs are plain JS objects, not CSS — they can't resolve
 // var(--teal) themselves, so the strength/body-comp/habit charts hardcoded
 // hex colors and were the one part of the UI that ignored the light/dark
@@ -6903,6 +7024,32 @@ function ringSVG(id, size = 44, strokeWidth = 3){
 // re-render — same as everything else in this file, nothing here is a
 // live-reactive canvas system).
 function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// Shows an element with a fade-in — forces a reflow before re-adding the
+// class so the animation restarts even if the element still had it from
+// a previous show (classList.add() alone is a no-op if the class is
+// already present, so navigating to the same drill-down twice in a row
+// would only animate the first time without this).
+function _showWithFade(el, display){
+  if(!el) return;
+  el.style.display = display;
+  el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in');
+}
+
+// Shared shimmer skeleton — replaces the bare "Loading..." text repeated
+// across Community's lists (Feed/Channels/Members/Map) with something that
+// actually looks like the content that's about to arrive.
+function skeletonRows(n = 3){
+  return Array.from({ length: n }, () => `
+    <div class="card" style="display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:8px">
+      <div class="skeleton" style="width:40px;height:40px;border-radius:50%;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div class="skeleton skeleton-line" style="width:50%"></div>
+        <div class="skeleton skeleton-line"></div>
+      </div>
+    </div>
+  `).join('');
+}
 
 function setRingProgress(id, percent){
   const ring = document.getElementById(id);
