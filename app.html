@@ -1910,6 +1910,10 @@
           <div id="community-chat-desc" style="font-size:11px;color:var(--muted)"></div>
         </div>
       </div>
+      <div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0">
+        <button class="channel-subtab-btn" data-subtab="discussion" onclick="switchChannelSubTab('discussion')" style="flex:1;background:none;border:none;color:var(--teal);font-family:var(--B);font-weight:700;font-size:12px;padding:10px 4px;cursor:pointer;border-bottom:2px solid var(--teal)">💬 Discussion</button>
+        <button class="channel-subtab-btn" data-subtab="posts" onclick="switchChannelSubTab('posts')" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:12px;padding:10px 4px;cursor:pointer;border-bottom:2px solid transparent">📝 Posts</button>
+      </div>
       <div id="community-messages" style="flex:1;overflow-y:auto;padding:16px 20px"></div>
       <div id="community-reply-preview" style="display:none;padding:8px 20px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);align-items:center;justify-content:space-between">
         <div>Replying to <span id="community-reply-preview-text" style="color:var(--teal)"></span></div>
@@ -1921,6 +1925,16 @@
         <button onclick="sendCommunityMessage()" style="background:var(--teal);border:none;border-radius:8px;padding:0 16px;color:#000;font-weight:700;cursor:pointer">Send</button>
       </div>
       <div id="community-readonly-note" style="display:none;padding:12px 20px;text-align:center;font-size:12px;color:var(--muted)">Only JP can post here.</div>
+      <div id="community-channel-posts-view" style="display:none;flex:1;overflow-y:auto;padding:16px 20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="display:flex;gap:6px">
+            <button class="channel-posts-sort-btn" data-sort="hot" onclick="setChannelPostsSort('hot')" style="background:var(--s1);border:1px solid var(--teal);color:var(--teal);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700">🔥 Hot</button>
+            <button class="channel-posts-sort-btn" data-sort="new" onclick="setChannelPostsSort('new')" style="background:var(--s1);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700">New</button>
+          </div>
+          <button onclick="openComposer(null, communityActiveChannel?.id)" style="background:var(--teal);border:none;color:#000;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">+ Post</button>
+        </div>
+        <div id="community-channel-posts-list"></div>
+      </div>
     </div>
   </div>
 
@@ -1970,6 +1984,9 @@
         <div id="composer-title" style="font-family:var(--D);font-size:20px;font-weight:900">NEW POST</div>
         <button onclick="closeComposer()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
       </div>
+      <select id="composer-channel" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--white);font-family:var(--B);font-size:13px;margin-bottom:10px;box-sizing:border-box">
+        <option value="">General feed</option>
+      </select>
       <textarea id="composer-body" placeholder="What's on your mind?" rows="5" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:10px;box-sizing:border-box;resize:vertical"></textarea>
       <div id="composer-media-preview" style="display:none;margin-bottom:10px"></div>
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -2975,11 +2992,12 @@ async function openChannel(channelId){
   const descEl = document.getElementById('community-chat-desc');
   if(titleEl) titleEl.textContent = ch.name;
   if(descEl) descEl.textContent = ch.description || '';
-  const canPost = !ch.admin_only_post || PROFILE?.is_admin;
-  const composerEl = document.getElementById('community-composer');
-  const readonlyEl = document.getElementById('community-readonly-note');
-  if(composerEl) composerEl.style.display = canPost ? 'flex' : 'none';
-  if(readonlyEl) readonlyEl.style.display = canPost ? 'none' : 'block';
+
+  // Always land on Discussion first — Posts (the new Reddit-style ranked
+  // view) is additive, not a replacement for the live chat that already
+  // works, so the default entry point stays what people are used to.
+  _channelPostsSortMode = 'hot';
+  switchChannelSubTab('discussion');
 
   await _loadCommunityMembers();
   await loadMessages();
@@ -2999,6 +3017,82 @@ async function openChannel(channelId){
     // Realtime failing to subscribe shouldn't block reading/posting —
     // messages just won't live-update until the next manual reload.
   }
+}
+
+// Discussion (existing live chat) vs Posts (new — channel-tagged posts,
+// Reddit-style ranked) are two distinct content types living inside the
+// same channel/niche, matching "different niches of discussions, posts
+// etc within each channel."
+function switchChannelSubTab(tab){
+  const ch = communityActiveChannel;
+  const canPost = ch && (!ch.admin_only_post || PROFILE?.is_admin);
+  const messagesEl = document.getElementById('community-messages');
+  const composerEl = document.getElementById('community-composer');
+  const readonlyEl = document.getElementById('community-readonly-note');
+  const replyPreview = document.getElementById('community-reply-preview');
+  const mentionList = document.getElementById('community-mention-list');
+  const postsView = document.getElementById('community-channel-posts-view');
+  const isDiscussion = tab === 'discussion';
+  if(messagesEl) messagesEl.style.display = isDiscussion ? 'block' : 'none';
+  if(composerEl) composerEl.style.display = isDiscussion && canPost ? 'flex' : 'none';
+  if(readonlyEl) readonlyEl.style.display = isDiscussion && !canPost ? 'block' : 'none';
+  if(!isDiscussion){
+    if(replyPreview) replyPreview.style.display = 'none';
+    if(mentionList) mentionList.style.display = 'none';
+  }
+  if(postsView) postsView.style.display = isDiscussion ? 'none' : 'block';
+  document.querySelectorAll('.channel-subtab-btn').forEach(btn => {
+    const active = btn.dataset.subtab === tab;
+    btn.style.color = active ? 'var(--teal)' : 'var(--muted)';
+    btn.style.borderBottomColor = active ? 'var(--teal)' : 'transparent';
+  });
+  if(!isDiscussion && ch) loadChannelPosts(ch.id);
+}
+
+let _channelPostsSortMode = 'hot';
+
+function setChannelPostsSort(mode){
+  _channelPostsSortMode = mode;
+  document.querySelectorAll('.channel-posts-sort-btn').forEach(btn => {
+    const active = btn.dataset.sort === mode;
+    btn.style.color = active ? 'var(--teal)' : 'var(--muted)';
+    btn.style.borderColor = active ? 'var(--teal)' : 'var(--border)';
+  });
+  if(communityActiveChannel) loadChannelPosts(communityActiveChannel.id);
+}
+
+// Reddit's actual "hot" formula (vote score + a time decay against Reddit's
+// own epoch, Dec 8 2005) — not a made-up approximation. We have no
+// downvotes, only likes, so score is always >= 0: a post with likes gets a
+// log-scaled boost on top of its raw recency position, and that boost
+// itself shrinks in relative importance as more time passes (the constant
+// 45000 is Reddit's own — one "vote" worth of order is worth about half a
+// day of pure age). Deliberately vote-based only, not reply-count-weighted
+// — that's how Reddit's real hot ranking works too, comments don't feed it.
+function _hotScore(post){
+  const score = post._likeCount || 0;
+  const order = Math.log10(Math.max(Math.abs(score), 1));
+  const sign = score > 0 ? 1 : (score < 0 ? -1 : 0);
+  const seconds = (new Date(post.created_at).getTime() / 1000) - 1134028003;
+  return sign * order + seconds / 45000;
+}
+
+async function loadChannelPosts(channelId){
+  const list = document.getElementById('community-channel-posts-list');
+  if(!list) return;
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  const { data, error } = await sb.from('posts')
+    .select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url), channel:standard_channels(name)')
+    .eq('channel_id', channelId)
+    .is('parent_post_id', null)
+    .order('created_at', { ascending: false })
+    .limit(60);
+  if(error){ list.innerHTML = _communityErrorHtml('Failed to load posts', error); return; }
+  const posts = data || [];
+  if(posts.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;margin-top:20px">No posts in this channel yet — be first.</div>'; return; }
+  await _attachPostMeta(posts);
+  if(_channelPostsSortMode === 'hot') posts.sort((a, b) => _hotScore(b) - _hotScore(a));
+  list.innerHTML = posts.map(_renderPostCard).join('');
 }
 
 function closeChannelView(){
@@ -3624,7 +3718,8 @@ function closeProfileView(){
   switchCommunityTab('feed');
 }
 
-/* ── FEED & POSTS (X-style — separate content model from channels) ── */
+/* ── FEED & POSTS (X-style; optionally tagged to a channel, which is what
+   powers each channel's Reddit-style Hot/New Posts tab) ── */
 const COMMUNITY_MAX_VIDEO_BYTES = 250 * 1024 * 1024;
 const COMMUNITY_MAX_VIDEO_SECONDS = 300;
 const COMMUNITY_MAX_IMAGE_BYTES = 15 * 1024 * 1024;
@@ -3637,6 +3732,9 @@ function _renderPostCard(post){
   const likeCount = post._likeCount || 0;
   const replyCount = post._replyCount || 0;
   const isMine = post.user_id === USER.id;
+  const channelBadge = post.channel?.name
+    ? `<span onclick="event.stopPropagation();openChannel('${post.channel_id}').then(()=>switchChannelSubTab('posts'))" style="font-size:10px;color:var(--teal);background:rgba(44,212,196,.08);border:1px solid rgba(44,212,196,.25);padding:2px 8px;border-radius:10px;cursor:pointer;white-space:nowrap;flex-shrink:0">#${escHtml(post.channel.name)}</span>`
+    : '';
   let media = '';
   if(post.media_url && post.media_type === 'video'){
     media = `<video src="${escHtml(post.media_url)}" controls style="width:100%;border-radius:10px;margin-top:8px;max-height:400px;background:#000"></video>`;
@@ -3650,6 +3748,7 @@ function _renderPostCard(post){
         <div style="font-weight:700;font-size:13px">${escHtml(author)}</div>
         <div style="font-size:10px;color:var(--dim)">${time}</div>
       </div>
+      ${channelBadge}
       ${isMine ? `<button onclick="event.stopPropagation();deletePost('${post.id}')" style="background:none;border:none;color:var(--dim);font-size:15px;cursor:pointer;padding:4px" title="Delete post">🗑️</button>` : ''}
     </div>
     ${post.body ? `<div style="font-size:14px;white-space:pre-wrap">${_highlightMentions(post.body)}</div>` : ''}
@@ -3676,6 +3775,8 @@ async function deletePost(postId){
   } else if(document.getElementById('community-profile-view')?.style.display !== 'none'){
     const viewedId = document.getElementById('community-profile-body')?.dataset.userId || USER.id;
     await openProfileView(viewedId);
+  } else if(document.getElementById('community-channel-posts-view')?.style.display !== 'none' && communityActiveChannel){
+    await loadChannelPosts(communityActiveChannel.id);
   } else {
     await loadFeed();
   }
@@ -3703,7 +3804,7 @@ async function loadFeed(){
   if(!list) return;
   list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
   const { data, error } = await sb.from('posts')
-    .select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)')
+    .select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url), channel:standard_channels(name)')
     .is('parent_post_id', null)
     .order('created_at', { ascending: false })
     .limit(30);
@@ -3719,6 +3820,7 @@ async function togglePostLike(postId){
   if(existing) await sb.from('post_likes').delete().eq('post_id', postId).eq('user_id', USER.id);
   else await sb.from('post_likes').insert({ post_id: postId, user_id: USER.id });
   if(_activePostThreadId) await loadPostThread(_activePostThreadId);
+  else if(document.getElementById('community-channel-posts-view')?.style.display !== 'none' && communityActiveChannel) await loadChannelPosts(communityActiveChannel.id);
   else await loadFeed();
 }
 
@@ -3739,9 +3841,9 @@ async function loadPostThread(postId){
   const body = document.getElementById('community-post-thread-body');
   if(!body) return;
   body.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
-  const { data: post, error } = await sb.from('posts').select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)').eq('id', postId).maybeSingle();
+  const { data: post, error } = await sb.from('posts').select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url), channel:standard_channels(name)').eq('id', postId).maybeSingle();
   if(error || !post){ body.innerHTML = _communityErrorHtml('Failed to load post', error||{message:'Post not found'}); return; }
-  const { data: replies } = await sb.from('posts').select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)').eq('parent_post_id', postId).order('created_at', { ascending: true });
+  const { data: replies } = await sb.from('posts').select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url), channel:standard_channels(name)').eq('parent_post_id', postId).order('created_at', { ascending: true });
   const allPosts = [post, ...(replies||[])];
   await _attachPostMeta(allPosts);
   body.innerHTML = _renderPostCard(post) +
@@ -3754,7 +3856,7 @@ let _composerReplyTo = null;
 let _composerMediaFile = null;
 let _composerMediaType = null;
 
-function openComposer(replyToId){
+async function openComposer(replyToId, defaultChannelId){
   _composerReplyTo = replyToId || null;
   _composerMediaFile = null;
   _composerMediaType = null;
@@ -3764,6 +3866,21 @@ function openComposer(replyToId){
   preview.style.display = 'none';
   preview.innerHTML = '';
   document.getElementById('composer-media-file').value = '';
+
+  // Channel selection only applies to new top-level posts — a reply always
+  // belongs to its parent's thread, not a separately chosen niche.
+  const channelSelect = document.getElementById('composer-channel');
+  if(channelSelect){
+    if(replyToId){
+      channelSelect.style.display = 'none';
+    } else {
+      channelSelect.style.display = 'block';
+      if(!communityChannelsCache.length) await loadChannels();
+      channelSelect.innerHTML = '<option value="">General feed</option>' +
+        communityChannelsCache.map(ch => `<option value="${ch.id}">#${escHtml(ch.name)}</option>`).join('');
+      channelSelect.value = defaultChannelId || '';
+    }
+  }
   document.getElementById('composer-modal').style.display = 'flex';
 }
 function closeComposer(){
@@ -3836,13 +3953,17 @@ async function submitPost(){
 
   const payload = { user_id: USER.id, body: body || null, media_url, media_type };
   const replyTo = _composerReplyTo;
+  const channelSelect = document.getElementById('composer-channel');
+  const channelId = (!replyTo && channelSelect && channelSelect.value) ? channelSelect.value : null;
   if(replyTo) payload.parent_post_id = replyTo;
+  else payload.channel_id = channelId;
   const { error } = await sb.from('posts').insert(payload);
   btn.disabled = false; btn.textContent = 'Post';
   if(error){ showToast('Failed to post: ' + (error.message||'unknown error')); return; }
   closeComposer();
   showToast('Posted');
   if(replyTo) await loadPostThread(replyTo);
+  else if(channelId && communityActiveChannel?.id === channelId && document.getElementById('community-channel-posts-view')?.style.display !== 'none') await loadChannelPosts(channelId);
   else await loadFeed();
 }
 
