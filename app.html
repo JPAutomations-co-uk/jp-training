@@ -34,6 +34,30 @@
       --teal:#2CD4C4;--teal-lo:rgba(44,212,196,.08);--teal-mid:rgba(44,212,196,.18);
       --white:#FFF;--muted:#888;--dim:#444;
       --D:'Barlow Condensed',sans-serif;--B:'Poppins',sans-serif;
+
+      /* ── Dark glass + glow design tokens ──
+         Phase 1 of the full-app UI transform: frosted glass on elevated/
+         static surfaces (topbar, sidebar, modals — few instances, cheap),
+         soft teal glow on active/important states, gradient+shadow depth
+         on cards instead of flat fill + 1px border. Deliberately NOT
+         applying backdrop-filter to every list card — running blur under
+         dozens of scrolling elements is a real mobile perf cost; the glass
+         *look* on regular cards comes from --card-grad + shadow instead,
+         real blur is reserved for the handful of fixed/overlay surfaces
+         below that actually sit on top of moving content. */
+      --glass-bg:rgba(10,10,10,.72);
+      --glass-border:rgba(255,255,255,.08);
+      --glow-teal:0 0 24px rgba(44,212,196,.35);
+      --glow-teal-sm:0 0 12px rgba(44,212,196,.3);
+      --shadow-ambient:0 10px 32px rgba(0,0,0,.45);
+      --shadow-contact:0 1px 2px rgba(0,0,0,.5);
+      --card-grad:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));
+      --radius-sm:10px;--radius-md:14px;--radius-lg:18px;
+
+      /* ── z-index scale — was ad-hoc (8+ overlays sharing z-index:500,
+         3 sharing z-index:300); named tiers so new overlays have an
+         obvious slot instead of copying a random existing value. ── */
+      --z-intake:300;--z-sheet:500;--z-sheet-nested:520;--z-toast:540;--z-critical:9999;
     }
     /* Light theme — same variable set, built on the existing var(--...)
        architecture already used everywhere. Honest limitation: a handful of
@@ -43,6 +67,14 @@
       --black:#FAFAFA;--s1:#FFF;--s2:#F2F2F2;--border:#E2E2E2;
       --teal:#0E9E8F;--teal-lo:rgba(14,158,143,.08);--teal-mid:rgba(14,158,143,.18);
       --white:#0A0A0A;--muted:#555;--dim:#999;
+
+      --glass-bg:rgba(255,255,255,.72);
+      --glass-border:rgba(0,0,0,.07);
+      --glow-teal:0 0 20px rgba(14,158,143,.22);
+      --glow-teal-sm:0 0 10px rgba(14,158,143,.18);
+      --shadow-ambient:0 10px 28px rgba(0,0,0,.1);
+      --shadow-contact:0 1px 2px rgba(0,0,0,.08);
+      --card-grad:linear-gradient(180deg,rgba(0,0,0,.025),rgba(0,0,0,.005));
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     /* Reusable utility classes for the most-repeated inline patterns added
@@ -51,9 +83,34 @@
        full retrofit of the whole file. Retroactively converting every
        existing inline style across ~7,500 lines is a separate, much larger
        and riskier job than this pass, and wasn't attempted. */
-    .section-card{border:1px solid var(--border);background:rgba(255,255,255,.02);padding:14px;margin-bottom:12px}
+    .section-card{border:1px solid var(--glass-border);background:var(--card-grad),var(--s1);
+      border-radius:var(--radius-md);padding:14px;margin-bottom:12px;box-shadow:var(--shadow-ambient),var(--shadow-contact);
+      transition:box-shadow .2s,border-color .2s}
     .section-label{font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em}
     .mini-badge{font-size:9px;color:var(--teal);border:1px solid rgba(44,212,196,.3);padding:1px 5px;letter-spacing:.06em;text-transform:uppercase;display:inline-block}
+
+    /* ── New card primitive (Phase 1) — the shared "bordered panel" look
+       every pane hand-tunes slightly differently. Adopted incrementally as
+       existing inline-styled cards get touched in later phases, not a
+       retroactive find-replace of every card in one pass (too large/risky
+       to do blind in a single diff on a file this size). ── */
+    .card{border:1px solid var(--glass-border);background:var(--card-grad),var(--s1);
+      border-radius:var(--radius-md);box-shadow:var(--shadow-ambient),var(--shadow-contact);
+      transition:box-shadow .2s,border-color .2s,transform .15s}
+    .card:active{transform:scale(.985)}
+
+    /* ── Glow utility — soft teal glow for active/important elements,
+       replacing plain color-only active states. ── */
+    .glow-teal{box-shadow:var(--glow-teal)!important}
+
+    /* ── Bottom-sheet panel primitive — every modal's content wrapper
+       hand-wrote the same background/border-top/border-radius trio inline.
+       One shared glass treatment applied via class; each modal keeps its
+       own inline style for the properties that genuinely vary (width,
+       padding, max-height, flex layout). ── */
+    .sheet-panel{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border-top:1px solid var(--glass-border);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+      box-shadow:var(--shadow-ambient)}
 
     /* Member map — Leaflet generates its own popup chrome (wrapper/tip),
        which inline styles on the bindPopup() HTML can't reach, so it's
@@ -70,11 +127,13 @@
     /* ── LAYOUT ── */
     #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
     #topbar{display:flex;align-items:center;justify-content:space-between;
-      padding:0 20px;height:56px;border-bottom:1px solid var(--border);
-      background:rgba(0,0,0,.92);backdrop-filter:blur(20px);flex-shrink:0;position:relative;z-index:10}
+      padding:0 20px;height:56px;border-bottom:1px solid var(--glass-border);
+      background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      flex-shrink:0;position:relative;z-index:10}
     #content{flex:1;overflow-y:auto;overflow-x:hidden}
-    #bottomnav{display:flex;border-top:1px solid var(--border);background:rgba(0,0,0,.95);
-      backdrop-filter:blur(20px);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+    #bottomnav{display:flex;border-top:1px solid var(--glass-border);background:var(--glass-bg);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);flex-shrink:0;
+      padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -8px 24px rgba(0,0,0,.25)}
 
     /* ── TOP BAR ── */
     .tb-logo{font-family:var(--D);font-size:18px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
@@ -85,6 +144,11 @@
     .xp-ring-bg{fill:none;stroke:var(--border);stroke-width:2.5}
     .xp-ring-fill{fill:none;stroke:var(--teal);stroke-width:2.5;stroke-linecap:round;
       transition:stroke-dashoffset .5s ease}
+    /* Generalized ring motif (ringSVG()/setRingProgress()) — same idea as
+       the XP ring above, parameterized for reuse anywhere in the app. */
+    .ring-bg{fill:none;stroke:var(--border)}
+    .ring-fill{fill:none;stroke:var(--teal);stroke-linecap:round;transition:stroke-dashoffset .6s ease;
+      filter:drop-shadow(0 0 4px rgba(44,212,196,.5))}
     .tb-avatar-init{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
       font-family:var(--D);font-size:13px;font-weight:800;color:var(--teal)}
     /* XP card */
@@ -98,7 +162,7 @@
       opacity:0;transform:translateY(-6px);transition:all .25s;pointer-events:none;z-index:200}
     #xp-toast.show{opacity:1;transform:translateY(0)}
     /* Level-up overlay */
-    #levelup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;
+    #levelup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:var(--z-critical);
       display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
     #levelup-overlay.show{display:flex}
     .tb-signout{font-size:11px;color:var(--dim);cursor:pointer;background:none;border:none;
@@ -109,26 +173,31 @@
     /* ── BOTTOM NAV ── */
     .bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
       gap:4px;padding:10px 4px;cursor:pointer;border:none;background:none;
-      color:var(--dim);transition:color .2s;font-family:var(--B);position:relative}
+      color:var(--dim);transition:color .25s,transform .15s;font-family:var(--B);position:relative}
+    .bn-tab:active{transform:scale(.92)}
     .bn-tab.active{color:var(--teal)}
+    .bn-tab.active svg{filter:drop-shadow(0 0 6px rgba(44,212,196,.5))}
     .bn-tab svg{width:20px;height:20px;stroke:currentColor;fill:none;
-      stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:filter .25s}
     .bn-tab span{font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
     .bn-tab.active::before{content:'';position:absolute;top:0;left:20%;right:20%;
-      height:2px;background:var(--teal)}
+      height:2px;background:var(--teal);box-shadow:var(--glow-teal-sm)}
 
     /* ── SIDEBAR (desktop only — hidden here, shown inside the
        @media(min-width:880px) block below). Mirrors .bn-tab's active/icon/
        label conventions so both nav surfaces look like one design, not two
-       bolted-together ones. ── */
+       bolted-together ones. Glass surface since it's a fixed elevated panel
+       (cheap: one instance, not one per list row). ── */
     #sidebar{display:none;flex-direction:column;width:220px;flex-shrink:0;
-      padding:20px 12px;border-right:1px solid var(--border);overflow-y:auto}
+      padding:20px 12px;border-right:1px solid var(--glass-border);overflow-y:auto;
+      background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
     .sidebar-tab{display:flex;align-items:center;gap:12px;padding:10px 12px;
-      border-radius:8px;cursor:pointer;border:none;background:none;
-      color:var(--dim);transition:color .2s,background .2s;font-family:var(--B);
-      font-size:13px;font-weight:600;text-align:left;width:100%}
+      border-radius:var(--radius-sm);cursor:pointer;border:none;background:none;
+      color:var(--dim);transition:color .2s,background .2s,box-shadow .2s,transform .15s;
+      font-family:var(--B);font-size:13px;font-weight:600;text-align:left;width:100%}
     .sidebar-tab:hover{color:var(--muted);background:rgba(255,255,255,.03)}
-    .sidebar-tab.active{color:var(--teal);background:var(--teal-lo)}
+    .sidebar-tab:active{transform:scale(.98)}
+    .sidebar-tab.active{color:var(--teal);background:var(--teal-lo);box-shadow:inset 0 0 0 1px rgba(44,212,196,.25),var(--glow-teal-sm)}
     .sidebar-tab svg{width:19px;height:19px;stroke:currentColor;fill:none;
       stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
     .sidebar-divider{height:1px;background:var(--border);margin:10px 4px}
@@ -201,12 +270,21 @@
     .score-val{font-family:var(--D);font-size:28px;font-weight:900;color:var(--teal);
       text-align:right;margin-top:4px}
 
-    /* ── SUBMIT BUTTON ── */
+    /* ── SUBMIT BUTTON ──
+       Primary-CTA convergence (Phase 1): .btn-primary/.lab-cta/.mob-next-btn
+       were three separately hand-tuned "big teal uppercase button" classes
+       with 13-16px padding drift. Rather than hunt down and rename every
+       element's class in a file this size, all three now share the same
+       radius/glow/press-feedback treatment so they read as one component
+       even though the class names stay put. */
     .btn-primary{width:100%;padding:16px;background:var(--teal);border:none;
-      font-family:var(--D);font-size:16px;font-weight:800;letter-spacing:.1em;
-      text-transform:uppercase;color:#000;cursor:pointer;transition:background .2s;margin-top:4px}
-    .btn-primary:hover{background:#3eeade}
-    .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+      border-radius:var(--radius-sm);font-family:var(--D);font-size:16px;font-weight:800;
+      letter-spacing:.1em;text-transform:uppercase;color:#000;cursor:pointer;
+      transition:background .2s,box-shadow .2s,transform .15s;margin-top:4px;
+      box-shadow:var(--glow-teal-sm)}
+    .btn-primary:hover{background:#3eeade;box-shadow:var(--glow-teal)}
+    .btn-primary:active{transform:scale(.98)}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
 
     /* ── TRAIN ── */
     .workout-ex{padding:16px;background:var(--s1);border:1px solid var(--border);margin-bottom:10px}
@@ -286,7 +364,7 @@
     .pb-step-label{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:16px}
     .pb-split-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     /* Exercise library bottom sheet */
-    #ex-library{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);display:none;flex-direction:column;justify-content:flex-end}
+    #ex-library{position:fixed;inset:0;z-index:var(--z-sheet);background:rgba(0,0,0,.75);display:none;flex-direction:column;justify-content:flex-end}
     #ex-library.open{display:flex}
     .ex-lib-sheet{background:var(--s1);border-top:1px solid var(--border);max-height:80vh;display:flex;flex-direction:column}
     .ex-lib-header{padding:16px 20px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -301,7 +379,7 @@
     .ex-lib-group{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);padding:10px 16px 4px;position:sticky;top:0;background:var(--s1)}
     .ex-lib-empty{text-align:center;padding:32px 16px;color:var(--dim);font-size:13px}
     /* Exercise progress sheet */
-    #ex-progress-sheet{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);display:none;flex-direction:column;justify-content:flex-end}
+    #ex-progress-sheet{position:fixed;inset:0;z-index:var(--z-sheet);background:rgba(0,0,0,.75);display:none;flex-direction:column;justify-content:flex-end}
     #ex-progress-sheet.open{display:flex}
     .ep-sheet{background:var(--s1);border-top:1px solid var(--border);max-height:85vh;display:flex;flex-direction:column}
     .ep-header{padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -389,11 +467,13 @@
       border:1px solid rgba(44,212,196,.25);background:rgba(44,212,196,.06);
       font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
       color:var(--teal);margin-bottom:14px}
-    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
-      background:#0C0C0C;border:1px solid rgba(44,212,196,.4);padding:10px 20px;
-      font-size:12px;color:var(--teal);z-index:200;opacity:0;transition:opacity .3s;
-      pointer-events:none;white-space:nowrap}
-    .toast.show{opacity:1}
+    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(6px);
+      background:var(--glass-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      border:1px solid rgba(44,212,196,.4);border-radius:var(--radius-sm);padding:10px 20px;
+      font-size:12px;color:var(--teal);z-index:var(--z-toast);opacity:0;
+      box-shadow:var(--glow-teal-sm),var(--shadow-ambient);
+      transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
     /* ── ONBOARDING OVERLAY ── */
     #ob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(16px);
@@ -565,7 +645,7 @@
     .chart-empty{font-size:12px;color:var(--dim);text-align:center;padding:16px 0}
 
     /* ── INTAKE OVERLAY ── */
-    #intake-overlay{position:fixed;inset:0;z-index:300;background:var(--black);
+    #intake-overlay{position:fixed;inset:0;z-index:var(--z-intake);background:var(--black);
       display:flex;flex-direction:column}
     #intake-overlay.hidden{display:none}
     #intake-header{padding:16px 20px;border-bottom:1px solid var(--border);
@@ -622,7 +702,7 @@
        intake overlay above, kept as a fully separate ID set deliberately:
        lower risk of a shared refactor breaking the primary onboarding flow
        every new user depends on. Reuses the shared .im/.confirm-* classes. */
-    #fsi-overlay{position:fixed;inset:0;z-index:300;background:var(--black);
+    #fsi-overlay{position:fixed;inset:0;z-index:var(--z-intake);background:var(--black);
       display:flex;flex-direction:column}
     #fsi-overlay.hidden{display:none}
     #fsi-header{padding:16px 20px;border-bottom:1px solid var(--border);
@@ -702,9 +782,9 @@
     .al-step-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-left:6px}
     .al-q{font-size:14px;font-weight:600;color:var(--white);margin-bottom:14px;line-height:1.4}
     .al-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
-    .al-chip{background:var(--s1);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:9px 14px;cursor:pointer;border-radius:2px;transition:all .2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .al-chip{background:var(--s1);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:9px 14px;cursor:pointer;border-radius:var(--radius-sm);transition:all .2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
     .al-chip:active{transform:scale(.97)}
-    .al-chip.sel{background:rgba(44,212,196,.08);border-color:var(--teal);color:var(--teal)}
+    .al-chip.sel{background:rgba(44,212,196,.08);border-color:var(--teal);color:var(--teal);box-shadow:var(--glow-teal-sm)}
     .al-chip-icon{font-size:16px;line-height:1}
     .al-section-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--white);margin-bottom:12px;margin-top:24px;display:flex;align-items:center;gap:6px}
     .al-section-label::before{content:'';display:inline-block;width:3px;height:14px;background:var(--teal);flex-shrink:0}
@@ -729,9 +809,12 @@
     .habit-hide{background:none;border:none;color:rgba(255,255,255,.15);font-size:12px;cursor:pointer;padding:4px 6px;flex-shrink:0;line-height:1;letter-spacing:.06em;font-family:var(--B);font-weight:600;transition:color .15s}
     .habit-hide:hover{color:var(--dim)}
     /* Coach history */
-    #coach-hist-sheet{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);display:none;flex-direction:column;justify-content:flex-end}
+    #coach-hist-sheet{position:fixed;inset:0;z-index:var(--z-sheet);background:rgba(0,0,0,.8);display:none;flex-direction:column;justify-content:flex-end}
     #coach-hist-sheet.open{display:flex}
-    .ch-panel{background:var(--s1);border-top:1px solid var(--border);max-height:85vh;display:flex;flex-direction:column}
+    .ch-panel{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border-top:1px solid var(--glass-border);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+      max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--shadow-ambient);
+      padding-bottom:env(safe-area-inset-bottom)}
     .ch-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
     .ch-title{font-family:var(--D);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
     .ch-body{flex:1;overflow-y:auto;padding:12px 16px}
@@ -748,9 +831,12 @@
     .fridge-inp:focus{border-color:rgba(44,212,196,.5)}
     .fridge-inp::placeholder{color:var(--dim)}
     /* Plan history sheet */
-    #plan-hist-sheet{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);display:none;flex-direction:column;justify-content:flex-end}
+    #plan-hist-sheet{position:fixed;inset:0;z-index:var(--z-sheet);background:rgba(0,0,0,.8);display:none;flex-direction:column;justify-content:flex-end}
     #plan-hist-sheet.open{display:flex}
-    .ph-panel{background:var(--s1);border-top:1px solid var(--border);max-height:80vh;display:flex;flex-direction:column}
+    .ph-panel{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border-top:1px solid var(--glass-border);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+      max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--shadow-ambient);
+      padding-bottom:env(safe-area-inset-bottom)}
     .ph-snap{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;transition:background .15s}
     .ph-snap:hover{background:rgba(255,255,255,.03)}
     .ph-snap-date{font-size:11px;font-weight:700;color:var(--teal);margin-bottom:3px}
@@ -771,17 +857,23 @@
     .mob-phase{display:none}
     .mob-phase.active{display:block}
     .mob-chip-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
-    .mob-chip{padding:9px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:12px;cursor:pointer;transition:all .15s;user-select:none}
-    .mob-chip.sel{background:rgba(44,212,196,.12);border-color:var(--teal);color:var(--teal)}
+    .mob-chip{padding:9px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--B);font-size:12px;cursor:pointer;transition:all .15s;user-select:none}
+    .mob-chip:active{transform:scale(.97)}
+    .mob-chip.sel{background:rgba(44,212,196,.12);border-color:var(--teal);color:var(--teal);box-shadow:var(--glow-teal-sm)}
     .food-ctx-grid{display:flex;flex-wrap:wrap;gap:6px}
-    .food-ctx-chip{padding:7px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:11px;cursor:pointer;transition:all .15s;user-select:none}
-    .food-ctx-chip.sel{background:var(--teal);border-color:var(--teal);color:#000;font-weight:600}
+    .food-ctx-chip{padding:7px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--B);font-size:11px;cursor:pointer;transition:all .15s;user-select:none}
+    .food-ctx-chip:active{transform:scale(.97)}
+    .food-ctx-chip.sel{background:var(--teal);border-color:var(--teal);color:#000;font-weight:600;box-shadow:var(--glow-teal-sm)}
     .mob-radio-group{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
-    .mob-radio{padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:13px;cursor:pointer;transition:all .15s;text-align:left;display:block}
-    .mob-radio.sel{background:rgba(44,212,196,.12);border-color:var(--teal);color:var(--white)}
+    .mob-radio{padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--B);font-size:13px;cursor:pointer;transition:all .15s;text-align:left;display:block}
+    .mob-radio:active{transform:scale(.99)}
+    .mob-radio.sel{background:rgba(44,212,196,.12);border-color:var(--teal);color:var(--white);box-shadow:var(--glow-teal-sm)}
     .mob-phase-nav{display:flex;gap:8px;margin-top:20px}
-    .mob-next-btn{flex:1;padding:14px;background:var(--teal);border:none;color:#000;font-family:var(--D);font-size:14px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
-    .mob-back-btn{padding:14px 18px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+    .mob-next-btn{flex:1;padding:15px;background:var(--teal);border:none;border-radius:var(--radius-sm);color:#000;font-family:var(--D);font-size:14px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;box-shadow:var(--glow-teal-sm);transition:box-shadow .2s,transform .15s}
+    .mob-next-btn:hover{box-shadow:var(--glow-teal)}
+    .mob-next-btn:active{transform:scale(.98)}
+    .mob-back-btn{padding:15px 18px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:transform .15s}
+    .mob-back-btn:active{transform:scale(.98)}
     .mob-processing{text-align:center;padding:60px 20px}
     .mob-results{}
     .mob-section{margin-bottom:20px}
@@ -816,7 +908,7 @@
     .al-why{display:block;font-size:11px;color:rgba(44,212,196,.6);margin-top:4px;font-style:italic}
     .al-add-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--teal);background:rgba(44,212,196,.08);border:1px solid rgba(44,212,196,.2);padding:3px 8px;cursor:pointer;white-space:nowrap;line-height:1.4}
     /* Day picker overlay */
-    #al-day-picker{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.8);display:none;align-items:flex-end}
+    #al-day-picker{position:fixed;inset:0;z-index:var(--z-intake);background:rgba(0,0,0,.8);display:none;align-items:flex-end}
     .al-picker-sheet{background:var(--s1);border-top:1px solid var(--border);width:100%;padding:20px 20px 32px;max-height:70vh;overflow-y:auto}
     .al-picker-ex{font-size:12px;color:var(--teal);margin-bottom:14px;line-height:1.4;font-style:italic}
     .al-picker-title{font-family:var(--D);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--white);margin-bottom:12px}
@@ -956,15 +1048,21 @@
       padding:16px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.65}
     .lab-cta{width:100%;padding:15px;background:var(--teal);color:var(--black);
       font-family:var(--D);font-size:14px;font-weight:900;letter-spacing:.1em;
-      text-transform:uppercase;border:none;cursor:pointer;margin-top:8px}
-    .lab-cta:disabled{opacity:.5;cursor:default}
+      text-transform:uppercase;border:none;border-radius:var(--radius-sm);cursor:pointer;
+      margin-top:8px;box-shadow:var(--glow-teal-sm);transition:box-shadow .2s,transform .15s}
+    .lab-cta:hover{box-shadow:var(--glow-teal)}
+    .lab-cta:active{transform:scale(.98)}
+    .lab-cta:disabled{opacity:.5;cursor:default;box-shadow:none}
     .lab-cta-sec{width:100%;padding:13px;background:transparent;color:var(--teal);
       font-family:var(--D);font-size:13px;font-weight:800;letter-spacing:.08em;
-      text-transform:uppercase;border:1px solid rgba(44,212,196,.3);cursor:pointer;margin-top:8px}
+      text-transform:uppercase;border:1px solid rgba(44,212,196,.3);border-radius:var(--radius-sm);
+      cursor:pointer;margin-top:8px;transition:box-shadow .2s,transform .15s}
+    .lab-cta-sec:hover{box-shadow:var(--glow-teal-sm)}
+    .lab-cta-sec:active{transform:scale(.98)}
     /* Lab sticky footer — sticks to bottom of #content scroll area, above bottom nav */
     .lab-sticky-foot{position:sticky;bottom:0;z-index:10;
-      background:rgba(0,0,0,.97);backdrop-filter:blur(16px);
-      border-top:1px solid var(--border);margin:8px -20px 0;padding:10px 20px 14px}
+      background:var(--glass-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      border-top:1px solid var(--glass-border);margin:8px -20px 0;padding:10px 20px 14px}
     .lab-sticky-foot .lab-cta{margin-top:0}
     /* Hormone lab phase-2 question nav */
     .lab-q-nav{position:sticky;bottom:0;z-index:10;display:flex;gap:8px;
@@ -1976,8 +2074,8 @@
   </div>
 
   <!-- ══ CREATE CHANNEL MODAL (admin only) ══ -->
-  <div id="create-channel-modal" onclick="if(event.target===this)closeCreateChannel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+  <div id="create-channel-modal" onclick="if(event.target===this)closeCreateChannel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div style="font-family:var(--D);font-size:20px;font-weight:900">NEW CHANNEL</div>
         <button onclick="closeCreateChannel()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
@@ -1992,8 +2090,8 @@
   </div>
 
   <!-- ══ EDIT MY PROFILE MODAL ══ -->
-  <div id="edit-profile-modal" onclick="if(event.target===this)closeEditProfile()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+  <div id="edit-profile-modal" onclick="if(event.target===this)closeEditProfile()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div style="font-family:var(--D);font-size:20px;font-weight:900">EDIT PROFILE</div>
         <button onclick="closeEditProfile()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
@@ -2015,8 +2113,8 @@
   </div>
 
   <!-- ══ COMPOSER MODAL (new post / reply) ══ -->
-  <div id="composer-modal" onclick="if(event.target===this)closeComposer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+  <div id="composer-modal" onclick="if(event.target===this)closeComposer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div id="composer-title" style="font-family:var(--D);font-size:20px;font-weight:900">NEW POST</div>
         <button onclick="closeComposer()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
@@ -2037,8 +2135,8 @@
   </div>
 
   <!-- ══ PROGRAMME CALENDAR MODAL (month/year view + deload weeks) ══ -->
-  <div id="programme-calendar-modal" onclick="if(event.target===this)closeProgrammeCalendar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
+  <div id="programme-calendar-modal" onclick="if(event.target===this)closeProgrammeCalendar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px">
         <div>
           <div style="font-family:var(--D);font-size:22px;font-weight:900">FULL PROGRAMME</div>
@@ -2066,8 +2164,8 @@
   </div>
 
   <!-- ══ EVENTS MODAL ══ -->
-  <div id="events-modal" onclick="if(event.target===this)closeEvents()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
+  <div id="events-modal" onclick="if(event.target===this)closeEvents()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px">
         <div style="font-family:var(--D);font-size:22px;font-weight:900">EVENTS</div>
         <button onclick="closeEvents()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px">✕</button>
@@ -2086,8 +2184,8 @@
   </div>
 
   <!-- ══ ADMIN MODAL (applications + compliance) — only ever opened for PROFILE.is_admin ══ -->
-  <div id="admin-modal" onclick="if(event.target===this)closeAdmin()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+  <div id="admin-modal" onclick="if(event.target===this)closeAdmin()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px">
         <div style="font-family:var(--D);font-size:22px;font-weight:900">THE STANDARD — ADMIN</div>
         <button onclick="closeAdmin()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px">✕</button>
@@ -2182,8 +2280,8 @@
   </nav>
 
   <!-- WHAT'S NEW -->
-  <div id="whats-new-modal" onclick="if(event.target===this)closeWhatsNew()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:570;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:75vh;overflow-y:auto;padding:20px">
+  <div id="whats-new-modal" onclick="if(event.target===this)closeWhatsNew()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet-nested);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;max-height:75vh;overflow-y:auto;padding:20px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div style="font-family:var(--D);font-size:20px;font-weight:900">WHAT'S NEW</div>
         <button onclick="closeWhatsNew()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
@@ -2194,8 +2292,8 @@
   </div>
 
   <!-- GLOBAL SEARCH -->
-  <div id="global-search-modal" onclick="if(event.target===this)closeGlobalSearch()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:560;align-items:flex-start">
-    <div style="background:var(--black);border-bottom:1px solid var(--border);width:100%;max-height:80vh;overflow-y:auto;padding:16px 20px 20px">
+  <div id="global-search-modal" onclick="if(event.target===this)closeGlobalSearch()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet-nested);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;max-height:80vh;overflow-y:auto;padding:16px 20px 20px">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
         <input id="global-search-input" placeholder="Search habits, today's exercises, mobility…" oninput="runGlobalSearch(this.value)" style="flex:1;background:var(--s1);border:1px solid var(--border);padding:10px 12px;color:#fff;font-size:14px">
         <button onclick="closeGlobalSearch()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
@@ -2207,8 +2305,8 @@
   <!-- MORE MENU — Coach/Lab/Move/Community moved here to keep the bottom
        nav to 5 thumb-reachable tabs instead of 8. Nothing removed, just
        one tap further away for the less-daily-use ones. -->
-  <div id="more-menu" onclick="if(event.target===this)toggleMoreMenu()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:550;align-items:flex-end">
-    <div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+  <div id="more-menu" onclick="if(event.target===this)toggleMoreMenu()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet-nested);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div style="font-family:var(--D);font-size:20px;font-weight:900">MORE</div>
         <button onclick="toggleMoreMenu()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
@@ -3759,12 +3857,15 @@ async function openProfileView(userId){
       ${linkChips.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px">${linkChips.map(l => `<a href="${escHtml(l)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--teal);background:rgba(44,212,196,.08);border:1px solid rgba(44,212,196,.25);padding:4px 10px;border-radius:12px;text-decoration:none">${escHtml(l.replace(/^https?:\/\//,'').replace(/\/$/,''))}</a>`).join('')}</div>` : ''}
     </div>
     <div style="display:flex;gap:10px;margin-bottom:20px">
-      <div style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+      <div class="card" style="flex:1;padding:14px;text-align:center">
         <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--teal)">${postCount || 0}</div>
         <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Posts</div>
       </div>
-      <div style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
-        <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--teal)">${m.streak_days || 0}</div>
+      <div class="card" style="flex:1;padding:14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div style="position:relative;width:44px;height:44px">
+          ${ringSVG('profile-streak-ring')}
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:13px;font-weight:900;color:var(--teal)">${m.streak_days || 0}</div>
+        </div>
         <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Day Streak</div>
       </div>
     </div>
@@ -3774,6 +3875,14 @@ async function openProfileView(userId){
     <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Posts</div>
     ${postList.length ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px">${postList.map(_renderProfileGridTile).join('')}</div>` : '<div style="color:var(--muted);font-size:13px">No posts yet.</div>'}
   `;
+
+  // Ring progress toward the next streak milestone (7/30/90 days, matching
+  // this app's real milestone thresholds) — set after the innerHTML swap so
+  // the SVG exists to target, and on a rAF tick so the transition actually
+  // animates in from 0 instead of snapping straight to its resting value.
+  const streak = m.streak_days || 0;
+  const nextMilestone = streak < 7 ? 7 : streak < 30 ? 30 : streak < 90 ? 90 : streak || 1;
+  requestAnimationFrame(() => setRingProgress('profile-streak-ring', (streak / nextMilestone) * 100));
 }
 
 // Instagram-style profile grid tile — photos/videos render as square
@@ -5453,8 +5562,8 @@ function openShoppingList(){
   const win = document.createElement('div');
   win.id = 'shopping-list-modal';
   win.onclick = e=>{ if(e.target===win) win.remove(); };
-  win.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:600;display:flex;align-items:flex-end';
-  win.innerHTML = `<div style="background:var(--black);border-top:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-height:80vh;overflow-y:auto;padding:20px">
+  win.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet-nested);display:flex;align-items:flex-end';
+  win.innerHTML = `<div class="sheet-panel" style="width:100%;max-height:80vh;overflow-y:auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div style="font-family:var(--D);font-size:20px;font-weight:900">SHOPPING LIST</div>
       <button onclick="document.getElementById('shopping-list-modal').remove()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
@@ -5840,8 +5949,9 @@ async function loadProgressCharts(){
   }
 
   const tealAlpha = v => v>=70?'rgba(44,212,196,.7)':v>=40?'rgba(44,212,196,.35)':'rgba(44,212,196,.15)';
-  const gridOpts = { y:{ticks:{color:'#444'},grid:{color:'#1A1A1A'},border:{display:false}},
-                     x:{ticks:{color:'#888'},grid:{display:false},border:{display:false}} };
+  const gridTick = cssVar('--dim'), gridLine = cssVar('--border'), axisTick = cssVar('--muted');
+  const gridOpts = { y:{ticks:{color:gridTick},grid:{color:gridLine},border:{display:false}},
+                     x:{ticks:{color:axisTick},grid:{display:false},border:{display:false}} };
   const noLegend = { legend:{display:false} };
 
   // Habits chart
@@ -5862,8 +5972,8 @@ async function loadProgressCharts(){
     const labs = checkinData.map(r=>new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
     const avgs = checkinData.map(r=>Math.round(CHECK_METRICS.reduce((s,m)=>s+(+r[m.key]||5),0)/CHECK_METRICS.length*10)/10);
     _charts.checkin = new Chart(cc,{type:'line',data:{labels:labs,datasets:[{
-      data:avgs,borderColor:'#2CD4C4',backgroundColor:'rgba(44,212,196,.08)',
-      fill:true,tension:.4,pointBackgroundColor:'#2CD4C4',pointRadius:4,
+      data:avgs,borderColor:cssVar('--teal'),backgroundColor:'rgba(44,212,196,.08)',
+      fill:true,tension:.4,pointBackgroundColor:cssVar('--teal'),pointRadius:4,
     }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,min:1,max:10}}}});
   }
 
@@ -5914,10 +6024,10 @@ async function renderStrengthChart(exName){
   if(_charts.strength) try{_charts.strength.destroy()}catch(e){}
   _charts.strength = new Chart(canvas,{type:'line',data:{
     labels: dates.map(d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})),
-    datasets:[{ data: dates.map(d=>byDate[d]), borderColor:'#2CD4C4', backgroundColor:'rgba(44,212,196,.08)', fill:true, tension:.3, pointBackgroundColor:'#2CD4C4', pointRadius:4 }]
+    datasets:[{ data: dates.map(d=>byDate[d]), borderColor:cssVar('--teal'), backgroundColor:'rgba(44,212,196,.08)', fill:true, tension:.3, pointBackgroundColor:cssVar('--teal'), pointRadius:4 }]
   },options:{responsive:true,plugins:{legend:{display:false}},scales:{
-    y:{ticks:{color:'#444',callback:v=>v+'kg'},grid:{color:'#1A1A1A'},border:{display:false}},
-    x:{ticks:{color:'#888'},grid:{display:false},border:{display:false}}
+    y:{ticks:{color:cssVar('--dim'),callback:v=>v+'kg'},grid:{color:cssVar('--border')},border:{display:false}},
+    x:{ticks:{color:cssVar('--muted')},grid:{display:false},border:{display:false}}
   }}});
 }
 
@@ -5950,14 +6060,14 @@ function renderBodyCompChart(){
   if(_charts.bodycomp) try{_charts.bodycomp.destroy()}catch(e){}
   const labels = log.map(e=>new Date(e.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
   const datasets = [];
-  if(log.some(e=>e.weight_kg)) datasets.push({ label:'Weight (kg)', data:log.map(e=>e.weight_kg), borderColor:'#2CD4C4', backgroundColor:'rgba(44,212,196,.08)', tension:.3, pointRadius:3, yAxisID:'y' });
+  if(log.some(e=>e.weight_kg)) datasets.push({ label:'Weight (kg)', data:log.map(e=>e.weight_kg), borderColor:cssVar('--teal'), backgroundColor:'rgba(44,212,196,.08)', tension:.3, pointRadius:3, yAxisID:'y' });
   if(log.some(e=>e.body_fat)) datasets.push({ label:'Body Fat %', data:log.map(e=>e.body_fat), borderColor:'#818cf8', backgroundColor:'rgba(129,140,248,.08)', tension:.3, pointRadius:3, yAxisID:'y1' });
   _charts.bodycomp = new Chart(canvas,{type:'line',data:{labels,datasets},options:{responsive:true,
-    plugins:{legend:{display:datasets.length>1,labels:{color:'#888',font:{size:10}}}},
+    plugins:{legend:{display:datasets.length>1,labels:{color:cssVar('--muted'),font:{size:10}}}},
     scales:{
-      y:{position:'left',ticks:{color:'#444'},grid:{color:'#1A1A1A'},border:{display:false}},
-      y1:{position:'right',ticks:{color:'#444'},grid:{display:false},border:{display:false}},
-      x:{ticks:{color:'#888'},grid:{display:false},border:{display:false}}
+      y:{position:'left',ticks:{color:cssVar('--dim')},grid:{color:cssVar('--border')},border:{display:false}},
+      y1:{position:'right',ticks:{color:cssVar('--dim')},grid:{display:false},border:{display:false}},
+      x:{ticks:{color:cssVar('--muted')},grid:{display:false},border:{display:false}}
     }}});
 }
 
@@ -6768,6 +6878,39 @@ async function completeFutureSelfIntake(){
 }
 
 function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// Reusable radial-progress ring — the same SVG stroke-dasharray/dashoffset
+// technique the topbar XP ring already used (see renderXPUI), generalized
+// so any "X% of a target" display (streak, macros, micronutrients, habit
+// completion) can share one shape language instead of flat bars everywhere.
+// Adopted incrementally at real usage sites, not a retroactive conversion
+// of every existing bar in one pass — see the streak ring in
+// openProfileView() for the first applied example.
+function ringSVG(id, size = 44, strokeWidth = 3){
+  const r = (size - strokeWidth) / 2;
+  const c = (2 * Math.PI * r).toFixed(2);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg);flex-shrink:0">
+    <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${strokeWidth}"/>
+    <circle class="ring-fill" id="${id}" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${strokeWidth}" stroke-dasharray="${c}" stroke-dashoffset="${c}"/>
+  </svg>`;
+}
+// Chart.js configs are plain JS objects, not CSS — they can't resolve
+// var(--teal) themselves, so the strength/body-comp/habit charts hardcoded
+// hex colors and were the one part of the UI that ignored the light/dark
+// theme toggle. This reads the CURRENT computed value at chart-build time
+// instead, so a chart built after switching theme picks up the right
+// colors (it won't hot-update an already-rendered chart without a
+// re-render — same as everything else in this file, nothing here is a
+// live-reactive canvas system).
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function setRingProgress(id, percent){
+  const ring = document.getElementById(id);
+  if(!ring) return;
+  const r = parseFloat(ring.getAttribute('r'));
+  const c = 2 * Math.PI * r;
+  ring.style.strokeDashoffset = c * (1 - Math.max(0, Math.min(100, percent)) / 100);
+}
 
 function stripMd(s){
   return s
