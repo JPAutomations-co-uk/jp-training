@@ -1147,7 +1147,7 @@
         <svg viewBox="0 0 36 36"><circle class="xp-ring-bg" cx="18" cy="18" r="15.9"/><circle class="xp-ring-fill" id="xp-ring" cx="18" cy="18" r="15.9"/></svg>
         <div class="tb-avatar-init" id="tb-avatar-init">?</div>
       </div>
-      <button onclick="switchTab('community')" id="tb-community-btn" title="Community" style="background:none;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">👥</button>
+      <button onclick="switchTab('community')" id="tb-community-btn" title="Community" style="background:none;border:1px solid var(--border);color:var(--muted);height:30px;padding:0 10px;border-radius:15px;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:5px;white-space:nowrap">👥 Community</button>
       <button onclick="openGlobalSearch()" title="Search" style="background:none;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">🔍</button>
       <button onclick="toggleAppTheme()" id="theme-toggle-btn" title="Toggle light/dark" style="background:none;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">🌙</button>
       <button class="tb-signout" onclick="signOut()">Sign out</button>
@@ -2072,10 +2072,6 @@
       </div>
     </div>
     <div id="community-members-view" style="display:none">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <button onclick="closeMembersView()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0">←</button>
-        <div style="font-family:var(--D);font-size:20px;font-weight:900">MEMBERS</div>
-      </div>
       <div id="community-members-list"></div>
     </div>
     <div id="community-profile-view" style="display:none">
@@ -2471,6 +2467,19 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Shared confirm dialog (confirmDialog()) — replaces native confirm()
+     everywhere in the app so destructive actions get the app's own
+     glass/sheet treatment instead of a jarring native browser dialog. -->
+<div id="confirm-modal" onclick="if(event.target===this)_confirmDialogResolve?.(false)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+  <div class="sheet-panel" style="width:100%;padding:24px;padding-bottom:calc(24px + env(safe-area-inset-bottom))">
+    <div id="confirm-modal-text" style="font-size:14px;color:var(--white);margin-bottom:20px;line-height:1.5"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="_confirmDialogResolve?.(false)" style="flex:1;padding:13px;background:var(--s1);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-weight:700;cursor:pointer">Cancel</button>
+      <button onclick="_confirmDialogResolve?.(true)" style="flex:1;padding:13px;background:#f87171;border:none;border-radius:var(--radius-sm);color:#000;font-weight:700;cursor:pointer">Delete</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ── THEME ── applied as early as possible in this script to minimise the
@@ -3166,7 +3175,14 @@ async function initCommunity(){
 // Channels/Members) is showing — Events is deliberately not one of these,
 // it stays a modal (openEvents()) reached from the same tab bar for
 // discoverability, not a 4th persistent view.
+// Tracks whichever of the 4 persistent tabs was last active, so drill-downs
+// reached from any of them (Notifications/DM list/a profile/a post thread)
+// can return to where the user actually came from instead of hardcoding
+// Feed — previously tapping a member from Map or Members, then hitting
+// back, always landed on Feed regardless of origin.
+let _lastCommunityTab = 'feed';
 function switchCommunityTab(tab){
+  _lastCommunityTab = tab;
   const views = { feed: 'community-feed-view', channels: 'community-list-view', members: 'community-members-view', map: 'community-map-view' };
   Object.entries(views).forEach(([key, id]) => {
     const el = document.getElementById(id);
@@ -3431,6 +3447,13 @@ async function loadMessages(){
     const flagBtn = PROFILE?.is_admin
       ? `<button onclick="toggleCaseStudyFlag('${m.id}',${!!m.case_study_flagged})" title="${m.case_study_flagged ? 'Unflag case study' : 'Flag as case study'}" style="background:none;border:none;cursor:pointer;padding:0;font-size:12px;opacity:${m.case_study_flagged ? '1' : '.35'}">⭐</button>`
       : '';
+    // Discussion previously had no way to delete your own message at all,
+    // unlike Feed/Posts — soft-delete (deleted_at) so the "Message removed"
+    // placeholder stays for anyone who already saw/replied to it, rather
+    // than silently vanishing mid-conversation.
+    const deleteBtn = m.author?.id === USER.id
+      ? `<button onclick="deleteMessage('${m.id}')" title="Delete message" style="background:none;border:none;cursor:pointer;padding:0;font-size:12px;color:var(--dim)">🗑️</button>`
+      : '';
 
     const replyMsg = m.reply_to_id ? byId[m.reply_to_id] : null;
     const replyHtml = m.reply_to_id
@@ -3446,7 +3469,7 @@ async function loadMessages(){
 
     return `<div style="margin-bottom:16px" data-msg-id="${m.id}">
       ${replyHtml}
-      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span>${flagBtn}</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--teal);font-weight:700">${escHtml(author)} <span style="color:var(--dim);font-weight:400">${time}</span>${flagBtn}${deleteBtn}</div>
       <div style="font-size:14px;margin:2px 0 4px">${_highlightMentions(m.body)}</div>
       <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
         ${reactionRow}
@@ -3556,6 +3579,13 @@ async function toggleCaseStudyFlag(messageId, currentlyFlagged){
   await loadMessages();
 }
 
+async function deleteMessage(messageId){
+  if(!await confirmDialog('Delete this message? This can\'t be undone.')) return;
+  const { error } = await sb.from('channel_messages').update({ deleted_at: new Date().toISOString() }).eq('id', messageId).eq('user_id', USER.id);
+  if(error){ showToast('Failed to delete: ' + (error.message || error.code || 'unknown error')); return; }
+  await loadMessages();
+}
+
 /* ── NOTIFICATIONS (mentions + replies to your own posts) ── */
 let notifRealtimeSub = null;
 
@@ -3590,13 +3620,19 @@ async function openNotifications(){
     .limit(30);
   if(error){ list.innerHTML = _communityErrorHtml('Failed to load notifications', error); return; }
   if(!data || data.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">Nothing yet.</div>'; return; }
+  // Discussion @mentions/replies were the only thing that ever notified —
+  // Feed/channel-Post likes+replies and new DMs now do too (post_like/
+  // post_reply/dm types, added alongside the original mention/reply).
+  const VERBS = { mention: 'mentioned you in', reply: 'replied to you in', post_like: 'liked your post', post_reply: 'replied to your post', dm: 'sent you a message' };
   list.innerHTML = data.map(n => {
     const actor = n.actor?.display_name || 'Someone';
     const channelName = n.channel?.name || 'a channel';
-    const verb = n.type === 'mention' ? 'mentioned you in' : 'replied to you in';
+    const verb = VERBS[n.type] || 'interacted with you';
+    const isChannelType = n.type === 'mention' || n.type === 'reply';
+    const detail = isChannelType ? ` <b>#${escHtml(channelName)}</b>` : '';
     const time = new Date(n.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    return `<div onclick="openNotification('${n.id}','${n.channel_id||''}')" style="background:${n.read?'var(--s1)':'rgba(44,212,196,.06)'};border:1px solid ${n.read?'var(--border)':'rgba(44,212,196,.25)'};border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
-      <div style="font-size:13px">${escHtml(actor)} ${verb} <b>#${escHtml(channelName)}</b></div>
+    return `<div onclick="openNotification('${n.id}','${n.channel_id||''}','${n.type}','${n.post_id||''}','${n.dm_conversation_id||''}')" style="background:${n.read?'var(--s1)':'rgba(44,212,196,.06)'};border:1px solid ${n.read?'var(--border)':'rgba(44,212,196,.25)'};border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+      <div style="font-size:13px">${escHtml(actor)} ${verb}${detail}</div>
       <div style="font-size:11px;color:var(--dim);margin-top:2px">${time}</div>
     </div>`;
   }).join('');
@@ -3606,11 +3642,13 @@ async function openNotifications(){
 function closeNotifications(){
   const view = document.getElementById('community-notifications-view');
   if(view) view.style.display = 'none';
-  switchCommunityTab('feed');
+  switchCommunityTab(_lastCommunityTab);
 }
-function openNotification(notifId, channelId){
+function openNotification(notifId, channelId, type, postId, dmConvoId){
   closeNotifications();
-  if(channelId) openChannel(channelId);
+  if(type === 'post_like' || type === 'post_reply'){ if(postId) openPostThread(postId); }
+  else if(type === 'dm'){ if(dmConvoId) openDmChat(dmConvoId); }
+  else if(channelId) openChannel(channelId);
 }
 
 // ── Wins auto-surfacing — real streak milestones only, nothing fabricated.
@@ -3663,13 +3701,13 @@ async function openDmList(){
 function closeDmList(){
   const view = document.getElementById('community-dm-list-view');
   if(view) view.style.display = 'none';
-  switchCommunityTab('feed');
+  switchCommunityTab(_lastCommunityTab);
 }
 
 async function loadDmConversations(){
   const list = document.getElementById('community-dm-conversations');
   if(!list) return;
-  list.innerHTML = '<div style="color:var(--muted);font-size:13px">Loading...</div>';
+  list.innerHTML = skeletonRows(3);
   const { data, error } = await sb.from('dm_conversations')
     .select('*, a:profiles!dm_conversations_user_a_fkey(id,display_name,avatar_url), b:profiles!dm_conversations_user_b_fkey(id,display_name,avatar_url)')
     .or(`user_a.eq.${USER.id},user_b.eq.${USER.id}`)
@@ -3677,11 +3715,38 @@ async function loadDmConversations(){
   if(error){ list.innerHTML = _communityErrorHtml('Failed to load messages', error); return; }
   dmConversationsCache = data || [];
   if(dmConversationsCache.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No conversations yet — start one from a member\'s profile.</div>'; return; }
-  list.innerHTML = dmConversationsCache.map(c => {
+
+  // DM list previously showed name + avatar only — zero unread signal,
+  // unlike channels' unread dot and notifications' unread tint. One batch
+  // query across all the user's conversations, grouped client-side (same
+  // pattern _attachPostMeta already uses for posts) rather than N+1 queries.
+  const convoIds = dmConversationsCache.map(c => c.id);
+  const { data: allMsgs } = await sb.from('dm_messages')
+    .select('conversation_id,body,sender_id,read,created_at')
+    .in('conversation_id', convoIds)
+    .order('created_at', { ascending: false });
+  const latestByConvo = {}, unreadByConvo = {};
+  (allMsgs || []).forEach(m => {
+    if(!latestByConvo[m.conversation_id]) latestByConvo[m.conversation_id] = m;
+    if(!m.read && m.sender_id !== USER.id) unreadByConvo[m.conversation_id] = (unreadByConvo[m.conversation_id]||0) + 1;
+  });
+
+  list.innerHTML = dmConversationsCache.map((c, i) => {
     const other = c.a?.id === USER.id ? c.b : c.a;
-    return `<div onclick="openDmChat('${c.id}')" style="display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+    const last = latestByConvo[c.id];
+    const unread = unreadByConvo[c.id] || 0;
+    const preview = last ? (last.sender_id === USER.id ? 'You: ' : '') + (last.body||'').slice(0,50) : 'No messages yet';
+    const time = last ? new Date(last.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+    return `<div onclick="openDmChat('${c.id}')" class="card tap-target stagger-in" style="display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;animation-delay:${Math.min(i,8)*40}ms">
       ${other?.avatar_url ? `<img src="${escHtml(other.avatar_url)}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:36px;height:36px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>`}
-      <div style="font-weight:700;font-size:14px">${escHtml(other?.display_name || 'Member')}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="font-weight:${unread?'800':'700'};font-size:14px">${escHtml(other?.display_name || 'Member')}</div>
+          ${unread ? `<span style="width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:var(--glow-teal-sm);flex-shrink:0"></span>` : ''}
+        </div>
+        <div style="font-size:12px;color:${unread?'var(--white)':'var(--muted)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(preview)}</div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);flex-shrink:0">${time}</div>
     </div>`;
   }).join('');
 }
@@ -3765,6 +3830,12 @@ async function sendDmMessage(){
   const { error } = await sb.from('dm_messages').insert({ conversation_id: dmActiveConversation, sender_id: USER.id, body });
   if(error){ showToast('Failed to send: ' + (error.message || error.code || 'unknown error')); return; }
   await loadDmMessages();
+  // New DMs previously generated zero notification at all.
+  const { data: convo } = await sb.from('dm_conversations').select('user_a,user_b').eq('id', dmActiveConversation).maybeSingle();
+  const otherId = convo ? (convo.user_a === USER.id ? convo.user_b : convo.user_a) : null;
+  if(otherId){
+    sb.from('notifications').insert({ user_id: otherId, type: 'dm', dm_conversation_id: dmActiveConversation, actor_id: USER.id }).then(()=>{}, ()=>{});
+  }
 }
 
 /* ── CREATE CHANNEL (admin) ── */
@@ -3797,8 +3868,15 @@ let _communityMembersFull = [];
 // Members is now a persistent tab (switchCommunityTab('members')), not a
 // drill-down — this is kept only as a reset target for switchTab()'s
 // cross-pane cleanup guard, which needs some safe default to fall back to.
+// Members has no back-button of its own anymore — it's a persistent tab
+// like Feed/Channels/Map, not a drill-down (its old "← MEMBERS" header was
+// leftover from an earlier design and has been removed). This only still
+// exists to be called from switchTab()'s "leaving Community" cleanup,
+// where hiding the view is all that's needed — the whole pane is already
+// being left, so there's nothing to navigate back to within Community.
 function closeMembersView(){
-  switchCommunityTab('feed');
+  const view = document.getElementById('community-members-view');
+  if(view) view.style.display = 'none';
 }
 
 async function loadMembersList(){
@@ -4020,7 +4098,7 @@ function _renderProfileGridTile(post, i){
 function closeProfileView(){
   const view = document.getElementById('community-profile-view');
   if(view) view.style.display = 'none';
-  switchCommunityTab('feed');
+  switchCommunityTab(_lastCommunityTab);
 }
 
 /* ── FEED & POSTS (X-style; optionally tagged to a channel, which is what
@@ -4070,7 +4148,7 @@ function _renderPostCard(post, i){
 // the .eq('user_id', USER.id) here is a UX-speed shortcut, not the real guard).
 // Cascades to replies + likes via the FK ON DELETE CASCADE set up in migration 0009.
 async function deletePost(postId){
-  if(!confirm('Delete this post? This can\'t be undone.')) return;
+  if(!await confirmDialog('Delete this post? This can\'t be undone.')) return;
   const { error } = await sb.from('posts').delete().eq('id', postId).eq('user_id', USER.id);
   if(error){ showToast('Failed to delete: ' + (error.message || 'unknown error')); return; }
   showToast('Post deleted');
@@ -4133,6 +4211,14 @@ async function togglePostLike(postId){
   // already-liked post in the list, which a class baked into the render
   // function itself would replay on every unrelated reload/re-render.
   if(wasLiking) document.getElementById('post-like-' + postId)?.classList.add('pop-in');
+  // Feed/Post likes previously generated zero notification — only
+  // Discussion @mentions/replies did. Skip notifying yourself.
+  if(wasLiking){
+    const { data: post } = await sb.from('posts').select('user_id').eq('id', postId).maybeSingle();
+    if(post && post.user_id !== USER.id){
+      sb.from('notifications').insert({ user_id: post.user_id, type: 'post_like', post_id: postId, actor_id: USER.id }).then(()=>{}, ()=>{});
+    }
+  }
 }
 
 let _activePostThreadId = null;
@@ -4146,7 +4232,7 @@ function closePostThread(){
   _activePostThreadId = null;
   const view = document.getElementById('community-post-thread-view');
   if(view) view.style.display = 'none';
-  switchCommunityTab('feed');
+  switchCommunityTab(_lastCommunityTab);
 }
 async function loadPostThread(postId){
   const body = document.getElementById('community-post-thread-body');
@@ -4276,6 +4362,14 @@ async function submitPost(){
   if(replyTo) await loadPostThread(replyTo);
   else if(channelId && communityActiveChannel?.id === channelId && document.getElementById('community-channel-posts-view')?.style.display !== 'none') await loadChannelPosts(channelId);
   else await loadFeed();
+  // Post replies previously generated zero notification — only Discussion
+  // replies did. Skip notifying yourself.
+  if(replyTo){
+    const { data: parent } = await sb.from('posts').select('user_id').eq('id', replyTo).maybeSingle();
+    if(parent && parent.user_id !== USER.id){
+      sb.from('notifications').insert({ user_id: parent.user_id, type: 'post_reply', post_id: replyTo, actor_id: USER.id }).then(()=>{}, ()=>{});
+    }
+  }
 }
 
 /* ── EDIT MY PROFILE (bio + avatar) ── */
@@ -7037,6 +7131,24 @@ function _showWithFade(el, display){
   el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in');
 }
 
+// Promise-based replacement for native confirm() — every destructive
+// action in the app (delete post/message/habit, restore a plan) used the
+// browser's own unstyled dialog, jarring against everything else here.
+// Usage: if(!await confirmDialog('Delete this?')) return;
+let _confirmDialogResolve = null;
+function confirmDialog(message){
+  return new Promise(resolve => {
+    const modal = document.getElementById('confirm-modal');
+    document.getElementById('confirm-modal-text').textContent = message;
+    modal.style.display = 'flex';
+    _confirmDialogResolve = (result) => {
+      modal.style.display = 'none';
+      _confirmDialogResolve = null;
+      resolve(result);
+    };
+  });
+}
+
 // Shared shimmer skeleton — replaces the bare "Loading..." text repeated
 // across Community's lists (Feed/Channels/Members/Map) with something that
 // actually looks like the content that's about to arrive.
@@ -7998,11 +8110,11 @@ function addCustomHabit(){
   input.value = '';
   initHabits();
 }
-function removeCustomHabit(fullKey){
+async function removeCustomHabit(fullKey){
   // Was one instant, irreversible tap — more destructive than the built-in
   // habit "hide" (reversible via "Restore hidden habits") for what a user
   // experiences as the same conceptual "remove" gesture.
-  if(!confirm('Delete this habit? This can\'t be undone.')) return;
+  if(!await confirmDialog('Delete this habit? This can\'t be undone.')) return;
   const key = fullKey.replace('custom_','');
   OB.custom_habits = (OB.custom_habits||[]).filter(h=>'custom_'+h.key!==fullKey);
   localStorage.setItem('jpt_uid', USER.id);
@@ -10707,12 +10819,12 @@ function closePlanHistory() {
   document.getElementById('plan-hist-sheet')?.classList.remove('open');
 }
 
-function restorePlanSnapshot(idx) {
+async function restorePlanSnapshot(idx) {
   try {
     const raw = localStorage.getItem(_PLAN_HIST_KEY()) || '[]';
     const hist = JSON.parse(raw);
     if(!hist[idx]) return;
-    if(!confirm('Restore this plan? Your current plan will be replaced.')) return;
+    if(!await confirmDialog('Restore this plan? Your current plan will be replaced.')) return;
     OB.train = OB.train||{};
     OB.train.weeklyPlan = JSON.parse(JSON.stringify(hist[idx].plan));
     localStorage.setItem('jpt_ob', JSON.stringify(OB));
