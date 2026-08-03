@@ -2015,7 +2015,7 @@
       <button class="community-tab-btn" data-tab="channels" onclick="switchCommunityTab('channels')" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Channels</button>
       <button class="community-tab-btn" data-tab="members" onclick="switchCommunityTab('members')" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Members</button>
       <button class="community-tab-btn" data-tab="map" onclick="switchCommunityTab('map')" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Map</button>
-      <button class="community-tab-btn" data-tab="events" onclick="openEvents()" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Events</button>
+      <button class="community-tab-btn" data-tab="events" onclick="openEvents()" title="Opens as a popup, not a tab" style="flex:1;background:none;border:none;color:var(--muted);font-family:var(--B);font-weight:700;font-size:13px;padding:8px 4px;cursor:pointer;border-bottom:2px solid transparent">Events ↗</button>
     </div>
 
     <!-- FEED TAB -->
@@ -2072,6 +2072,7 @@
       </div>
     </div>
     <div id="community-members-view" style="display:none">
+      <input id="community-members-search" placeholder="Search members…" oninput="filterMembersList(this.value)" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:12px;box-sizing:border-box">
       <div id="community-members-list"></div>
     </div>
     <div id="community-profile-view" style="display:none">
@@ -2121,7 +2122,7 @@
   <div id="create-channel-modal" onclick="if(event.target===this)closeCreateChannel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
     <div class="sheet-panel" style="width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div style="font-family:var(--D);font-size:20px;font-weight:900">NEW CHANNEL</div>
+        <div id="cc-modal-title" style="font-family:var(--D);font-size:20px;font-weight:900">NEW CHANNEL</div>
         <button onclick="closeCreateChannel()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
       </div>
       <input id="cc-name" placeholder="Channel name" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--white);font-family:var(--B);font-size:14px;margin-bottom:10px;box-sizing:border-box">
@@ -2129,7 +2130,8 @@
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:16px;cursor:pointer">
         <input type="checkbox" id="cc-admin-only">Announcement channel (only admins can post)
       </label>
-      <button onclick="createChannel()" style="width:100%;background:var(--teal);border:none;border-radius:8px;padding:14px;color:#000;font-weight:700;cursor:pointer;font-family:var(--D);letter-spacing:.04em;text-transform:uppercase">Create Channel</button>
+      <button id="cc-submit-btn" onclick="createChannel()" style="width:100%;background:var(--teal);border:none;border-radius:8px;padding:14px;color:#000;font-weight:700;cursor:pointer;font-family:var(--D);letter-spacing:.04em;text-transform:uppercase">Create Channel</button>
+      <button id="cc-delete-btn" onclick="deleteChannel()" style="display:none;width:100%;background:transparent;border:1px solid #f87171;border-radius:8px;padding:12px;color:#f87171;font-weight:700;cursor:pointer;margin-top:8px">Delete Channel</button>
     </div>
   </div>
 
@@ -3222,6 +3224,12 @@ function _renderChannelListHtml(){
   return communityChannelsCache.map((ch, i) => {
     const lastRead = _channelReadsCache[ch.id];
     const isUnread = ch.last_message_at && (!lastRead || new Date(ch.last_message_at) > new Date(lastRead));
+    // Channel management was create-only — admins get an edit affordance
+    // right on the row now (RLS already supported update/delete, only the
+    // UI was missing).
+    const editBtn = PROFILE?.is_admin
+      ? `<button onclick="event.stopPropagation();openEditChannel('${ch.id}')" style="background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer;padding:4px" title="Edit channel">✏️</button>`
+      : '';
     return `
     <div onclick="openChannel('${ch.id}')" class="card tap-target stagger-in" style="display:flex;align-items:center;gap:10px;padding:14px;margin-bottom:8px;animation-delay:${Math.min(i,8)*40}ms">
       <div style="font-size:16px">${ch.admin_only_post ? '📢' : '#'}</div>
@@ -3229,6 +3237,7 @@ function _renderChannelListHtml(){
         <div style="font-weight:700;font-size:14px">${escHtml(ch.name)}${isUnread ? ' <span style="color:var(--teal);font-size:8px;vertical-align:middle">●</span>' : ''}</div>
         ${ch.description ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${escHtml(ch.description)}</div>` : ''}
       </div>
+      ${editBtn}
       <div style="color:var(--dim)">›</div>
     </div>
   `;
@@ -3839,12 +3848,34 @@ async function sendDmMessage(){
 }
 
 /* ── CREATE CHANNEL (admin) ── */
+// Channel management was create-only — RLS ("Admins manage channels", for
+// all) already covers update/delete, this was purely a missing UI. The
+// same modal now does double duty as create/edit, keyed by
+// _editingChannelId (null = create).
+let _editingChannelId = null;
 function openCreateChannel(){
   if(!PROFILE?.is_admin) return;
+  _editingChannelId = null;
+  document.getElementById('cc-modal-title').textContent = 'NEW CHANNEL';
+  document.getElementById('cc-submit-btn').textContent = 'Create Channel';
+  document.getElementById('cc-delete-btn').style.display = 'none';
   document.getElementById('create-channel-modal').style.display = 'flex';
   document.getElementById('cc-name').value = '';
   document.getElementById('cc-description').value = '';
   document.getElementById('cc-admin-only').checked = false;
+}
+function openEditChannel(channelId){
+  if(!PROFILE?.is_admin) return;
+  const ch = communityChannelsCache.find(c => c.id === channelId);
+  if(!ch) return;
+  _editingChannelId = channelId;
+  document.getElementById('cc-modal-title').textContent = 'EDIT CHANNEL';
+  document.getElementById('cc-submit-btn').textContent = 'Save Changes';
+  document.getElementById('cc-delete-btn').style.display = 'block';
+  document.getElementById('create-channel-modal').style.display = 'flex';
+  document.getElementById('cc-name').value = ch.name || '';
+  document.getElementById('cc-description').value = ch.description || '';
+  document.getElementById('cc-admin-only').checked = !!ch.admin_only_post;
 }
 function closeCreateChannel(){
   document.getElementById('create-channel-modal').style.display = 'none';
@@ -3854,11 +3885,28 @@ async function createChannel(){
   if(!name) { showToast('Name it something first'); return; }
   const description = document.getElementById('cc-description')?.value.trim() || null;
   const adminOnly = !!document.getElementById('cc-admin-only')?.checked;
+  if(_editingChannelId){
+    const { error } = await sb.from(COMMUNITY_TABLE).update({ name, description, admin_only_post: adminOnly }).eq('id', _editingChannelId);
+    if(error){ showToast('Failed to save: ' + (error.message || error.code || 'unknown error')); return; }
+    closeCreateChannel();
+    showToast('Channel updated');
+    await loadChannels();
+    return;
+  }
   const position = communityChannelsCache.length;
   const { error } = await sb.from(COMMUNITY_TABLE).insert({ name, description, admin_only_post: adminOnly, position });
   if(error){ showToast('Failed to create channel: ' + (error.message || error.code || 'unknown error')); return; }
   closeCreateChannel();
   showToast('Channel created');
+  await loadChannels();
+}
+async function deleteChannel(){
+  if(!_editingChannelId) return;
+  if(!await confirmDialog('Delete this channel? All its Discussion messages will be deleted too (posts tagged to it move to the general Feed instead). This can\'t be undone.')) return;
+  const { error } = await sb.from(COMMUNITY_TABLE).delete().eq('id', _editingChannelId);
+  if(error){ showToast('Failed to delete: ' + (error.message || error.code || 'unknown error')); return; }
+  closeCreateChannel();
+  showToast('Channel deleted');
   await loadChannels();
 }
 
@@ -3889,8 +3937,16 @@ async function loadMembersList(){
     .order('display_name', { ascending: true });
   if(error){ list.innerHTML = _communityErrorHtml('Failed to load members', error); return; }
   _communityMembersFull = data || [];
-  if(_communityMembersFull.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No members yet.</div>'; return; }
-  list.innerHTML = _communityMembersFull.map((m, i) => `
+  const searchEl = document.getElementById('community-members-search');
+  if(searchEl) searchEl.value = '';
+  _renderMembersList(_communityMembersFull);
+}
+
+function _renderMembersList(members){
+  const list = document.getElementById('community-members-list');
+  if(!list) return;
+  if(members.length === 0){ list.innerHTML = '<div style="color:var(--muted);font-size:13px">No members yet.</div>'; return; }
+  list.innerHTML = members.map((m, i) => `
     <div onclick="openProfileView('${m.id}')" class="card tap-target stagger-in" style="display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;animation-delay:${Math.min(i,8)*40}ms">
       ${m.avatar_url ? `<img src="${escHtml(m.avatar_url)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0">` : `<div style="width:40px;height:40px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">👤</div>`}
       <div style="flex:1;min-width:0">
@@ -3900,6 +3956,16 @@ async function loadMembersList(){
       ${m.streak_days > 0 ? `<div style="font-size:11px;color:var(--teal);flex-shrink:0">🔥 ${m.streak_days}</div>` : ''}
     </div>
   `).join('');
+}
+
+// No search/filter existed at all — unsearchable as the roster grows.
+// Client-side against the already-fetched full list, no extra query.
+function filterMembersList(query){
+  const q = query.trim().toLowerCase();
+  if(!q){ _renderMembersList(_communityMembersFull); return; }
+  _renderMembersList(_communityMembersFull.filter(m =>
+    (m.display_name||'').toLowerCase().includes(q) || (m.bio||'').toLowerCase().includes(q)
+  ));
 }
 
 // One-tap entry to your own profile — previously only reachable by finding
@@ -3929,7 +3995,7 @@ async function loadMemberMap(){
   }
 
   const { data, error } = await sb.from('profiles')
-    .select('id,display_name,avatar_url,location_name,location_lat,location_lng')
+    .select('id,display_name,avatar_url,bio,streak_days,location_name,location_lat,location_lng')
     .eq('status', 'approved')
     .not('location_lat', 'is', null)
     .not('location_lng', 'is', null);
@@ -3974,11 +4040,15 @@ async function loadMemberMap(){
     const avatarHtml = m.avatar_url
       ? `<img src="${escHtml(m.avatar_url)}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-bottom:8px;border:2px solid var(--teal)">`
       : `<div style="width:56px;height:56px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 8px">👤</div>`;
+    // Popup previously showed far less than the Members list preview
+    // (bio, streak) for the same underlying data — brought to parity.
     marker.bindPopup(
-      `<div onclick="openProfileView('${m.id}')" style="text-align:center;padding:12px;cursor:pointer;min-width:140px">
+      `<div onclick="openProfileView('${m.id}')" style="text-align:center;padding:12px;cursor:pointer;min-width:160px;max-width:200px">
         ${avatarHtml}
         <div style="font-family:var(--B);font-weight:700;font-size:14px;color:var(--white)">${escHtml(m.display_name||'Member')}</div>
         ${m.location_name ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${escHtml(m.location_name)}</div>` : ''}
+        ${m.bio ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4">${escHtml(m.bio)}</div>` : ''}
+        ${m.streak_days > 0 ? `<div style="font-size:11px;color:var(--teal);margin-top:6px">🔥 ${m.streak_days} day streak</div>` : ''}
         <div style="font-size:11px;color:var(--teal);margin-top:8px;font-weight:600">View profile →</div>
       </div>`,
       { className: 'jpt-map-popup', closeButton: true }
@@ -4060,8 +4130,12 @@ async function openProfileView(userId){
       ? `<button onclick="openEditProfile()" style="width:100%;background:var(--s1);border:1px solid var(--border);color:var(--teal);padding:14px;border-radius:8px;cursor:pointer;font-weight:700;margin-bottom:20px">Edit My Profile</button>`
       : `<button onclick="openDmWithUser('${m.id}','${escHtml(m.display_name||'Member').replace(/'/g,"\\'")}')" style="width:100%;background:var(--teal);border:none;color:#000;padding:14px;border-radius:8px;cursor:pointer;font-weight:700;margin-bottom:20px">Message</button>`}
     <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Posts</div>
-    ${postList.length ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px">${postList.map(_renderProfileGridTile).join('')}</div>` : '<div style="color:var(--muted);font-size:13px">No posts yet.</div>'}
+    ${postList.length ? `<div id="profile-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px">${postList.map(_renderProfileGridTile).join('')}</div>` : '<div style="color:var(--muted);font-size:13px">No posts yet.</div>'}
+    ${postCount > postList.length ? `<button id="profile-grid-load-more" onclick="loadMoreProfilePosts('${userId}')" style="width:100%;margin-top:12px;padding:10px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;cursor:pointer">Load more (${postCount - postList.length} more)</button>` : ''}
   `;
+  // Grid was hard-capped at 60 with no way to see more — pagination state
+  // for the "Load more" button above.
+  _profileGridState = { userId, offset: postList.length, total: postCount || 0 };
 
   // Ring progress toward the next streak milestone (7/30/90 days, matching
   // this app's real milestone thresholds) — set after the innerHTML swap so
@@ -4099,6 +4173,29 @@ function closeProfileView(){
   const view = document.getElementById('community-profile-view');
   if(view) view.style.display = 'none';
   switchCommunityTab(_lastCommunityTab);
+}
+
+let _profileGridState = null;
+async function loadMoreProfilePosts(userId){
+  if(!_profileGridState || _profileGridState.userId !== userId) return;
+  const btn = document.getElementById('profile-grid-load-more');
+  if(btn){ btn.disabled = true; btn.textContent = 'Loading...'; }
+  const { data: more } = await sb.from('posts')
+    .select('*, author:profiles!posts_user_id_fkey(display_name,avatar_url)')
+    .eq('user_id', userId)
+    .is('parent_post_id', null)
+    .order('created_at', { ascending: false })
+    .range(_profileGridState.offset, _profileGridState.offset + 59);
+  const newPosts = more || [];
+  await _attachPostMeta(newPosts);
+  const grid = document.getElementById('profile-grid');
+  if(grid) grid.insertAdjacentHTML('beforeend', newPosts.map((p, i) => _renderProfileGridTile(p, i)).join(''));
+  _profileGridState.offset += newPosts.length;
+  const remaining = _profileGridState.total - _profileGridState.offset;
+  if(btn){
+    if(remaining > 0){ btn.disabled = false; btn.textContent = `Load more (${remaining} more)`; }
+    else btn.remove();
+  }
 }
 
 /* ── FEED & POSTS (X-style; optionally tagged to a channel, which is what
@@ -6647,6 +6744,11 @@ async function sendMessage(){
   const msg=input.value.trim();
   if(!msg)return;
   input.value='';
+  // Suggested prompts previously stayed pinned above the input for the
+  // whole session even mid-conversation — only useful before the first
+  // message, so clear them once a real conversation starts.
+  const promptsEl = document.getElementById('coach-suggested-prompts');
+  if(promptsEl) promptsEl.innerHTML = '';
 
   const msgs=document.getElementById('coach-messages');
   msgs.innerHTML+=`<div class="msg user">${escHtml(msg)}</div>`;
