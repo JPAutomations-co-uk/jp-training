@@ -5155,7 +5155,10 @@ function renderSplitRealignControl(){
   const el = document.getElementById('pc-split-realign');
   if(!el) return;
   if(USER?.id !== JP_USER_ID){ el.innerHTML=''; return; }
-  const today = jpSplitDayName(TODAY);
+  // Live date, not the stale page-load TODAY const — this label/pre-selection
+  // is the trust signal JP reads before deciding what to pick, so it needs
+  // to be right even if the tab's been open a while (see jpRealignSplit()).
+  const today = jpSplitDayName(new Date().toISOString().split('T')[0]);
   el.innerHTML = `
     <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="font-size:11px;color:var(--dim)">Today's split day is</label>
@@ -7962,11 +7965,21 @@ function effectiveDayName(dateStr){
 // Manual realignment for when the rolling cycle drifts (skipped day, extra
 // rest day, etc.) — JP picks which split-day label today should be, and the
 // anchor is recomputed so the whole rotation shifts to match.
+//
+// Real bug fixed here: TODAY is a const computed once when the page loads
+// (new Date().toISOString().split('T')[0]), not recomputed live. If the
+// tab had been open since before the real day turned over, realigning to
+// "Monday" would anchor against yesterday's stale TODAY instead of the
+// actual current date — landing one full day off (confirmed: JP realigned
+// to Monday, the app showed Tuesday). Computing the date fresh here,
+// independent of the stale module-level TODAY, makes realignment correct
+// regardless of how long the tab's been open.
 function jpRealignSplit(dayName){
   const targetIdx = JP_SPLIT_DAY_NAMES.indexOf(dayName);
   if (targetIdx < 0) return;
   OB.train = OB.train || {};
-  const d = new Date(TODAY + 'T00:00:00'); d.setDate(d.getDate() - targetIdx);
+  const liveToday = new Date().toISOString().split('T')[0];
+  const d = new Date(liveToday + 'T00:00:00'); d.setDate(d.getDate() - targetIdx);
   OB.train.splitAnchorDate = d.toISOString().split('T')[0];
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
   saveOB().catch(()=>{});
