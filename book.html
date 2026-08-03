@@ -11,7 +11,7 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Book Your Free Call — JP Training</title>
+  <title>Apply to The Standard — JP Training</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
@@ -339,9 +339,9 @@
 <!-- STEP 0 — Contact details -->
 <div class="question active" id="q0">
   <div class="q-inner">
-    <p class="q-num" id="q0-label">Let's get started</p>
-    <h1 class="q-title" id="q0-title">ONE LAST<br><span class="t">THING.</span></h1>
-    <p class="q-sub" id="q0-sub">JP will reach out directly to arrange your free 30-minute call — no commitment, just a conversation about what you're trying to fix.</p>
+    <p class="q-num" id="q0-label">Applying to The Standard</p>
+    <h1 class="q-title" id="q0-title">LET'S START<br><span class="t">WITH YOU.</span></h1>
+    <p class="q-sub" id="q0-sub">JP reviews every application personally. If it's a fit, he'll reach out directly to arrange your screening call.</p>
 
     <!-- Hidden inputs pre-filled from session -->
     <input type="hidden" id="f-name" value="">
@@ -375,13 +375,13 @@
   </div>
 </div>
 
-<!-- STEP 1 — Age -->
+<!-- STEP 1 — Years building this business -->
 <div class="question" id="q1">
   <div class="q-inner">
     <p class="q-num">Question 1 of 10</p>
-    <h2 class="q-title">HOW OLD<br><span class="t">ARE YOU?</span></h2>
-    <p class="q-sub">Training load, recovery, and hormonal protocols all shift with age. This keeps your programme relevant to where your body actually is.</p>
-    <input type="number" class="q-input" id="f-age" placeholder="e.g. 38" min="14" max="80" autocomplete="off">
+    <h2 class="q-title">HOW LONG HAVE YOU<br><span class="t">BEEN BUILDING THIS?</span></h2>
+    <p class="q-sub">Years on what you're building right now — not your career overall. Enter 0 if it's brand new.</p>
+    <input type="number" class="q-input" id="f-age" placeholder="e.g. 2" min="0" max="60" autocomplete="off">
     <button class="btn-continue" id="btn-q1">
       Continue
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -389,36 +389,36 @@
   </div>
 </div>
 
-<!-- STEP 2 — Main goal (multi-select) -->
+<!-- STEP 2 — What they're building (multi-select) -->
 <div class="question" id="q2">
   <div class="q-inner">
     <p class="q-num">Question 2 of 10</p>
-    <h2 class="q-title">WHAT'S YOUR<br><span class="t">MAIN GOAL?</span></h2>
-    <p class="q-sub">Select everything that applies — we'll prioritise together on the call.</p>
+    <h2 class="q-title">WHAT ARE YOU<br><span class="t">BUILDING?</span></h2>
+    <p class="q-sub">Select everything that applies.</p>
     <div class="choices" id="choices-q2">
-      <div class="choice" data-val="fat-loss">
+      <div class="choice" data-val="agency-consulting">
         <span class="choice-key">A</span>
-        <span class="choice-text">Fat loss &amp; body recomposition</span>
+        <span class="choice-text">Agency or consulting</span>
       </div>
-      <div class="choice" data-val="muscle">
+      <div class="choice" data-val="ecommerce">
         <span class="choice-key">B</span>
-        <span class="choice-text">Build muscle &amp; strength</span>
+        <span class="choice-text">E-commerce or a physical product</span>
       </div>
-      <div class="choice" data-val="energy">
+      <div class="choice" data-val="saas-tech">
         <span class="choice-key">C</span>
-        <span class="choice-text">Optimise energy &amp; daily performance</span>
+        <span class="choice-text">SaaS or tech</span>
       </div>
-      <div class="choice" data-val="longevity">
+      <div class="choice" data-val="local-service">
         <span class="choice-key">D</span>
-        <span class="choice-text">Improve longevity &amp; healthspan</span>
+        <span class="choice-text">A local service business</span>
       </div>
-      <div class="choice" data-val="hormones">
+      <div class="choice" data-val="creator-content">
         <span class="choice-key">E</span>
-        <span class="choice-text">Fix hormones / low testosterone</span>
+        <span class="choice-text">Content or a creator business</span>
       </div>
-      <div class="choice" data-val="athletic">
+      <div class="choice" data-val="other">
         <span class="choice-key">F</span>
-        <span class="choice-text">Athletic or sport performance</span>
+        <span class="choice-text">Something else</span>
       </div>
     </div>
     <br>
@@ -429,44 +429,40 @@
   </div>
 </div>
 
-<!-- STEP 3 — Training history (single, auto-advance) -->
+<!-- STEP 3 — Business stage / how real (single, auto-advance) -->
 <div class="question" id="q3">
   <div class="q-inner">
     <p class="q-num">Question 3 of 10</p>
-    <h2 class="q-title">YOUR TRAINING<br><span class="t">HISTORY.</span></h2>
-    <p class="q-sub">Be straight with me — the more accurate this is, the better the protocol fits.</p>
+    <h2 class="q-title">HOW REAL<br><span class="t">IS IT RIGHT NOW?</span></h2>
+    <p class="q-sub">Be straight with me — serious intent qualifies, you don't need proven revenue.</p>
     <div class="choices" id="choices-q3">
-      <div class="choice" data-val="beginner">
+      <div class="choice" data-val="pre-revenue">
         <span class="choice-key">A</span>
-        <span class="choice-text">Never trained seriously — complete beginner</span>
+        <span class="choice-text">Pre-revenue — building the idea, all-in on making it real</span>
       </div>
-      <div class="choice" data-val="returning">
+      <div class="choice" data-val="early-revenue">
         <span class="choice-key">B</span>
-        <span class="choice-text">Used to train, fell off it — looking to restart</span>
+        <span class="choice-text">Some revenue, not yet consistent</span>
       </div>
-      <div class="choice" data-val="inconsistent">
+      <div class="choice" data-val="scaling">
         <span class="choice-key">C</span>
-        <span class="choice-text">Training occasionally but never consistently</span>
+        <span class="choice-text">Consistent revenue — now scaling</span>
       </div>
-      <div class="choice" data-val="no-results">
+      <div class="choice" data-val="established">
         <span class="choice-key">D</span>
-        <span class="choice-text">Training regularly but not seeing results</span>
-      </div>
-      <div class="choice" data-val="experienced">
-        <span class="choice-key">E</span>
-        <span class="choice-text">Experienced — consistent for years, want the next level</span>
+        <span class="choice-text">Established — now optimising, not proving</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- STEP 4 — Biggest frustration (free text) -->
+<!-- STEP 4 — Honest health state (free text) -->
 <div class="question" id="q4">
   <div class="q-inner">
     <p class="q-num">Question 4 of 10</p>
-    <h2 class="q-title">WHAT'S ACTUALLY<br><span class="t">GOING ON?</span></h2>
-    <p class="q-sub">What's the thing frustrating you most right now? Don't hold back — this is where the useful stuff is.</p>
-    <textarea class="q-textarea" id="f-frustration" placeholder="e.g. I've been training for years but nothing's changed. I'm always exhausted. I know what I should be doing but it never sticks…" rows="3"></textarea>
+    <h2 class="q-title">WHAT'S YOUR HONEST<br><span class="t">HEALTH STATE?</span></h2>
+    <p class="q-sub">Not the version you'd tell a doctor. Energy, sleep, weight, whatever's actually true right now.</p>
+    <textarea class="q-textarea" id="f-frustration" placeholder="e.g. I'm exhausted by 3pm most days, sleep is inconsistent, I've put on weight I can't seem to shift, and I know exactly why but haven't fixed it…" rows="3"></textarea>
     <button class="btn-continue" id="btn-q4">
       Continue
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -474,28 +470,28 @@
   </div>
 </div>
 
-<!-- STEP 5 — Lifestyle (single, auto-advance) -->
+<!-- STEP 5 — What they've already tried (single, auto-advance) -->
 <div class="question" id="q5">
   <div class="q-inner">
     <p class="q-num">Question 5 of 10</p>
-    <h2 class="q-title">WHAT'S YOUR<br><span class="t">DAY LIKE?</span></h2>
-    <p class="q-sub">Training should fit around your life, not fight against it.</p>
+    <h2 class="q-title">WHAT HAVE YOU<br><span class="t">ALREADY TRIED?</span></h2>
+    <p class="q-sub">For your health, specifically — not your business.</p>
     <div class="choices" id="choices-q5">
-      <div class="choice" data-val="desk">
+      <div class="choice" data-val="nothing-structured">
         <span class="choice-key">A</span>
-        <span class="choice-text">Office / desk-based — mostly sedentary</span>
+        <span class="choice-text">Nothing structured — health's been an afterthought</span>
       </div>
-      <div class="choice" data-val="manual">
+      <div class="choice" data-val="generic-pt">
         <span class="choice-key">B</span>
-        <span class="choice-text">Manual or physical work — on my feet all day</span>
+        <span class="choice-text">A generic PT or off-the-shelf programme</span>
       </div>
-      <div class="choice" data-val="mixed">
+      <div class="choice" data-val="tried-didnt-stick">
         <span class="choice-key">C</span>
-        <span class="choice-text">Mixed — some desk, some active</span>
+        <span class="choice-text">Tried properly — it didn't stick once things got busy</span>
       </div>
-      <div class="choice" data-val="shift">
+      <div class="choice" data-val="currently-not-working">
         <span class="choice-key">D</span>
-        <span class="choice-text">Shift work or irregular hours</span>
+        <span class="choice-text">Doing something right now, but it's not working</span>
       </div>
     </div>
   </div>
@@ -560,7 +556,7 @@
   <div class="q-inner">
     <p class="q-num">Question 8 of 10</p>
     <h2 class="q-title">ANYTHING I<br><span class="t">NEED TO KNOW?</span></h2>
-    <p class="q-sub">Injuries, health conditions, medications, past surgeries. Anything relevant before we speak. Leave blank if nothing applies.</p>
+    <p class="q-sub">Injuries, health conditions, medications, past surgeries. Anything relevant before your screening call. Leave blank if nothing applies.</p>
     <textarea class="q-textarea" id="f-health" placeholder="e.g. Lower back issues, high blood pressure, on TRT, previous knee surgery, type 2 diabetes…" rows="3"></textarea>
     <button class="btn-continue" id="btn-q8">
       Continue
@@ -569,51 +565,51 @@
   </div>
 </div>
 
-<!-- STEP 9 — Previous coaching (single, auto-advance) -->
+<!-- STEP 9 — Why a network, specifically (single, auto-advance) -->
 <div class="question" id="q9">
   <div class="q-inner">
     <p class="q-num">Question 9 of 10</p>
-    <h2 class="q-title">WORKED WITH A<br><span class="t">COACH BEFORE?</span></h2>
-    <p class="q-sub">No wrong answer — this just tells me where you're starting from.</p>
+    <h2 class="q-title">WHY A NETWORK,<br><span class="t">SPECIFICALLY?</span></h2>
+    <p class="q-sub">Not "why get healthier." Why does doing this alongside other entrepreneurs matter to you, over doing it alone?</p>
     <div class="choices" id="choices-q9">
-      <div class="choice" data-val="never">
+      <div class="choice" data-val="tired-of-alone">
         <span class="choice-key">A</span>
-        <span class="choice-text">Never — first time considering it</span>
+        <span class="choice-text">Tired of building alone — nobody around me gets it</span>
       </div>
-      <div class="choice" data-val="tried-failed">
+      <div class="choice" data-val="peers-not-friends">
         <span class="choice-key">B</span>
-        <span class="choice-text">Yes — tried it before but it didn't deliver</span>
+        <span class="choice-text">I want peers who actually understand the weight of this, not just friends who don't</span>
       </div>
-      <div class="choice" data-val="tried-good">
+      <div class="choice" data-val="accountability">
         <span class="choice-key">C</span>
-        <span class="choice-text">Yes — had a good experience, looking for something more</span>
+        <span class="choice-text">Accountability I can't manufacture by myself</span>
       </div>
-      <div class="choice" data-val="current">
+      <div class="choice" data-val="all-of-it">
         <span class="choice-key">D</span>
-        <span class="choice-text">Currently have a coach but it's not working</span>
+        <span class="choice-text">Honestly, all of the above</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- STEP 10 — Timeline (single, submit on select) -->
+<!-- STEP 10 — Consent to terms (single, submit on select) -->
 <div class="question" id="q10">
   <div class="q-inner">
     <p class="q-num">Question 10 of 10</p>
-    <h2 class="q-title">WHEN DO YOU<br><span class="t">WANT TO START?</span></h2>
-    <p class="q-sub">Helps me understand where you are in the decision.</p>
+    <h2 class="q-title">LAST THING —<br><span class="t">THE TERMS.</span></h2>
+    <p class="q-sub">£500/month, one price, no exceptions. Every member's protocol and app activity is tracked — removal (warning first) is real, for non-compliance, conduct, or not actually building. Stated plainly, not buried.</p>
     <div class="choices" id="choices-q10">
-      <div class="choice" data-val="now">
+      <div class="choice" data-val="understood-ready">
         <span class="choice-key">A</span>
-        <span class="choice-text">Now — I'm ready to commit and get moving</span>
+        <span class="choice-text">Understood — I'm ready to be screened</span>
       </div>
-      <div class="choice" data-val="few-weeks">
+      <div class="choice" data-val="understood-questions">
         <span class="choice-key">B</span>
-        <span class="choice-text">Within the next few weeks</span>
+        <span class="choice-text">Understood — I have questions for the screening call</span>
       </div>
       <div class="choice" data-val="exploring">
         <span class="choice-key">C</span>
-        <span class="choice-text">Just exploring — not sure yet</span>
+        <span class="choice-text">Still deciding — send me the details anyway</span>
       </div>
     </div>
   </div>
@@ -624,10 +620,10 @@
   <div class="success-icon">
     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
-  <h1 class="success-h">YOU'RE<br><span class="t">ALL SET.</span></h1>
-  <p class="success-p"><strong>Your answers are with JP.</strong><br>He'll be in touch shortly. In the meantime, your app is ready to explore.</p>
+  <h1 class="success-h">APPLICATION<br><span class="t">RECEIVED.</span></h1>
+  <p class="success-p"><strong>Your application is with JP.</strong><br>He reviews every one personally. If it's a fit, he'll reach out to book your screening call.</p>
   <a href="/app.html" class="success-cta">Open the App →</a>
-  <a href="https://calendar.app.google/4vZYVLHsThfsdPxC7" target="_blank" rel="noopener noreferrer" style="margin-top:12px;font-size:13px;color:var(--muted);text-decoration:none;display:block" onclick="gtag('event','calendar_click',{event_category:'booking_form'})">Or pick a call time now →</a>
+  <a href="https://calendar.app.google/4vZYVLHsThfsdPxC7" target="_blank" rel="noopener noreferrer" style="margin-top:12px;font-size:13px;color:var(--muted);text-decoration:none;display:block" onclick="gtag('event','calendar_click',{event_category:'booking_form'})">Or grab a screening call slot now →</a>
   <p class="success-note">JP will reach out on your phone within a few hours.</p>
   <a href="index.html" class="back-home">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -856,7 +852,16 @@ async function submitForm() {
   document.getElementById('progress').style.width = '100%';
   document.getElementById('step-counter').innerHTML = '';
 
-  // Build message
+  // Build message — the answers.* property names below are legacy from the
+  // old intake questionnaire (age/goals/training_history/lifestyle/
+  // previous_coaching/timeline) and are kept as-is since modalPayload sends
+  // them to an external webhook (MailerLite + Slack) that may key off these
+  // exact names. Only the human-readable labels changed to match what each
+  // question actually asks now — see the STEP comments above for the real
+  // mapping (age -> years building, goals -> what they're building,
+  // training_history -> business stage, frustration -> honest health state,
+  // lifestyle -> what they've tried before, previous_coaching -> why a
+  // network specifically, timeline -> consent to terms).
   var goals = Array.isArray(answers.q2) ? answers.q2.join(', ') : (answers.q2 || '—');
   var lines = [
     '=== CONTACT ===',
@@ -864,23 +869,23 @@ async function submitForm() {
     'Phone:   ' + (answers.phone || '—'),
     'Email:   ' + (answers.email || '—'),
     '',
-    '=== QUESTIONNAIRE ===',
-    'Age:               ' + (answers.age || '—'),
-    'Goals:             ' + goals,
-    'Training history:  ' + (answers.q3 || '—'),
-    'Biggest challenge: ' + (answers.frustration || '—'),
-    'Lifestyle:         ' + (answers.q5 || '—'),
+    '=== APPLICATION ===',
+    'Years building:    ' + (answers.age || '—'),
+    'Building:          ' + goals,
+    'Business stage:    ' + (answers.q3 || '—'),
+    'Health state:      ' + (answers.frustration || '—'),
+    'Tried before:      ' + (answers.q5 || '—'),
     'Sleep:             ' + (answers.q6 || '—'),
     'Energy:            ' + (answers.q7 || '—'),
     'Health / injuries: ' + (answers.health || '—'),
-    'Previous coaching: ' + (answers.q9 || '—'),
-    'Timeline:          ' + (answers.q10 || '—'),
+    'Why a network:     ' + (answers.q9 || '—'),
+    'Terms understood:  ' + (answers.q10 || '—'),
   ];
 
   var body = new FormData();
   // Replace YOUR_ACCESS_KEY with your key from web3forms.com (free)
   body.append('access_key', 'd7afb74a-4ae2-49af-9090-d0f08cfd62ba');
-  body.append('subject', 'JP Training — Call Request: ' + (answers.name || 'Unknown') + ' · ' + (answers.phone || ''));
+  body.append('subject', 'The Standard — Application: ' + (answers.name || 'Unknown') + ' · ' + (answers.phone || ''));
   body.append('from_name', 'JP Training Website');
   body.append('message', lines.join('\n'));
   body.append('botcheck', '');
