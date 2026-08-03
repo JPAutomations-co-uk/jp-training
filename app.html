@@ -2508,13 +2508,13 @@ function buildSearchIndex(){
     (getHabits()||[]).forEach(h=>idx.push({ type:'Habit', label:h.name, tab:'habits' }));
   } catch(e){}
   try {
-    const todayName = effectiveDayName(TODAY);
+    const todayName = effectiveTodayName();
     const today = (_weeklyPlan||[]).find(d=>d.day===todayName);
     (today?.exercises||[]).forEach(ex=>idx.push({ type:'Exercise (today)', label:ex.name, tab:'train' }));
   } catch(e){}
   try {
     if(typeof JP_MOBILITY_PLAN !== 'undefined' && USER?.id === JP_USER_ID){
-      const todayName = effectiveDayName(TODAY);
+      const todayName = effectiveTodayName();
       const m = JP_MOBILITY_PLAN[todayName];
       (m?.warmup?.drills||[]).forEach(d=>idx.push({ type:'Mobility (today)', label:d, tab:'train' }));
       (m?.staticStretch?.drills||[]).forEach(d=>idx.push({ type:'Mobility (today)', label:d, tab:'train' }));
@@ -2643,7 +2643,7 @@ function getHabits(){
     // text — recomputed on every getHabits() call so it's always current
     // with whatever's logged in Eat, without needing a separate data path.
     if (ch.key === 'meal_plan' && USER?.id === JP_USER_ID && OB.nutritionPlan && HABIT_DATE === TODAY && typeof foods !== 'undefined') {
-      const dayName = effectiveDayName(TODAY);
+      const dayName = effectiveTodayName();
       const targets = OB.nutritionPlan[dayName]?.targets;
       if (targets) {
         const cal = foods.reduce((a,f)=>a+(+f.calories||0), 0);
@@ -5053,7 +5053,7 @@ function renderWeeklyCalendar(plan) {
       </div>`;
     return;
   }
-  const todayName = effectiveDayName(TODAY);
+  const todayName = effectiveTodayName();
 
   document.getElementById('train-day-tabs').innerHTML = _weeklyPlan.map(d => {
     const isToday = d.day === todayName;
@@ -5223,7 +5223,7 @@ function renderDayTabIndicators(){
   // week (Sunday..Saturday = getDay() 0..6).
   const isJP = USER?.id === JP_USER_ID;
   const names = isJP ? JP_SPLIT_DAY_NAMES : ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const todayIdx = isJP ? names.indexOf(jpSplitDayName(TODAY)) : new Date().getDay();
+  const todayIdx = isJP ? names.indexOf(jpSplitDayName(new Date().toISOString().split('T')[0])) : new Date().getDay();
   (_weeklyPlan||[]).forEach(d=>{
     const dot = document.getElementById('day-tab-dot-'+d.day);
     if(!dot) return;
@@ -5239,7 +5239,7 @@ function renderDayTabIndicators(){
 
 function selectDay(dayName) {
   if(!_weeklyPlan.length) return;
-  const todayName = effectiveDayName(TODAY);
+  const todayName = effectiveTodayName();
   const day = _weeklyPlan.find(d => d.day === dayName);
   if(!day) return;
   _selectedDayName = dayName;
@@ -6068,7 +6068,7 @@ async function logFoodEntry(name, timeVal, d) {
     // This is a totals check, not exact-food matching: free-text logs can't
     // be reliably compared item-for-item against the plan's wording.
     if (USER?.id === JP_USER_ID && OB.nutritionPlan && EAT_DATE === TODAY) {
-      const dayName = effectiveDayName(TODAY);
+      const dayName = effectiveTodayName();
       const targets = OB.nutritionPlan[dayName]?.targets;
       if (targets) {
         const totalCal = foods.reduce((a,f)=>a+(+f.calories||0), 0);
@@ -6721,7 +6721,7 @@ function initCoach(){
   // calls initCoach() first (main Coach tab, Train tab's inline chat) picks it
   // up automatically.
   if (USER?.id === JP_USER_ID) {
-    const todayName = effectiveDayName(TODAY);
+    const todayName = effectiveTodayName();
     const todayTrain = (OB.train?.weeklyPlan || JP_TRAINING_PLAN).find(d => d.day === todayName);
     const todayNutrition = (OB.nutritionPlan || JP_NUTRITION_PLAN)[todayName];
     const jpParts = [
@@ -7948,11 +7948,12 @@ function jpSplitDayName(dateStr){
 // given split-day label corresponds to — JP's rolling-cycle equivalent of
 // _dateForWeekday().
 function jpDateForSplitDay(dayName){
+  const liveToday = new Date().toISOString().split('T')[0];
   const targetIdx = JP_SPLIT_DAY_NAMES.indexOf(dayName);
-  if (targetIdx < 0) return TODAY;
-  const todayIdx = JP_SPLIT_DAY_NAMES.indexOf(jpSplitDayName(TODAY));
+  if (targetIdx < 0) return liveToday;
+  const todayIdx = JP_SPLIT_DAY_NAMES.indexOf(jpSplitDayName(liveToday));
   const back = ((todayIdx - targetIdx) + 7) % 7;
-  const d = new Date(TODAY + 'T00:00:00'); d.setDate(d.getDate() - back);
+  const d = new Date(liveToday + 'T00:00:00'); d.setDate(d.getDate() - back);
   return d.toISOString().split('T')[0];
 }
 // The one function every "what day is it, for plan/nutrition/mobility
@@ -7961,6 +7962,18 @@ function jpDateForSplitDay(dayName){
 function effectiveDayName(dateStr){
   if (USER?.id === JP_USER_ID) return jpSplitDayName(dateStr);
   return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(dateStr+'T00:00:00').getDay()];
+}
+// "What day is it right NOW" for JP's rolling split — every call site that
+// used to pass the stale page-load TODAY const into effectiveDayName()/
+// jpSplitDayName() got wrong answers whenever the tab had been open since
+// before the real day turned over (this app is a PWA, tabs stay open for
+// days). TODAY itself is left alone (used in far too many other places —
+// logging dates, save timestamps — to safely replace everywhere in one
+// pass), but every "what's today's day-NAME for display/selection"
+// lookup now goes through this instead, computing the date fresh each
+// time rather than trusting a value that might be a day stale.
+function effectiveTodayName(){
+  return effectiveDayName(new Date().toISOString().split('T')[0]);
 }
 // Manual realignment for when the rolling cycle drifts (skipped day, extra
 // rest day, etc.) — JP picks which split-day label today should be, and the
@@ -8063,7 +8076,7 @@ function applyJPRealProtocol() {
     { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
     { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:true },
   ];
-  const todayDayLabel = effectiveDayName(TODAY);
+  const todayDayLabel = effectiveTodayName();
   const jpCustomKeys = new Set(JP_CUSTOM_HABITS.map(h => h.key));
   OB.custom_habits = (OB.custom_habits || []).filter(h => !jpCustomKeys.has(h.key));
   JP_CUSTOM_HABITS.forEach(h => {
@@ -8324,7 +8337,7 @@ function renderProgrammeAnalysis(d){
     return;
   }
 
-  const todayName = effectiveDayName(TODAY);
+  const todayName = effectiveTodayName();
   const plan = d.weeklyPlan || OB.train?.weeklyPlan || [];
   const analysis = d.analysis || OB.train?.analysis || '';
   const improvements = d.improvements || OB.train?.improvements || [];
