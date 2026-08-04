@@ -2611,6 +2611,24 @@ const JP_USER_ID = 'cfa880cb-bdf4-4ffa-a7ca-7b9c918984ea'; // jamesharvey51@hotm
 
 let USER=null, PROFILE=null;
 const TODAY=new Date().toISOString().split('T')[0];
+// TODAY is computed once here, at page load — this app is a PWA, tabs
+// commonly stay open for days, and every date-dependent default (habit
+// date, split-day rotation, "no future logging" gates, etc.) derives from
+// this one value at some point. Rather than chase down and fix every
+// individual consumer whenever staleness causes a symptom (already done
+// twice for the split-day system alone), detect the actual rollover
+// directly: whenever the tab regains focus/visibility, or every 5 minutes
+// while it's just sitting open, compare TODAY against the real live date.
+// If they've diverged, reload — TODAY is a const specifically so nothing
+// can quietly limp along on half-stale state; a full reload re-derives
+// everything correctly from scratch in one stroke.
+function _checkDateRollover(){
+  const liveToday = new Date().toISOString().split('T')[0];
+  if(liveToday !== TODAY) window.location.reload();
+}
+document.addEventListener('visibilitychange', () => { if(!document.hidden) _checkDateRollover(); });
+window.addEventListener('focus', _checkDateRollover);
+setInterval(_checkDateRollover, 5 * 60 * 1000);
 // v1 launch date — "The Standard"'s real app, live from this date. Every
 // account's progress (XP/level/streaks, training/habit history, progress
 // charts) is scoped to start counting from here, for every user, not just
