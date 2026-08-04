@@ -6232,7 +6232,7 @@ const HABIT_TIME_LOOKUP = {
   custom_neck_training:'Post-Training', custom_pnf_prep:'Evening', custom_explosive_warmup:'Pre-Training',
   custom_static_stretch:'Post-Training', custom_sport_mobility:'Pre-Training', custom_postural_protocol:'Evening',
   custom_creatine:'Post-Training', custom_no_cannabis:'Anytime', custom_no_nicotine:'Anytime',
-  custom_prebed_stack:'Evening', custom_red_light:'Evening', custom_nsdr_yoga:'Evening',
+  custom_prebed_stack:'Evening', custom_nsdr_yoga:'Evening',
   custom_breathing_protocol:'Anytime', custom_meal_plan:'Evening',
 };
 
@@ -8109,7 +8109,6 @@ function applyJPRealProtocol() {
     { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
     { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
     { key: 'prebed_stack',     name: 'Pre-Bed Stack',               desc: 'Magnesium glycinate 200mg + L-theanine 200mg, 21:00 — sleep quality, feeds directly into the recovery/height/muscle levers.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:false },
-    { key: 'red_light',        name: 'Red Light Therapy',           desc: '10-20 min, mask — real mechanism for skin/inflammation (collagen synthesis, cytochrome c oxidase), directly relevant given your acne history. Not a meaningful testosterone lever from a face mask specifically (that evidence is from direct-to-body application) — check your mask actually runs 630-670nm red / 810-850nm NIR, efficacy is uncertain if unspecified.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:false },
     { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:false },
     { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
     { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:true },
