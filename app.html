@@ -2609,8 +2609,24 @@ const sb=supabase.createClient(SUPA_URL,SUPA_KEY,{
 // temporal-dead-zone ReferenceError and break the site for everyone.
 const JP_USER_ID = 'cfa880cb-bdf4-4ffa-a7ca-7b9c918984ea'; // jamesharvey51@hotmail.com
 
+// The "true today," as the user actually experiences it — local calendar
+// date, not UTC. toISOString() (used everywhere else in this file for
+// date ARITHMETIC, which is fine) always reports UTC; the UK runs on
+// BST (UTC+1) for most of the year, so for roughly the hour right after
+// local midnight, toISOString() still reports the PREVIOUS calendar day.
+// That's a real, separate bug from tab-staleness — even a freshly loaded
+// page would get "today" wrong during that window if it asked UTC. Local
+// getters (getFullYear/getMonth/getDate) reflect the browser's own
+// timezone, which is what "today" actually means to whoever's using it.
+function _localDateStr(d){
+  d = d || new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 let USER=null, PROFILE=null;
-const TODAY=new Date().toISOString().split('T')[0];
+const TODAY=_localDateStr();
 // TODAY is computed once here, at page load — this app is a PWA, tabs
 // commonly stay open for days, and every date-dependent default (habit
 // date, split-day rotation, "no future logging" gates, etc.) derives from
@@ -2623,7 +2639,7 @@ const TODAY=new Date().toISOString().split('T')[0];
 // can quietly limp along on half-stale state; a full reload re-derives
 // everything correctly from scratch in one stroke.
 function _checkDateRollover(){
-  const liveToday = new Date().toISOString().split('T')[0];
+  const liveToday = _localDateStr();
   if(liveToday !== TODAY) window.location.reload();
 }
 document.addEventListener('visibilitychange', () => { if(!document.hidden) _checkDateRollover(); });
@@ -3029,7 +3045,7 @@ function stepsWeeklyAvg() {
   const vals = [];
   for(let i=1; i<=7; i++) {
     const d = new Date(); d.setDate(d.getDate()-i);
-    const k = d.toISOString().split('T')[0];
+    const k = _localDateStr(d);
     if(stepsHistory[k] !== undefined) vals.push(stepsHistory[k]);
   }
   return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null;
@@ -4714,7 +4730,7 @@ async function loadCompliance(){
   if(!members || members.length === 0){ box.innerHTML = '<div style="color:var(--muted);font-size:13px">No approved members yet.</div>'; return; }
 
   const since = new Date(); since.setDate(since.getDate() - 13);
-  const sinceStr = since.toISOString().slice(0,10);
+  const sinceStr = _localDateStr(since);
   const memberIds = members.map(m => m.id);
 
   const sinceIso = since.toISOString();
@@ -4731,7 +4747,7 @@ async function loadCompliance(){
     sb.from('call_rsvps').select('user_id,created_at').in('user_id', memberIds).gte('created_at', sinceIso),
   ]);
 
-  const today = new Date().toISOString().slice(0,10);
+  const today = _localDateStr();
   const reports = members.map(m => {
     const myHabits = (habits || []).filter(h => h.user_id === m.id);
     const myCheckins = (checkins || []).filter(c => c.user_id === m.id);
@@ -4802,7 +4818,7 @@ let habitState={};
 function shiftHabitDate(delta){
   const d = new Date(HABIT_DATE+'T00:00:00');
   d.setDate(d.getDate()+delta);
-  const nd = d.toISOString().split('T')[0];
+  const nd = _localDateStr(d);
   if(nd > TODAY) return;            // no future logging
   HABIT_DATE = nd;
   todaySteps = stepsHistory[HABIT_DATE] || 0;
@@ -4865,7 +4881,8 @@ async function loadHabitStreaks(){
   const from = new Date(TODAY+'T00:00:00'); from.setDate(from.getDate()-30);
   // Never reach further back than the v1 launch date — streaks only ever
   // reflect post-launch activity.
-  const fromStr = from.toISOString().split('T')[0] > APP_LAUNCH_DATE ? from.toISOString().split('T')[0] : APP_LAUNCH_DATE;
+  const fromLocal = _localDateStr(from);
+  const fromStr = fromLocal > APP_LAUNCH_DATE ? fromLocal : APP_LAUNCH_DATE;
   const { data, error } = await sb.from('habit_log')
     .select('habit_name,date,completed').eq('user_id',USER.id).eq('completed',true).gte('date',fromStr);
   if(error || !data) return;
@@ -4874,7 +4891,7 @@ async function loadHabitStreaks(){
   const streaks = {};
   Object.keys(byHabit).forEach(key=>{
     let streak=0, d=new Date(TODAY+'T00:00:00');
-    while(byHabit[key].has(d.toISOString().split('T')[0])){ streak++; d.setDate(d.getDate()-1); }
+    while(byHabit[key].has(_localDateStr(d))){ streak++; d.setDate(d.getDate()-1); }
     if(streak>0) streaks[key]=streak;
   });
   habitStreaks = streaks;
@@ -5057,7 +5074,7 @@ function _dateForWeekday(dayName){
   let back = now.getDay() - target;
   if(back < 0) back += 7;            // target later in the week → last week's occurrence
   const d = new Date(now); d.setDate(d.getDate() - back);
-  const iso = d.toISOString().split('T')[0];
+  const iso = _localDateStr(d);
   return iso > TODAY ? TODAY : iso;
 }
 
@@ -5176,7 +5193,7 @@ function renderSplitRealignControl(){
   // Live date, not the stale page-load TODAY const — this label/pre-selection
   // is the trust signal JP reads before deciding what to pick, so it needs
   // to be right even if the tab's been open a while (see jpRealignSplit()).
-  const today = jpSplitDayName(new Date().toISOString().split('T')[0]);
+  const today = jpSplitDayName(_localDateStr());
   el.innerHTML = `
     <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="font-size:11px;color:var(--dim)">Today's split day is</label>
@@ -5224,7 +5241,7 @@ function renderWeeklyPRs(){
   const now = new Date(TODAY+'T00:00:00');
   const dow = now.getDay(); // 0=Sun
   const monday = new Date(now); monday.setDate(now.getDate() - ((dow+6)%7));
-  const mondayStr = monday.toISOString().split('T')[0];
+  const mondayStr = _localDateStr(monday);
   const thisWeekPRs = Object.entries(_pbData||{})
     .filter(([,v]) => v.date >= mondayStr)
     .sort((a,b) => b[1].date.localeCompare(a[1].date));
@@ -5241,14 +5258,14 @@ function renderDayTabIndicators(){
   // week (Sunday..Saturday = getDay() 0..6).
   const isJP = USER?.id === JP_USER_ID;
   const names = isJP ? JP_SPLIT_DAY_NAMES : ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const todayIdx = isJP ? names.indexOf(jpSplitDayName(new Date().toISOString().split('T')[0])) : new Date().getDay();
+  const todayIdx = isJP ? names.indexOf(jpSplitDayName(_localDateStr())) : new Date().getDay();
   (_weeklyPlan||[]).forEach(d=>{
     const dot = document.getElementById('day-tab-dot-'+d.day);
     if(!dot) return;
     if(d.type === 'rest'){ dot.style.background='transparent'; return; }
     const diff = names.indexOf(d.day) - todayIdx; // <0 earlier this cycle, 0 today, >0 not reached yet this cycle
     if(diff > 0){ dot.style.background='transparent'; dot.title=''; return; }
-    const dateForThisWeek = isJP ? jpDateForSplitDay(d.day) : (()=>{ const dt=new Date(TODAY+'T00:00:00'); dt.setDate(dt.getDate()+diff); return dt.toISOString().split('T')[0]; })();
+    const dateForThisWeek = isJP ? jpDateForSplitDay(d.day) : (()=>{ const dt=new Date(TODAY+'T00:00:00'); dt.setDate(dt.getDate()+diff); return _localDateStr(dt); })();
     if(_loggedSessionDates.has(dateForThisWeek)){ dot.style.background='var(--teal)'; dot.title='Logged'; }
     else if(diff < 0){ dot.style.background='#f87171'; dot.title='Missed'; }
     else { dot.style.background='transparent'; dot.title=''; }
@@ -5917,7 +5934,7 @@ function updateEatDateUI(){
 function shiftEatDate(delta){
   const d = new Date(EAT_DATE+'T00:00:00');
   d.setDate(d.getDate()+delta);
-  const newDate = d.toISOString().split('T')[0];
+  const newDate = _localDateStr(d);
   if(newDate > TODAY) return;
   EAT_DATE = newDate;
   initEat();
@@ -6239,7 +6256,8 @@ async function loadProgressCharts(){
   const d = new Date(); d.setDate(d.getDate()-6);
   // Never reach further back than the v1 launch date — the 7-day window
   // otherwise still dips into pre-launch days for the first week after launch.
-  const from = d.toISOString().split('T')[0] > APP_LAUNCH_DATE ? d.toISOString().split('T')[0] : APP_LAUNCH_DATE;
+  const dLocal = _localDateStr(d);
+  const from = dLocal > APP_LAUNCH_DATE ? dLocal : APP_LAUNCH_DATE;
 
   const [{ data: habitData }, { data: checkinData }, { data: calData }] = await Promise.all([
     sb.from('habit_log').select('date,completed').eq('user_id',USER.id).gte('date',from),
@@ -6257,7 +6275,7 @@ async function loadProgressCharts(){
   const days=[], pcts=[], calMap={};
   for(let i=6;i>=0;i--){
     const dt=new Date(); dt.setDate(dt.getDate()-i);
-    const ds=dt.toISOString().split('T')[0];
+    const ds=_localDateStr(dt);
     const dayH=(habitData||[]).filter(h=>h.date===ds);
     const allH=getHabits();
     const done=dayH.filter(h=>h.completed).length;
@@ -6297,7 +6315,7 @@ async function loadProgressCharts(){
 
   // Calorie chart
   const calCanvas = document.getElementById('chart-cals');
-  const calVals = days.map((_,i)=>{const dt=new Date();dt.setDate(dt.getDate()-(6-i));return calMap[dt.toISOString().split('T')[0]]||0;});
+  const calVals = days.map((_,i)=>{const dt=new Date();dt.setDate(dt.getDate()-(6-i));return calMap[_localDateStr(dt)]||0;});
   const hasCals = calVals.some(v=>v>0);
   document.getElementById('chart-cals-empty').style.display = hasCals?'none':'block';
   if(calCanvas && hasCals){
@@ -6312,7 +6330,7 @@ async function loadStrengthExerciseOptions(){
   const sel = document.getElementById('pr-exercise-select');
   if(!sel || !USER) return;
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-90);
-  const { data: sessions } = await sb.from('workout_sessions').select('id,date').eq('user_id',USER.id).gte('date',cutoff.toISOString().slice(0,10));
+  const { data: sessions } = await sb.from('workout_sessions').select('id,date').eq('user_id',USER.id).gte('date',_localDateStr(cutoff));
   if(!sessions?.length){ sel.innerHTML = '<option>No sessions logged yet</option>'; return; }
   const { data: sets } = await sb.from('session_sets').select('session_id,exercise_name,weight_kg').in('session_id',sessions.map(s=>s.id)).gt('weight_kg',0);
   const counts = {};
@@ -6327,7 +6345,7 @@ async function renderStrengthChart(exName){
   const empty = document.getElementById('chart-strength-empty');
   if(!canvas || !exName || !USER) return;
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-90);
-  const { data: sessions } = await sb.from('workout_sessions').select('id,date').eq('user_id',USER.id).gte('date',cutoff.toISOString().slice(0,10)).order('date',{ascending:true});
+  const { data: sessions } = await sb.from('workout_sessions').select('id,date').eq('user_id',USER.id).gte('date',_localDateStr(cutoff)).order('date',{ascending:true});
   if(!sessions?.length){ empty.style.display='block'; canvas.style.display='none'; return; }
   const { data: sets } = await sb.from('session_sets').select('session_id,weight_kg').eq('exercise_name',exName).in('session_id',sessions.map(s=>s.id));
   const byDate = {};
@@ -6530,7 +6548,8 @@ async function renderHabitCategoryBreakdown(){
   const el = document.getElementById('habit-category-breakdown');
   if(!el || !USER) return;
   const from = new Date(); from.setDate(from.getDate()-6);
-  const fromStr = from.toISOString().slice(0,10) > APP_LAUNCH_DATE ? from.toISOString().slice(0,10) : APP_LAUNCH_DATE;
+  const fromLocal = _localDateStr(from);
+  const fromStr = fromLocal > APP_LAUNCH_DATE ? fromLocal : APP_LAUNCH_DATE;
   const { data } = await sb.from('habit_log').select('habit_name,completed').eq('user_id',USER.id).gte('date',fromStr);
   if(!data?.length){ el.innerHTML = '<p style="font-size:12px;color:var(--dim)">Log a few days of habits to see this.</p>'; return; }
   const buckets = {};
@@ -6555,7 +6574,8 @@ async function renderAdherenceCorrelation(){
   const el = document.getElementById('adherence-correlation');
   if(!el || !USER) return;
   const from = new Date(); from.setDate(from.getDate()-28);
-  const fromStr = from.toISOString().slice(0,10) > APP_LAUNCH_DATE ? from.toISOString().slice(0,10) : APP_LAUNCH_DATE;
+  const fromLocal = _localDateStr(from);
+  const fromStr = fromLocal > APP_LAUNCH_DATE ? fromLocal : APP_LAUNCH_DATE;
   const [{data:habitData}, {data:checkinData}] = await Promise.all([
     sb.from('habit_log').select('date,completed').eq('user_id',USER.id).gte('date',fromStr),
     sb.from('progress_checkins').select('date,energy,mood,sleep_q').eq('user_id',USER.id).gte('date',fromStr).order('date',{ascending:true}),
@@ -6565,7 +6585,7 @@ async function renderAdherenceCorrelation(){
   const rows = checkinData.map(c=>{
     const end = new Date(c.date+'T00:00:00');
     const start = new Date(end); start.setDate(end.getDate()-6);
-    const startStr = start.toISOString().slice(0,10);
+    const startStr = _localDateStr(start);
     const weekHabits = (habitData||[]).filter(h=>h.date>=startStr && h.date<=c.date);
     const pct = weekHabits.length ? Math.round(weekHabits.filter(h=>h.completed).length/weekHabits.length*100) : null;
     const wellbeing = Math.round(((+c.energy||0)+(+c.mood||0)+(+c.sleep_q||0))/3*10)/10;
@@ -7966,13 +7986,13 @@ function jpSplitDayName(dateStr){
 // given split-day label corresponds to — JP's rolling-cycle equivalent of
 // _dateForWeekday().
 function jpDateForSplitDay(dayName){
-  const liveToday = new Date().toISOString().split('T')[0];
+  const liveToday = _localDateStr();
   const targetIdx = JP_SPLIT_DAY_NAMES.indexOf(dayName);
   if (targetIdx < 0) return liveToday;
   const todayIdx = JP_SPLIT_DAY_NAMES.indexOf(jpSplitDayName(liveToday));
   const back = ((todayIdx - targetIdx) + 7) % 7;
   const d = new Date(liveToday + 'T00:00:00'); d.setDate(d.getDate() - back);
-  return d.toISOString().split('T')[0];
+  return _localDateStr(d);
 }
 // The one function every "what day is it, for plan/nutrition/mobility
 // purposes" call site should use — routes JP through the rolling split,
@@ -7991,7 +8011,7 @@ function effectiveDayName(dateStr){
 // lookup now goes through this instead, computing the date fresh each
 // time rather than trusting a value that might be a day stale.
 function effectiveTodayName(){
-  return effectiveDayName(new Date().toISOString().split('T')[0]);
+  return effectiveDayName(_localDateStr());
 }
 // Manual realignment for when the rolling cycle drifts (skipped day, extra
 // rest day, etc.) — JP picks which split-day label today should be, and the
@@ -8009,9 +8029,9 @@ function jpRealignSplit(dayName){
   const targetIdx = JP_SPLIT_DAY_NAMES.indexOf(dayName);
   if (targetIdx < 0) return;
   OB.train = OB.train || {};
-  const liveToday = new Date().toISOString().split('T')[0];
+  const liveToday = _localDateStr();
   const d = new Date(liveToday + 'T00:00:00'); d.setDate(d.getDate() - targetIdx);
-  OB.train.splitAnchorDate = d.toISOString().split('T')[0];
+  OB.train.splitAnchorDate = _localDateStr(d);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
   saveOB().catch(()=>{});
   showToast(`Split realigned — today is ${dayName}`);
@@ -10349,7 +10369,8 @@ async function loadTrainingHistory() {
     // Never reach further back than the v1 launch date — day-tab dots and
     // training history only ever reflect post-launch activity, for every
     // user, without deleting any of the underlying rows.
-    const cutoffStr = cutoff.toISOString().slice(0,10) > APP_LAUNCH_DATE ? cutoff.toISOString().slice(0,10) : APP_LAUNCH_DATE;
+    const cutoffLocal = _localDateStr(cutoff);
+    const cutoffStr = cutoffLocal > APP_LAUNCH_DATE ? cutoffLocal : APP_LAUNCH_DATE;
     const [{ data: sessions }, { data: trainedHabitDays }] = await Promise.all([
       sb.from('workout_sessions').select('id,date,session_type').eq('user_id',USER.id).gte('date',cutoffStr).order('date',{ascending:false}),
       sb.from('habit_log').select('date').eq('user_id',USER.id).eq('habit_name','training').eq('completed',true).gte('date',cutoffStr),
