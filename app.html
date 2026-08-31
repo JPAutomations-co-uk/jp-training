@@ -5185,7 +5185,7 @@ function openProgrammeCalendar(){
 // whenever the rolling cycle drifts from reality (skipped day, extra rest
 // day, doubled up two sessions in one day, etc.) — picks a label, and
 // jpRealignSplit() recomputes the anchor so the whole rotation shifts.
-const JP_SPLIT_SESSION_HINT = { Monday:'Push A', Tuesday:'Legs A', Wednesday:'Pull A', Thursday:'Push B', Friday:'Legs B', Saturday:'Pull B', Sunday:'Athletic Development' };
+const JP_SPLIT_SESSION_HINT = { Monday:'Upper A', Tuesday:'Lower A', Wednesday:'Upper B', Thursday:'Sprint Day', Friday:'Lower B', Saturday:'Zone 2', Sunday:'Full Rest' };
 function renderSplitRealignControl(){
   const el = document.getElementById('pc-split-realign');
   if(!el) return;
@@ -5492,23 +5492,23 @@ async function saveWorkout(asToday){
   // manual tap for each associated habit was pure double bookkeeping.
   // Scoped honestly: only habits genuinely part of THIS session (warm-up
   // before it, stretch after it, creatine post-workout) auto-complete here.
-  // PNF (pre-Speed/Power Session, hours later) and Postural Protocol
-  // (evening, unrelated to session timing) are deliberately NOT included —
-  // they're separate events, not part of finishing the lift.
+  // PNF (deferred — see JP_MOBILITY_PLAN) and Postural Protocol (evening,
+  // unrelated to session timing) are deliberately NOT included — they're
+  // separate events, not part of finishing the lift.
   if(saveDate === TODAY) {
     autoCompleteHabit('training');
-    // Every day of the week now has a real trackable session (Sunday's
-    // Athletic Development session replaced the old rest+sport slot), so
-    // static_stretch fires for any non-rest day reaching this point.
+    // v24: Sunday is a real full rest day again (no exercises, nothing to
+    // save), so this only ever fires on Mon-Sat — no rest-day special-case
+    // needed, saveWorkout() simply won't run on a day with nothing to log.
     autoCompleteHabit('custom_static_stretch');
     autoCompleteHabit('custom_creatine');
-    // Explosive/plyo warm-up now covers every session with a jump/sprint
-    // component: Mon (Speed), Tue (plyo legs), Wed (Power), Fri (plyo legs),
-    // Sun (Athletic Development) — checked against the plan-day LABEL just
-    // saved (selDay.day), not the real calendar weekday, since JP's split
-    // rotates independently of the calendar now.
+    // Explosive/plyo warm-up covers every session with a jump/sprint
+    // component: Tue (Lower A plyo), Thu (Sprint Day), Fri (Lower B plyo)
+    // — checked against the plan-day LABEL just saved (selDay.day), not
+    // the real calendar weekday, since JP's split rotates independently
+    // of the calendar now.
     const savedDayLabel = selDay ? selDay.day : effectiveDayName(saveDate);
-    if(['Monday','Tuesday','Wednesday','Friday','Sunday'].includes(savedDayLabel)) autoCompleteHabit('custom_explosive_warmup');
+    if(['Tuesday','Thursday','Friday'].includes(savedDayLabel)) autoCompleteHabit('custom_explosive_warmup');
   }
   // Bonus: all sets ticked
   const allDone = document.querySelectorAll('.set-done');
@@ -6223,13 +6223,13 @@ async function getMealSuggestion(){
 
 // Flat key→time lookup covering both base and JP's custom habits, for the
 // category-breakdown chart — built separately from getHabits() because that
-// only returns TODAY's applicable habits (e.g. pnf_prep only shows Mon/Wed),
+// only returns TODAY's applicable habits (e.g. explosive_warmup only shows Tue/Thu/Fri),
 // but a 7-day habit_log history can contain entries from any day.
 const HABIT_TIME_LOOKUP = {
   sunlight:'Morning', training:'Post-Training', steps:'Anytime', sleep:'Evening',
   cold:'Morning', supplements:'Morning', stress:'Anytime', no_phone:'Evening',
   no_alcohol:'Anytime', hydration:'Anytime',
-  custom_neck_training:'Post-Training', custom_pnf_prep:'Evening', custom_explosive_warmup:'Pre-Training',
+  custom_neck_training:'Post-Training', custom_explosive_warmup:'Pre-Training',
   custom_static_stretch:'Post-Training', custom_sport_mobility:'Pre-Training', custom_postural_protocol:'Evening',
   custom_creatine:'Post-Training', custom_no_cannabis:'Anytime', custom_no_nicotine:'Anytime',
   custom_prebed_stack:'Evening', custom_nsdr_yoga:'Evening',
@@ -7535,89 +7535,102 @@ const OB_DEFS = {
 // Everyone else's Train/Eat content on this app is generated fresh by
 // /api/programme and /api/food on demand (a real, deliberate design for a
 // multi-client coaching product). JP is both the coach and his own athlete,
+// v24 training rebuild (31 Aug 2026) — JP is bringing MMA back (3x/week,
+// exact days TBD, confirmed he'll specify once known) and asked to drop
+// weightlifting from 6x/week to 4x (Upper/Lower x2), 1 dedicated sprint
+// day, plyometrics folded into both lower days. 4 lift + 1 sprint + Zone2
+// + 1 full rest = 7 — genuinely no day left over for MMA to sit on its
+// own, so it will have to layer onto 3 of these 6 trained days once
+// assigned. Recommended (not yet built, since exact days are unknown):
+// layer MMA onto Upper A, Upper B, and Zone 2 — never onto Lower A/B or
+// Sprint Day, which already carry the week's heaviest leg/CNS load;
+// stacking MMA's footwork/kicking demand on top of those would recreate
+// the exact concurrent-training interference (Wilson 2012) already found
+// and fixed once before in this protocol (the 9-sessions/zero-rest-days
+// rebalance). PNF hip flexor/adductor prep and neck training (both
+// removed when Muay Thai was dropped in July) will be reinstated once
+// MMA's actual days are confirmed — deliberately not guessed at here.
+// Old Push A/Pull A/Push B/Pull B consolidated into Upper A/Upper B:
+// chest exercise placement per JP's explicit call (flat bench on A,
+// incline on B, cable fly added to B) rather than just concatenating the
+// old push+pull exercise lists, which would have made each session
+// unreasonably long. 5 ab/core exercises spread across the 4 lifting
+// days per JP's request: Cable Crunch (Upper A), Pallof Press (Lower A),
+// Hanging Leg Raise (Upper B), Ab Wheel Rollout + Cable Woodchopper
+// (Lower B) — covers flexion, anti-rotation, hip flexion, anti-extension,
+// and rotation, not just 5 variations on the same movement pattern.
+// Sunday's Athletic Development content (multi-directional sprints,
+// acceleration ladder, resisted bounds, rotating PB test) merged into the
+// new standalone Sprint Day rather than kept as a separate 8th session —
+// Sunday itself reverts to type:'rest' with an empty exercises array,
+// same handling already confirmed to work correctly (every day.type ===
+// 'rest' check in the codebase is a literal string match). Working
+// weights/rep schemes for every carried-over exercise are unchanged from
+// the prior split — only day placement and the additions above changed.
 const JP_TRAINING_PLAN = [
-  { day: 'Monday', type: 'push', sessionName: 'Push A — Upper Chest Priority + Speed Session 18:00', exercises: [
-    { name: 'Incline Barbell Press', sets: 4, reps: '3-4 top / 8-10 back-off', load: '80kg / 65kg', notes: 'Add load once all back-off sets hit the top of the rep range' },
-    { name: 'Weighted Dips', sets: 3, reps: '3-4 top / 10-12 back-off', load: '45kg / 25-30kg', notes: 'Add weight once both back-off sets hit 12 clean' },
-    { name: 'Incline DB Press', sets: 3, reps: '10-12', load: '25-27.5kg each', notes: 'Double progression — reps first, then weight' },
-    { name: 'Cable Lateral Raise', sets: 4, reps: '12-15', load: '10kg', notes: 'Strict form over load — side delt priority day' },
-    { name: 'Overhead Cable Tricep Extension', sets: 3, reps: '10-12', load: '20kg', notes: 'Double progression' },
-    { name: 'Face Pull', sets: 3, reps: '15', load: '12.5kg', notes: 'Rear delt/rotator cuff health — keep light, high rep' },
-    { name: 'A-Skip', sets: 3, reps: '20m', load: 'Bodyweight', notes: 'Evening Speed Session, 18:00 — high knee, dorsiflexed ankle. Warm-up already covered by the mobility card below.' },
-    { name: 'B-Skip', sets: 3, reps: '20m', load: 'Bodyweight', notes: '' },
-    { name: 'Wall Drives', sets: 3, reps: '8 sec each leg', load: 'Bodyweight', notes: 'Fast leg cycling against the wall, hips tall' },
-    { name: '3-Point Stance Starts', sets: 4, reps: '10m', load: 'Bodyweight', notes: 'Full recovery — 90 sec rest between reps' },
-    { name: 'Acceleration Sprints', sets: 4, reps: '20m', load: 'Bodyweight', notes: 'Max intent, full recovery — 2 min rest between reps' },
-    { name: 'Horizontal Bounds', sets: 3, reps: '6', load: 'Bodyweight', notes: '90 sec rest' },
-    { name: 'Split Squat Wall Hold', sets: 3, reps: '30 sec each leg', load: 'Bodyweight', notes: 'Cooldown — 30 sec rest' },
-  ], keyLifts: 'Incline Barbell Press, Weighted Dips, Acceleration Sprints' },
-  { day: 'Tuesday', type: 'legs', sessionName: 'Legs A — Quad + Upper Glute', exercises: [
-    { name: 'Box Jump', sets: 4, reps: '5', load: 'Bodyweight', notes: 'Step down, don\'t jump down. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
-    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Max horizontal distance, full reset between reps' },
-    { name: 'Pogo Jumps', sets: 3, reps: '15', load: 'Bodyweight', notes: 'Stiff ankles, minimal ground contact — Achilles elasticity' },
-    { name: 'Hack Squat', sets: 3, reps: '3-4 top / 10-12 back-off', load: '55kg / 45kg', notes: 'Add load once back-off hits 12' },
-    { name: 'Bulgarian Split Squat', sets: 3, reps: '10-12 each', load: '35kg each', notes: 'Double progression, both legs' },
-    { name: 'Hip Abduction Machine', sets: 3, reps: '12-15', load: '40-50kg', notes: 'Lean 30° forward to bias upper glutes' },
-    { name: 'Leg Extension × Sissy Squat (superset)', sets: 2, reps: '12-15', load: '37.5kg / BW', notes: '2 rounds, no rest between the pair' },
-    { name: 'Seated Leg Curl', sets: 3, reps: '10-12', load: '82.5-90kg', notes: 'Double progression' },
-    { name: 'Single-Leg Calf Raise', sets: 3, reps: '12-15 each', load: 'BW or +10kg', notes: 'Full stretch at the bottom' },
+  { day: 'Monday', type: 'upper', sessionName: 'Upper A — Chest/Lat Emphasis', exercises: [
+    { name: 'Flat Barbell Bench Press', sets: 3, reps: '3-4 top / 8-10 back-off', load: '87.5kg / 75kg', notes: 'Rest: 3-4 min top set, 2-3 min back-off. Add load once back-off hits 10.' },
+    { name: 'Weighted Pull-Ups', sets: 3, reps: '2-3 top / 8-10 back-off', load: '37.5kg / 15kg', notes: 'Rest: 3-4 min top set, 2-3 min back-off. Add weight once back-off hits 10.' },
+    { name: 'Incline DB Press', sets: 3, reps: '10-12', load: '25-27.5kg each', notes: 'Rest: 90 sec. Double progression — reps first, then weight.' },
+    { name: 'Machine Row', sets: 3, reps: '4-5 top / 10-12 back-off', load: '145kg / 90kg', notes: 'Rest: 2-3 min. Add load once back-off hits 12.' },
+    { name: 'Cable Lateral Raise', sets: 4, reps: '12-15', load: '10kg', notes: 'Rest: 60-75 sec. Side delt priority.' },
+    { name: 'DB Lateral Raise', sets: 3, reps: '12-15', load: '7.5-10kg', notes: 'Rest: 60-75 sec. Different resistance curve than cable — second angle of stimulus, not just more volume.' },
+    { name: 'Overhead Cable Tricep Extension', sets: 3, reps: '10-12', load: '20kg', notes: 'Rest: 75-90 sec. Double progression.' },
+    { name: 'Face Pull', sets: 3, reps: '15', load: '12.5kg', notes: 'Rest: 45-60 sec. Rear delt/rotator cuff health — keep light, high rep.' },
+    { name: 'Cable Crunch', sets: 3, reps: '15-20', load: '~15-20kg — establish baseline first session', notes: 'Rest: 45-60 sec. 1 of 5 weekly ab/core exercises across the 4 lifting days.' },
+  ], keyLifts: 'Flat Barbell Bench Press, Weighted Pull-Ups' },
+  { day: 'Tuesday', type: 'lower', sessionName: 'Lower A — Quad + Upper Glute + Plyometrics A', exercises: [
+    { name: 'Box Jump', sets: 4, reps: '5', load: 'Bodyweight', notes: 'Rest: 90 sec. Step down, don\'t jump down. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
+    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Rest: 90 sec. Max horizontal distance, full reset between reps.' },
+    { name: 'Pogo Jumps', sets: 3, reps: '15', load: 'Bodyweight', notes: 'Rest: 60 sec. Stiff ankles, minimal ground contact — Achilles elasticity.' },
+    { name: 'Hack Squat', sets: 3, reps: '3-4 top / 10-12 back-off', load: '55kg / 45kg', notes: 'Rest: 3-4 min top set, 2-3 min back-off. Add load once back-off hits 12.' },
+    { name: 'Bulgarian Split Squat', sets: 3, reps: '10-12 each', load: '35kg each', notes: 'Rest: 2 min. Double progression, both legs.' },
+    { name: 'Hip Abduction Machine', sets: 3, reps: '12-15', load: '40-50kg', notes: 'Rest: 60-75 sec. Lean 30° forward to bias upper glutes.' },
+    { name: 'Leg Extension × Sissy Squat (superset)', sets: 2, reps: '12-15', load: '37.5kg / BW', notes: '30 sec rest between the pair, 90 sec between rounds — 2 rounds total.' },
+    { name: 'Seated Leg Curl', sets: 3, reps: '10-12', load: '82.5-90kg', notes: 'Rest: 90 sec. Double progression.' },
+    { name: 'Single-Leg Calf Raise', sets: 3, reps: '12-15 each', load: 'BW or +10kg', notes: 'Rest: 45-60 sec. Full stretch at the bottom.' },
+    { name: 'Pallof Press', sets: 3, reps: '12-15 each side', load: 'Light cable stack', notes: 'Rest: 45-60 sec. Anti-rotation core, low fatigue cost — 2 of 5 weekly ab/core exercises.' },
   ], keyLifts: 'Hack Squat, Bulgarian Split Squat' },
-  { day: 'Wednesday', type: 'pull', sessionName: 'Pull A — Lat Width + Power Session 17:30', exercises: [
-    { name: 'Weighted Pull-Ups', sets: 3, reps: '2-3 top / 8-10 back-off', load: '37.5kg / 15kg', notes: 'Add weight once back-off sets hit 10' },
-    { name: 'Neutral/Mag Grip Pulldown', sets: 3, reps: '10-12', load: '90-95kg', notes: 'Double progression' },
-    { name: 'Machine Row', sets: 3, reps: '4-5 top / 10-12 back-off', load: '145kg / 90kg', notes: 'Add load once back-off hits 12' },
-    { name: 'Incline DB Curl', sets: 3, reps: '10-12', load: '17.5-20kg', notes: 'Double progression' },
-    { name: 'Hammer Curl', sets: 3, reps: '12-15', load: '17.5kg', notes: 'Double progression' },
-    { name: 'DB Lateral Raise', sets: 3, reps: '12-15', load: 'new — start ~7.5-10kg', notes: 'Different resistance curve than cable — genuine second angle of stimulus, not just more volume' },
-    { name: 'Depth Drop → Vertical Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Evening Power Session, 17:30 — step off box, land and explode immediately. 2 min rest.' },
-    { name: 'Box Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: '90 sec rest' },
-    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Max horizontal distance, full reset — 90 sec rest' },
-    { name: 'Lateral Bounds', sets: 3, reps: '8 each side', load: 'Bodyweight', notes: 'Glute-driven push-off, stick the landing — 60 sec rest' },
-    { name: 'Single-Leg Hop for Distance', sets: 3, reps: '5 each leg', load: 'Bodyweight', notes: '60 sec rest' },
-    { name: 'Spanish Squat Hold', sets: 3, reps: '30 sec', load: 'Bodyweight', notes: 'Cooldown — 30 sec rest' },
-  ], keyLifts: 'Weighted Pull-Ups, Machine Row, Depth Drop → Vertical Jump' },
-  { day: 'Thursday', type: 'push', sessionName: 'Push B — Side Delt Priority', exercises: [
-    { name: 'Sprint Protocol (pre-lift)', sets: 1, reps: '5×10m starts, 4×20m accel, 3×40m top speed, 3× flying sprints', load: '—', notes: 'Full recovery between every set — speed work, not conditioning' },
-    { name: 'Machine Shoulder Press', sets: 3, reps: '3-4 top / 8-10 back-off', load: '60kg/side / 45kg/side', notes: 'Add load once back-off hits 10' },
-    { name: 'Cable Lateral Raise', sets: 5, reps: '12-15', load: '10-11.25kg', notes: '5 sets — this is the side delt priority day' },
-    { name: 'Flat Barbell Bench', sets: 3, reps: '3-4 top / 8-10 back-off', load: '87.5kg / 75kg', notes: 'Add load once back-off hits 10' },
-    { name: 'Incline Cable Fly', sets: 3, reps: '12-15', load: '25kg', notes: 'Double progression' },
-    { name: 'Bar Tricep Pressdown', sets: 3, reps: '10-12', load: '35kg', notes: 'Double progression' },
-    { name: 'Rear Delt Cable Fly', sets: 3, reps: '12-15', load: '10-12.5kg', notes: 'Double progression' },
-    { name: 'Hanging Leg Raise', sets: 3, reps: '12-15', load: 'BW', notes: 'First direct core work in the split' },
-  ], keyLifts: 'Machine Shoulder Press, Flat Barbell Bench' },
-  { day: 'Friday', type: 'legs', sessionName: 'Legs B — Posterior Chain + Glute Priority', exercises: [
-    { name: 'Depth Drop → Vertical Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Step off box, land and explode immediately. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
-    { name: 'Lateral Bounds', sets: 3, reps: '6 each', load: 'Bodyweight', notes: 'Glute-driven push-off, stick the landing' },
-    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Max horizontal distance, full reset between reps' },
-    { name: 'Barbell RDL', sets: 3, reps: '3-5 top / 8-10 back-off', load: '110-120kg / 90-100kg', notes: 'Add load once back-off hits 10' },
-    { name: 'Barbell Hip Thrust', sets: 4, reps: '3-5 top / 10-12 back-off', load: '80-100kg / 70-80kg', notes: 'Add load once back-off hits 12' },
-    { name: 'Hip Abduction Machine', sets: 3, reps: '12-15', load: '40-50kg', notes: 'Lean 30° forward to bias upper glutes' },
-    { name: 'Walking Lunges', sets: 3, reps: '10-12 each', load: '25-30kg DB each hand', notes: 'Double progression' },
-    { name: 'Seated Leg Curl', sets: 3, reps: '10-12', load: '82.5-90kg', notes: 'Double progression' },
-    { name: 'Seated Calf Raise', sets: 3, reps: '12-15', load: '60-70kg', notes: 'Full stretch at the bottom' },
-    { name: 'Standing Calf Machine', sets: 2, reps: '12-15', load: '82.5kg', notes: 'Double progression' },
+  { day: 'Wednesday', type: 'upper', sessionName: 'Upper B — Shoulder/Back-Thickness Emphasis', exercises: [
+    { name: 'Incline Barbell Press', sets: 4, reps: '3-4 top / 8-10 back-off', load: '80kg / 65kg', notes: 'Rest: 3-4 min top set, 2-3 min back-off. Add load once all back-off sets hit the top of the rep range.' },
+    { name: 'Machine Shoulder Press', sets: 3, reps: '3-4 top / 8-10 back-off', load: '60kg each side / 45kg each side', notes: 'Rest: 3 min top set, 2 min back-off. Add load once back-off hits 10.' },
+    { name: 'Meadows Row / Single-Arm DB Row', sets: 3, reps: '10-12 each', load: '45-50kg', notes: 'Rest: 90 sec. Double progression, both sides.' },
+    { name: 'Neutral Grip Pulldown', sets: 3, reps: '10-12', load: '85-90kg', notes: 'Rest: 90 sec. Double progression.' },
+    { name: 'Incline Cable Fly', sets: 3, reps: '12-15', load: '25kg', notes: 'Rest: 60-75 sec. Chest finisher — different stimulus than the pressing movements above.' },
+    { name: 'Cable Lateral Raise', sets: 5, reps: '12-15', load: '10-11.25kg', notes: 'Rest: 60-75 sec. 5 sets — this is the side delt priority day.' },
+    { name: 'Incline DB Curl', sets: 3, reps: '10-12', load: '17.5-20kg', notes: 'Rest: 60-75 sec. Double progression.' },
+    { name: 'Bar Tricep Pressdown', sets: 3, reps: '10-12', load: '35kg', notes: 'Rest: 60-75 sec. Double progression.' },
+    { name: 'Hanging Leg Raise', sets: 3, reps: '12-15', load: 'BW', notes: 'Rest: 45-60 sec. 3 of 5 weekly ab/core exercises.' },
+  ], keyLifts: 'Incline Barbell Press, Machine Shoulder Press' },
+  { day: 'Thursday', type: 'sprint', sessionName: 'Sprint Day — Speed, Power & Agility', exercises: [
+    { name: '3-Point Stance Starts', sets: 5, reps: '10m', load: 'Bodyweight', notes: 'Rest: 90 sec. Full recovery between reps — speed work, not conditioning.' },
+    { name: 'Acceleration Sprints', sets: 4, reps: '20m', load: 'Bodyweight', notes: 'Rest: 2 min.' },
+    { name: 'Multi-Directional Sprints', sets: 4, reps: 'variable, max effort', load: 'Bodyweight', notes: 'Rest: 2 min. Forward, backward, lateral shuffle into sprint.' },
+    { name: 'Top Speed Sprints', sets: 3, reps: '40m', load: 'Bodyweight', notes: 'Rest: 3 min full.' },
+    { name: 'Flying Sprints (20m build + 20m max)', sets: 3, reps: '1', load: 'Bodyweight', notes: 'Rest: 3 min full.' },
+    { name: 'Acceleration Ladder', sets: 3, reps: 'full ladder length', load: 'Bodyweight', notes: 'Rest: 90 sec.' },
+    { name: 'Resisted Bounds', sets: 3, reps: '6', load: 'Bodyweight', notes: 'Rest: 90 sec. Band or partner resistance if available.' },
+    { name: 'Copenhagen Plank', sets: 3, reps: '20 sec each side', load: 'Bodyweight', notes: 'Rest: 30 sec. Adductor/groin strength — cooldown.' },
+    { name: 'Single-Leg Wall Sit', sets: 3, reps: '30 sec each leg', load: 'Bodyweight', notes: 'Rest: 30 sec. Cooldown.' },
+  ], keyLifts: 'Top Speed Sprints, Flying Sprints — plus a rotating PB test (30m sprint / standing vertical jump / standing broad jump / 5-10-5 shuttle, one per week on a 4-week cycle, moved here from the old Sunday Athletic Development slot).' },
+  { day: 'Friday', type: 'lower', sessionName: 'Lower B — Posterior Chain + Glute Priority + Plyometrics B', exercises: [
+    { name: 'Depth Drop → Vertical Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Rest: 2 min — highest-impact plyo here, needs the most recovery. Step off box, land and explode immediately. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
+    { name: 'Lateral Bounds', sets: 3, reps: '6 each', load: 'Bodyweight', notes: 'Rest: 90 sec. Glute-driven push-off, stick the landing.' },
+    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Rest: 90 sec. Max horizontal distance, full reset between reps.' },
+    { name: 'Barbell RDL', sets: 3, reps: '3-5 top / 8-10 back-off', load: '110-120kg / 90-100kg', notes: 'Rest: 3-4 min top set, 2-3 min back-off. Add load once back-off hits 10.' },
+    { name: 'Barbell Hip Thrust', sets: 4, reps: '3-5 top / 10-12 back-off', load: '80-100kg / 70-80kg', notes: 'Rest: 3 min top set, 2 min back-off. Add load once back-off hits 12.' },
+    { name: 'Hip Abduction Machine', sets: 3, reps: '12-15', load: '40-50kg', notes: 'Rest: 60-75 sec. Lean 30° forward to bias upper glutes.' },
+    { name: 'Walking Lunges', sets: 3, reps: '10-12 each', load: '25-30kg DB each hand', notes: 'Rest: 90 sec. Double progression.' },
+    { name: 'Seated Leg Curl', sets: 3, reps: '10-12', load: '82.5-90kg', notes: 'Rest: 90 sec. Double progression.' },
+    { name: 'Ab Wheel Rollout', sets: 3, reps: '10-12', load: 'Bodyweight, kneeling', notes: 'Rest: 60 sec. From knees, not full standing — build toward full rollout over time. 4 of 5 weekly ab/core exercises.' },
+    { name: 'Cable Woodchopper', sets: 3, reps: '12-15 each side', load: '~10-15kg — establish baseline first session', notes: 'Rest: 45-60 sec. Rotational core — 5 of 5 weekly ab/core exercises.' },
+    { name: 'Seated Calf Raise', sets: 3, reps: '12-15', load: '60-70kg', notes: 'Rest: 45-60 sec. Full stretch at the bottom.' },
+    { name: 'Standing Calf Machine', sets: 2, reps: '12-15', load: '82.5kg', notes: 'Rest: 45-60 sec. Double progression.' },
   ], keyLifts: 'Barbell RDL, Barbell Hip Thrust' },
-  { day: 'Saturday', type: 'pull', sessionName: 'Pull B — Mid-Back Thickness', exercises: [
-    { name: 'Zone 2 Cardio (pre-lift)', sets: 1, reps: '20-25 min, incline treadmill/track, conversational pace', load: '—', notes: 'Walking only — never jogging, running competes with leg hypertrophy' },
-    { name: 'Weighted Pull-Ups', sets: 3, reps: '2-3 top / 10-12 back-off', load: '37.5kg / 15kg', notes: 'Add weight once back-off hits 12' },
-    { name: 'Meadows Row / Single-Arm DB Row', sets: 3, reps: '10-12 each', load: '45-50kg', notes: 'Double progression, both sides' },
-    { name: 'Neutral Grip Pulldown', sets: 3, reps: '10-12', load: '85-90kg', notes: 'Double progression' },
-    { name: 'Preacher EZ Bar Curl', sets: 3, reps: '4-5 top / 8-10 back-off', load: '45kg / 32.5-35kg', notes: 'Add load once back-off hits 10' },
-    { name: 'Incline DB Curl', sets: 2, reps: '10-12', load: '17.5-20kg', notes: 'Double progression' },
-    { name: 'Face Pull', sets: 2, reps: '15', load: '12.5kg', notes: 'Rear delt/rotator cuff health' },
-    { name: 'Pallof Press', sets: 3, reps: '12-15 each side', load: 'light cable stack', notes: 'Anti-rotation core — deliberately low fatigue cost given Zone 2 + full Pull session' },
-  ], keyLifts: 'Weighted Pull-Ups, Meadows Row' },
-  { day: 'Sunday', type: 'athletic', sessionName: 'Athletic Development — Speed, Power & Agility ~12:00', exercises: [
-    { name: 'Multi-Directional Sprints', sets: 4, reps: 'variable, max effort', load: 'Bodyweight', notes: '2 min rest — forward, backward, lateral shuffle into sprint' },
-    { name: 'Acceleration Ladder', sets: 3, reps: 'full ladder length', load: 'Bodyweight', notes: '90 sec rest' },
-    { name: 'Resisted Bounds', sets: 3, reps: '6', load: 'Bodyweight', notes: 'Band or partner resistance if available — 90 sec rest' },
-    { name: 'Box Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: '90 sec rest' },
-    { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: '90 sec rest' },
-    { name: 'Lateral Bound', sets: 3, reps: '6 each side', load: 'Bodyweight', notes: '60 sec rest' },
-    { name: 'Single-Leg Wall Sit', sets: 3, reps: '30 sec each leg', load: 'Bodyweight', notes: '30 sec rest' },
-    { name: 'Copenhagen Plank', sets: 3, reps: '20 sec each side', load: 'Bodyweight', notes: 'Adductor/groin strength — 30 sec rest' },
-  ], keyLifts: 'Multi-Directional Sprints, Box Jump, Broad Jump — plus a rotating PB test (sprint/vertical jump/broad jump/agility shuttle, one per week on a 4-week cycle).' },
+  { day: 'Saturday', type: 'cardio', sessionName: 'Zone 2 Cardio', exercises: [
+    { name: 'Zone 2 Cardio', sets: 1, reps: '20-25 min, incline treadmill/track or cycling, conversational pace (~120-140bpm)', load: '—', notes: 'Walking/cycling only — never running, running competes with leg hypertrophy. Continuous effort, no set-based rest structure.' },
+  ], keyLifts: 'Zone 2 Cardio' },
+  { day: 'Sunday', type: 'rest', sessionName: 'Full Rest', exercises: [], keyLifts: 'Full rest day — daily walking and the evening Postural Protocol still apply, no training session.' },
 ];
 
 // v23 nutrition rebuild (31 Aug 2026) — full rebuild driven by three real
@@ -7747,13 +7760,21 @@ const JP_NUTRITION_PLAN = {
 // the old sport-matched selector. Reference/informational only — not
 // sets×reps×load work, so it isn't pushed through the session_sets tracking
 // pipeline like the lifts.
+// v24 rebuild — matches the new Upper A/Lower A+Plyo A/Upper B/Sprint
+// Day/Lower B+Plyo B/Zone 2/Rest structure. PNF extras removed for now
+// (were pre-Speed/Power-Session content that no longer exists) — will
+// come back once JP confirms which days carry the returning MMA
+// sessions, since PNF's real value here is hip mobility/kick height for
+// combat sport, not a generic addition. Sunday (Rest) deliberately has no
+// entry — renderMobilityCard() already handles a missing day by
+// returning an empty string, which is the correct behaviour for a day
+// with no session at all.
 const JP_MOBILITY_PLAN = {
   Monday: {
     warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
     staticStretch: { label: 'Chest/shoulders, 2×30-45s', drills: ['Doorway pec stretch', 'Cross-body rear delt', 'Overhead tricep', 'Anterior shoulder'] },
     extras: [
-      { label: 'Pre-Speed-Session warm-up — 10 min, before 18:00', detail: 'Walking hip circles ×10 each direction, leg swings front-back + lateral ×10 each leg, high knees 20m ×2, walking heel flicks 20m ×2, 2 build-up strides @ 50%/75% effort' },
-      { label: 'PNF hip flexor + adductor — 10 min, pre-Speed Session', detail: 'Hip Flexor CRAC 3 sets each side, Adductor 3 sets — sprint stride length & hip mobility' },
+      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
     ],
   },
   Tuesday: {
@@ -7765,15 +7786,14 @@ const JP_MOBILITY_PLAN = {
   },
   Wednesday: {
     warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
-    staticStretch: { label: 'Lats/biceps, 2×30-45s', drills: ['Lat overhead stretch', 'Cross-body rear delt', 'Bicep wall stretch', 'Thoracic rotation'] },
+    staticStretch: { label: 'Lats/rear delts, 2×30-45s', drills: ['Lat overhead stretch', 'Cross-body rear delt', 'Bicep wall stretch', 'Thoracic rotation'] },
     extras: [
-      { label: 'Pre-Power-Session warm-up — 10-12 min, before 17:30', detail: 'Walking hip circles ×10 each direction, leg swings front-back + lateral ×10 each leg, bodyweight squat-to-stand ×10, lateral band walk ×10 each direction, 2 build-up jumps @ 50%/75% effort' },
-      { label: 'PNF hip flexor + adductor — 10 min, pre-Power Session', detail: 'Hip Flexor CRAC 3 sets each side, Adductor 3 sets — jump mechanics & hip mobility' },
+      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
     ],
   },
   Thursday: {
-    warmup: { label: 'Sprint warm-up (5 min) then Upper (6-8 min)', drills: ['A-skips, B-skips, high knees, butt kicks, falling starts (pre-sprint)', 'Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', '2 build-up sets of first compound @ 50%/75%'] },
-    staticStretch: { label: 'Chest/shoulders, 2×30-45s', drills: ['Doorway pec stretch', 'Cross-body rear delt', 'Overhead tricep', 'Anterior shoulder'] },
+    warmup: { label: 'Sprint warm-up (5 min) then mobility (10-12 min)', drills: ['A-skips, B-skips, high knees, butt kicks, falling starts (pre-sprint)', 'Walking hip circles ×10 each direction', 'Leg swings front-back + lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', '2-3 build-up strides @ 50%/75% effort'] },
+    staticStretch: { label: 'Full-body, 2×30-45s — post-session', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Standing quad stretch', 'Seated thoracic rotation ×10 each direction'] },
     extras: [
       { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
     ],
@@ -7786,17 +7806,10 @@ const JP_MOBILITY_PLAN = {
     ],
   },
   Saturday: {
-    warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
-    staticStretch: { label: 'Lats/rear delts, 2×30-45s', drills: ['Lat overhead stretch', 'Cross-body rear delt', 'Bicep wall stretch', 'Thoracic rotation'] },
+    warmup: { label: 'Light dynamic warm-up (5 min) — steady-state, doesn\'t need the full explosive prep', drills: ['Arm circles ×10 each direction', 'Walking hip circles ×10 each direction', 'Bodyweight squat-to-stand ×10', 'Walking lunge ×8 each side'] },
     extras: [
-      { label: 'Zone 2 Cardio — 20-25 min, pre-gym', detail: 'Incline treadmill walk or cycling, conversational pace (~120-140 bpm) — not running' },
       { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
     ],
-  },
-  Sunday: {
-    warmup: { label: 'Athletic Development warm-up (10-12 min)', drills: ['Walking hip circles ×10 each direction', 'Leg swings front-back + lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', '2-3 build-up strides/jumps @ 50%/75% effort'] },
-    staticStretch: { label: 'Full-body, 2×30-45s — post-session', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Standing quad stretch', 'Seated thoracic rotation ×10 each direction'] },
-    extras: [],
   },
 };
 
@@ -7809,13 +7822,11 @@ const JP_MOBILITY_PLAN = {
 // Postural Protocol, daily walking, and an honest height-protocol summary
 // rather than the generic fallback's overstated "dead hangs decompress the
 // spine" / "explosive jumps are the growth stimulus" framing.
-// Sunday's rotating team-sport slot was replaced by a single fixed Athletic
-// Development session (v21 MMA-removal rebuild) — no "which sport today"
-// selector needed any more, so this is now a static before/after display of
-// the same mobility that lives in Train's Sunday mobility card, surfaced
-// here too since Move is meant to be the full movement picture.
+// v24: Sunday's Athletic Development session moved to the new standalone
+// Thursday Sprint Day (see JP_TRAINING_PLAN) — this display repurposed to
+// match rather than left pointing at a day that's now a full rest day.
 const JP_ATHLETIC_MOBILITY = {
-  before: ['Walking hip circles ×10 each direction', 'Leg swings front-back + lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', '2-3 build-up strides/jumps @ 50%/75% effort'],
+  before: ['A-skips, B-skips, high knees, butt kicks, falling starts (pre-sprint)', 'Walking hip circles ×10 each direction', 'Leg swings front-back + lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', '2-3 build-up strides @ 50%/75% effort'],
   after: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Standing quad stretch', 'Seated thoracic rotation ×10 each direction'],
 };
 
@@ -7823,7 +7834,7 @@ function renderMoveSportPanel(){
   const el = document.getElementById('move-sport-panel');
   if(!el) return;
   el.innerHTML = `
-    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Sunday — Athletic Development Mobility</div>
+    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Thursday — Sprint Day Mobility</div>
     <div style="font-size:11px;font-weight:700;color:var(--white);margin-bottom:4px">Before</div>
     <ul style="margin:0 0 10px;padding-left:16px;font-size:12px;color:var(--muted)">${JP_ATHLETIC_MOBILITY.before.map(d=>`<li style="margin-bottom:3px">${escHtml(d)}</li>`).join('')}</ul>
     <div style="font-size:11px;font-weight:700;color:var(--white);margin-bottom:4px">After</div>
@@ -7833,18 +7844,19 @@ function renderMoveSportPanel(){
 }
 
 const JP_MOVE_RESULTS = {
-  summary: 'Your day-specific static stretching still lives in the Train tab, matched to whatever session you\'re doing. This page covers what stays constant regardless of the day — daily posture correction, daily walking, the Speed/Power-session injury-prevention blocks, a real yoga/NSDR option, Sunday\'s Athletic Development mobility, and the honest version of what actually moves your height goal.',
+  summary: 'Your day-specific static stretching still lives in the Train tab, matched to whatever session you\'re doing. This page covers what stays constant regardless of the day — daily posture correction, daily walking, the explosive-warm-up injury-prevention block, a real yoga/NSDR option, Sprint Day\'s mobility, and the honest version of what actually moves your height goal.',
   key_focus: 'The daily Postural Protocol is the one item here with a real, measurable payoff (1-3cm of functional height from correcting compressed posture) — everything else is either injury-prevention, baseline movement, or an honest account of what is and isn\'t actually driving the height goal.',
   morning_routine: [
-    { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your lifting/speed/power/sprint days don\'t otherwise cover.' },
+    { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your Upper/Lower/Sprint days don\'t otherwise cover.' },
   ],
   desk_breaks: [],
-  // PNF and Explosive Warm-Up were previously only visible in Train's
-  // mobility card — added here too since Move is meant to be the full
-  // movement picture, and these are arguably the two most injury-relevant
-  // items in the whole protocol.
+  // PNF removed for now — was pre-Speed/Power-Session hip mobility, and
+  // those sessions no longer exist (v24 training rebuild). Will come back
+  // once JP confirms which days carry the returning MMA sessions, since
+  // PNF's actual value is kick height/hip mobility for combat sport, not
+  // a generic addition to slot in without a session it's actually prepping
+  // for.
   evening_routine: [
-    { name: 'PNF Hip Flexor + Adductor (Mon/Wed, pre-Speed/Power Session)', duration: '10 min', how_to: 'Contract-relax: half-kneeling, contract rear hip flexor into floor 65-70% × 8 sec → relax → fire glute, drive hips forward → hold 25-30 sec. 3 sets each side. Same for adductors, seated straddle.', why: 'Sprint stride length and jump mechanics — direct performance lever for the Speed/Power sessions, not just injury prevention.', habitKey:'custom_pnf_prep' },
     { name: 'Yoga Flow', duration: '10-15 min, evening — real content, not a placeholder', how_to: 'Cat-cow (10 reps) → downward dog (45 sec) → low lunge each side (45 sec) → pigeon pose each side (60 sec) → seated forward fold (60 sec) → supine spinal twist each side (45 sec).', why: 'Hip-opening and spinal mobility sequence, directly relevant to kick height and general flexibility goals — you said you wanted to explore this further, this is the first real routine rather than a vague "NSDR or yoga" placeholder.', habitKey:'custom_nsdr_yoga' },
     { name: 'NSDR / Yoga Nidra (alternative to the flow above)', duration: '10-20 min', how_to: 'Guided body-scan audio (search "NSDR" or "Yoga Nidra" — Huberman\'s or any 10-20 min guided track works), lying still, eyes closed.', why: 'Real, evidenced dopamine reset (Kjaer 2002, +65%) and nervous-system recovery — use this OR the yoga flow above, not required to do both.', habitKey:'custom_nsdr_yoga' },
   ],
@@ -7857,11 +7869,11 @@ const JP_MOVE_RESULTS = {
     { name: 'Child\'s Pose', sets_reps: '1 × 60 sec', how_to: 'Kneel and sit back onto the heels, arms extended forward.', why: 'Spinal decompression, low-key close to the block.', priority: 'Low' },
   ],
   // Explosive Warm-Up doesn't map cleanly to any existing category (it's
-  // Tue/Fri-specific, pre-lift, not morning/desk/evening) — given its own
-  // section in mobRenderResults() rather than force-fit somewhere it doesn't
-  // belong.
+  // Tue/Thu/Fri-specific, pre-lift, not morning/desk/evening) — given its
+  // own section in mobRenderResults() rather than force-fit somewhere it
+  // doesn't belong.
   injury_prevention: [
-    { name: 'Explosive Warm-Up (Mon/Tue/Wed/Fri/Sun, before any sprint/jump/plyo work)', duration: '10-12 min', how_to: 'Hip circles, leg swings (front-back + lateral), hip flexor lunge + rotation, walking quad stretch, squat-to-stand, lateral band walk, walking high knees/heel flicks, build-up strides/jumps at 50%/75% effort.', why: 'The single highest injury-risk moment in your week — sprinting or jumping cold. Full detail in Train\'s mobility card.', habitKey:'custom_explosive_warmup', readOnce:false },
+    { name: 'Explosive Warm-Up (Tue/Thu/Fri, before any sprint/jump/plyo work)', duration: '10-12 min', how_to: 'Hip circles, leg swings (front-back + lateral), hip flexor lunge + rotation, walking quad stretch, squat-to-stand, lateral band walk, walking high knees/heel flicks, build-up strides/jumps at 50%/75% effort.', why: 'The single highest injury-risk moment in your week — sprinting or jumping cold. Full detail in Train\'s mobility card.', habitKey:'custom_explosive_warmup', readOnce:false },
   ],
   height_protocol: [
     { name: 'The honest ceiling', duration: 'Read once, keep in mind', how_to: 'At 18.5, growth plates in the height-critical bones (femur/tibia) are likely closing or closed — real window status is unconfirmed without a bone-age X-ray.', why: 'Nothing below overrides biology — this is "do everything legitimate on the chance a window remains," not a guarantee.', readOnce:true },
@@ -7890,7 +7902,7 @@ function renderMobilityCard(dayName) {
   const drillList = drills => `<ul style="margin:4px 0 0;padding-left:16px;font-size:12px;color:var(--muted)">${drills.map(d=>`<li style="margin-bottom:2px">${escHtml(d)}</li>`).join('')}</ul>`;
   const sections = [];
   if (m.warmup) {
-    const isExplosive = dayName === 'Tuesday' || dayName === 'Friday' || dayName === 'Sunday';
+    const isExplosive = dayName === 'Tuesday' || dayName === 'Thursday' || dayName === 'Friday';
     sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}${isExplosive?mobCheckbox('custom_explosive_warmup'):''}</div>${drillList(m.warmup.drills)}</div>`);
   }
   if (m.staticStretch) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">After — ${escHtml(m.staticStretch.label)}${mobCheckbox('custom_static_stretch')}</div>${drillList(m.staticStretch.drills)}</div>`);
@@ -8065,7 +8077,7 @@ function jpRealignSplit(dayName){
 // then behaves like any other user's plan — editable through the app's own
 // swapExercise() flow without this function silently discarding it on the
 // next page load, which unconditional overwriting-every-load would do.
-const JP_PROTOCOL_VERSION = 'v23.1-kefir-not-milk-colostrum';
+const JP_PROTOCOL_VERSION = 'v24-upper-lower-sprint-split';
 
 function applyJPRealProtocol() {
   if (USER?.id !== JP_USER_ID) return;
@@ -8121,8 +8133,7 @@ function applyJPRealProtocol() {
     { key: 'make_bed',         name: 'Make Bed / Tidy Room',        desc: 'One fully-finished task before anything else — real behavioural-science basis (keystone habit: momentum + lower activation energy for the rest of the day), not tidiness for its own sake. First 5 min after waking.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:false },
     { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:true },
     { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:false },
-    { key: 'pnf_prep',         name: 'PNF Prep',                    desc: 'Hip flexor + adductor PNF, 10 min pre-Speed/Power Session — sprint stride length, jump mechanics & groin injury prevention.', days: ['Monday','Wednesday'], time:'Evening', priority:true },
-    { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Monday (Speed), Tuesday (plyo legs), Wednesday (Power), Friday (plyo legs), Sunday (Athletic Development).', days: ['Monday','Tuesday','Wednesday','Friday','Sunday'], time:'Pre-Training', priority:true },
+    { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Tuesday (Lower A plyo), Thursday (Sprint Day), Friday (Lower B plyo).', days: ['Tuesday','Thursday','Friday'], time:'Pre-Training', priority:true },
     { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: JP_SPLIT_DAY_NAMES, time:'Post-Training', priority:false },
     { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, cat-cow, wall slides, chin tucks, child\'s pose — 10 min, evening. Real 1-3cm functional height payoff, needs daily consistency to work.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:true },
     { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: JP_SPLIT_DAY_NAMES, time:'Post-Training', priority:true },
