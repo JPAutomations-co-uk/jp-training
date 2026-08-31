@@ -6229,7 +6229,7 @@ const HABIT_TIME_LOOKUP = {
   sunlight:'Morning', training:'Post-Training', steps:'Anytime', sleep:'Evening',
   cold:'Morning', supplements:'Morning', stress:'Anytime', no_phone:'Evening',
   no_alcohol:'Anytime', hydration:'Anytime',
-  custom_neck_training:'Post-Training', custom_explosive_warmup:'Pre-Training',
+  custom_neck_training:'Post-Training', custom_explosive_warmup:'Pre-Training', custom_morning_mobility:'Morning',
   custom_static_stretch:'Post-Training', custom_sport_mobility:'Pre-Training', custom_postural_protocol:'Evening',
   custom_creatine:'Post-Training', custom_no_cannabis:'Anytime', custom_no_nicotine:'Anytime',
   custom_prebed_stack:'Evening', custom_nsdr_yoga:'Evening',
@@ -7847,6 +7847,7 @@ const JP_MOVE_RESULTS = {
   summary: 'Your day-specific static stretching still lives in the Train tab, matched to whatever session you\'re doing. This page covers what stays constant regardless of the day — daily posture correction, daily walking, the explosive-warm-up injury-prevention block, a real yoga/NSDR option, Sprint Day\'s mobility, and the honest version of what actually moves your height goal.',
   key_focus: 'The daily Postural Protocol is the one item here with a real, measurable payoff (1-3cm of functional height from correcting compressed posture) — everything else is either injury-prevention, baseline movement, or an honest account of what is and isn\'t actually driving the height goal.',
   morning_routine: [
+    { name: 'Morning Mobility Block', duration: '~10 min, right after wake, before breakfast', how_to: 'Dead hangs 3×45-60s → wall slides 2×10 → band pull-aparts 2×15 → hip flexor hold 90s each side → dead bug 2×8.', why: 'Posture correction + core stability, done before any axial loading (discs are more hydrated/vulnerable to flexion-load injury right after sleep — nothing here loads the spine under bodyweight-plus). Honest note: dead hangs are decompression/comfort, not a height-growth mechanism.', habitKey:'custom_morning_mobility' },
     { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your Upper/Lower/Sprint days don\'t otherwise cover.' },
   ],
   desk_breaks: [],
@@ -8077,7 +8078,7 @@ function jpRealignSplit(dayName){
 // then behaves like any other user's plan — editable through the app's own
 // swapExercise() flow without this function silently discarding it on the
 // next page load, which unconditional overwriting-every-load would do.
-const JP_PROTOCOL_VERSION = 'v24-upper-lower-sprint-split';
+const JP_PROTOCOL_VERSION = 'v24.1-morning-mobility-block';
 
 function applyJPRealProtocol() {
   if (USER?.id !== JP_USER_ID) return;
@@ -8131,6 +8132,7 @@ function applyJPRealProtocol() {
   // Monday's slot lands on this cycle," not calendar Monday specifically.
   const JP_CUSTOM_HABITS = [
     { key: 'make_bed',         name: 'Make Bed / Tidy Room',        desc: 'One fully-finished task before anything else — real behavioural-science basis (keystone habit: momentum + lower activation energy for the rest of the day), not tidiness for its own sake. First 5 min after waking.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:false },
+    { key: 'morning_mobility', name: 'Morning Mobility Block',      desc: 'Dead hangs 3×45-60s, wall slides 2×10, band pull-aparts 2×15, hip flexor hold 90s each side, dead bug 2×8 — ~10 min, right after wake, before breakfast and before any axial loading. Posture correction + core stability for injury prevention. Honest note: dead hangs are spinal decompression/comfort, not a height-growth mechanism — don\'t expect stature from them.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:true },
     { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:true },
     { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:false },
     { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Tuesday (Lower A plyo), Thursday (Sprint Day), Friday (Lower B plyo).', days: ['Tuesday','Thursday','Friday'], time:'Pre-Training', priority:true },
