@@ -7620,104 +7620,124 @@ const JP_TRAINING_PLAN = [
   ], keyLifts: 'Multi-Directional Sprints, Box Jump, Broad Jump — plus a rotating PB test (sprint/vertical jump/broad jump/agility shuttle, one per week on a 4-week cycle).' },
 ];
 
-// v20 nutrition protocol — dark chocolate removed, espresso→yerba mate,
-// clock times matched to his real 07:30 wake, Wednesday's carb target
-// matched to Monday's (identical Muay Thai session, was previously
-// under-fuelled). Full research/audit trail lives in the nutrition
-// protocol memory — this is the final, current state of that work.
-// Every ingredient carries an explicit gram/ml amount (v21, 28 Jul 2026) — JP
-// asked for exact weights throughout so the plan can be followed to the
-// letter, not approximated. Where the source protocol memory never stated an
-// exact figure for an item (banana, avocado, carrot, seasoning), a reasonable
-// standard-portion estimate is used and marked with "~" rather than presented
-// as an exact figure it isn't.
-// MMA-removal rebuild (31 Jul 2026): Muay Thai dropped from Mon/Wed, replaced
-// by Speed/Power sessions that finish earlier — Monday's dinner reverted to
-// the standard non-lean version (the old lean-dinner constraint existed only
-// because Muay Thai ending at 20:00 compressed the sleep gap), Wednesday's
-// dinner note retimed, Sunday's sport slot became a fixed Athletic
-// Development session. Calorie/carb targets deliberately unchanged — real
-// energy expenditure for short-burst max-intent work with full recovery
-// between reps isn't obviously higher than the old continuous-effort
-// sessions it replaced, so this wasn't treated as a reason to re-tier fuelling.
+// v23 nutrition rebuild (31 Aug 2026) — full rebuild driven by three real
+// findings, not a cosmetic pass: (1) flat weight (68.5kg, unchanged since
+// June) alongside BF ticking 13%→14% on a plan targeting 4,600-5,100
+// kcal/day — basic energy-balance math (even a conservative 1,000kcal/day
+// overshoot sustained 8 weeks should produce 7-11kg gain) means the old
+// targets never matched reality; new targets are built off an actual
+// Mifflin-St Jeor TDEE estimate (~3,250-3,450kcal) plus a genuine surplus,
+// not the old aspirational number — protein cut 350g→~205g too, since
+// 350g (5.1g/kg) was nearly double the ~150-200g/day ceiling where MPS
+// saturates, confirmed back in the original v3-v5 research. (2) New foods
+// JP now has access to (oysters, extra sardines, beef heart, liver, lungs,
+// brisket) placed with a stated purpose each, funded by trimming the
+// existing beef/egg bloat rather than piled on top — this is also what
+// finally makes oysters viable again (previously excluded because dietary
+// zinc from beef+eggs alone already sat at 37-63mg/day, over the 40mg
+// adult UL — the trim opens real headroom). Cold-pressed pineapple-ginger-
+// turmeric juice added Saturday only (bromelain+gingerol+curcumin, real
+// anti-inflammatory whole-food compounds) — beetroot juice (nitrate,
+// explosivity) keeps every other day since checking JP_TRAINING_PLAN
+// directly confirmed every day except Saturday has genuine sprint/plyo/
+// jump work, not just Mon/Wed/Fri as first assumed. (3) Nuts (Brazil/
+// almond/macadamia) removed entirely from the 10:15 snack — JP reported
+// real gut issues. Honest disclosure, not silently patched over: this
+// reopens three gaps those nuts were specifically added (v9) to close —
+// vitamin E (almonds were the only non-seed-oil source in an animal-first
+// diet; whole-food fallback is now avocado+salmon+squash, projected
+// ~12mg vs the 15mg target, a real but modest residual gap), manganese
+// (macadamia; Saturday's mussels alone cover it that day, other days now
+// run short — low clinical priority, manganese deficiency is rare in
+// practice), and B1/thiamine (already flagged "tightest margin" back in
+// v9 even WITH the nuts). Selenium (Brazil nuts) is NOT a concern without
+// them — sardines/salmon/oysters/eggs/beef already provide well over the
+// 55mcg target from animal sources alone. No supplement added for any of
+// this — JP's explicit standing rule now is whole food only; the vitamin
+// E/manganese/B1 gaps are disclosed and left as a bloodwork-monitoring
+// item, the same "verify, don't guess" pattern already used for zinc/
+// iodine/vitamin A throughout this protocol. Compensation for the ~400kcal
+// nuts removed leans on fat/protein (extra egg at breakfast, more butter
+// on the dinner squash, larger avocado portions) rather than piling more
+// meat back on, consistent with the whole point of the trim.
 const JP_NUTRITION_PLAN = {
-  Monday: { label: 'Push A + Speed Session — full carb', targets: { calories: 5100, protein: 350, carbs: 340, fat: 160 }, meals: [
-    { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
-    { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
-    { time: '12:00', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 100g mixed berries + 80g pineapple; 250ml beetroot juice' },
+  Monday: { label: 'Push A + Speed Session — full carb', targets: { calories: 3550, protein: 205, carbs: 350, fat: 125 }, meals: [
+    { time: '07:45', name: '4 whole eggs (~220g), fried in 10g beef tallow; 120g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
+    { time: '10:15', name: '1 medium raw carrot (~70g); 150g cucumber — no nuts (gut issues)' },
+    { time: '12:00', name: '120g salmon, pan-fried in 5g butter; 1 whole avocado (~140g); 100g mixed berries + 80g pineapple; 250ml beetroot juice' },
     { time: '13:00', name: '1 tbsp raw honey (~21g); 1 banana (~120g); yerba mate (1 mug, ~5g dry leaf/250ml water); taurine 1.5g' },
-    { time: '15:30', name: '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g)' },
-    { time: '16:45', name: '1 medium sweet potato (~200g), roasted in 5g butter; 200ml coconut water' },
+    { time: '15:30', name: '170g beef mince or steak, seared in 5g tallow; 1 whole egg (~55g)' },
+    { time: '16:45', name: '150g sweet potato, roasted in 5g butter; 200ml coconut water' },
     { time: '17:30', name: '1 banana (~120g); 1 tbsp honey (~21g); 1/2 tsp salt (~2.5g) dissolved in 500ml water (pre-Speed Session)' },
-    { time: '19:30', name: '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g) — post-Speed Session, standard dinner (session now ends earlier than Muay Thai did, no need for a lighter version)' },
+    { time: '19:30', name: '180g beef; ~250g butternut squash roasted in 20g butter; 75g avocado; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g)' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
-    { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
+    { time: '21:00', name: '350ml raw milk; 225ml beef bone broth' },
   ] },
-  Tuesday: { label: 'Legs A — highest carb', targets: { calories: 4900, protein: 350, carbs: 340, fat: 160 }, meals: [
-    { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
-    { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
-    { time: '12:00', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 150g mango; 250ml beetroot juice' },
+  Tuesday: { label: 'Legs A + Plyometrics A — highest carb, liver + brisket', targets: { calories: 3550, protein: 205, carbs: 350, fat: 125 }, meals: [
+    { time: '07:45', name: '4 whole eggs (~220g), fried in 10g beef tallow; 120g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
+    { time: '10:15', name: '1 medium raw carrot (~70g); 150g cucumber — no nuts (gut issues)' },
+    { time: '12:00', name: '120g salmon, pan-fried in 5g butter; 1 whole avocado (~140g); 150g mango; 250ml beetroot juice' },
     { time: '13:00', name: '1 tbsp raw honey (~21g); 1 banana (~120g); yerba mate (1 mug, ~5g dry leaf/250ml water); taurine 1.5g' },
-    { time: '15:30', name: '275g beef + 100g liver, seared in 5g tallow; 4 whole eggs (~220g) — folate + copper' },
-    { time: '16:45', name: '1 large sweet potato (~300g), roasted in 5g butter; 200ml coconut water' },
-    { time: '19:00', name: '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 20g Parmigiano Reggiano' },
+    { time: '15:30', name: '110g beef + 100g liver, seared in 5g tallow; 1 whole egg (~55g) — folate + copper' },
+    { time: '16:45', name: '200g sweet potato, roasted in 5g butter; 200ml coconut water' },
+    { time: '19:00', name: '150g brisket (swap-in for beef mince — variety, higher-fat cut); ~250g butternut squash roasted in 20g butter; 75g avocado; 20g Parmigiano Reggiano' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
-    { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
+    { time: '21:00', name: '350ml raw milk; 225ml beef bone broth' },
   ] },
-  Wednesday: { label: 'Pull A + Power Session — matched to Monday\'s fuelling', targets: { calories: 5100, protein: 350, carbs: 340, fat: 160 }, meals: [
-    { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
-    { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
-    { time: '12:00', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 150g pineapple; 250ml beetroot juice' },
+  Wednesday: { label: 'Pull A + Power Session — oysters', targets: { calories: 3550, protein: 205, carbs: 350, fat: 125 }, meals: [
+    { time: '07:45', name: '4 whole eggs (~220g), fried in 10g beef tallow; 120g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
+    { time: '10:15', name: '1 medium raw carrot (~70g); 150g cucumber — no nuts (gut issues)' },
+    { time: '12:00', name: '120g salmon, pan-fried in 5g butter; 1 whole avocado (~140g); 150g pineapple; 250ml beetroot juice' },
     { time: '13:00', name: '1 tbsp raw honey (~21g); 1 banana (~120g); yerba mate (1 mug, ~5g dry leaf/250ml water); taurine 1.5g' },
-    { time: '15:30', name: '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g)' },
-    { time: '16:45', name: '1 medium sweet potato (~200g), roasted in 5g butter; 200ml coconut water' },
+    { time: '15:30', name: '170g beef mince or steak, seared in 5g tallow; 1 whole egg (~55g)' },
+    { time: '16:45', name: '150g sweet potato, roasted in 5g butter; 200ml coconut water' },
     { time: '17:00', name: '1 banana (~120g); 1 tbsp honey (~21g); 1/2 tsp salt (~2.5g) dissolved in 500ml water (pre-Power Session)' },
-    { time: '19:00', name: '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g) — post-Power Session' },
+    { time: '19:00', name: '120g beef + 6 oysters, cooked (grilled/steamed — not raw, infection risk) — zinc; only fits now the daily beef/egg load is trimmed. ~250g butternut squash roasted in 20g butter; 75g avocado; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g)' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
-    { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
+    { time: '21:00', name: '350ml raw milk; 225ml beef bone broth' },
   ] },
-  Thursday: { label: 'Push B — full carb', targets: { calories: 4800, protein: 350, carbs: 320, fat: 160 }, meals: [
-    { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
-    { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
-    { time: '12:00', name: '100g sardines; 1 whole avocado (~150g); 100g watermelon + 80g mango; 250ml beetroot juice' },
+  Thursday: { label: 'Push B + Sprint Protocol — beef heart, extra sardines', targets: { calories: 3550, protein: 205, carbs: 350, fat: 125 }, meals: [
+    { time: '07:45', name: '4 whole eggs (~220g), fried in 10g beef tallow; 120g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
+    { time: '10:15', name: '1 medium raw carrot (~70g); 150g cucumber — no nuts (gut issues)' },
+    { time: '12:00', name: '100g sardines; 1 whole avocado (~140g); 100g watermelon + 80g mango; 250ml beetroot juice' },
     { time: '13:00', name: '1 tbsp raw honey (~21g); 1 banana (~120g); yerba mate (1 mug, ~5g dry leaf/250ml water); taurine 1.5g' },
-    { time: '15:30', name: '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g)' },
-    { time: '16:45', name: '1 medium sweet potato (~200g), roasted in 5g butter; 200ml coconut water' },
-    { time: '19:00', name: '275g beef + 100g beef heart; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 20g Parmigiano Reggiano — CoQ10 + taurine' },
+    { time: '15:30', name: '110g beef + 100g beef heart, seared in 5g tallow; 1 whole egg (~55g) — CoQ10 + taurine' },
+    { time: '16:45', name: '150g sweet potato, roasted in 5g butter; 200ml coconut water' },
+    { time: '19:00', name: '120g beef; ~250g butternut squash roasted in 20g butter; 75g avocado; 20g Parmigiano Reggiano' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
-    { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
+    { time: '21:00', name: '350ml raw milk; 225ml beef bone broth' },
   ] },
-  Friday: { label: 'Legs B — highest carb', targets: { calories: 4900, protein: 350, carbs: 340, fat: 160 }, meals: [
-    { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
-    { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
-    { time: '12:00', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 100g mixed berries + 80g pineapple; 250ml beetroot juice' },
+  Friday: { label: 'Legs B + Plyometrics B — highest carb, liver + brisket', targets: { calories: 3550, protein: 205, carbs: 350, fat: 125 }, meals: [
+    { time: '07:45', name: '4 whole eggs (~220g), fried in 10g beef tallow; 120g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
+    { time: '10:15', name: '1 medium raw carrot (~70g); 150g cucumber — no nuts (gut issues)' },
+    { time: '12:00', name: '120g salmon, pan-fried in 5g butter; 1 whole avocado (~140g); 100g mixed berries + 80g pineapple; 250ml beetroot juice' },
     { time: '13:00', name: '1 tbsp raw honey (~21g); 1 banana (~120g); yerba mate (1 mug, ~5g dry leaf/250ml water); taurine 1.5g' },
-    { time: '15:30', name: '275g beef + 100g liver, seared in 5g tallow; 4 whole eggs (~220g) — folate + copper, 2nd hit' },
-    { time: '16:45', name: '1 large sweet potato (~300g), roasted in 5g butter; 200ml coconut water' },
-    { time: '19:00', name: '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g)' },
+    { time: '15:30', name: '110g beef + 100g liver, seared in 5g tallow; 1 whole egg (~55g) — folate + copper, 2nd hit' },
+    { time: '16:45', name: '200g sweet potato, roasted in 5g butter; 200ml coconut water' },
+    { time: '19:00', name: '180g brisket (swap-in for beef mince); ~250g butternut squash roasted in 20g butter; 75g avocado; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g)' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
-    { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
+    { time: '21:00', name: '350ml raw milk; 225ml beef bone broth' },
   ] },
-  Saturday: { label: 'Pull B — reduced carb', targets: { calories: 4600, protein: 350, carbs: 260, fat: 160 }, meals: [
-    { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
-    { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
-    { time: '12:00', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 150g papaya — no beetroot today' },
+  Saturday: { label: 'Pull B + Zone 2 — recovery day, lungs, anti-inflammatory juice', targets: { calories: 3150, protein: 195, carbs: 270, fat: 115 }, meals: [
+    { time: '07:45', name: '4 whole eggs (~220g), fried in 10g beef tallow; 120g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
+    { time: '10:15', name: '1 medium raw carrot (~70g); 150g cucumber — no nuts (gut issues)' },
+    { time: '12:00', name: '120g salmon, pan-fried in 5g butter; 1 whole avocado (~140g); 150g papaya; 250ml cold-pressed pineapple-ginger-turmeric juice — bromelain + gingerol + curcumin, anti-inflammatory, placed on the one day with no sprint/plyo/jump demand' },
     { time: '13:00', name: '1 banana (~120g); yerba mate (1 mug, ~5g dry leaf/250ml water); taurine 1.5g — no honey' },
-    { time: '15:30', name: '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g)' },
-    { time: '16:45', name: '1 medium sweet potato (~200g), roasted in 5g butter; 200ml coconut water' },
-    { time: '19:00', name: '150g mussels (cooked) + 200g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g); 20g Parmigiano Reggiano' },
+    { time: '15:30', name: '110g beef + 100g lung, seared in 5g tallow; 1 whole egg (~55g) — lean-protein variety, no standout nutrient the diet is missing, included for real dietary diversity' },
+    { time: '16:45', name: '150g sweet potato, roasted in 5g butter; 200ml coconut water' },
+    { time: '19:00', name: '100g mussels (cooked) + 120g beef; ~250g butternut squash roasted in 20g butter; 75g avocado; 20g Parmigiano Reggiano' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
-    { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
+    { time: '21:00', name: '350ml raw milk; 225ml beef bone broth' },
   ] },
-  Sunday: { label: 'Athletic Development — moderate carb', targets: { calories: 4600, protein: 350, carbs: 270, fat: 160 }, meals: [
-    { time: '07:45', name: '6 whole eggs (~330g), fried in 5g beef tallow; 150g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
-    { time: '10:15', name: '1 medium raw carrot (~70g); 10g Brazil nuts (2 nuts); 35g almonds; 20g macadamia' },
+  Sunday: { label: 'Athletic Development — moderate carb, extra sardines', targets: { calories: 3250, protein: 200, carbs: 290, fat: 115 }, meals: [
+    { time: '07:45', name: '4 whole eggs (~220g), fried in 10g beef tallow; 120g potato in 5g butter; 1 banana (~120g); 200ml raw milk; 140ml raw colostrum' },
+    { time: '10:15', name: '1 medium raw carrot (~70g); 150g cucumber — no nuts (gut issues)' },
     { time: '10:45', name: '1 banana (~120g); 1 tbsp honey (~21g) — pre-session' },
-    { time: '13:30', name: '200g salmon, pan-fried in 5g butter; 1 whole avocado (~150g); 150g pineapple — post-session' },
-    { time: '15:30', name: '375g beef mince or steak, seared in 5g tallow; 4 whole eggs (~220g)' },
-    { time: '19:00', name: '375g beef; ~340g butternut squash roasted in 10g butter; 1/2 avocado (~75g)' },
+    { time: '13:30', name: '100g salmon + 100g sardines; 1 whole avocado (~140g); 150g pineapple — post-session' },
+    { time: '15:30', name: '150g beef mince or steak, seared in 5g tallow; 1 whole egg (~55g)' },
+    { time: '19:00', name: '180g beef; ~250g butternut squash roasted in 20g butter; 75g avocado' },
     { time: '20:00', name: '100g raw kefir; ~50g pomegranate seeds' },
-    { time: '21:00', name: '500ml raw milk; 225ml beef bone broth' },
+    { time: '21:00', name: '350ml raw milk; 225ml beef bone broth' },
   ] },
 };
 
@@ -8045,7 +8065,7 @@ function jpRealignSplit(dayName){
 // then behaves like any other user's plan — editable through the app's own
 // swapExercise() flow without this function silently discarding it on the
 // next page load, which unconditional overwriting-every-load would do.
-const JP_PROTOCOL_VERSION = 'v21-mma-removal-athletic-rebuild';
+const JP_PROTOCOL_VERSION = 'v23-nutrition-rebuild-no-nuts';
 
 function applyJPRealProtocol() {
   if (USER?.id !== JP_USER_ID) return;
