@@ -1567,13 +1567,56 @@
       <!-- ══ HORMONE LAB ══ -->
       <div id="hormone-lab-content">
 
+      <!-- Phase 0: real bloodwork vs screening questionnaire fork -->
+      <div id="lab-phase-0" class="lab-phase">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Real bloodwork always beats a screening guess. If you've had blood taken, submit it here for an accurate, data-driven read. No bloodwork yet? Take the ~2 minute screening questionnaire instead.</p>
+        <button class="lab-cta" onclick="bwRenderForm();labShowPhase('bw-entry')" style="margin-bottom:10px">🩸 Submit Bloodwork Results</button>
+        <button class="lab-cta-sec" onclick="renderLabPainGrid();labShowPhase(1)">No bloodwork — take the screening questionnaire</button>
+      </div>
+
+      <!-- Bloodwork entry — a selection covering every marker across the
+           advanced panels (androgen/thyroid/adrenal/metabolic/lipids/iron
+           & FBC/liver/kidney/vitamins/inflammatory/growth), submitted
+           manually. Reference ranges are entered per-marker alongside the
+           value rather than assumed, since different UK labs report
+           different ranges/units for the same marker. -->
+      <div id="lab-phase-bw-entry" class="lab-phase">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:4px;line-height:1.6">Enter whatever your panel actually tested — leave anything you don't have blank. Use the reference range printed on your own results, not a guess, since labs vary.</p>
+        <div style="display:flex;gap:8px;margin:12px 0">
+          <div style="flex:1"><label style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Test date</label><input type="date" id="bw-test-date" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:8px;color:#fff;font-size:13px;margin-top:4px"></div>
+          <div style="flex:1"><label style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">Lab (optional)</label><input type="text" id="bw-lab-name" placeholder="e.g. Medichecks" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:8px;color:#fff;font-size:13px;margin-top:4px"></div>
+        </div>
+        <div id="bw-panels-container"></div>
+        <div class="lab-sticky-foot">
+          <button class="lab-cta" onclick="bwSubmit()" id="bw-submit-btn">Analyse Results →</button>
+        </div>
+      </div>
+
+      <!-- Bloodwork processing -->
+      <div id="lab-phase-bw-processing" class="lab-phase">
+        <div class="lab-processing">
+          <div class="lab-spinner"></div>
+          <div style="font-family:var(--D);font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:8px">Analysing</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.6">Classifying every marker against your own reference ranges, cross-referencing your real training and nutrition data...</div>
+        </div>
+      </div>
+
+      <!-- Bloodwork results + history -->
+      <div id="lab-phase-bw-results" class="lab-phase">
+        <div id="bw-results-content"></div>
+        <div id="bw-history-content" style="margin-top:24px"></div>
+        <button class="lab-cta-sec" onclick="labShowPhase('bw-entry');bwRenderForm()">Submit Another Test</button>
+        <button class="lab-cta-sec" onclick="renderLabPainGrid();labShowPhase(1)" style="margin-top:8px">Take the Screening Questionnaire Instead</button>
+      </div>
+
       <!-- Phase 1: Pain point selection -->
-      <div id="lab-phase-1" class="lab-phase active">
+      <div id="lab-phase-1" class="lab-phase">
         <p style="font-size:13px;color:var(--muted);margin-bottom:4px;line-height:1.6">What are you currently struggling with? Select everything that applies.</p>
         <div class="lab-pain-grid" id="lab-pain-grid"></div>
         <div id="lab-p1-error" style="font-size:12px;color:#f87171;display:none;margin-bottom:8px">Select at least one to continue.</div>
         <div class="lab-sticky-foot">
           <button class="lab-cta" onclick="labPhase1Next()">Start Assessment →</button>
+          <button class="lab-cta-sec" onclick="bwRenderForm();labShowPhase('bw-entry')" style="margin-top:8px">Have bloodwork instead? Submit it →</button>
         </div>
       </div>
 
@@ -1752,6 +1795,7 @@
         <!-- AL Phase 4: Results -->
         <div id="al-phase-4" class="al-phase">
           <div id="al-results-content"></div>
+          <div id="al-history-content" style="margin-top:20px"></div>
           <button class="lab-cta-sec" style="margin-top:8px" onclick="alReset()">New Protocol</button>
         </div>
 
@@ -1940,6 +1984,7 @@
     <!-- Phase 7: Results -->
     <div id="mob-phase-7" class="mob-phase">
       <div id="mob-results-body"></div>
+      <div id="mob-history-content" style="margin-top:20px"></div>
       <button class="mob-add-habits-btn" id="mob-add-habits-btn" onclick="mobAddHabits()">+ Add Mobility Habits to Daily Tracker</button>
       <button class="mob-restart-btn" onclick="mobRestart()">Redo questionnaire</button>
     </div>
@@ -9086,7 +9131,22 @@ function labTimeAgo(isoStr) {
   return `${days} day${days>1?'s':''} ago`;
 }
 
-function initLab() {
+async function initLab() {
+  // Real bloodwork always wins when it exists — a submitted lab result is
+  // strictly more accurate than a lifestyle-inferred likelihood, so check
+  // for it before anything else and short-circuit straight to it.
+  if(USER?.id){
+    try{
+      const { data } = await sb.from('bloodwork_assessments').select('*').eq('user_id',USER.id).order('created_at',{ascending:false}).limit(20);
+      if(data && data.length){
+        BW_STATE.history = data;
+        bwRenderResults(data[0]);
+        bwRenderHistory();
+        labShowPhase('bw-results');
+        return;
+      }
+    }catch(e){ console.error('bloodwork load error (falling through to questionnaire path)', e); }
+  }
   // Restore saved results if available
   if(!HL_STATE.results) {
     const saved = labLoad();
@@ -9121,8 +9181,7 @@ function initLab() {
     checkLabStale();
     return;
   }
-  renderLabPainGrid();
-  labShowPhase(1);
+  labShowPhase(0);
 }
 
 function labBuildProfile() {
@@ -9289,9 +9348,10 @@ function labPhase1Next() {
   renderLabQuestion();
 }
 
+const LAB_PHASE_IDS = [0, 1, 2, 3, 4, 'bw-entry', 'bw-processing', 'bw-results'];
 function labShowPhase(n) {
   HL_STATE.phase = n;
-  [1,2,3,4].forEach(i => {
+  LAB_PHASE_IDS.forEach(i => {
     const el = document.getElementById('lab-phase-'+i);
     if(el) el.classList.toggle('active', i===n);
   });
@@ -9514,6 +9574,246 @@ function renderLabResults(data) {
 }
 
 /* ══════════════════════════════════════════
+   BLOODWORK — real lab results, replaces the questionnaire-guess path
+   whenever they exist. Classification (in_range/low/high/critical) is
+   computed server-side in lib/bloodwork-scoring.js, imported by
+   api/bloodwork-analysis.js — this client never classifies a value
+   itself, same division of responsibility as Hormone Lab's pattern
+   scoring. BW_PANELS below is a display-only duplicate of the marker
+   list (names/units for rendering the entry form) — the actual
+   classification logic lives exactly once, server-side.
+══════════════════════════════════════════ */
+const BW_PANELS = [
+  { key: 'androgen', label: 'Androgen / Reproductive', markers: [
+    { key: 'total_testosterone', name: 'Total Testosterone', unit: 'nmol/L' },
+    { key: 'free_testosterone',  name: 'Free Testosterone',  unit: 'pmol/L' },
+    { key: 'shbg',               name: 'SHBG',               unit: 'nmol/L' },
+    { key: 'lh',                 name: 'LH',                 unit: 'IU/L' },
+    { key: 'fsh',                name: 'FSH',                unit: 'IU/L' },
+    { key: 'oestradiol',         name: 'Oestradiol (E2)',    unit: 'pmol/L' },
+    { key: 'dhea_s',             name: 'DHEA-S',             unit: 'µmol/L' },
+    { key: 'prolactin',          name: 'Prolactin',          unit: 'mIU/L' },
+  ] },
+  { key: 'thyroid', label: 'Thyroid', markers: [
+    { key: 'tsh',            name: 'TSH',                      unit: 'mIU/L' },
+    { key: 'free_t3',        name: 'Free T3',                  unit: 'pmol/L' },
+    { key: 'free_t4',        name: 'Free T4',                  unit: 'pmol/L' },
+    { key: 'reverse_t3',     name: 'Reverse T3',               unit: 'ng/dL' },
+    { key: 'tpo_antibodies', name: 'TPO Antibodies',           unit: 'IU/mL' },
+    { key: 'tg_antibodies',  name: 'Thyroglobulin Antibodies', unit: 'IU/mL' },
+  ] },
+  { key: 'adrenal', label: 'Adrenal / Stress', markers: [
+    { key: 'cortisol_am', name: 'Cortisol (AM)', unit: 'nmol/L' },
+  ] },
+  { key: 'metabolic', label: 'Metabolic', markers: [
+    { key: 'fasting_glucose', name: 'Fasting Glucose', unit: 'mmol/L' },
+    { key: 'fasting_insulin', name: 'Fasting Insulin', unit: 'mIU/L' },
+    { key: 'hba1c',           name: 'HbA1c',           unit: 'mmol/mol' },
+  ] },
+  { key: 'lipids', label: 'Lipids', markers: [
+    { key: 'total_cholesterol',   name: 'Total Cholesterol',   unit: 'mmol/L' },
+    { key: 'ldl',                 name: 'LDL Cholesterol',     unit: 'mmol/L' },
+    { key: 'hdl',                 name: 'HDL Cholesterol',     unit: 'mmol/L' },
+    { key: 'triglycerides',       name: 'Triglycerides',       unit: 'mmol/L' },
+    { key: 'non_hdl_cholesterol', name: 'Non-HDL Cholesterol', unit: 'mmol/L' },
+  ] },
+  { key: 'iron_fbc', label: 'Iron & Full Blood Count', markers: [
+    { key: 'ferritin',               name: 'Ferritin',               unit: 'µg/L' },
+    { key: 'iron',                   name: 'Iron',                   unit: 'µmol/L' },
+    { key: 'tibc',                   name: 'TIBC',                   unit: 'µmol/L' },
+    { key: 'transferrin_saturation', name: 'Transferrin Saturation', unit: '%' },
+    { key: 'haemoglobin',            name: 'Haemoglobin',            unit: 'g/L' },
+    { key: 'haematocrit',            name: 'Haematocrit',            unit: 'L/L' },
+    { key: 'mcv',                    name: 'MCV',                    unit: 'fL' },
+    { key: 'wbc',                    name: 'White Blood Cells',      unit: 'x10^9/L' },
+    { key: 'platelets',              name: 'Platelets',              unit: 'x10^9/L' },
+  ] },
+  { key: 'liver', label: 'Liver Function', markers: [
+    { key: 'alt',       name: 'ALT',       unit: 'U/L' },
+    { key: 'ast',       name: 'AST',       unit: 'U/L' },
+    { key: 'ggt',       name: 'GGT',       unit: 'U/L' },
+    { key: 'alp',       name: 'ALP',       unit: 'U/L' },
+    { key: 'bilirubin', name: 'Bilirubin', unit: 'µmol/L' },
+    { key: 'albumin',   name: 'Albumin',   unit: 'g/L' },
+  ] },
+  { key: 'kidney', label: 'Kidney Function', markers: [
+    { key: 'creatinine', name: 'Creatinine', unit: 'µmol/L' },
+    { key: 'egfr',       name: 'eGFR',       unit: 'mL/min/1.73m²' },
+    { key: 'urea',       name: 'Urea',       unit: 'mmol/L' },
+  ] },
+  { key: 'vitamins', label: 'Vitamins & Minerals', markers: [
+    { key: 'vitamin_d',   name: 'Vitamin D (25-OH)', unit: 'nmol/L' },
+    { key: 'vitamin_b12', name: 'Vitamin B12',       unit: 'pmol/L' },
+    { key: 'folate',      name: 'Folate',            unit: 'µg/L' },
+    { key: 'zinc',        name: 'Zinc',              unit: 'µmol/L' },
+    { key: 'magnesium',   name: 'Magnesium',         unit: 'mmol/L' },
+    { key: 'selenium',    name: 'Selenium',          unit: 'µmol/L' },
+    { key: 'copper',      name: 'Copper',            unit: 'µmol/L' },
+  ] },
+  { key: 'inflammatory', label: 'Inflammatory', markers: [
+    { key: 'crp',          name: 'CRP (hs-CRP)', unit: 'mg/L' },
+    { key: 'homocysteine', name: 'Homocysteine', unit: 'µmol/L' },
+  ] },
+  { key: 'growth', label: 'Growth & Other', markers: [
+    { key: 'igf_1', name: 'IGF-1', unit: 'nmol/L' },
+  ] },
+];
+const BW_MARKER_NAMES = Object.fromEntries(BW_PANELS.flatMap(p => p.markers.map(m => [m.key, m.name])));
+const BW_STATUS_LABEL = { in_range: 'In Range', low: 'Low', high: 'High', critical_low: 'Critical Low', critical_high: 'Critical High' };
+const BW_STATUS_CLASS = { in_range: 'optimal', low: 'sub-optimal', high: 'sub-optimal', critical_low: 'suppressed', critical_high: 'suppressed' };
+
+let BW_STATE = { history: [] };
+
+function bwRenderForm() {
+  const el = document.getElementById('bw-panels-container');
+  if (!el) return;
+  el.innerHTML = BW_PANELS.map(panel => `
+    <div class="section-card" style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">${escHtml(panel.label)}</div>
+      ${panel.markers.map(m => `
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+          <div style="flex:1.5;font-size:12px;color:var(--white)">${escHtml(m.name)}</div>
+          <input type="number" step="any" placeholder="Value" data-bw-key="${m.key}" data-bw-field="value" style="flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:6px;color:#fff;font-size:12px">
+          <input type="text" data-bw-key="${m.key}" data-bw-field="unit" value="${escHtml(m.unit)}" style="flex:0.9;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:6px;color:#fff;font-size:11px">
+          <input type="number" step="any" placeholder="Low" data-bw-key="${m.key}" data-bw-field="refLow" style="flex:0.7;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:6px;color:#fff;font-size:12px">
+          <input type="number" step="any" placeholder="High" data-bw-key="${m.key}" data-bw-field="refHigh" style="flex:0.7;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:6px;color:#fff;font-size:12px">
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function bwCollectMarkers() {
+  const markers = {};
+  document.querySelectorAll('#bw-panels-container [data-bw-key]').forEach(input => {
+    const key = input.dataset.bwKey, field = input.dataset.bwField;
+    markers[key] = markers[key] || {};
+    markers[key][field] = field === 'unit' ? input.value : (input.value === '' ? null : parseFloat(input.value));
+  });
+  // Only keep entries where an actual value was entered — a stray
+  // reference-range number with no value isn't a submission.
+  Object.keys(markers).forEach(k => { if (markers[k].value == null || isNaN(markers[k].value)) delete markers[k]; });
+  return markers;
+}
+
+async function bwSubmit() {
+  const markers = bwCollectMarkers();
+  if (!Object.keys(markers).length) { showToast('Enter at least one marker value'); return; }
+  const testDate = document.getElementById('bw-test-date').value || _localDateStr();
+  const labName = document.getElementById('bw-lab-name').value.trim() || null;
+
+  labShowPhase('bw-processing');
+  try {
+    const headers = await labAuthHeaders();
+    const appData = {
+      currentNutritionPlan: OB.nutritionPlan ? Object.values(OB.nutritionPlan).map(d => d.label).filter(Boolean).join('; ') : null,
+      avgFoodScore: labDataSnapshot().avgFoodScore,
+      currentTrainingPlan: (OB.train?.weeklyPlan || []).filter(d => d.type !== 'rest').map(d => d.day + ' ' + d.sessionName).join('; '),
+      habitStreak: OB.streak_days || null,
+      sleepHrs: OB.habits?.sleep_hrs || '',
+    };
+    const res = await fetch('/api/bloodwork-analysis', { method: 'POST', headers, body: JSON.stringify({ markers, appData }) });
+    const data = await res.json();
+    if (labHandleErrorResponse(res, data)) { labShowPhase('bw-entry'); return; }
+
+    const row = {
+      user_id: USER.id, test_date: testDate, lab_name: labName,
+      engine_version: data.engineVersion || 'v1', markers,
+      flags: data.flags || [], clinical_review: data.clinicalReview || [],
+      narrative: data.narrative || null, narrative_model: data.narrativeModel || null,
+    };
+    if (USER?.id) {
+      sb.from('bloodwork_assessments').insert(row).then(() => {}, e => console.error('bloodwork save error', e));
+    }
+    const withDate = { ...row, created_at: new Date().toISOString() };
+    BW_STATE.history.unshift(withDate);
+    bwRenderResults(withDate);
+    bwRenderHistory();
+    labShowPhase('bw-results');
+  } catch (e) {
+    console.error('bloodwork submit error', e);
+    showToast('Something went wrong — try again');
+    labShowPhase('bw-entry');
+  }
+}
+
+function bwRenderResults(row) {
+  const el = document.getElementById('bw-results-content');
+  if (!el) return;
+  const flags = row.flags || [];
+  const clinicalFlags = row.narrative?.clinical_flags || [];
+  const guidance = row.narrative?.in_scope_guidance || {};
+  const summary = row.narrative?.summary || '';
+
+  const clinicalHtml = clinicalFlags.length ? `
+    <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);padding:14px 16px;margin-bottom:18px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#f87171;margin-bottom:8px">⚠ Needs a doctor, not a diet change</div>
+      ${clinicalFlags.map(c => `<div style="font-size:12px;color:var(--white);margin-bottom:8px"><strong>${escHtml(c.marker_or_pattern)}</strong> — ${escHtml(c.why)}</div>`).join('')}
+    </div>` : '';
+
+  const markerHtml = flags.map(f => `
+    <div class="hormone-card">
+      <div class="hormone-name">${escHtml(BW_MARKER_NAMES[f.marker] || f.marker)}</div>
+      <div class="hormone-val ${BW_STATUS_CLASS[f.status] || 'sub-optimal'}">${escHtml(BW_STATUS_LABEL[f.status] || f.status)}</div>
+      <div class="hormone-status ${BW_STATUS_CLASS[f.status] || 'sub-optimal'}">${f.value}${f.unit ? ' ' + escHtml(f.unit) : ''} (range ${f.refLow}–${f.refHigh})</div>
+    </div>`).join('');
+
+  const GUIDANCE_SECTIONS = [
+    { key: 'nutrition', label: '🥩 Nutrition' },
+    { key: 'training',  label: '💪 Training' },
+    { key: 'sleep',     label: '🌙 Sleep' },
+    { key: 'testing',   label: '🔬 Worth Retesting' },
+  ];
+  const guidanceHtml = GUIDANCE_SECTIONS.map(s => {
+    const items = guidance[s.key] || [];
+    if (!items.length) return '';
+    return `<div class="protocol-section">
+      <div class="protocol-hdr" onclick="labToggleProtocol(this)">
+        <div class="protocol-hdr-title">${s.label}</div>
+        <span class="protocol-hdr-caret" style="transform:rotate(180deg)">▾</span>
+      </div>
+      <div class="protocol-body open">${items.map(i => `<div class="protocol-item"><div class="protocol-dot"></div><div>${escHtml(i)}</div></div>`).join('')}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="sh-label" style="margin-bottom:6px">Bloodwork Results${row.test_date ? ' — ' + escHtml(row.test_date) : ''}${row.lab_name ? ' · ' + escHtml(row.lab_name) : ''}</div>
+    ${summary ? `<div class="lab-summary">${escHtml(summary)}</div>` : ''}
+    ${clinicalHtml}
+    ${markerHtml ? `<div class="hormone-grid">${markerHtml}</div>` : ''}
+    <div style="margin-top:20px">
+      ${guidanceHtml || '<div style="font-size:12px;color:var(--dim)">No lifestyle-modifiable findings flagged — markers are either in range or already addressed by your current protocol.</div>'}
+    </div>`;
+}
+
+function bwRenderHistory() {
+  const el = document.getElementById('bw-history-content');
+  if (!el) return;
+  if (BW_STATE.history.length <= 1) { el.innerHTML = ''; return; }
+  const past = BW_STATE.history.slice(1);
+  el.innerHTML = `
+    <div class="sh-label" style="margin-bottom:10px">Previous Tests — track changes over time</div>
+    ${past.map((row, i) => {
+      const outOfRange = (row.flags || []).filter(f => f.status !== 'in_range').length;
+      return `<div class="section-card" style="margin-bottom:8px;cursor:pointer" onclick="bwShowPastResult(${i + 1})">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;font-weight:700;color:var(--white)">${escHtml(row.test_date)}</div>
+          <div style="font-size:11px;color:var(--dim)">${escHtml(row.lab_name || '')}</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${outOfRange} marker${outOfRange===1?'':'s'} outside range</div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function bwShowPastResult(idx) {
+  const row = BW_STATE.history[idx];
+  if (!row) return;
+  bwRenderResults(row);
+  document.getElementById('bw-results-content')?.scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ══════════════════════════════════════════
    LAB SWITCHER
 ══════════════════════════════════════════ */
 function switchLabType(type) {
@@ -9712,7 +10012,7 @@ function renderMilestones() {
 /* ══════════════════════════════════════════
    ATHLETE LAB
 ══════════════════════════════════════════ */
-let AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null, position:null, level:null, weaknesses:[] };
+let AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null, position:null, level:null, weaknesses:[], history:[] };
 
 function alStorageKey() { return 'jpt_athlete_lab_'+(USER?.id||'guest'); }
 function alLoadSaved() { try { const r=localStorage.getItem(alStorageKey()); return r?JSON.parse(r):null; } catch(e){return null;} }
@@ -9723,6 +10023,7 @@ function initAthleteLab() {
   if(saved?.results) {
     AL_STATE = { ...AL_STATE, ...saved };
     alRenderResults(AL_STATE.results);
+    alLoadHistory();
     alShowPhase(4);
     return;
   }
@@ -9946,12 +10247,60 @@ async function alSubmit() {
     AL_STATE.results = data;
     AL_STATE.savedAt = new Date().toISOString();
     alSave(AL_STATE);
+    // Real table, not just localStorage — a browser-local blob meant the
+    // previous result was gone the instant a new one was generated, with
+    // no way to compare protocols over time. See migrations/0016.
+    if(USER?.id){
+      sb.from('athlete_lab_assessments').insert({
+        user_id: USER.id,
+        input: { sports: AL_STATE.sports, goals: AL_STATE.goals, phase: AL_STATE.phase, frequency: AL_STATE.frequency, experience: AL_STATE.experience, position: AL_STATE.position, level: AL_STATE.level, weaknesses: AL_STATE.weaknesses||[], notes },
+        result: data,
+        result_model: 'claude-haiku-4-5-20251001',
+      }).then(()=>{}, e=>console.error('athlete lab save error', e));
+    }
     alRenderResults(data);
+    await alLoadHistory();
     alShowPhase(4);
   } catch(e) {
     showToast('Timed out — try again');
     alShowPhase(2);
   }
+}
+
+async function alLoadHistory(){
+  if(!USER?.id) return;
+  try{
+    const { data } = await sb.from('athlete_lab_assessments').select('*').eq('user_id',USER.id).order('created_at',{ascending:false}).limit(20);
+    AL_STATE.history = data || [];
+    alRenderHistory();
+  }catch(e){ console.error('athlete lab history load error', e); }
+}
+
+function alRenderHistory(){
+  const el = document.getElementById('al-history-content');
+  if(!el) return;
+  const past = (AL_STATE.history||[]).slice(1); // first entry is the one already shown above
+  if(!past.length){ el.innerHTML=''; return; }
+  el.innerHTML = `
+    <div class="sh-label" style="margin-bottom:10px">Previous Protocols</div>
+    ${past.map((row,i) => {
+      const sport = row.input?.sports?.map(s=>AL_SPORT_LABELS[s]||s).join(' + ') || 'Athlete Lab';
+      const date = row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+      return `<div class="section-card" style="margin-bottom:8px;cursor:pointer" onclick="alShowPastResult(${i+1})">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;font-weight:700;color:var(--white)">${escHtml(sport)}</div>
+          <div style="font-size:11px;color:var(--dim)">${escHtml(date)}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function alShowPastResult(idx){
+  const row = (AL_STATE.history||[])[idx];
+  if(!row?.result) return;
+  alRenderResults(row.result);
+  document.getElementById('al-results-content')?.scrollIntoView({behavior:'smooth'});
 }
 
 function alRenderResults(data) {
@@ -10007,7 +10356,7 @@ function alRenderResults(data) {
 }
 
 function alReset() {
-  AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null, position:null, level:null, weaknesses:[] };
+  AL_STATE = { sports:[], goals:[], phase:null, frequency:null, experience:null, notes:'', results:null, savedAt:null, position:null, level:null, weaknesses:[], history:AL_STATE.history||[] };
   try { localStorage.removeItem(alStorageKey()); } catch(e) {}
   document.querySelectorAll('#al-sport-chips .al-chip, #al-goal-chips .al-chip, #al-season-chips .al-chip, #al-freq-chips .al-chip, #al-exp-chips .al-chip, #al-position-chips .al-chip, #al-level-chips .al-chip, #al-weakness-chips .al-chip').forEach(b=>b.classList.remove('sel'));
   const ta = document.getElementById('al-notes');
@@ -11322,7 +11671,7 @@ let MOB_STATE = {
   goals: [], problems: [], posture: [],
   desk: '8+', time: '10', pref: 'morning',
   growing: 'no', flex: 'average', injuries: '',
-  results: null
+  results: null, history: []
 };
 
 function mobToggleChip(btn) {
@@ -11386,6 +11735,10 @@ async function mobRunAnalysis() {
     OB.mobility = { state: MOB_STATE, results: data, ts: Date.now() };
     localStorage.setItem('jpt_ob', JSON.stringify(OB));
     saveOB().catch(() => {});
+    mobSaveAssessment(MOB_STATE, data);
+    MOB_STATE.history = MOB_STATE.history || [];
+    MOB_STATE.history.unshift({ state: MOB_STATE, results: data, created_at: new Date().toISOString() });
+    mobRenderHistory();
     mobRenderResults(data);
     mobShowPhase(7);
   } catch(e) {
@@ -11395,6 +11748,10 @@ async function mobRunAnalysis() {
     OB.mobility = { state: MOB_STATE, results: data, ts: Date.now() };
     try { localStorage.setItem('jpt_ob', JSON.stringify(OB)); } catch(_) {}
     saveOB().catch(() => {});
+    mobSaveAssessment(MOB_STATE, data);
+    MOB_STATE.history = MOB_STATE.history || [];
+    MOB_STATE.history.unshift({ state: MOB_STATE, results: data, created_at: new Date().toISOString() });
+    mobRenderHistory();
     mobRenderResults(data);
     mobShowPhase(7);
     showToast('Protocol ready');
@@ -11540,7 +11897,7 @@ async function mobAddHabits() {
 }
 
 function mobRestart() {
-  MOB_STATE = { goals:[], problems:[], posture:[], desk:'8+', time:'10', pref:'morning', growing:'no', flex:'average', injuries:'', results:null };
+  MOB_STATE = { goals:[], problems:[], posture:[], desk:'8+', time:'10', pref:'morning', growing:'no', flex:'average', injuries:'', results:null, history:MOB_STATE.history||[] };
   // Reset all chip selections
   document.querySelectorAll('#pane-move .mob-chip').forEach(c => {
     const defaultSel = ['8+','10','morning','no','average'].includes(c.dataset.val);
@@ -11565,6 +11922,7 @@ function initMove() {
     if(valid) {
       MOB_STATE = { ...MOB_STATE, ...((OB.mobility && OB.mobility.state) || {}), results: saved };
       mobRenderResults(saved);
+      mobLoadHistory();
       mobShowPhase(7);
     } else {
       mobShowPhase(1);
@@ -11575,6 +11933,55 @@ function initMove() {
   // Reset scroll so the top of the pane is always visible on entry.
   const c = document.getElementById('content');
   if(c) c.scrollTop = 0;
+}
+
+// Real table, not just the OB.mobility blob it lives alongside — a fire-
+// and-forget write so a save failure never blocks the user seeing their
+// just-generated protocol (mobRenderResults already ran before this is
+// called).
+function mobSaveAssessment(state, results){
+  if(!USER?.id) return;
+  sb.from('mobility_assessments').insert({
+    user_id: USER.id,
+    state: state || {},
+    results: results || null,
+  }).then(()=>{}, e=>console.error('mobility assessment save error', e));
+}
+
+async function mobLoadHistory(){
+  if(!USER?.id) return;
+  try{
+    const { data } = await sb.from('mobility_assessments').select('*').eq('user_id',USER.id).order('created_at',{ascending:false}).limit(20);
+    MOB_STATE.history = data || [];
+    mobRenderHistory();
+  }catch(e){ console.error('mobility history load error', e); }
+}
+
+function mobRenderHistory(){
+  const el = document.getElementById('mob-history-content');
+  if(!el) return;
+  const past = (MOB_STATE.history||[]).slice(1); // first entry is the one already shown above
+  if(!past.length){ el.innerHTML=''; return; }
+  el.innerHTML = `
+    <div class="sh-label" style="margin-bottom:10px">Previous Assessments</div>
+    ${past.map((row,i) => {
+      const date = row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+      const goals = (row.state?.goals||[]).join(', ') || 'Mobility assessment';
+      return `<div class="section-card" style="margin-bottom:8px;cursor:pointer" onclick="mobShowPastResult(${i+1})">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;font-weight:700;color:var(--white)">${escHtml(goals)}</div>
+          <div style="font-size:11px;color:var(--dim)">${escHtml(date)}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function mobShowPastResult(idx){
+  const row = (MOB_STATE.history||[])[idx];
+  if(!row?.results) return;
+  mobRenderResults(row.results);
+  document.getElementById('mob-results-body')?.scrollIntoView({behavior:'smooth'});
 }
 
 /* ── ADMIN SELF-APPROVE ── */
