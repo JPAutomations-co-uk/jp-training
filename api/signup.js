@@ -51,7 +51,6 @@ export default async function handler(req) {
       id: userId,
       display_name: name,
       status: 'pending',
-      onboarding_completed: false,
     }),
   })
 
