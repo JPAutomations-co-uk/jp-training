@@ -73,7 +73,7 @@ export default async function handler(req) {
 
     // Score badge
     h('div', { display: 'flex', flexDirection: 'row', alignItems: 'baseline', marginTop: 36 }, [
-      h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 180, color: badgeColor, lineHeight: 1 }, score != null ? String(score) : '—'),
+      h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 180, color: badgeColor, lineHeight: 1 }, score != null ? String(score) : '-'),
       score != null ? h('span', { fontFamily: 'Barlow Condensed', fontWeight: 700, fontSize: 48, color: COLOR.dim, marginLeft: 12 }, '/10') : null,
     ].filter(Boolean)),
 
