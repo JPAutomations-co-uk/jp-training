@@ -8002,13 +8002,85 @@ function renderMoveSportPanel(){
   `;
 }
 
-const JP_MOVE_RESULTS = {
-  summary: 'Your day-specific static stretching still lives in the Train tab, matched to whatever session you\'re doing. This page covers what stays constant regardless of the day — daily posture correction, daily walking, the explosive-warm-up injury-prevention block, a real yoga/NSDR option, Sprint Day\'s mobility, and the honest version of what actually moves your height goal.',
-  key_focus: 'The daily Postural Protocol is the one item here with a real, measurable payoff (1-3cm of functional height from correcting compressed posture) — everything else is either injury-prevention, baseline movement, or an honest account of what is and isn\'t actually driving the height goal.',
-  morning_routine: [
-    { name: 'Morning Mobility Block', duration: '~10 min, right after wake, before breakfast', how_to: 'Dead hangs 3×45-60s → wall slides 2×10 → band pull-aparts 2×15 → hip flexor hold 90s each side → dead bug 2×8.', why: 'Posture correction + core stability, done before any axial loading (discs are more hydrated/vulnerable to flexion-load injury right after sleep — nothing here loads the spine under bodyweight-plus). Honest note: dead hangs are decompression/comfort, not a height-growth mechanism.', habitKey:'custom_morning_mobility' },
-    { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your Upper/Lower/Sprint days don\'t otherwise cover.' },
-  ],
+// v28 (1 Sep 2026) — morning/evening now rotate by day, like a gym split,
+// but ONLY the added-focus layer. The core items (hip flexor hold + dead
+// bug in the morning; hip flexor lunge + thoracic extension + chin tuck
+// in the evening) stay daily and non-negotiable — these are the ones with
+// a real evidenced 4-8 week daily-consistency requirement for the actual
+// structural adaptation (the 1-3cm functional height payoff). Splitting
+// THOSE across days the way a gym split works would undermine the exact
+// mechanism that makes them effective — so the rotation lives entirely in
+// a second, additional layer tied to what's being trained that day
+// (upper-body days get chest/lat focus, leg/plyo days get hip/ankle/
+// hamstring focus, Sunday — most time, lowest fatigue — gets the deepest
+// combined session).
+const JP_MORNING_ROTATING = {
+  Monday:    { label: 'Chest/anterior shoulder focus', items: [
+    { name: 'Doorway Pec Stretch', sets_reps: '2 × 30 sec' },
+    { name: 'Wall Slides', sets_reps: '2 × 10 reps' },
+  ] },
+  Tuesday:   { label: 'Ankle + hip rotation focus', items: [
+    { name: 'Calf/Soleus Wall Stretch', sets_reps: '2 × 30 sec each side' },
+    { name: 'Figure-4 Hip Stretch', sets_reps: '2 × 30 sec each side' },
+  ] },
+  Wednesday: { label: 'Lats/rear delt focus', items: [
+    { name: 'Cross-Body Rear Delt Stretch', sets_reps: '2 × 30 sec' },
+    { name: 'Band Pull-Aparts', sets_reps: '2 × 15 reps' },
+  ] },
+  Thursday:  { label: 'Quads + ankle mobility focus', items: [
+    { name: 'Standing Quad Stretch', sets_reps: '2 × 30 sec each side' },
+    { name: 'Ankle Circles', sets_reps: '10 each direction' },
+  ] },
+  Friday:    { label: 'Hamstrings/glutes focus', items: [
+    { name: 'Standing Hamstring Stretch', sets_reps: '2 × 30 sec each side' },
+    { name: 'Glute Figure-4', sets_reps: '2 × 30 sec each side' },
+  ] },
+  Saturday:  { label: 'Gentle full-body reset', items: [
+    { name: 'Cat-Cow', sets_reps: '2 × 10 reps' },
+    { name: 'Child\'s Pose', sets_reps: '60 sec' },
+  ] },
+  Sunday:    { label: 'Deepest session — most time available', items: [
+    { name: 'Dead Hang', sets_reps: '3 × 45-60 sec' },
+    { name: 'Thread-the-Needle Thoracic Rotation', sets_reps: '2 × 8 each side' },
+  ] },
+};
+const JP_EVENING_ROTATING = {
+  Monday:    { label: 'Chest/anterior shoulder focus', items: [
+    { name: 'Doorway Pec Stretch', sets_reps: '2 × 45 sec' },
+    { name: 'Wall Slide', sets_reps: '2 × 15 reps' },
+  ] },
+  Tuesday:   { label: 'Deep hip flexor + ankle focus', items: [
+    { name: 'Couch Stretch', sets_reps: '2 × 45 sec each side' },
+    { name: 'Ankle Dorsiflexion Wall Drill', sets_reps: '2 × 10 reps' },
+  ] },
+  Wednesday: { label: 'Lats/rear delt focus', items: [
+    { name: 'Lat Overhead Stretch', sets_reps: '2 × 45 sec' },
+    { name: 'Cross-Body Rear Delt Stretch', sets_reps: '2 × 45 sec' },
+  ] },
+  Thursday:  { label: 'Deep glute + calf focus', items: [
+    { name: 'Pigeon Pose', sets_reps: '2 × 45 sec each side' },
+    { name: 'Standing Calf Stretch', sets_reps: '2 × 45 sec each side' },
+  ] },
+  Friday:    { label: 'Hamstrings/glutes focus', items: [
+    { name: 'Lying Hamstring Stretch', sets_reps: '2 × 45 sec each side' },
+    { name: 'Seated Figure-4', sets_reps: '2 × 45 sec each side' },
+  ] },
+  // Saturday's rotating slot is deliberately empty — Yoga Flow/NSDR
+  // (below, every day) already serves as that day's full integrative
+  // session, a second addition would be redundant.
+  Saturday:  { label: 'Full integrative flow — covered by Yoga Flow/NSDR below, no separate addition needed', items: [] },
+  Sunday:    { label: 'Full-body deep flush — most time, lowest fatigue', items: [
+    { name: 'Doorway Pec Stretch', sets_reps: '60 sec' },
+    { name: 'Couch Stretch', sets_reps: '60 sec each side' },
+    { name: 'Lat Overhead Stretch', sets_reps: '60 sec' },
+    { name: 'Pigeon Pose', sets_reps: '60 sec each side' },
+    { name: 'Lying Hamstring Stretch', sets_reps: '60 sec each side' },
+  ] },
+};
+
+const JP_MOVE_RESULTS_BASE = {
+  summary: 'Morning and evening both rotate by day now — a second, added focus layered on top of the two non-negotiable daily items (hip flexor hold + dead bug in the morning, the full Postural Protocol in the evening), tied to whatever you\'re training that day. The core items stay daily because they need consistent repetition to actually produce the structural adaptation; the rotation is what gives you real variety without touching that.',
+  key_focus: 'The daily Postural Protocol is the one item here with a real, measurable payoff (1-3cm of functional height from correcting compressed posture) — everything else is either injury-prevention, baseline movement, day-specific variety, or an honest account of what is and isn\'t actually driving the height goal.',
   desk_breaks: [],
   // PNF removed for now — was pre-Speed/Power-Session hip mobility, and
   // those sessions no longer exist (v24 training rebuild). Will come back
@@ -8016,10 +8088,6 @@ const JP_MOVE_RESULTS = {
   // PNF's actual value is kick height/hip mobility for combat sport, not
   // a generic addition to slot in without a session it's actually prepping
   // for.
-  evening_routine: [
-    { name: 'Yoga Flow', duration: '10-15 min, evening — real content, not a placeholder', how_to: 'Cat-cow (10 reps) → downward dog (45 sec) → low lunge each side (45 sec) → pigeon pose each side (60 sec) → seated forward fold (60 sec) → supine spinal twist each side (45 sec).', why: 'Hip-opening and spinal mobility sequence, directly relevant to kick height and general flexibility goals — you said you wanted to explore this further, this is the first real routine rather than a vague "NSDR or yoga" placeholder.', habitKey:'custom_nsdr_yoga' },
-    { name: 'NSDR / Yoga Nidra (alternative to the flow above)', duration: '10-20 min', how_to: 'Guided body-scan audio (search "NSDR" or "Yoga Nidra" — Huberman\'s or any 10-20 min guided track works), lying still, eyes closed.', why: 'Real, evidenced dopamine reset (Kjaer 2002, +65%) and nervous-system recovery — use this OR the yoga flow above, not required to do both.', habitKey:'custom_nsdr_yoga' },
-  ],
   posture_corrections: [
     { name: 'Hip Flexor Lunge Stretch', sets_reps: '2 × 45 sec each side', how_to: 'Kneeling lunge position, rear knee down, drive the hips forward while staying upright.', why: 'Anterior pelvic tilt correction.', priority: 'High' },
     { name: 'Thoracic Extension Over Foam Roller', sets_reps: '1 × 2 min', how_to: 'Roller placed under the mid-back (T4-T12), arms crossed over the chest, extend gently over the roller.', why: 'Kyphosis correction.', priority: 'High' },
@@ -8043,6 +8111,37 @@ const JP_MOVE_RESULTS = {
   ],
   habits_to_add: [],
 };
+
+// Builds the day-aware Move results — morning_routine/evening_routine are
+// computed fresh from the effective day name (JP's rolling split, not the
+// real calendar weekday), everything else comes from the static base.
+// Called at every seed/render site instead of using a plain constant, so
+// "today's focus" is always actually today's, not whatever day the page
+// happened to load on.
+function buildJPMoveResults(){
+  const dayName = effectiveTodayName();
+  const amRot = JP_MORNING_ROTATING[dayName] || JP_MORNING_ROTATING.Monday;
+  const pmRot = JP_EVENING_ROTATING[dayName] || JP_EVENING_ROTATING.Monday;
+
+  const morning_routine = [
+    { name: 'Morning Mobility Core', duration: '~5 min, right after wake, before breakfast', how_to: 'Hip flexor hold 90s each side → dead bug 2×8.', why: 'The two non-negotiable daily items — anterior pelvic tilt correction + core stability — done before any axial loading (discs are more hydrated/vulnerable to flexion-load injury right after sleep). Same every day regardless of the training split, because this is the one that needs daily consistency to actually work.', habitKey:'custom_morning_mobility' },
+    { name: `Today's Focus — ${amRot.label}`, duration: '~5 min', how_to: amRot.items.length ? amRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → ') : 'No extra focus today.', why: 'Rotates by day, tied to what you\'re training — same logic as a gym split, applied to mobility instead of muscle groups.' },
+    { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your Upper/Lower/Sprint days don\'t otherwise cover.' },
+  ];
+
+  const evening_routine = [
+    { name: 'Postural Protocol (core, non-negotiable)', duration: '10 min, evening', how_to: 'Hip flexor lunge stretch 2×45s each side → thoracic extension over foam roller 1×2min → chin tuck 2×10 reps, 5s hold.', why: 'The one item in this whole protocol with a real, measured payoff — 1-3cm of functional height from correcting compressed posture. Needs daily consistency to hit the 4-8 week structural adaptation window, which is exactly why this doesn\'t rotate with the rest.', habitKey:'custom_postural_protocol' },
+  ];
+  if (pmRot.items.length) {
+    evening_routine.push({ name: `Today's Focus — ${pmRot.label}`, duration: '~5-8 min', how_to: pmRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → '), why: 'Rotates by day, tied to what you\'re training.' });
+  }
+  evening_routine.push(
+    { name: 'Yoga Flow', duration: '10-15 min, evening — real content, not a placeholder', how_to: 'Cat-cow (10 reps) → downward dog (45 sec) → low lunge each side (45 sec) → pigeon pose each side (60 sec) → seated forward fold (60 sec) → supine spinal twist each side (45 sec).', why: 'Hip-opening and spinal mobility sequence, directly relevant to kick height and general flexibility goals.', habitKey:'custom_nsdr_yoga' },
+    { name: 'NSDR / Yoga Nidra (alternative to the flow above)', duration: '10-20 min', how_to: 'Guided body-scan audio (search "NSDR" or "Yoga Nidra" — Huberman\'s or any 10-20 min guided track works), lying still, eyes closed.', why: 'Real, evidenced dopamine reset (Kjaer 2002, +65%) and nervous-system recovery — use this OR the yoga flow above, not required to do both.', habitKey:'custom_nsdr_yoga' }
+  );
+
+  return { ...JP_MOVE_RESULTS_BASE, morning_routine, evening_routine };
+}
 
 // Small inline checkbox that writes to the exact same habit_log entry as the
 // Habits tab — completing mobility from right here (where the session lives)
@@ -8237,7 +8336,7 @@ function jpRealignSplit(dayName){
 // then behaves like any other user's plan — editable through the app's own
 // swapExercise() flow without this function silently discarding it on the
 // next page load, which unconditional overwriting-every-load would do.
-const JP_PROTOCOL_VERSION = 'v27-precise-cooking-fats';
+const JP_PROTOCOL_VERSION = 'v28-mobility-day-split';
 
 function applyJPRealProtocol() {
   if (USER?.id !== JP_USER_ID) return;
@@ -8275,7 +8374,7 @@ function applyJPRealProtocol() {
   // this would silently overwrite a deliberate "Redo questionnaire" result
   // on the very next reload.
   if (OB._moveResultsVersion !== JP_PROTOCOL_VERSION) {
-    OB.mobility = { state: null, results: JP_MOVE_RESULTS, ts: Date.now() };
+    OB.mobility = { state: null, results: buildJPMoveResults(), ts: Date.now() };
     OB._moveResultsVersion = JP_PROTOCOL_VERSION;
   }
 
@@ -8291,12 +8390,12 @@ function applyJPRealProtocol() {
   // Monday's slot lands on this cycle," not calendar Monday specifically.
   const JP_CUSTOM_HABITS = [
     { key: 'make_bed',         name: 'Make Bed / Tidy Room',        desc: 'One fully-finished task before anything else — real behavioural-science basis (keystone habit: momentum + lower activation energy for the rest of the day), not tidiness for its own sake. First 5 min after waking.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:false },
-    { key: 'morning_mobility', name: 'Morning Mobility Block',      desc: 'Dead hangs 3×45-60s, wall slides 2×10, band pull-aparts 2×15, hip flexor hold 90s each side, dead bug 2×8 — ~10 min, right after wake, before breakfast and before any axial loading. Posture correction + core stability for injury prevention. Honest note: dead hangs are spinal decompression/comfort, not a height-growth mechanism — don\'t expect stature from them.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:true },
+    { key: 'morning_mobility', name: 'Morning Mobility Block',      desc: 'Hip flexor hold 90s each side + dead bug 2×8 (daily core, before any axial loading) plus a rotating day-specific focus tied to what you\'re training — see the Move tab for today\'s exact focus. ~10 min, right after wake, before breakfast.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:true },
     { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:true },
     { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:false },
     { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Tuesday (Lower A plyo), Thursday (Sprint Day), Friday (Lower B plyo).', days: ['Tuesday','Thursday','Friday'], time:'Pre-Training', priority:true },
     { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: JP_SPLIT_DAY_NAMES, time:'Post-Training', priority:false },
-    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, cat-cow, wall slides, chin tucks, child\'s pose — 10 min, evening. Real 1-3cm functional height payoff, needs daily consistency to work.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:true },
+    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, chin tucks — 10 min, evening, same every day (real 1-3cm functional height payoff, needs daily consistency to work) — plus a rotating day-specific focus on top, see the Move tab for today\'s exact addition.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:true },
     { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: JP_SPLIT_DAY_NAMES, time:'Post-Training', priority:true },
     { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
     { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
@@ -11935,6 +12034,20 @@ function mobRestart() {
 }
 
 function initMove() {
+  // JP-gated: always compute fresh rather than render whatever was saved
+  // at the last protocol-version bump — "Today's Focus" has to reflect
+  // the actual current day, not whichever day happened to be live when
+  // applyJPRealProtocol() last seeded OB.mobility.
+  if (USER?.id === JP_USER_ID) {
+    const results = buildJPMoveResults();
+    MOB_STATE = { ...MOB_STATE, results };
+    mobRenderResults(results);
+    mobLoadHistory();
+    mobShowPhase(7);
+    const c = document.getElementById('content');
+    if (c) c.scrollTop = 0;
+    return;
+  }
   // Guarantee the pane is never left blank: show saved results only if they're
   // valid, otherwise always fall back to the questionnaire (phase 1).
   try {
