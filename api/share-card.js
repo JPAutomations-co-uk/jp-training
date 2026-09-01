@@ -71,11 +71,19 @@ export default async function handler(req) {
       h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 34, color: COLOR.teal, textTransform: 'uppercase', letterSpacing: 1 }, 'Training'),
     ]),
 
-    // Score badge
-    h('div', { display: 'flex', flexDirection: 'row', alignItems: 'baseline', marginTop: 36 }, [
-      h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 180, color: badgeColor, lineHeight: 1 }, score != null ? String(score) : '-'),
-      score != null ? h('span', { fontFamily: 'Barlow Condensed', fontWeight: 700, fontSize: 48, color: COLOR.dim, marginLeft: 12 }, '/10') : null,
-    ].filter(Boolean)),
+    // Score badge — unrated meals get a text label at a smaller size
+    // instead of a numeral placeholder character: a "-" or similar single
+    // glyph at 180px in Barlow Condensed Black renders as a solid
+    // rectangle, not a recognizable dash (confirmed via a real render),
+    // so it doesn't communicate "no score" the way text does.
+    score != null
+      ? h('div', { display: 'flex', flexDirection: 'row', alignItems: 'baseline', marginTop: 36 }, [
+          h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 180, color: badgeColor, lineHeight: 1 }, String(score)),
+          h('span', { fontFamily: 'Barlow Condensed', fontWeight: 700, fontSize: 48, color: COLOR.dim, marginLeft: 12 }, '/10'),
+        ])
+      : h('div', { display: 'flex', alignItems: 'center', marginTop: 36, height: 180 }, [
+          h('span', { fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 56, color: COLOR.dim, textTransform: 'uppercase', letterSpacing: 1 }, 'Not yet rated'),
+        ]),
 
     // Headline
     h('div', {
