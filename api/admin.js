@@ -14,7 +14,7 @@ export const config = { runtime: 'edge' }
 // wipe path now needs a second, exact confirmation string on top
 // of the secret so a stray/guessed request can't trigger it by
 // accident. Set the secret via: vercel env add ADMIN_SECRET
-const SUPA_URL = 'https://uzzcvrduoswjsrvuopgv.supabase.co'
+const SUPA_URL = 'https://xmynwdyadrwuvzdclvfh.supabase.co'
 
 export default async function handler(req) {
   const url = new URL(req.url)

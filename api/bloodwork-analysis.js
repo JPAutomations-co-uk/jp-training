@@ -5,8 +5,8 @@ import { scoreBloodwork, MARKER_NAMES } from '../lib/bloodwork-scoring.js'
 // Same Supabase project as app.html — SUPA_URL and the anon key are public
 // values already shipped client-side, safe to duplicate here rather than
 // invent a new secret-passing mechanism (same note as hormone-lab.js).
-const SUPA_URL = 'https://uzzcvrduoswjsrvuopgv.supabase.co'
-const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6emN2cmR1b3N3anNydnVvcGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDQyNDcsImV4cCI6MjA5NzUyMDI0N30.5tD1xhZdSJaZFnNWfDXozPsvHceeqHl682pClUppUFo'
+const SUPA_URL = 'https://xmynwdyadrwuvzdclvfh.supabase.co'
+const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteW53ZHlhZHJ3dXZ6ZGNsdmZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxODMyOTIsImV4cCI6MjEwMzc1OTI5Mn0.o8_hRTxRwBD3bbiBAmeIDcMbCEPhiWqHV_zUrb6_j-A'
 
 const RATE_LIMIT_PER_HOUR = 8
 

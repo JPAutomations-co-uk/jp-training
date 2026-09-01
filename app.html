@@ -2639,8 +2639,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 /* ── INIT ── */
-const SUPA_URL='https://uzzcvrduoswjsrvuopgv.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6emN2cmR1b3N3anNydnVvcGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDQyNDcsImV4cCI6MjA5NzUyMDI0N30.5tD1xhZdSJaZFnNWfDXozPsvHceeqHl682pClUppUFo';
+const SUPA_URL='https://xmynwdyadrwuvzdclvfh.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteW53ZHlhZHJ3dXZ6ZGNsdmZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxODMyOTIsImV4cCI6MjEwMzc1OTI5Mn0.o8_hRTxRwBD3bbiBAmeIDcMbCEPhiWqHV_zUrb6_j-A';
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY,{
   auth:{storage:window.localStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
 });
@@ -6683,7 +6683,7 @@ async function loadCheckinHistory(){
   if(error?.code==='42P01'){
     hist.innerHTML=`<div style="background:#0C0C0C;border:1px solid rgba(44,212,196,0.2);padding:16px">
       <p style="font-size:12px;color:var(--teal);margin-bottom:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">One-time setup needed</p>
-      <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px">Run this SQL in your <a href="https://supabase.com/dashboard/project/uzzcvrduoswjsrvuopgv/sql" target="_blank" style="color:var(--teal)">Supabase SQL editor</a>:</p>
+      <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px">Run this SQL in your <a href="https://supabase.com/dashboard/project/xmynwdyadrwuvzdclvfh/sql" target="_blank" style="color:var(--teal)">Supabase SQL editor</a>:</p>
       <pre style="font-size:10px;color:#888;white-space:pre-wrap;background:#000;padding:10px;line-height:1.5">CREATE TABLE progress_checkins (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,

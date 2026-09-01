@@ -16,7 +16,7 @@ export default async function handler(req) {
     return new Response('Unauthorized', { status: 401 })
   }
 
-  const SUPA_URL = 'https://uzzcvrduoswjsrvuopgv.supabase.co'
+  const SUPA_URL = 'https://xmynwdyadrwuvzdclvfh.supabase.co'
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!SERVICE_KEY) {

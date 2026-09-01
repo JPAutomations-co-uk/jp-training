@@ -4,7 +4,7 @@ export const config = { runtime: 'edge' }
 export default async function handler(req) {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
 
-  const SUPA_URL = 'https://uzzcvrduoswjsrvuopgv.supabase.co'
+  const SUPA_URL = 'https://xmynwdyadrwuvzdclvfh.supabase.co'
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!SERVICE_KEY) return json({ error: 'Server config error' }, 500)
 
