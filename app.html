@@ -7618,17 +7618,31 @@ const OB_DEFS = {
 // 'rest' check in the codebase is a literal string match). Working
 // weights/rep schemes for every carried-over exercise are unchanged from
 // the prior split — only day placement and the additions above changed.
+// Weighted Dips + a 3-exercise/week bicep split added (1 Sep 2026), per
+// JP's explicit request. Dips slotted into Monday as a 3rd pressing
+// compound — gives full pec-angle coverage (incline = upper, flat =
+// mid, dips = lower) that wasn't there before, ordered 3rd so the four
+// heaviest compounds (bench/pull-up/dip/row) alternate push-pull-push-
+// pull while fresh, with the higher-rep Incline DB Press moved after
+// them. Biceps split as EZ Bar Curl (Monday, supinated grip — overall
+// mass, less wrist strain than a straight bar) + Hammer Curl (Wednesday,
+// neutral grip — brachialis/brachioradialis, arm thickness) + the
+// existing Incline DB Curl (Wednesday, arm behind torso — long head
+// under full stretch) — three distinct mechanisms, not three variations
+// on the same curl.
 const JP_TRAINING_PLAN = [
   { day: 'Monday', type: 'upper', sessionName: 'Upper A — Chest/Lat Emphasis', exercises: [
     { name: 'Flat Barbell Bench Press', sets: 3, reps: '3-4 top / 8-10 back-off', load: '87.5kg / 75kg', notes: 'Rest: 3-4 min top set, 2-3 min back-off. Add load once back-off hits 10.' },
     { name: 'Weighted Pull-Ups', sets: 3, reps: '2-3 top / 8-10 back-off', load: '37.5kg / 15kg', notes: 'Rest: 3-4 min top set, 2-3 min back-off. Add weight once back-off hits 10.' },
-    { name: 'Incline DB Press', sets: 3, reps: '10-12', load: '25-27.5kg each', notes: 'Rest: 90 sec. Double progression — reps first, then weight.' },
+    { name: 'Weighted Dips', sets: 3, reps: '8-12', load: 'Bodyweight + dip belt — establish added-weight baseline first session', notes: 'Rest: 2 min. Lower-chest/tricep compound — lean forward for chest bias. Third pressing angle alongside bench (mid) and incline DB press (upper).' },
     { name: 'Machine Row', sets: 3, reps: '4-5 top / 10-12 back-off', load: '145kg / 90kg', notes: 'Rest: 2-3 min. Add load once back-off hits 12.' },
+    { name: 'Incline DB Press', sets: 3, reps: '10-12', load: '25-27.5kg each', notes: 'Rest: 90 sec. Double progression — reps first, then weight.' },
     { name: 'Cable Lateral Raise', sets: 5, reps: '12-15', load: '10kg', notes: 'Rest: 60-75 sec. Side delt priority — consolidated from cable+DB into one exercise, bumped to 5 sets to hold weekly volume.' },
+    { name: 'EZ Bar Curl', sets: 3, reps: '8-12', load: 'Establish baseline first session', notes: 'Rest: 75-90 sec. Overall bicep mass, supinated grip — 1 of 3 weekly bicep exercises, each a different mechanism (see Hammer Curl/Incline DB Curl on Wednesday).' },
     { name: 'Overhead Cable Tricep Extension', sets: 3, reps: '10-12', load: '20kg', notes: 'Rest: 75-90 sec. Double progression.' },
     { name: 'Face Pull', sets: 3, reps: '15', load: '12.5kg', notes: 'Rest: 45-60 sec. Rear delt/rotator cuff health — keep light, high rep.' },
     { name: 'Cable Crunch', sets: 3, reps: '15-20', load: '~15-20kg — establish baseline first session', notes: 'Rest: 45-60 sec. 1 of 5 weekly ab/core exercises across the 4 lifting days.' },
-  ], keyLifts: 'Flat Barbell Bench Press, Weighted Pull-Ups' },
+  ], keyLifts: 'Flat Barbell Bench Press, Weighted Pull-Ups, Weighted Dips' },
   { day: 'Tuesday', type: 'lower', sessionName: 'Lower A — Quad + Upper Glute + Plyometrics A', exercises: [
     { name: 'Box Jump', sets: 4, reps: '5', load: 'Bodyweight', notes: 'Rest: 90 sec. Step down, don\'t jump down. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
     { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Rest: 90 sec. Max horizontal distance, full reset between reps.' },
@@ -7648,7 +7662,8 @@ const JP_TRAINING_PLAN = [
     { name: 'Neutral Grip Pulldown', sets: 3, reps: '10-12', load: '85-90kg', notes: 'Rest: 90 sec. Double progression.' },
     { name: 'Incline Cable Fly', sets: 3, reps: '12-15', load: '25kg', notes: 'Rest: 60-75 sec. Chest finisher — different stimulus than the pressing movements above.' },
     { name: 'Cable Lateral Raise', sets: 5, reps: '12-15', load: '10-11.25kg', notes: 'Rest: 60-75 sec. 5 sets — this is the side delt priority day.' },
-    { name: 'Incline DB Curl', sets: 3, reps: '10-12', load: '17.5-20kg', notes: 'Rest: 60-75 sec. Double progression.' },
+    { name: 'Incline DB Curl', sets: 3, reps: '10-12', load: '17.5-20kg', notes: 'Rest: 60-75 sec. Double progression. Arm behind torso — long head under full stretch, 1 of 3 weekly bicep exercises (see EZ Bar Curl/Hammer Curl).' },
+    { name: 'Hammer Curl', sets: 3, reps: '10-12', load: 'Establish baseline first session', notes: 'Rest: 60-75 sec. Neutral grip — brachialis/brachioradialis emphasis, arm thickness distinct from the two supinated curls.' },
     { name: 'Bar Tricep Pressdown', sets: 3, reps: '10-12', load: '35kg', notes: 'Rest: 60-75 sec. Double progression.' },
     { name: 'Hanging Leg Raise', sets: 3, reps: '12-15', load: 'BW', notes: 'Rest: 45-60 sec. 3 of 5 weekly ab/core exercises.' },
   ], keyLifts: 'Incline Barbell Press, Machine Shoulder Press' },
