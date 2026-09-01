@@ -465,6 +465,9 @@
     .food-del{background:none;border:none;color:var(--dim);cursor:pointer;
       font-size:16px;padding:2px 4px;transition:color .2s;flex-shrink:0}
     .food-del:hover{color:#ff6b6b}
+    .food-share{background:none;border:none;color:var(--dim);cursor:pointer;
+      font-size:14px;padding:2px 6px;transition:color .2s;flex-shrink:0}
+    .food-share:hover{color:var(--teal)}
     .food-form{background:var(--s1);border:1px solid var(--border);padding:16px;margin-bottom:16px}
     .food-form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
     .food-form input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(44,212,196,.2);
@@ -981,6 +984,15 @@
     /* ── LEADERBOARD MODAL ── */
     #lb-modal{position:fixed;inset:0;z-index:400;background:var(--black);display:none;flex-direction:column}
     #lb-modal.open{display:flex}
+
+    /* ── SHARE CARD MODAL ── */
+    #share-modal{position:fixed;inset:0;z-index:400;background:var(--black);display:none;flex-direction:column}
+    #share-modal.open{display:flex}
+    .share-preview-wrap{width:100%;max-width:420px;aspect-ratio:1/1;background:var(--s1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto}
+    .share-preview-wrap img{width:100%;height:100%;object-fit:contain;display:none}
+    .share-loading{font-family:var(--B);font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+    .share-go-btn{margin-top:24px;width:100%;max-width:420px;padding:14px;background:var(--teal);color:#000;border:none;font-family:var(--D);font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+    .share-go-btn:disabled{opacity:.4;cursor:default}
     .lb-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
     .lb-title{font-family:var(--D);font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
     .lb-close{background:none;border:none;color:var(--dim);font-size:24px;cursor:pointer;padding:4px 8px;line-height:1}
@@ -1179,6 +1191,21 @@
     </div>
     <div class="lb-body" id="lb-body">
       <div class="lb-empty">Loading...</div>
+    </div>
+  </div>
+
+  <!-- SHARE CARD MODAL -->
+  <div id="share-modal">
+    <div class="lb-header">
+      <div class="lb-title">Share Card</div>
+      <button class="lb-close" onclick="closeShareModal()">✕</button>
+    </div>
+    <div class="lb-body" style="display:flex;flex-direction:column;align-items:center;padding:24px 16px">
+      <div class="share-preview-wrap">
+        <span class="share-loading" id="share-loading-text">Generating...</span>
+        <img id="share-preview-img" alt="Share card preview">
+      </div>
+      <button class="share-go-btn" id="share-go-btn" onclick="shareCardNow()" disabled>Share to Instagram</button>
     </div>
   </div>
 
@@ -6064,6 +6091,7 @@ function renderFoods(){
         <div class="food-name">${escHtml(f.food_name)}${timeStr(f)}</div>
         <div class="food-macros">${Math.round(f.protein_g||0)}P · ${Math.round(f.carbs_g||0)}C · ${Math.round(f.fat_g||0)}F<br>${Math.round(f.calories||0)} kcal</div>
         ${scoreHtml}
+        <button class="food-share" onclick="event.stopPropagation();shareFoodCard('${f.id}')" title="Share">⤴</button>
         <button class="food-del" onclick="event.stopPropagation();removeFood(${i})">×</button>
       </div>
       ${hasRating ? `<div style="font-size:11px;color:var(--dim);padding:0 14px 6px;font-style:italic">${escHtml(r.headline)} — tap for detail</div>` : ''}
@@ -10777,6 +10805,79 @@ async function openLeaderboard() {
 
 function closeLeaderboard() {
   document.getElementById('lb-modal')?.classList.remove('open');
+}
+
+/* ── SHARE CARD ── */
+let _shareCardBlob = null;
+
+async function shareFoodCard(id) {
+  const f = foods.find(x => String(x.id) === String(id));
+  if (!f) return;
+  const r = foodRatings[id] || {};
+  const hasRating = r.score != null;
+
+  _shareCardBlob = null;
+  const img = document.getElementById('share-preview-img');
+  const loadingText = document.getElementById('share-loading-text');
+  const goBtn = document.getElementById('share-go-btn');
+  img.style.display = 'none';
+  img.src = '';
+  loadingText.style.display = '';
+  loadingText.textContent = 'Generating...';
+  goBtn.disabled = true;
+  document.getElementById('share-modal').classList.add('open');
+
+  try {
+    const res = await fetch('/api/share-card', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        score: hasRating ? r.score : null,
+        headline: hasRating ? r.headline : null,
+        foodName: f.food_name,
+        calories: f.calories, protein: f.protein_g, carbs: f.carbs_g, fat: f.fat_g,
+      }),
+    });
+    if (!res.ok) throw new Error('Card generation failed');
+    const blob = await res.blob();
+    _shareCardBlob = blob;
+    img.src = URL.createObjectURL(blob);
+    img.style.display = '';
+    loadingText.style.display = 'none';
+    goBtn.disabled = false;
+  } catch (e) {
+    console.error('shareFoodCard:', e);
+    loadingText.textContent = 'Failed to generate — try again';
+    showToast('Card generation failed');
+  }
+}
+
+async function shareCardNow() {
+  if (!_shareCardBlob) return;
+  const file = new File([_shareCardBlob], 'jp-training-meal.png', { type: 'image/png' });
+
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'JP Training' });
+      return;
+    } catch (e) {
+      // user cancelled the native share sheet — fall through to download
+      // is unnecessary here, cancelling is a valid end state
+      if (e?.name === 'AbortError') return;
+    }
+  }
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(_shareCardBlob);
+  a.download = 'jp-training-meal.png';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function closeShareModal() {
+  document.getElementById('share-modal')?.classList.remove('open');
+  _shareCardBlob = null;
 }
 
 /* ════════════════════════════════════════
