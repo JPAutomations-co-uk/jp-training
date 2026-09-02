@@ -6181,7 +6181,7 @@ async function logFoodEntry(name, timeVal, d) {
   const rating = (hasData && d.score) ? {
     score: d.score, headline: d.headline||null,
     reasons: d.reasons||null, tips: Array.isArray(d.tips)?d.tips:[],
-    toTen: d.to_ten||null,
+    toTen: d.to_ten||null, tagline: d.tagline||null,
     micros: d.micros||null, mealTime: timeVal||null
   } : (timeVal ? { mealTime: timeVal } : null);
 
@@ -10971,6 +10971,7 @@ async function shareFoodCard(id) {
       body: JSON.stringify({
         score: hasRating ? r.score : null,
         headline: hasRating ? r.headline : null,
+        tagline: hasRating ? r.tagline : null,
         foodName: f.food_name,
         calories: f.calories, protein: f.protein_g, carbs: f.carbs_g, fat: f.fat_g,
       }),

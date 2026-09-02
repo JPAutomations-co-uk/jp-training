@@ -6,12 +6,13 @@ import { ImageResponse } from '@vercel/og'
 // tree can't see the page's actual stylesheet, so these are duplicated here
 // by hand. If the app's theme colors change, update both places.
 const COLOR = {
-  black: '#000',
+  black: '#050505',
   white: '#FFF',
   teal: '#2CD4C4',
-  muted: '#888',
-  dim: '#444',
-  border: '#1A1A1A',
+  tealDim: 'rgba(44,212,196,.35)',
+  muted: '#9A9A9A',
+  dim: '#565656',
+  border: '#232323',
   red: '#f87171',
 }
 
@@ -38,12 +39,21 @@ function scoreColor(score) {
 
 // App's own convention is comma-separated ("200g chicken breast, rice,
 // broccoli") — confirmed via the add-food placeholder text and every
-// existing foods.map().join(', ') call site, not semicolons.
+// existing foods.map().join(', ') call site, not semicolons. Raised from
+// a 5-item cap to 9 per JP's request to list ingredients individually —
+// 9 comfortably fits the redesigned layout's freed-up vertical space
+// (the score badge no longer dominates the whole top half of the card).
 function parseIngredients(foodName) {
   const parts = String(foodName || '').split(',').map(s => s.trim()).filter(Boolean)
   if (parts.length <= 1) return { lines: [String(foodName || '').trim()], more: 0 }
-  return { lines: parts.slice(0, 5), more: Math.max(0, parts.length - 5) }
+  return { lines: parts.slice(0, 9), more: Math.max(0, parts.length - 9) }
 }
+
+// Fallback for meals logged before the tagline field existed, or logged
+// without a successful AI rating — stays in the same dry, unfiltered
+// register as a real tagline rather than degrading to a flat "no data"
+// line, since this is a share-card people are meant to actually post.
+const FALLBACK_TAGLINE = 'No AI verdict on file for this one — but if it\'s on this plan, it\'s already outperforming whatever\'s in everyone else\'s Tupperware.'
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors() })
@@ -52,10 +62,10 @@ export default async function handler(req) {
   let body
   try { body = await req.json() } catch { return new Response('Bad request', { status: 400, headers: cors() }) }
 
-  const { score = null, headline = null, foodName = '', calories = 0, protein = 0, carbs = 0, fat = 0 } = body
+  const { score = null, tagline = null, foodName = '', calories = 0, protein = 0, carbs = 0, fat = 0 } = body
   const { lines: ingredientLines, more } = parseIngredients(foodName)
   const badgeColor = scoreColor(score)
-  const displayHeadline = headline || (ingredientLines[0] ? `${ingredientLines[0]} — logged` : 'Logged with JP Training')
+  const displayTagline = tagline || FALLBACK_TAGLINE
 
   const [barlowBold, barlowBlack, poppinsRegular, poppinsSemiBold] = await Promise.all([
     fontBarlowBold, fontBarlowBlack, fontPoppinsRegular, fontPoppinsSemiBold,
@@ -63,68 +73,84 @@ export default async function handler(req) {
 
   const tree = h('div', {
     width: 1080, height: 1080, display: 'flex', flexDirection: 'column',
-    backgroundColor: COLOR.black, padding: 64, fontFamily: 'Poppins',
+    backgroundImage: `linear-gradient(155deg, #0a0a0a 0%, ${COLOR.black} 55%, #071613 100%)`,
+    padding: 70, fontFamily: 'Poppins', position: 'relative',
   }, [
-    // Header — text logotype doubles as the branding watermark
-    h('div', { display: 'flex', flexDirection: 'row', alignItems: 'center' }, [
-      h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 34, color: COLOR.white, textTransform: 'uppercase', letterSpacing: 1 }, 'JP '),
-      h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 34, color: COLOR.teal, textTransform: 'uppercase', letterSpacing: 1 }, 'Training'),
+    // Hairline frame — thin inset border for a card/certificate feel
+    // rather than content floating loose on a flat background.
+    h('div', { position: 'absolute', top: 24, left: 24, right: 24, bottom: 24, border: `1px solid ${COLOR.border}` }, null),
+
+    // Header — small, refined logotype (doubles as the branding
+    // watermark) opposite a compact score seal, not a giant numeral
+    // dominating the card the way the first version did.
+    h('div', { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }, [
+      h('div', { display: 'flex', flexDirection: 'row', alignItems: 'baseline' }, [
+        h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 26, color: COLOR.white, textTransform: 'uppercase', letterSpacing: 2 }, 'JP '),
+        h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 26, color: COLOR.teal, textTransform: 'uppercase', letterSpacing: 2 }, 'Training'),
+      ]),
+      h('div', {
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        width: 92, height: 92, borderRadius: 46, border: `2px solid ${badgeColor}`,
+      }, score != null ? [
+        h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 38, color: badgeColor, lineHeight: 1 }, String(score)),
+        h('span', { fontFamily: 'Poppins', fontWeight: 600, fontSize: 12, color: COLOR.dim, marginTop: 2 }, 'OUT OF 10'),
+      ] : [
+        h('span', { fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 20, color: COLOR.dim }, 'N/A'),
+      ]),
     ]),
 
-    // Score badge — unrated meals get a text label at a smaller size
-    // instead of a numeral placeholder character: a "-" or similar single
-    // glyph at 180px in Barlow Condensed Black renders as a solid
-    // rectangle, not a recognizable dash (confirmed via a real render),
-    // so it doesn't communicate "no score" the way text does.
-    score != null
-      ? h('div', { display: 'flex', flexDirection: 'row', alignItems: 'baseline', marginTop: 36 }, [
-          h('span', { fontFamily: 'Barlow Condensed', fontWeight: 900, fontSize: 180, color: badgeColor, lineHeight: 1 }, String(score)),
-          h('span', { fontFamily: 'Barlow Condensed', fontWeight: 700, fontSize: 48, color: COLOR.dim, marginLeft: 12 }, '/10'),
-        ])
-      : h('div', { display: 'flex', alignItems: 'center', marginTop: 36, height: 180 }, [
-          h('span', { fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 56, color: COLOR.dim, textTransform: 'uppercase', letterSpacing: 1 }, 'Not yet rated'),
-        ]),
+    // Tagline — the hero of the card. Small tracked kicker above it,
+    // then the actual line, large and confident.
+    h('div', { display: 'flex', flexDirection: 'column', marginTop: 54 }, [
+      h('span', { fontFamily: 'Poppins', fontWeight: 600, fontSize: 13, color: COLOR.teal, textTransform: 'uppercase', letterSpacing: 3 }, 'THE VERDICT'),
+      h('div', {
+        display: 'flex', fontFamily: 'Barlow Condensed', fontWeight: 700, fontSize: 47,
+        color: COLOR.white, marginTop: 14, lineHeight: 1.22,
+        maxHeight: 235, overflow: 'hidden',
+      }, displayTagline),
+    ]),
 
-    // Headline
-    h('div', {
-      display: 'flex', fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 44,
-      color: COLOR.white, textTransform: 'uppercase', marginTop: 24, lineHeight: 1.15,
-      maxHeight: 112, overflow: 'hidden',
-    }, displayHeadline),
-
-    // Macro stats row
+    // Macro row
     h('div', {
       display: 'flex', flexDirection: 'row', justifyContent: 'space-between',
-      marginTop: 48, paddingTop: 32, paddingBottom: 32,
+      marginTop: 44, paddingTop: 28, paddingBottom: 28,
       borderTop: `1px solid ${COLOR.border}`, borderBottom: `1px solid ${COLOR.border}`,
     }, [
       ['CAL', Math.round(calories)],
       ['PROTEIN', `${Math.round(protein)}g`],
       ['CARBS', `${Math.round(carbs)}g`],
       ['FAT', `${Math.round(fat)}g`],
-    ].map(([label, value], i, arr) => h('div', {
+    ].map(([label, value], i) => h('div', {
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      paddingLeft: 20, paddingRight: 20,
+      paddingLeft: 18, paddingRight: 18,
       borderLeft: i > 0 ? `1px solid ${COLOR.border}` : 'none',
     }, [
-      h('span', { fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 40, color: COLOR.white }, String(value)),
-      h('span', { fontFamily: 'Poppins', fontWeight: 600, fontSize: 16, color: COLOR.dim, letterSpacing: 2, marginTop: 6 }, label),
+      h('span', { fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 34, color: COLOR.white }, String(value)),
+      h('span', { fontFamily: 'Poppins', fontWeight: 600, fontSize: 13, color: COLOR.dim, letterSpacing: 2, marginTop: 6 }, label),
     ]))),
 
-    // Ingredient list
-    h('div', { display: 'flex', flexDirection: 'column', marginTop: 40, gap: 16 }, [
-      ...ingredientLines.map(line => h('div', { display: 'flex', flexDirection: 'row', alignItems: 'center' }, [
-        h('div', { width: 10, height: 10, backgroundColor: COLOR.teal, marginRight: 16, flexShrink: 0 }, null),
-        h('span', { fontFamily: 'Poppins', fontWeight: 400, fontSize: 28, color: COLOR.white }, line),
+    // Ingredients — listed individually, numbered rather than bulleted,
+    // for a more editorial feel than a plain dot list.
+    h('div', { display: 'flex', flexDirection: 'column', marginTop: 36 }, [
+      h('span', { fontFamily: 'Poppins', fontWeight: 600, fontSize: 13, color: COLOR.teal, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 16 }, 'INGREDIENTS'),
+      ...ingredientLines.map((line, i) => h('div', {
+        display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: 13,
+      }, [
+        h('span', { fontFamily: 'Barlow Condensed', fontWeight: 700, fontSize: 20, color: COLOR.tealDim, width: 34, flexShrink: 0 }, String(i + 1).padStart(2, '0')),
+        h('span', { fontFamily: 'Poppins', fontWeight: 400, fontSize: 24, color: COLOR.muted }, line),
       ])),
-      more > 0 ? h('span', { fontFamily: 'Poppins', fontWeight: 400, fontSize: 24, color: COLOR.dim, marginLeft: 26 }, `+${more} more`) : null,
+      more > 0 ? h('span', { fontFamily: 'Poppins', fontWeight: 400, fontSize: 20, color: COLOR.dim, marginLeft: 34 }, `+${more} more`) : null,
     ].filter(Boolean)),
 
     // Footer
     h('div', {
-      display: 'flex', fontFamily: 'Poppins', fontWeight: 400, fontSize: 20,
-      color: COLOR.dim, marginTop: 'auto', paddingTop: 24, borderTop: `1px solid ${COLOR.border}`,
-    }, 'Logged with JP Training'),
+      display: 'flex', flexDirection: 'row', justifyContent: 'space-between',
+      fontFamily: 'Poppins', fontWeight: 400, fontSize: 16,
+      color: COLOR.dim, marginTop: 'auto', paddingTop: 20, borderTop: `1px solid ${COLOR.border}`,
+    }, [
+      h('span', { fontFamily: 'Poppins' }, 'jptraining.fit'),
+      h('span', { fontFamily: 'Poppins' }, 'Logged with JP Training'),
+    ]),
   ])
 
   return new ImageResponse(tree, {
