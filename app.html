@@ -1868,6 +1868,7 @@
       <div class="sh-label">Move</div>
       <div class="sh-title">Your<br><span style="color:var(--teal)">Movement</span></div>
       <p class="sh-sub">Daily stretches, mobility, posture correction, flexibility & height protocol — built for you.</p>
+      <div id="move-week-strip" style="display:none;justify-content:space-between;margin-top:14px;padding:10px 12px;background:var(--s1);border:1px solid var(--border)"></div>
     </div>
 
     <!-- Phase 1: Goals -->
@@ -6313,6 +6314,7 @@ const HABIT_TIME_LOOKUP = {
   custom_creatine:'Post-Training', custom_no_cannabis:'Anytime', custom_no_nicotine:'Anytime',
   custom_prebed_stack:'Evening', custom_nsdr_yoga:'Evening',
   custom_breathing_protocol:'Anytime', custom_meal_plan:'Evening',
+  custom_pretrain_warmup:'Pre-Training', custom_morning_focus:'Morning', custom_evening_focus:'Evening',
 };
 
 /* ════════════════════════════════════════
@@ -8174,7 +8176,7 @@ function buildJPMoveResults(){
 
   const morning_routine = [
     { name: 'Morning Mobility Core', duration: '~5 min, right after wake, before breakfast', how_to: 'Hip flexor hold 90s each side → dead bug 2×8.', why: 'The two non-negotiable daily items — anterior pelvic tilt correction + core stability — done before any axial loading (discs are more hydrated/vulnerable to flexion-load injury right after sleep). Same every day regardless of the training split, because this is the one that needs daily consistency to actually work.', habitKey:'custom_morning_mobility' },
-    { name: `Today's Focus — ${amRot.label}`, duration: '~5 min', how_to: amRot.items.length ? amRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → ') : 'No extra focus today.', why: 'Rotates by day, tied to what you\'re training — same logic as a gym split, applied to mobility instead of muscle groups.' },
+    { name: `Today's Focus — ${amRot.label}`, duration: '~5 min', how_to: amRot.items.length ? amRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → ') : 'No extra focus today.', why: 'Rotates by day, tied to what you\'re training — same logic as a gym split, applied to mobility instead of muscle groups.', habitKey:'custom_morning_focus' },
     { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your Upper/Lower/Sprint days don\'t otherwise cover.' },
   ];
 
@@ -8182,7 +8184,7 @@ function buildJPMoveResults(){
     { name: 'Postural Protocol (core, non-negotiable)', duration: '10 min, evening', how_to: 'Hip flexor lunge stretch 2×45s each side → thoracic extension over foam roller 1×2min → chin tuck 2×10 reps, 5s hold.', why: 'The one item in this whole protocol with a real, measured payoff — 1-3cm of functional height from correcting compressed posture. Needs daily consistency to hit the 4-8 week structural adaptation window, which is exactly why this doesn\'t rotate with the rest.', habitKey:'custom_postural_protocol' },
   ];
   if (pmRot.items.length) {
-    evening_routine.push({ name: `Today's Focus — ${pmRot.label}`, duration: '~5-8 min', how_to: pmRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → '), why: 'Rotates by day, tied to what you\'re training.' });
+    evening_routine.push({ name: `Today's Focus — ${pmRot.label}`, duration: '~5-8 min', how_to: pmRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → '), why: 'Rotates by day, tied to what you\'re training.', habitKey:'custom_evening_focus' });
   }
   evening_routine.push(
     { name: 'Yoga Flow', duration: '10-15 min, evening — real content, not a placeholder', how_to: 'Cat-cow (10 reps) → downward dog (45 sec) → low lunge each side (45 sec) → pigeon pose each side (60 sec) → seated forward fold (60 sec) → supine spinal twist each side (45 sec).', why: 'Hip-opening and spinal mobility sequence, directly relevant to kick height and general flexibility goals.', habitKey:'custom_nsdr_yoga' },
@@ -8211,7 +8213,9 @@ function renderMobilityCard(dayName) {
   const sections = [];
   if (m.warmup) {
     const isExplosive = dayName === 'Tuesday' || dayName === 'Thursday' || dayName === 'Friday';
-    sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}${isExplosive?mobCheckbox('custom_explosive_warmup'):''}</div>${drillList(m.warmup.drills)}</div>`);
+    const isLightWarmup = dayName === 'Monday' || dayName === 'Wednesday' || dayName === 'Saturday';
+    const warmupKey = isExplosive ? 'custom_explosive_warmup' : isLightWarmup ? 'custom_pretrain_warmup' : null;
+    sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}${warmupKey?mobCheckbox(warmupKey):''}</div>${drillList(m.warmup.drills)}</div>`);
   }
   if (m.staticStretch) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">After — ${escHtml(m.staticStretch.label)}${mobCheckbox('custom_static_stretch')}</div>${drillList(m.staticStretch.drills)}</div>`);
   (m.extras||[]).forEach(e => {
@@ -8225,6 +8229,65 @@ function renderMobilityCard(dayName) {
     <div style="font-size:12px;font-weight:700;color:var(--white);margin-bottom:8px">Mobility & Stretching</div>
     ${sections.join('')}
   </div>`;
+}
+
+// Which habitKeys must be complete for a given split-day to count as a
+// "full routine" day on the week strip below — mirrors exactly what
+// actually renders a checkbox that day (buildJPMoveResults() +
+// renderMobilityCard()), not a generic "all Move habits" list, since the
+// item set genuinely differs by day (Saturday has no static stretch
+// content or evening rotation, Sunday has no warmup at all, etc).
+const JP_MOVE_DAY_REQUIRED_KEYS = {
+  Monday:    ['custom_morning_mobility','custom_morning_focus','custom_pretrain_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
+  Tuesday:   ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
+  Wednesday: ['custom_morning_mobility','custom_morning_focus','custom_pretrain_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
+  Thursday:  ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
+  Friday:    ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
+  Saturday:  ['custom_morning_mobility','custom_morning_focus','custom_pretrain_warmup','custom_postural_protocol','custom_nsdr_yoga'],
+  Sunday:    ['custom_morning_mobility','custom_morning_focus','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
+};
+
+// Read-only 7-dot completion strip for Move — Train has day-tab dots
+// (renderDayTabIndicators()) but those are attached to real per-day
+// selector buttons Move doesn't have, so this is a small standalone
+// strip instead, same color logic (teal=complete, red=missed,
+// transparent=today-not-yet/future) re-derived from habit_log directly
+// rather than reusing _loggedSessionDates (that Set tracks *workouts*,
+// not mobility completion).
+async function renderMoveWeekStrip(){
+  if (USER?.id !== JP_USER_ID) return;
+  const wrap = document.getElementById('move-week-strip');
+  if (!wrap) return;
+
+  const todayIdx = JP_SPLIT_DAY_NAMES.indexOf(effectiveTodayName());
+  const dayDates = JP_SPLIT_DAY_NAMES.map(d => ({ day: d, date: jpDateForSplitDay(d) }));
+  const earliest = dayDates.reduce((min,d) => d.date < min ? d.date : min, dayDates[0].date);
+
+  const { data } = await sb.from('habit_log').select('habit_name,date,completed')
+    .eq('user_id', USER.id).eq('completed', true).gte('date', earliest);
+
+  const doneByDate = {};
+  (data||[]).forEach(r => {
+    if (!doneByDate[r.date]) doneByDate[r.date] = new Set();
+    doneByDate[r.date].add(r.habit_name);
+  });
+
+  wrap.innerHTML = JP_SPLIT_DAY_NAMES.map((day,i) => {
+    const { date } = dayDates[i];
+    const required = JP_MOVE_DAY_REQUIRED_KEYS[day] || [];
+    const done = doneByDate[date] || new Set();
+    const complete = required.length > 0 && required.every(k => done.has(k));
+    const diff = i - todayIdx; // <0 earlier this cycle, 0 today, >0 not reached yet
+    let bg = 'transparent', title = '';
+    if (complete) { bg = 'var(--teal)'; title = 'Full routine done'; }
+    else if (diff < 0) { bg = '#f87171'; title = 'Missed'; }
+    else if (diff === 0) { title = 'Today — not finished yet'; }
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px" title="${title}">
+      <div style="width:8px;height:8px;border-radius:50%;background:${bg};border:1px solid var(--border)"></div>
+      <div style="font-size:9px;color:var(--dim);text-transform:uppercase">${day.slice(0,3)}</div>
+    </div>`;
+  }).join('');
+  wrap.style.display = 'flex';
 }
 
 // Persists OB to the user_state table instead of auth user_metadata.
@@ -8443,8 +8506,11 @@ function applyJPRealProtocol() {
     { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:true },
     { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:false },
     { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Tuesday (Lower A plyo), Thursday (Sprint Day), Friday (Lower B plyo).', days: ['Tuesday','Thursday','Friday'], time:'Pre-Training', priority:true },
-    { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: JP_SPLIT_DAY_NAMES, time:'Post-Training', priority:false },
+    { key: 'pretrain_warmup',  name: 'Pre-Training Warm-Up',        desc: 'Dynamic warm-up before lifting — see the mobility card on the Train tab for today\'s exact drills.', days: ['Monday','Wednesday','Saturday'], time:'Pre-Training', priority:true },
+    { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], time:'Post-Training', priority:false },
     { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, chin tucks — 10 min, evening, same every day (real 1-3cm functional height payoff, needs daily consistency to work) — plus a rotating day-specific focus on top, see the Move tab for today\'s exact addition.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:true },
+    { key: 'morning_focus',    name: 'Morning Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Morning Mobility Core — see the Move tab for today\'s exact stretches.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:false },
+    { key: 'evening_focus',    name: 'Evening Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Postural Protocol — see the Move tab for today\'s exact stretches. No separate item on Saturday (Yoga Flow/NSDR already covers that slot).', days: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'], time:'Evening', priority:false },
     { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: JP_SPLIT_DAY_NAMES, time:'Post-Training', priority:true },
     { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
     { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
@@ -12155,15 +12221,25 @@ function mobRestart() {
   mobShowPhase(1);
 }
 
-function initMove() {
+async function initMove() {
   // JP-gated: always compute fresh rather than render whatever was saved
   // at the last protocol-version bump — "Today's Focus" has to reflect
   // the actual current day, not whichever day happened to be live when
   // applyJPRealProtocol() last seeded OB.mobility.
   if (USER?.id === JP_USER_ID) {
+    // Move has no past-day view of its own, but HABIT_DATE is a global
+    // shared with the Habits tab's date-navigator — if JP was browsing a
+    // past day there and switches straight to Move, its checkboxes would
+    // silently read/write against that past date instead of today.
+    // Forcing today + reloading habitState before rendering fixes both
+    // that mis-attribution risk and the plain cold-start race where Move
+    // rendered from whatever habitState happened to already contain.
+    HABIT_DATE = TODAY;
+    await initHabits();
     const results = buildJPMoveResults();
     MOB_STATE = { ...MOB_STATE, results };
     mobRenderResults(results);
+    renderMoveWeekStrip();
     mobLoadHistory();
     mobShowPhase(7);
     const c = document.getElementById('content');
