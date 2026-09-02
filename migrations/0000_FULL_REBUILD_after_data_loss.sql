@@ -175,7 +175,7 @@ create table if not exists public.nutrition_logs (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users(id) on delete cascade,
   date        date not null default current_date,
-  name        text,
+  food_name   text,
   calories    numeric,
   protein_g   numeric,
   carbs_g     numeric,
