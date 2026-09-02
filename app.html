@@ -1206,6 +1206,7 @@
         <img id="share-preview-img" alt="Share card preview">
       </div>
       <button class="share-go-btn" id="share-go-btn" onclick="shareCardNow()" disabled>Share to Instagram</button>
+      <button class="share-go-btn" id="share-download-btn" onclick="downloadShareCard()" disabled style="background:transparent;border:1px solid var(--teal);color:var(--teal);margin-top:10px">Download Image</button>
     </div>
   </div>
 
@@ -6139,7 +6140,15 @@ const JP_NUTRITION_WEIGHT_KG = 68.5;
 function inferJPMealContext(name, timeVal) {
   if (/^Pre-MMA|^Pre-D2D/i.test(name)) return 'pre-training';
   if (/^Pre-bed/i.test(name)) return 'wind-down';
-  const hour = parseInt((timeVal||'').split(':')[0], 10);
+  // The meal-time field on the free-text add-food form is genuinely
+  // optional and empty by default — confirmed real case: JP typed his
+  // breakfast in manually without setting it, silently fell back to
+  // 'general' (the weakest scoring context), and got a materially lower
+  // score for the identical food. If no time was given, use right now —
+  // someone free-text-logging without a time is almost always logging
+  // something they just ate or are about to eat, not a hypothetical.
+  const effectiveTime = timeVal || new Date().toTimeString().slice(0,5);
+  const hour = parseInt(effectiveTime.split(':')[0], 10);
   if (isNaN(hour)) return 'general';
   return hour < 10 ? 'pre-training' : 'post-workout';
 }
@@ -10957,11 +10966,13 @@ async function shareFoodCard(id) {
   const img = document.getElementById('share-preview-img');
   const loadingText = document.getElementById('share-loading-text');
   const goBtn = document.getElementById('share-go-btn');
+  const downloadBtn = document.getElementById('share-download-btn');
   img.style.display = 'none';
   img.src = '';
   loadingText.style.display = '';
   loadingText.textContent = 'Generating...';
   goBtn.disabled = true;
+  downloadBtn.disabled = true;
   document.getElementById('share-modal').classList.add('open');
 
   try {
@@ -10983,6 +10994,7 @@ async function shareFoodCard(id) {
     img.style.display = '';
     loadingText.style.display = 'none';
     goBtn.disabled = false;
+    downloadBtn.disabled = false;
   } catch (e) {
     console.error('shareFoodCard:', e);
     loadingText.textContent = 'Failed to generate — try again';
@@ -11005,6 +11017,15 @@ async function shareCardNow() {
     }
   }
 
+  downloadShareCard();
+}
+
+// Standalone download action, always available as its own button rather
+// than only reachable as the fallback when navigator.share is missing —
+// some users just want to save the image directly regardless of share
+// support.
+function downloadShareCard() {
+  if (!_shareCardBlob) return;
   const a = document.createElement('a');
   a.href = URL.createObjectURL(_shareCardBlob);
   a.download = 'jp-training-meal.png';
