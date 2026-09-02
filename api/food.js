@@ -149,6 +149,18 @@ export default async function handler(req) {
     return json({ error: 'Parse error' }, 500)
   }
 
+  // Deterministic consistency check, not left to the model to self-correct —
+  // a prompt instruction alone ("these two fields must agree") was tested
+  // live and did not reliably hold: the model repeated a 9/10 score
+  // alongside a to_ten field stating "Already a 10 for this moment —
+  // nothing to change" even after being told explicitly not to. Same
+  // reasoning as bloodwork-analysis.js keeping its scoring deterministic
+  // rather than LLM-invented — force the fields to actually agree instead
+  // of hoping a small, fast model follows a conditional instruction.
+  if (typeof result.to_ten === 'string' && /already (a )?10|already optimal|nothing to change/i.test(result.to_ten)) {
+    result.score = 10
+  }
+
   return json(result)
 }
 
