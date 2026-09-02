@@ -49,7 +49,7 @@ APPROVED FOODS — the foundation of this protocol, score 8-10 in the right cont
 - Shellfish: oysters (highest zinc), mussels, prawns
 - RAW dairy ONLY: raw milk, raw cheese, raw kefir, full-fat raw yoghurt
 - Animal fats: butter, ghee, beef tallow/dripping, coconut oil
-- Whole fruit, raw honey, dates, sweet potato, white rice, cold-pressed juice (peri-workout), coconut water
+- Whole fruit, raw honey, dates, potato, sweet potato, white rice, cold-pressed juice (peri-workout), coconut water
 - Bone broth
 - Black coffee / espresso (ergogenic), electrolytes, creatine
 

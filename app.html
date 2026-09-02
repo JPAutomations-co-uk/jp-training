@@ -6113,8 +6113,40 @@ function pickFoodCtx(btn){
   _foodContext = btn.dataset.ctx || 'general';
 }
 
+// JP bypasses the generic onboarding questionnaire entirely (Train/Eat/
+// Move are all hardcoded to his real protocol), so OB.eat.goal/
+// OB.train.goal — the only fields callFoodAPI() otherwise reads for
+// "goals"/"weight"/"bodyFat" — are simply never set for his account.
+// Confirmed by reading applyJPRealProtocol() end to end: it never
+// touches OB.eat at all. Real, significant bug: every meal he's ever
+// logged has been scored with zero knowledge of his actual goals,
+// which explains generically-conservative scores (e.g. 7/10) on meals
+// that are already optimal, deliberately-designed protocol food.
+const JP_NUTRITION_GOALS = 'Hypertrophy, aesthetic physique and vascularity (forearms specifically), testosterone/SHBG/thyroid/HGH optimisation, strength — while training MMA 3x/week on top of a full lifting split, at a confirmed minimum-15k (often 20k) daily step floor.';
+const JP_NUTRITION_WEIGHT_KG = 68.5;
+
+// The second confirmed gap: _foodContext only ever changes if the user
+// manually taps a context chip in the Eat tab UI (pickFoodCtx()) — it
+// was never set when logging a PLANNED meal straight from the protocol
+// (logPlannedMeal()), even though the app already knows exactly which
+// slot that meal is. Infers from the meal-name prefixes added in the
+// v30 rebuild ("Pre-MMA fuel —", "Pre-D2D fuel —", "Pre-bed —") first,
+// falling back to a time-of-day bucket for the unprefixed breakfast/
+// lunch/dinner entries — breakfast sits ~3h before his 10:15 lifting
+// session (pre-training), lunch and dinner both follow a session
+// (post-workout recovery framing fits either the lifting or the MMA/
+// D2D block that just happened).
+function inferJPMealContext(name, timeVal) {
+  if (/^Pre-MMA|^Pre-D2D/i.test(name)) return 'pre-training';
+  if (/^Pre-bed/i.test(name)) return 'wind-down';
+  const hour = parseInt((timeVal||'').split(':')[0], 10);
+  if (isNaN(hour)) return 'general';
+  return hour < 10 ? 'pre-training' : 'post-workout';
+}
+
 async function callFoodAPI(name, timeVal) {
   const t = OB.train || {}; const e = OB.eat || {};
+  const isJP = USER?.id === JP_USER_ID;
   // Sum what's already logged today so the scorer judges this item in context
   // of the whole day rather than as if it must be a complete meal on its own —
   // a snack sitting between two protein-dense meals shouldn't get marked down
@@ -6126,11 +6158,11 @@ async function callFoodAPI(name, timeVal) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       name,
-      goals: t.goal || e.goal,
-      weight: e.weight_kg,
+      goals: isJP ? JP_NUTRITION_GOALS : (t.goal || e.goal),
+      weight: isJP ? JP_NUTRITION_WEIGHT_KG : e.weight_kg,
       bodyFat: e.body_fat,
-      primaryGoal: t.goal,
-      context: _foodContext || 'general',
+      primaryGoal: isJP ? JP_NUTRITION_GOALS : t.goal,
+      context: isJP ? inferJPMealContext(name, timeVal) : (_foodContext || 'general'),
       time: timeVal || null,
       dayCalories, dayProtein
     })
