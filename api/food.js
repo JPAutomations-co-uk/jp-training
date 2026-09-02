@@ -82,7 +82,9 @@ SCORING (context-adjusted):
 3-4: Poorly timed, or built around a downrated item as its primary content.
 1-2: Ultra-processed, seed oils, additive-laden.
 
-ALWAYS populate "to_ten" — the specific path from this item's score to a 10/10 in this exact context. Even a 9 gets the one change that closes the gap. A genuine 10 states plainly that it is already optimal. Never leave it vague, generic or empty.
+ALWAYS populate "to_ten" — the specific path from this item's score to a 10/10 in this exact context. Even a 9 gets the one change that closes the gap. Never leave it vague, generic or empty.
+
+CONSISTENCY RULE — decide this BEFORE picking a number: if you cannot name a real, concrete change that would improve this item for this exact context (not a trivial/theoretical tweak, an actual improvement), then it IS a 10 — set "score" to 10 and "to_ten" must say so plainly (e.g. "Already a 10 for this moment — nothing to change."). Never output a score below 10 alongside a to_ten that states the item is already optimal — those two fields must always agree. Conversely, if "to_ten" names a real improvement, the score must be below 10 by an amount that reflects how much that change would matter.
 
 British English. No asterisks. No markdown. Honest, direct and practical.`
 
