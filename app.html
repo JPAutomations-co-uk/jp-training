@@ -7912,55 +7912,94 @@ const JP_TRAINING_PLAN = [
 // building benefit plateaus, disclosed honestly to JP, but the 500g
 // red-meat floor was an explicit instruction, not a target this session
 // derived — implemented as asked, not argued down.
+// v30 (2 Sep 2026) — rebuilt around JP's real September daily schedule
+// (confirmed via his own routine doc) and MMA (Mon 18:30-19:30, Wed
+// 17:30-18:30, Fri 18:00-19:00). Breakfast corrected to 07:15 (was
+// 07:45 — never matched his actual wake/shower timing). Lifting is
+// 10:15am, ~3h after breakfast, so lunch at 12:00 IS the post-lifting
+// recovery meal — no separate midday "pre-training" slot needed.
+// Pre-MMA snack sits in his own schedule's existing "snack, change,
+// travel" slot; dinner moved to post-MMA on those 3 days. Tue/Thu's
+// afternoon snack relabelled "Pre-D2D fuel" (it was mislabelled
+// "snack" — it fuels a real 2h door-knocking block, not idle
+// grazing). Saturday gets a new pre-D2D fuel checkpoint (10:10, between
+// its early gym session and a genuine 3.5h D2D block that wasn't
+// accounted for before). Calories raised across the board for a
+// confirmed minimum-15k, mostly-20k daily step floor plus MMA/D2D load
+// on top of lifting — these are estimates to validate against real
+// recovery/weight trend over a few weeks, not lab-measured figures.
+// Red meat (beef/lamb/brisket only, organ meats/seafood on top of this)
+// stays >=500g/day everywhere per JP's explicit floor. Fat is NOT a
+// target to minimise here — JP is this active, and cholesterol/
+// saturated fat is a real T-synthesis substrate, not a liability at
+// this activity level (his explicit call, not assumed).
+// Two corrections made after JP reviewed the first v30 draft: (1)
+// pre-bed is kefir + honey only, every night, no fruit — a fast-sugar
+// hit right before sleep spikes insulin, which directly works against
+// the fasted-ish pre-bed window this 5-meal structure was already built
+// to protect for GH pulsatility; the "glycogen boost" nights before
+// Mon/Wed/Fri's MMA+lifting days (Sun/Tue/Thu) now carry their extra
+// carb in that night's DINNER instead of a pre-bed sugar hit — real
+// glycogen loading is about a day's total intake, not what's eaten in
+// the last hour before sleep. Sunday's dinner gets sweet potato added
+// specifically for this (breaking from its usual lowest-carb pattern)
+// since tomorrow is the week's hardest combined day. (2) Banana was
+// doing too much work (breakfast + every pre-training/pre-D2D snack) —
+// kept at breakfast only (fixed, identical every day, matches JP's
+// actual unchanging morning routine), rotated through mango/pineapple/
+// kiwi/watermelon for the snack slots instead. Tue/Thu/Sat dinners'
+// coconut water + Parmigiano (flavour/hydration extras with no specific
+// nutrient purpose) swapped for kiwi (vitamin C, real variety) + extra
+// mushrooms (B1, same reasoning already used on the other beef-mushroom
+// days) — Mon/Wed/Fri's coconut water wasn't flagged and stays as-is.
 const JP_NUTRITION_PLAN = {
-  Monday: { label: 'Upper A — moderate carb, non-explosive', targets: { calories: 3550, protein: 195, carbs: 288, fat: 185 }, meals: [
-    { time: '07:45', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 120g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
-    { time: '12:00', name: '120g salmon + 70g beef strips, pan-fried in 4g ghee; 1 whole avocado (~160g); 100g mixed berries + 80g pineapple; 250ml cold-pressed ginger-apple-cherry juice; 1 medium raw carrot (~70g); 150g cucumber' },
-    { time: '15:00', name: '260g beef mince or steak, seared in 4g beef dripping/tallow; 90g mushrooms, pan-seared — real B1/B-vitamin boost; 1 tbsp raw honey (~21g); 1 banana (~120g)' },
-    { time: '18:30', name: '80g lamb mince (swap-in — variety) + 90g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 10g ghee; 120g sweet potato roasted in 4g ghee; 75g avocado; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g); 200ml coconut water' },
-    { time: '21:00', name: '300ml raw kefir; 100g watermelon' },
+  Monday: { label: 'Upper A + MMA 18:30-19:30', targets: { calories: 4150, protein: 217, carbs: 375, fat: 205 }, meals: [
+    { time: '07:15', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 150g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
+    { time: '12:00', name: '120g salmon + 180g beef strips, pan-fried in 4g ghee; 1 whole avocado (~200g); 100g mixed berries + 80g pineapple; 250ml cold-pressed juice; 1 medium raw carrot (~70g); 150g cucumber' },
+    { time: '17:15', name: 'Pre-MMA fuel — 1 banana (~120g); 1 tbsp raw honey (~21g); 200ml orange juice; pinch of salt' },
+    { time: '20:00', name: '120g lamb mince (swap-in — variety) + 280g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 14g ghee; 350g sweet potato roasted in 4g ghee; 90g avocado; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g); 200ml coconut water' },
+    { time: '21:00', name: 'Pre-bed — 300ml raw kefir; 1 tbsp raw honey (~21g). No fruit — fast sugar right before sleep works against the GH pulse this slot is protecting.' },
   ] },
-  Tuesday: { label: 'Lower A + Plyometrics A — highest carb, liver + brisket', targets: { calories: 3800, protein: 220, carbs: 305, fat: 195 }, meals: [
-    { time: '07:45', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 120g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
-    { time: '12:00', name: '120g salmon + 70g beef strips, pan-fried in 4g ghee; 1 whole avocado (~160g); 150g mango; 250ml cold-pressed tropical juice (mango/pineapple/orange/carrot); 1 medium raw carrot (~70g); 150g cucumber' },
-    { time: '15:00', name: '250g beef mince + 100g liver, seared in 4g beef dripping/tallow — folate + copper; 1 tbsp raw honey (~21g); 1 banana (~120g)' },
-    { time: '18:30', name: '90g brisket (swap-in for beef mince — variety, higher-fat cut) + 90g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 10g ghee; 200g sweet potato roasted in 4g ghee; 75g avocado; 20g Parmigiano Reggiano; 200ml coconut water' },
-    { time: '21:00', name: '300ml raw kefir; 100g watermelon' },
+  Tuesday: { label: 'Lower A + Plyometrics A, no MMA — D2D evening', targets: { calories: 3820, protein: 214, carbs: 336, fat: 186 }, meals: [
+    { time: '07:15', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 150g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
+    { time: '12:00', name: '120g salmon + 200g beef strips, pan-fried in 4g ghee; 1 whole avocado (~190g); 150g mango; 250ml cold-pressed tropical juice; 1 medium raw carrot (~70g); 150g cucumber' },
+    { time: '16:30', name: 'Pre-D2D fuel — 120g pineapple; 1 tbsp raw honey (~21g)' },
+    { time: '19:30', name: '300g beef mince + 100g liver, seared in 4g beef dripping/tallow — folate + copper; 280g sweet potato roasted in 4g ghee (glycogen boost — tomorrow is Wednesday\'s MMA + lifting double day); ~250g butternut squash roasted in 10g ghee; 90g avocado; 80g kiwi; 90g mushrooms, pan-seared' },
+    { time: '21:00', name: 'Pre-bed — 300ml raw kefir; 1 tbsp raw honey (~21g)' },
   ] },
-  Wednesday: { label: 'Upper B — moderate carb, non-explosive, oysters', targets: { calories: 3550, protein: 195, carbs: 293, fat: 180 }, meals: [
-    { time: '07:45', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 120g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
-    { time: '12:00', name: '120g salmon + 70g beef strips, pan-fried in 4g ghee; 1 whole avocado (~160g); 100g kiwi + 80g pineapple; 250ml cold-pressed ginger-apple-cherry juice; 1 medium raw carrot (~70g); 150g cucumber' },
-    { time: '15:00', name: '260g beef mince, seared in 4g beef dripping/tallow; 90g mushrooms, pan-seared; 1 tbsp raw honey (~21g); 1 banana (~120g)' },
-    { time: '18:30', name: '170g beef mince + 3 oysters, seared/cooked in 4g beef dripping/tallow (grilled/steamed the oysters — not raw, infection risk) — zinc; ~250g butternut squash roasted in 10g ghee; 120g sweet potato roasted in 4g ghee; 75g avocado; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g); 200ml coconut water' },
-    { time: '21:00', name: '300ml raw kefir; 100g watermelon' },
+  Wednesday: { label: 'Upper B + MMA 17:30-18:30, tightest day', targets: { calories: 3920, protein: 199, carbs: 370, fat: 189 }, meals: [
+    { time: '07:15', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 150g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
+    { time: '12:00', name: '120g salmon + 190g beef strips, pan-fried in 4g ghee; 1 whole avocado (~200g); 100g kiwi + 80g pineapple; 250ml cold-pressed juice; 1 medium raw carrot (~70g); 150g cucumber' },
+    { time: '16:45', name: 'Pre-MMA fuel — 120g mango; 1 tbsp raw honey (~21g); 200ml orange juice; pinch of salt' },
+    { time: '19:00', name: '310g beef mince + 3 oysters, seared/cooked in 4g beef dripping/tallow (grilled/steamed — not raw, infection risk) — zinc; ~250g butternut squash roasted in 14g ghee; 350g sweet potato roasted in 4g ghee; 90g avocado; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g); 200ml coconut water' },
+    { time: '20:15', name: 'Pre-bed — 300ml raw kefir; 1 tbsp raw honey (~21g)' },
   ] },
-  Thursday: { label: 'Sprint Day — high carb, beef heart, extra sardines', targets: { calories: 3660, protein: 220, carbs: 290, fat: 185 }, meals: [
-    { time: '07:45', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 120g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
-    { time: '12:00', name: '100g sardines + 70g beef strips; 1 whole avocado (~160g); 100g watermelon + 80g mango; 250ml cold-pressed tropical juice; 1 medium raw carrot (~70g); 150g cucumber' },
-    { time: '15:00', name: '260g beef mince + 100g beef heart, seared in 4g beef dripping/tallow — CoQ10 + real dietary taurine (no supplement needed, beef heart alone runs ~63mg/100g); 1 tbsp raw honey (~21g); 1 banana (~120g)' },
-    { time: '18:30', name: '80g lamb mince (swap-in — variety) + 90g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 10g ghee; 200g sweet potato roasted in 4g ghee; 75g avocado; 20g Parmigiano Reggiano; 200ml coconut water' },
-    { time: '21:00', name: '300ml raw kefir — no watermelon here, already had 100g at lunch' },
+  Thursday: { label: 'Sprint Day, no MMA — D2D evening', targets: { calories: 3700, protein: 203, carbs: 328, fat: 183 }, meals: [
+    { time: '07:15', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 150g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
+    { time: '12:00', name: '100g sardines + 190g beef strips; 1 whole avocado (~190g); 100g watermelon + 80g mango; 250ml cold-pressed tropical juice; 1 medium raw carrot (~70g); 150g cucumber' },
+    { time: '16:30', name: 'Pre-D2D fuel — 100g kiwi; 1 tbsp raw honey (~21g)' },
+    { time: '19:30', name: '110g lamb mince (swap-in — variety) + 210g beef mince, seared in 4g beef dripping/tallow — CoQ10 + real dietary taurine; 280g sweet potato roasted in 4g ghee (glycogen boost — tomorrow is Friday\'s MMA + lifting double day); ~250g butternut squash roasted in 10g ghee; 90g avocado; 80g kiwi; 90g mushrooms, pan-seared' },
+    { time: '21:00', name: 'Pre-bed — 300ml raw kefir; 1 tbsp raw honey (~21g)' },
   ] },
-  Friday: { label: 'Lower B + Plyometrics B — highest carb, liver + brisket', targets: { calories: 3750, protein: 215, carbs: 306, fat: 190 }, meals: [
-    { time: '07:45', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 120g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
-    { time: '12:00', name: '120g salmon + 70g beef strips, pan-fried in 4g ghee; 1 whole avocado (~160g); 100g mixed berries + 80g pineapple; 250ml cold-pressed tropical juice; 1 medium raw carrot (~70g); 150g cucumber' },
-    { time: '15:00', name: '230g beef mince + 100g liver, seared in 4g beef dripping/tallow — folate + copper, 2nd hit; 1 tbsp raw honey (~21g); 1 banana (~120g)' },
-    { time: '18:30', name: '100g brisket (swap-in for beef mince) + 100g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 10g ghee; 200g sweet potato roasted in 4g ghee; 75g avocado; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g); 200ml coconut water' },
-    { time: '21:00', name: '300ml raw kefir; 100g watermelon' },
+  Friday: { label: 'Lower B + MMA 18:00-19:00', targets: { calories: 4150, protein: 221, carbs: 363, fat: 207 }, meals: [
+    { time: '07:15', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 150g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
+    { time: '11:30', name: '120g salmon + 210g beef strips, pan-fried in 4g ghee; 1 whole avocado (~200g); 100g mixed berries + 80g pineapple; 250ml cold-pressed juice; 1 medium raw carrot (~70g); 150g cucumber' },
+    { time: '16:45', name: 'Pre-MMA fuel — 150g watermelon; 1 tbsp raw honey (~21g); 200ml orange juice; pinch of salt' },
+    { time: '19:30', name: '130g brisket (swap-in — variety) + 260g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 14g ghee; 370g sweet potato roasted in 4g ghee; 90g avocado; 1 tsp turmeric (~3g) + 1/4 tsp black pepper (~0.5g); 200ml coconut water' },
+    { time: '20:45', name: 'Pre-bed — 300ml raw kefir; 1 tbsp raw honey (~21g)' },
   ] },
-  Saturday: { label: 'Zone 2 — reduced carb, non-explosive, lungs', targets: { calories: 3675, protein: 235, carbs: 258, fat: 190 }, meals: [
-    { time: '07:45', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 120g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
-    { time: '12:00', name: '120g salmon + 70g beef strips, pan-fried in 4g ghee; 1 whole avocado (~160g); 100g watermelon; 250ml cold-pressed ginger-apple-cherry juice; 1 medium raw carrot (~70g); 150g cucumber' },
-    { time: '15:00', name: '250g beef mince + 100g lung, seared in 4g beef dripping/tallow — lean-protein variety, real dietary diversity; 1 banana (~120g) — no honey' },
-    { time: '18:30', name: '100g mussels (cooked) + 180g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 10g ghee; 150g sweet potato roasted in 4g ghee; 75g avocado; 20g Parmigiano Reggiano; 200ml coconut water' },
-    { time: '21:00', name: '300ml raw kefir — no watermelon here, already had 100g at lunch' },
+  Saturday: { label: 'Zone 2 + ~3.5h D2D block, no MMA', targets: { calories: 4000, protein: 220, carbs: 362, fat: 193 }, meals: [
+    { time: '07:15', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 150g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice; double espresso' },
+    { time: '10:10', name: 'Pre-D2D fuel — 120g mango; 1 tbsp raw honey (~21g); 200ml coconut water' },
+    { time: '14:00', name: '120g salmon + 210g beef strips, pan-fried in 4g ghee; 1 whole avocado (~200g); 100g watermelon; 250ml cold-pressed juice; 1 medium raw carrot (~70g); 150g cucumber; 100g extra sweet potato; 1 extra banana (~120g) — bigger recovery meal given the long D2D gap since breakfast' },
+    { time: '18:15', name: '100g mussels (cooked) + 290g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 14g ghee; 180g sweet potato roasted in 4g ghee; 90g avocado; 80g kiwi; 90g mushrooms, pan-seared' },
+    { time: '19:45', name: 'Pre-bed — 300ml raw kefir; 1 tbsp raw honey (~21g)' },
   ] },
-  Sunday: { label: 'Full Rest — lowest carb, zero training demand, extra sardines', targets: { calories: 3270, protein: 210, carbs: 198, fat: 185 }, meals: [
-    { time: '07:45', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 120g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice' },
-    { time: '12:00', name: '100g salmon + 100g sardines + 70g beef strips; 1 whole avocado (~160g); 150g pineapple; 250ml cold-pressed ginger-apple-cherry juice; 1 medium raw carrot (~70g); 150g cucumber' },
-    { time: '15:30', name: '260g beef mince, seared in 4g beef dripping/tallow; 90g mushrooms, pan-seared' },
-    { time: '19:00', name: '80g lamb mince (swap-in — variety) + 90g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 10g ghee; 75g avocado' },
-    { time: '21:00', name: '300ml raw kefir; kept simple — no fruit pairing needed here' },
+  Sunday: { label: 'Full Rest — meal prep, early dinner', targets: { calories: 3700, protein: 226, carbs: 254, fat: 201 }, meals: [
+    { time: '07:15', name: '4 whole eggs (~220g), fried in 8g beef dripping/tallow; 150g potato in 4g ghee; 1 banana (~120g); 150ml raw kefir; 150ml orange juice' },
+    { time: '12:15', name: '100g salmon + 100g sardines + 170g beef strips; 1 whole avocado (~190g); 150g pineapple; 250ml cold-pressed juice; 1 medium raw carrot (~70g); 150g cucumber' },
+    { time: '15:30', name: '100g lamb mince (swap-in — variety) + 300g beef mince, seared in 4g beef dripping/tallow; ~250g butternut squash roasted in 12g ghee; 150g sweet potato roasted in 4g ghee (glycogen boost — tomorrow is Monday\'s MMA + lifting double day, the week\'s hardest combined day); 90g avocado' },
+    { time: '21:00', name: 'Pre-bed — 300ml raw kefir; 1 tbsp raw honey (~21g)' },
   ] },
 };
 
@@ -8448,7 +8487,7 @@ function jpRealignSplit(dayName){
 // then behaves like any other user's plan — editable through the app's own
 // swapExercise() flow without this function silently discarding it on the
 // next page load, which unconditional overwriting-every-load would do.
-const JP_PROTOCOL_VERSION = 'v29-nutrition-5-meal-beef-forward';
+const JP_PROTOCOL_VERSION = 'v30-nutrition-mma-schedule';
 
 function applyJPRealProtocol() {
   if (USER?.id !== JP_USER_ID) return;
