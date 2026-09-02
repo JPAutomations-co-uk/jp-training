@@ -37,23 +37,30 @@ function scoreColor(score) {
   return COLOR.red
 }
 
-// App's own convention is comma-separated ("200g chicken breast, rice,
-// broccoli") — confirmed via the add-food placeholder text and every
-// existing foods.map().join(', ') call site, not semicolons. Raised from
-// a 5-item cap to 9 per JP's request to list ingredients individually —
-// 9 comfortably fits the redesigned layout's freed-up vertical space
-// (the score badge no longer dominates the whole top half of the card).
+// Real bug, found from an actual logged meal: JP's planned-meal strings
+// (JP_NUTRITION_PLAN in app.html) use SEMICOLONS as the top-level
+// separator between distinct ingredients, with commas only for a
+// sub-detail within one ingredient — e.g. "4 whole eggs (~220g), fried
+// in 8g beef dripping/tallow; 150g potato in 4g ghee; 1 banana" is 3
+// ingredients (egg, potato, banana), not a comma-split mess. Splitting
+// on comma alone (the free-text add-food convention) mangled this into
+// 2 giant chunks. Fix: prefer semicolon-splitting when any semicolons
+// are present, only fall back to comma-splitting for genuine free-text
+// logs that never had semicolons at all (e.g. "chicken breast, rice,
+// broccoli").
 function parseIngredients(foodName) {
-  const parts = String(foodName || '').split(',').map(s => s.trim()).filter(Boolean)
-  if (parts.length <= 1) return { lines: [String(foodName || '').trim()], more: 0 }
+  const raw = String(foodName || '').trim()
+  const bySemicolon = raw.split(';').map(s => s.trim()).filter(Boolean)
+  const parts = bySemicolon.length > 1 ? bySemicolon : raw.split(',').map(s => s.trim()).filter(Boolean)
+  if (parts.length <= 1) return { lines: [raw], more: 0 }
   return { lines: parts.slice(0, 9), more: Math.max(0, parts.length - 9) }
 }
 
 // Fallback for meals logged before the tagline field existed, or logged
-// without a successful AI rating — stays in the same dry, unfiltered
-// register as a real tagline rather than degrading to a flat "no data"
-// line, since this is a share-card people are meant to actually post.
-const FALLBACK_TAGLINE = 'No AI verdict on file for this one — but if it\'s on this plan, it\'s already outperforming whatever\'s in everyone else\'s Tupperware.'
+// without a successful AI rating. Per JP's explicit direction: no
+// mention of "AI" or "the plan" — just a brief, brutal line about the
+// food itself, same register a real tagline should hit.
+const FALLBACK_TAGLINE = 'Logged. Whether that was a good idea is between you and your macros.'
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors() })
