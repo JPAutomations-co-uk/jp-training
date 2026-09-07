@@ -1462,6 +1462,19 @@
         <canvas id="chart-strength" height="110"></canvas>
         <div id="chart-strength-empty" class="chart-empty" style="display:none">Log a few sessions for this exercise to see progression.</div>
       </div>
+      <div id="pr-history-wrap" class="reveal-on-scroll"></div>
+      <div class="divider"></div>
+
+      <!-- MOBILITY PROGRESS (JP-only — stretch_* keys only exist on his account) -->
+      <div id="mobility-progress-section" style="display:none">
+        <div class="sh-label" style="margin-bottom:2px">Mobility — Stretch Completion</div>
+        <p class="sh-sub" style="margin-bottom:10px" id="mobility-streak-label"></p>
+        <div class="chart-card reveal-on-scroll">
+          <canvas id="chart-mobility" height="110"></canvas>
+          <div id="chart-mobility-empty" class="chart-empty" style="display:none">Tick off a few stretches to see your trend.</div>
+        </div>
+        <div class="divider"></div>
+      </div>
       <div class="divider"></div>
 
       <!-- BODY COMPOSITION -->
@@ -1512,9 +1525,17 @@
         <div id="chart-checkin-empty" class="chart-empty" style="display:none">Submit a few check-ins to see your trend.</div>
       </div>
       <div class="chart-card reveal-on-scroll">
-        <div class="chart-lbl">Daily Calories — Last 7 Days</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
+          <div class="chart-lbl" style="margin-bottom:0">Nutrition — Last 7 Days</div>
+          <select id="nutrition-metric-select" onchange="renderNutritionChart(this.value)" style="background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:11px;padding:3px 6px">
+            <option value="cal">Calories</option>
+            <option value="protein">Protein</option>
+            <option value="carbs">Carbs</option>
+            <option value="fat">Fat</option>
+          </select>
+        </div>
         <canvas id="chart-cals" height="110"></canvas>
-        <div id="chart-cals-empty" class="chart-empty" style="display:none">Log meals in the Eat tab to track calories.</div>
+        <div id="chart-cals-empty" class="chart-empty" style="display:none">Log meals in the Eat tab to track this.</div>
       </div>
 
       <div class="divider"></div>
@@ -5057,6 +5078,25 @@ async function toggleHabit(key){
   }
 }
 
+// Same habit_log persistence as toggleHabit() (same table, same permanence,
+// same onConflict upsert), deliberately WITHOUT its XP/perfect-day side
+// effects — this is for individual stretch/drill ticks (stretch_* keys),
+// and there can be 15-20+ of them in a single day. Running them through
+// toggleHabit() as-is would award 10XP per stretch (150-200+XP/day just
+// from ticking stretches) and flood the Habits tab with every single drill
+// unless each one were also registered in JP_CUSTOM_HABITS. Kept as a
+// separate function rather than a flag on toggleHabit() so the two
+// behaviours can never be accidentally conflated at a call site.
+async function toggleStretchItem(key){
+  const _d = HABIT_DATE;
+  habitState[key] = !habitState[key];
+  try{ localStorage.setItem(`jpt_habits_${USER.id}_${_d}`, JSON.stringify(habitState)); }catch(e){}
+  const { error } = await sb.from('habit_log').upsert({
+    user_id: USER.id, date: _d, habit_name: key, completed: habitState[key]
+  }, { onConflict: 'user_id,date,habit_name' });
+  if(error) console.error('Stretch item save failed:', error.message, error);
+}
+
 // Auto-completes a habit from a real signal elsewhere in the app (a saved
 // training session, steps goal hit, etc.) instead of requiring a manual tap —
 // same idea as the steps auto-complete below, generalised so other habits can
@@ -5573,8 +5613,19 @@ async function initEat(){
   renderNutritionPlan();
   const{data}=await sb.from('nutrition_logs').select('*').eq('user_id',USER.id).eq('date',EAT_DATE).order('created_at');
   foods=data||[];
-  // Restore ratings from localStorage cache (ratings are not stored in Supabase — no schema dependency)
+  // Restore ratings from localStorage cache first (richer — has reasons/
+  // tips/micros, which have nowhere to live in Supabase without a further
+  // migration). Anything the cache doesn't have (viewing an older date,
+  // cleared browser storage, a different device) falls back to the
+  // permanent score+tagline columns on nutrition_logs itself — thinner,
+  // but actually persists forever instead of vanishing once you move off
+  // the date it was logged on.
   _loadRatingsCache();
+  foods.forEach(f=>{
+    if(!foodRatings[f.id] && f.score != null){
+      foodRatings[f.id] = { score: f.score, tagline: f.notes||null, headline: null, reasons: null, tips: [], toTen: null, micros: null, mealTime: null };
+    }
+  });
   renderFoods();
   renderNutritionPlan(); // re-render now foods is populated, for the live macro progress bar
 }
@@ -6164,11 +6215,19 @@ async function logFoodEntry(name, timeVal, d) {
     micros: d.micros||null, mealTime: timeVal||null
   } : (timeVal ? { mealTime: timeVal } : null);
 
-  // Insert only guaranteed columns — meal_time excluded (may not exist in schema)
+  // Insert only guaranteed columns — meal_time excluded (may not exist in
+  // schema). score/notes DO exist (confirmed against the real rebuilt
+  // schema) but were never written before — the AI rating for every past
+  // meal was only ever cached in localStorage keyed per-date, so it
+  // silently vanished once you moved off that date. notes holds the
+  // tagline (not the full reasons/tips/micros breakdown — no column for
+  // that without a further migration, so that deeper detail stays
+  // session-cache-only; score+tagline is what's actually made permanent).
   const entry = {
     user_id: USER.id, date: EAT_DATE, food_name: name,
     calories: macros.cal, protein_g: macros.protein_g,
-    carbs_g: macros.carbs_g, fat_g: macros.fat_g
+    carbs_g: macros.carbs_g, fat_g: macros.fat_g,
+    score: rating?.score ?? null, notes: rating?.tagline ?? null
   };
 
   const { data, error } = await sb.from('nutrition_logs').insert(entry).select().single();
@@ -6340,6 +6399,10 @@ async function initProgress(){
   renderHabitCategoryBreakdown();
   renderAdherenceCorrelation();
   loadProgressCharts();
+  if (USER?.id === JP_USER_ID) {
+    renderPRHistory();
+    renderMobilityProgress();
+  }
 }
 
 let _charts = {};
@@ -6354,7 +6417,7 @@ async function loadProgressCharts(){
   const [{ data: habitData }, { data: checkinData }, { data: calData }] = await Promise.all([
     sb.from('habit_log').select('date,completed').eq('user_id',USER.id).gte('date',from),
     sb.from('progress_checkins').select('*').eq('user_id',USER.id).gte('date',APP_LAUNCH_DATE).order('date',{ascending:true}).limit(10),
-    sb.from('nutrition_logs').select('date,calories').eq('user_id',USER.id).gte('date',from),
+    sb.from('nutrition_logs').select('date,calories,protein_g,carbs_g,fat_g').eq('user_id',USER.id).gte('date',from),
   ]);
 
   // Scoped to just the charts this function owns — _charts is now shared
@@ -6364,7 +6427,7 @@ async function loadProgressCharts(){
   // whichever of those finished first, leaving their canvases blank.
   ['habits','checkin','cals'].forEach(k=>{ if(_charts[k]){ try{_charts[k].destroy()}catch(e){} delete _charts[k]; } });
 
-  const days=[], pcts=[], calMap={};
+  const days=[], pcts=[], calMap={}, proteinMap={}, carbsMap={}, fatMap={};
   for(let i=6;i>=0;i--){
     const dt=new Date(); dt.setDate(dt.getDate()-i);
     const ds=_localDateStr(dt);
@@ -6373,7 +6436,11 @@ async function loadProgressCharts(){
     const done=dayH.filter(h=>h.completed).length;
     days.push(dt.toLocaleDateString('en-GB',{weekday:'short'}));
     pcts.push(allH.length?Math.round((done/allH.length)*100):0);
-    calMap[ds]=(calData||[]).filter(f=>f.date===ds).reduce((s,f)=>s+(+f.calories||0),0);
+    const dayFoods = (calData||[]).filter(f=>f.date===ds);
+    calMap[ds]=dayFoods.reduce((s,f)=>s+(+f.calories||0),0);
+    proteinMap[ds]=dayFoods.reduce((s,f)=>s+(+f.protein_g||0),0);
+    carbsMap[ds]=dayFoods.reduce((s,f)=>s+(+f.carbs_g||0),0);
+    fatMap[ds]=dayFoods.reduce((s,f)=>s+(+f.fat_g||0),0);
   }
 
   const tealAlpha = v => v>=70?'rgba(44,212,196,.7)':v>=40?'rgba(44,212,196,.35)':'rgba(44,212,196,.15)';
@@ -6405,15 +6472,29 @@ async function loadProgressCharts(){
     }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,min:1,max:10}}}});
   }
 
-  // Calorie chart
+  // Nutrition chart — calories by default, switchable to protein/carbs/fat
+  // via the metric picker (renderNutritionChart()) without re-querying,
+  // since all 4 maps are already fetched above in the same round-trip.
+  _nutritionChartData = { days, cal: mapToVals(calMap), protein: mapToVals(proteinMap), carbs: mapToVals(carbsMap), fat: mapToVals(fatMap), gridOpts, noLegend };
+  function mapToVals(map){ return days.map((_,i)=>{const dt=new Date();dt.setDate(dt.getDate()-(6-i));return map[_localDateStr(dt)]||0;}); }
+  renderNutritionChart(document.getElementById('nutrition-metric-select')?.value || 'cal');
+}
+
+let _nutritionChartData = null;
+const NUTRITION_METRIC_UNIT = { cal:'kcal', protein:'g', carbs:'g', fat:'g' };
+function renderNutritionChart(metric){
+  if (!_nutritionChartData) return;
+  const { days, gridOpts, noLegend } = _nutritionChartData;
+  const vals = _nutritionChartData[metric] || _nutritionChartData.cal;
+  const unit = NUTRITION_METRIC_UNIT[metric] || 'kcal';
   const calCanvas = document.getElementById('chart-cals');
-  const calVals = days.map((_,i)=>{const dt=new Date();dt.setDate(dt.getDate()-(6-i));return calMap[_localDateStr(dt)]||0;});
-  const hasCals = calVals.some(v=>v>0);
+  const hasCals = vals.some(v=>v>0);
   document.getElementById('chart-cals-empty').style.display = hasCals?'none':'block';
+  if(_charts.cals){ try{_charts.cals.destroy()}catch(e){} delete _charts.cals; }
   if(calCanvas && hasCals){
     _charts.cals = new Chart(calCanvas,{type:'bar',data:{labels:days,datasets:[{
-      data:calVals,backgroundColor:'rgba(44,212,196,.3)',borderRadius:3,
-    }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,ticks:{...gridOpts.y.ticks,callback:v=>v+'kcal'}}}}});
+      data:vals,backgroundColor:'rgba(44,212,196,.3)',borderRadius:3,
+    }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,ticks:{...gridOpts.y.ticks,callback:v=>v+unit}}}}});
   }
 }
 
@@ -6457,6 +6538,49 @@ async function renderStrengthChart(exName){
     y:{ticks:{color:cssVar('--dim'),callback:v=>v+'kg'},grid:{color:cssVar('--border')},border:{display:false}},
     x:{ticks:{color:cssVar('--muted')},grid:{display:false},border:{display:false}}
   }}});
+}
+
+// All-time PR timeline (unlike renderStrengthChart's 90-day single-
+// exercise view) — walks every logged set chronologically per exercise
+// and records every date the running max weight actually increased.
+// Everything else "automatic strength tracking" needs (reps/weights per
+// set, live PB detection at save time) already exists via saveWorkout()/
+// session_sets — this is purely additive history, not a fix.
+async function renderPRHistory(){
+  const wrap = document.getElementById('pr-history-wrap');
+  if (!wrap || !USER) return;
+  const { data: sessions } = await sb.from('workout_sessions').select('id,date').eq('user_id',USER.id).order('date',{ascending:true});
+  if(!sessions?.length){ wrap.innerHTML=''; return; }
+  const sessionDateById = {};
+  sessions.forEach(s=>{ sessionDateById[s.id]=s.date; });
+  const { data: sets } = await sb.from('session_sets').select('session_id,exercise_name,weight_kg').in('session_id',sessions.map(s=>s.id)).gt('weight_kg',0);
+  if(!sets?.length){ wrap.innerHTML=''; return; }
+
+  const byExercise = {};
+  sets.forEach(s=>{
+    const date = sessionDateById[s.session_id];
+    if(!date) return;
+    (byExercise[s.exercise_name] = byExercise[s.exercise_name]||[]).push({ date, weight: +s.weight_kg });
+  });
+  const prEvents = [];
+  Object.entries(byExercise).forEach(([exName, entries])=>{
+    entries.sort((a,b)=>a.date.localeCompare(b.date));
+    let max = 0;
+    entries.forEach(e=>{
+      if(e.weight > max){ max = e.weight; prEvents.push({ exName, weight: e.weight, date: e.date }); }
+    });
+  });
+  prEvents.sort((a,b)=>b.date.localeCompare(a.date));
+  if(!prEvents.length){ wrap.innerHTML=''; return; }
+
+  wrap.innerHTML = `<div class="sh-label" style="margin-bottom:6px">PR History</div>
+    <div class="card" style="padding:6px 14px">
+      ${prEvents.slice(0,50).map(e=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+        <span style="color:var(--muted);flex:1;min-width:0">${escHtml(e.exName)}</span>
+        <span style="color:var(--teal);font-weight:700;flex-shrink:0">${e.weight}kg</span>
+        <span style="color:var(--dim);font-size:11px;flex-shrink:0">${new Date(e.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'})}</span>
+      </div>`).join('')}
+    </div>`;
 }
 
 // ── Body Composition: stored in OB (no dedicated table exists, and no DDL
@@ -8225,16 +8349,27 @@ function buildJPMoveResults(){
   const pmRot = JP_EVENING_ROTATING[dayName] || JP_EVENING_ROTATING.Monday;
 
   const morning_routine = [
-    { name: 'Morning Mobility Core', duration: '~5 min, right after wake, before breakfast', how_to: 'Hip flexor hold 90s each side → dead bug 2×8.', why: 'The two non-negotiable daily items — anterior pelvic tilt correction + core stability — done before any axial loading (discs are more hydrated/vulnerable to flexion-load injury right after sleep). Same every day regardless of the training split, because this is the one that needs daily consistency to actually work.', habitKey:'custom_morning_mobility' },
-    { name: `Today's Focus — ${amRot.label}`, duration: '~5 min', how_to: amRot.items.length ? amRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → ') : 'No extra focus today.', why: 'Rotates by day, tied to what you\'re training — same logic as a gym split, applied to mobility instead of muscle groups.', habitKey:'custom_morning_focus' },
+    { name: 'Morning Mobility Core', duration: '~5 min, right after wake, before breakfast', how_to: 'Hip flexor hold 90s each side → dead bug 2×8.', why: 'The two non-negotiable daily items — anterior pelvic tilt correction + core stability — done before any axial loading (discs are more hydrated/vulnerable to flexion-load injury right after sleep). Same every day regardless of the training split, because this is the one that needs daily consistency to actually work.', habitKey:'custom_morning_mobility',
+      subItems: [
+        { name: 'Hip Flexor Hold', sets_reps: '90s each side', key: 'stretch_core_hipflexor' },
+        { name: 'Dead Bug', sets_reps: '2×8', key: 'stretch_core_deadbug' },
+      ] },
+    { name: `Today's Focus — ${amRot.label}`, duration: '~5 min', how_to: amRot.items.length ? amRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → ') : 'No extra focus today.', why: 'Rotates by day, tied to what you\'re training — same logic as a gym split, applied to mobility instead of muscle groups.', habitKey:'custom_morning_focus',
+      subItems: amRot.items.map((i,idx)=>({ name: i.name, sets_reps: i.sets_reps, key: `stretch_am_focus_${idx+1}` })) },
     { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your Upper/Lower/Sprint days don\'t otherwise cover.' },
   ];
 
   const evening_routine = [
-    { name: 'Postural Protocol (core, non-negotiable)', duration: '10 min, evening', how_to: 'Hip flexor lunge stretch 2×45s each side → thoracic extension over foam roller 1×2min → chin tuck 2×10 reps, 5s hold.', why: 'The one item in this whole protocol with a real, measured payoff — 1-3cm of functional height from correcting compressed posture. Needs daily consistency to hit the 4-8 week structural adaptation window, which is exactly why this doesn\'t rotate with the rest.', habitKey:'custom_postural_protocol' },
+    { name: 'Postural Protocol (core, non-negotiable)', duration: '10 min, evening', how_to: 'Hip flexor lunge stretch 2×45s each side → thoracic extension over foam roller 1×2min → chin tuck 2×10 reps, 5s hold.', why: 'The one item in this whole protocol with a real, measured payoff — 1-3cm of functional height from correcting compressed posture. Needs daily consistency to hit the 4-8 week structural adaptation window, which is exactly why this doesn\'t rotate with the rest.', habitKey:'custom_postural_protocol',
+      subItems: [
+        { name: 'Hip Flexor Lunge Stretch', sets_reps: '2×45s each side', key: 'stretch_postural_1' },
+        { name: 'Thoracic Extension Over Foam Roller', sets_reps: '1×2min', key: 'stretch_postural_2' },
+        { name: 'Chin Tuck', sets_reps: '2×10 reps, 5s hold', key: 'stretch_postural_3' },
+      ] },
   ];
   if (pmRot.items.length) {
-    evening_routine.push({ name: `Today's Focus — ${pmRot.label}`, duration: '~5-8 min', how_to: pmRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → '), why: 'Rotates by day, tied to what you\'re training.', habitKey:'custom_evening_focus' });
+    evening_routine.push({ name: `Today's Focus — ${pmRot.label}`, duration: '~5-8 min', how_to: pmRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → '), why: 'Rotates by day, tied to what you\'re training.', habitKey:'custom_evening_focus',
+      subItems: pmRot.items.map((i,idx)=>({ name: i.name, sets_reps: i.sets_reps, key: `stretch_pm_focus_${idx+1}` })) });
   }
   evening_routine.push(
     { name: 'Yoga Flow', duration: '10-15 min, evening — real content, not a placeholder', how_to: 'Cat-cow (10 reps) → downward dog (45 sec) → low lunge each side (45 sec) → pigeon pose each side (60 sec) → seated forward fold (60 sec) → supine spinal twist each side (45 sec).', why: 'Hip-opening and spinal mobility sequence, directly relevant to kick height and general flexibility goals.', habitKey:'custom_nsdr_yoga' },
@@ -8255,19 +8390,40 @@ function mobCheckbox(key){
     class="${done?'done':''}" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--B);letter-spacing:.04em;padding:3px 8px;border:1px solid ${done?'var(--teal)':'var(--border)'};color:${done?'var(--teal)':'var(--dim)'};margin-left:8px"><span>${done?'✓ Done':'Mark done'}</span></span>`;
 }
 
+// One row per individual stretch/drill — deliberately compact (this can
+// render 6-10 times in a row inside a warmup/static-stretch block) and
+// wired to toggleStretchItem(), not toggleHabit() — see that function's
+// comment for why these are kept separate from real habits/XP.
+function mobItemRow(si){
+  const done = !!habitState[si.key];
+  const name = escHtml(si.name);
+  return `<div onclick="event.stopPropagation();toggleStretchItem('${si.key}');this.classList.toggle('done');const isDone=this.classList.contains('done');this.style.borderColor=isDone?'var(--teal)':'var(--border)';const n=this.querySelector('.mob-item-name');n.style.color=isDone?'var(--teal)':'var(--muted)';n.textContent=(isDone?'✓ ':'')+${JSON.stringify(si.name)};"
+    class="${done?'done':''}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px;border:1px solid ${done?'var(--teal)':'var(--border)'};cursor:pointer;font-size:11px;margin-bottom:3px">
+    <span class="mob-item-name" style="color:${done?'var(--teal)':'var(--muted)'}">${done?'✓ ':''}${name}</span>
+    <span style="color:var(--dim);font-size:10px;flex-shrink:0">${escHtml(si.sets_reps||'')}</span>
+  </div>`;
+}
+
 function renderMobilityCard(dayName) {
   if (USER?.id !== JP_USER_ID) return '';
   const m = JP_MOBILITY_PLAN[dayName];
   if (!m) return '';
-  const drillList = drills => `<ul style="margin:4px 0 0;padding-left:16px;font-size:12px;color:var(--muted)">${drills.map(d=>`<li style="margin-bottom:2px">${escHtml(d)}</li>`).join('')}</ul>`;
+  // keyPrefix present + JP's account → each drill becomes its own tickable
+  // row (positional key, e.g. stretch_warmup_1) instead of plain <li> text.
+  // Positional rather than name-based because the same drill text can
+  // legitimately appear on multiple days — the slot, not the wording, is
+  // what's being tracked.
+  const drillList = (drills, keyPrefix) => (keyPrefix && USER?.id===JP_USER_ID)
+    ? `<div style="margin-top:4px">${drills.map((d,i)=>mobItemRow({ name: d, sets_reps: '', key: `${keyPrefix}_${i+1}` })).join('')}</div>`
+    : `<ul style="margin:4px 0 0;padding-left:16px;font-size:12px;color:var(--muted)">${drills.map(d=>`<li style="margin-bottom:2px">${escHtml(d)}</li>`).join('')}</ul>`;
   const sections = [];
   if (m.warmup) {
     const isExplosive = dayName === 'Tuesday' || dayName === 'Thursday' || dayName === 'Friday';
     const isLightWarmup = dayName === 'Monday' || dayName === 'Wednesday' || dayName === 'Saturday';
     const warmupKey = isExplosive ? 'custom_explosive_warmup' : isLightWarmup ? 'custom_pretrain_warmup' : null;
-    sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}${warmupKey?mobCheckbox(warmupKey):''}</div>${drillList(m.warmup.drills)}</div>`);
+    sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}${warmupKey?mobCheckbox(warmupKey):''}</div>${drillList(m.warmup.drills, 'stretch_warmup')}</div>`);
   }
-  if (m.staticStretch) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">After — ${escHtml(m.staticStretch.label)}${mobCheckbox('custom_static_stretch')}</div>${drillList(m.staticStretch.drills)}</div>`);
+  if (m.staticStretch) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">After — ${escHtml(m.staticStretch.label)}${mobCheckbox('custom_static_stretch')}</div>${drillList(m.staticStretch.drills, 'stretch_static')}</div>`);
   (m.extras||[]).forEach(e => {
     let key = null;
     if (e.label.includes('PNF')) key = 'custom_pnf_prep';
@@ -8338,6 +8494,88 @@ async function renderMoveWeekStrip(){
     </div>`;
   }).join('');
   wrap.style.display = 'flex';
+}
+
+// Derives the full list of expected stretch_* keys for a given day NAME
+// (not date) directly from the live content structures, rather than a
+// second hardcoded table alongside JP_MOVE_DAY_REQUIRED_KEYS — a static
+// list here would silently drift out of sync the next time a warmup/
+// static-stretch drill count changes (exactly the kind of duplication
+// bug already found once this session with the old Sprint-Day mobility
+// panel). Mirrors the exact positional-key scheme used when rendering
+// each section (buildJPMoveResults()/renderMobilityCard()).
+function jpStretchKeysForDay(dayName){
+  const keys = ['stretch_core_hipflexor', 'stretch_core_deadbug'];
+  const amRot = JP_MORNING_ROTATING[dayName];
+  if (amRot) amRot.items.forEach((_,i)=>keys.push(`stretch_am_focus_${i+1}`));
+  const m = JP_MOBILITY_PLAN[dayName];
+  if (m?.warmup) m.warmup.drills.forEach((_,i)=>keys.push(`stretch_warmup_${i+1}`));
+  if (m?.staticStretch) m.staticStretch.drills.forEach((_,i)=>keys.push(`stretch_static_${i+1}`));
+  keys.push('stretch_postural_1','stretch_postural_2','stretch_postural_3');
+  const pmRot = JP_EVENING_ROTATING[dayName];
+  if (pmRot) pmRot.items.forEach((_,i)=>keys.push(`stretch_pm_focus_${i+1}`));
+  return keys;
+}
+
+// Progress tab's Mobility section — a completion-rate chart + streak,
+// deliberately NOT a chart per individual stretch (a trend line for
+// "Doorway Pec Stretch over time" isn't useful) — same aggregate-view
+// philosophy as the habits chart, scoped to stretch_* keys only.
+async function renderMobilityProgress(){
+  const section = document.getElementById('mobility-progress-section');
+  if (!section || USER?.id !== JP_USER_ID) return;
+  section.style.display = '';
+
+  const from = new Date(); from.setDate(from.getDate()-29);
+  const { data } = await sb.from('habit_log').select('date,habit_name,completed')
+    .eq('user_id',USER.id).eq('completed',true).gte('date',_localDateStr(from)).like('habit_name','stretch_%');
+  const doneByDate = {};
+  (data||[]).forEach(r=>{ (doneByDate[r.date]=doneByDate[r.date]||new Set()).add(r.habit_name); });
+
+  const days=[], pcts=[];
+  for(let i=6;i>=0;i--){
+    const dt=new Date(); dt.setDate(dt.getDate()-i);
+    const ds=_localDateStr(dt);
+    const required = jpStretchKeysForDay(effectiveDayName(ds));
+    const done = doneByDate[ds]||new Set();
+    const doneCount = required.filter(k=>done.has(k)).length;
+    days.push(dt.toLocaleDateString('en-GB',{weekday:'short'}));
+    pcts.push(required.length ? Math.round((doneCount/required.length)*100) : 0);
+  }
+
+  // Streak: consecutive fully-complete days walking backward from today.
+  // Today being incomplete doesn't break yesterday's streak (the day
+  // isn't over yet) — it just doesn't add to the count until it's done.
+  let streak = 0;
+  for(let i=0;i<30;i++){
+    const dt=new Date(); dt.setDate(dt.getDate()-i);
+    const ds=_localDateStr(dt);
+    const required = jpStretchKeysForDay(effectiveDayName(ds));
+    const done = doneByDate[ds]||new Set();
+    const complete = required.length>0 && required.every(k=>done.has(k));
+    if (complete) { streak++; continue; }
+    if (i===0) continue;
+    break;
+  }
+  const streakLabel = document.getElementById('mobility-streak-label');
+  if (streakLabel) streakLabel.textContent = streak>0
+    ? `${streak}-day streak of full routines completed`
+    : 'Tick off today\'s stretches to start a streak';
+
+  const canvas = document.getElementById('chart-mobility');
+  const hasData = pcts.some(v=>v>0);
+  const emptyEl = document.getElementById('chart-mobility-empty');
+  if (emptyEl) emptyEl.style.display = hasData?'none':'block';
+  if (_charts.mobility) { try{_charts.mobility.destroy()}catch(e){} delete _charts.mobility; }
+  if (canvas && hasData) {
+    const tealAlpha = v => v>=70?'rgba(44,212,196,.7)':v>=40?'rgba(44,212,196,.35)':'rgba(44,212,196,.15)';
+    _charts.mobility = new Chart(canvas,{type:'bar',data:{labels:days,datasets:[{
+      data:pcts, backgroundColor:pcts.map(tealAlpha), borderRadius:3,
+    }]},options:{responsive:true,plugins:{legend:{display:false}},scales:{
+      y:{min:0,max:100,ticks:{color:cssVar('--dim'),callback:v=>v+'%'},grid:{color:cssVar('--border')},border:{display:false}},
+      x:{ticks:{color:cssVar('--muted')},grid:{display:false},border:{display:false}}
+    }}});
+  }
 }
 
 // Persists OB to the user_state table instead of auth user_metadata.
@@ -12152,6 +12390,7 @@ function mobRenderResults(data) {
           ${ex.habitKey && USER?.id===JP_USER_ID ? mobCheckbox(ex.habitKey) : ''}
         </div>
         <div class="mob-ex-meta">${escHtml(ex.duration || ex.sets_reps || '')}</div>
+        ${ex.subItems?.length && USER?.id===JP_USER_ID ? `<div style="margin-top:6px">${ex.subItems.map(si=>mobItemRow(si)).join('')}</div>` : ''}
         ${ex.how_to ? `<button class="mob-ex-toggle" onclick="mobToggleHow(this)">How to ▾</button><div class="mob-ex-how">${escHtml(ex.how_to).replace(/\n/g,'<br>')}</div>` : ''}
         ${ex.why ? `<div style="font-size:11px;color:rgba(44,212,196,.6);margin-top:4px;font-style:italic">${escHtml(ex.why)}</div>` : ''}
       </div>`).join('');
