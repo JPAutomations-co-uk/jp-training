@@ -2278,7 +2278,6 @@
         </select>
         <button onclick="resetProgrammeStart()" style="margin-left:auto;font-size:11px;padding:5px 10px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer">Restart week count from today →</button>
       </div>
-      <div id="pc-split-realign"></div>
       <div style="flex:1;overflow-y:auto;padding:0 20px 20px"><div id="pc-week-list"></div></div>
     </div>
   </div>
@@ -5137,10 +5136,7 @@ function _clearTrainDraftDay(dayName){
   if(d[dayName]){ delete d[dayName]; try { localStorage.setItem(_trainDraftKey(), JSON.stringify(d)); } catch(e){} }
 }
 // Date of a given weekday within the current week, never in the future.
-// JP's account routes through the rolling split-day cycle instead, since
-// his plan's day labels are rotation positions, not real weekday names.
 function _dateForWeekday(dayName){
-  if (USER?.id === JP_USER_ID) return jpDateForSplitDay(dayName);
   const names = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const target = names.indexOf(dayName);
   if(target < 0) return TODAY;
@@ -5253,29 +5249,6 @@ function openProgrammeCalendar(){
   document.getElementById('pc-cadence-select').value = info.cadence;
   document.getElementById('pc-subtitle').textContent = `Started ${new Date(info.startDate+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} — currently week ${info.weekNumber}`;
   renderProgrammeCalendar();
-  renderSplitRealignControl();
-}
-// JP-only: lets him correct which split-day label today actually is,
-// whenever the rolling cycle drifts from reality (skipped day, extra rest
-// day, doubled up two sessions in one day, etc.) — picks a label, and
-// jpRealignSplit() recomputes the anchor so the whole rotation shifts.
-const JP_SPLIT_SESSION_HINT = { Monday:'Upper A', Tuesday:'Lower A', Wednesday:'Upper B', Thursday:'Sprint Day', Friday:'Lower B', Saturday:'Zone 2', Sunday:'Full Rest' };
-function renderSplitRealignControl(){
-  const el = document.getElementById('pc-split-realign');
-  if(!el) return;
-  if(USER?.id !== JP_USER_ID){ el.innerHTML=''; return; }
-  // Live date, not the stale page-load TODAY const — this label/pre-selection
-  // is the trust signal JP reads before deciding what to pick, so it needs
-  // to be right even if the tab's been open a while (see jpRealignSplit()).
-  const today = jpSplitDayName(_localDateStr());
-  el.innerHTML = `
-    <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <label style="font-size:11px;color:var(--dim)">Today's split day is</label>
-      <select id="pc-split-select" onchange="jpRealignSplit(this.value)" style="background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px;padding:4px 8px">
-        ${JP_SPLIT_DAY_NAMES.map(n=>`<option value="${escHtml(n)}"${n===today?' selected':''}>${escHtml(n)} (${escHtml(JP_SPLIT_SESSION_HINT[n])})</option>`).join('')}
-      </select>
-    </div>
-  `;
 }
 function closeProgrammeCalendar(){
   document.getElementById('programme-calendar-modal').style.display = 'none';
@@ -5327,19 +5300,16 @@ function renderWeeklyPRs(){
 }
 
 function renderDayTabIndicators(){
-  // JP's rotation is fixed-order (Monday..Sunday = position 0..6 in the
-  // cycle, not real weekdays) — everyone else stays on the real calendar
-  // week (Sunday..Saturday = getDay() 0..6).
-  const isJP = USER?.id === JP_USER_ID;
-  const names = isJP ? JP_SPLIT_DAY_NAMES : ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const todayIdx = isJP ? names.indexOf(jpSplitDayName(_localDateStr())) : new Date().getDay();
+  const names = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const todayIdx = new Date().getDay();
   (_weeklyPlan||[]).forEach(d=>{
     const dot = document.getElementById('day-tab-dot-'+d.day);
     if(!dot) return;
     if(d.type === 'rest'){ dot.style.background='transparent'; return; }
-    const diff = names.indexOf(d.day) - todayIdx; // <0 earlier this cycle, 0 today, >0 not reached yet this cycle
+    const diff = names.indexOf(d.day) - todayIdx; // <0 earlier this week, 0 today, >0 not reached yet this week
     if(diff > 0){ dot.style.background='transparent'; dot.title=''; return; }
-    const dateForThisWeek = isJP ? jpDateForSplitDay(d.day) : (()=>{ const dt=new Date(TODAY+'T00:00:00'); dt.setDate(dt.getDate()+diff); return _localDateStr(dt); })();
+    const dt=new Date(TODAY+'T00:00:00'); dt.setDate(dt.getDate()+diff);
+    const dateForThisWeek = _localDateStr(dt);
     if(_loggedSessionDates.has(dateForThisWeek)){ dot.style.background='var(--teal)'; dot.title='Logged'; }
     else if(diff < 0){ dot.style.background='#f87171'; dot.title='Missed'; }
     else { dot.style.background='transparent'; dot.title=''; }
@@ -8339,8 +8309,8 @@ async function renderMoveWeekStrip(){
   const wrap = document.getElementById('move-week-strip');
   if (!wrap) return;
 
-  const todayIdx = JP_SPLIT_DAY_NAMES.indexOf(effectiveTodayName());
-  const dayDates = JP_SPLIT_DAY_NAMES.map(d => ({ day: d, date: jpDateForSplitDay(d) }));
+  const todayIdx = JP_WEEKDAY_NAMES.indexOf(effectiveTodayName());
+  const dayDates = JP_WEEKDAY_NAMES.map(d => ({ day: d, date: _dateForWeekday(d) }));
   const earliest = dayDates.reduce((min,d) => d.date < min ? d.date : min, dayDates[0].date);
 
   const { data } = await sb.from('habit_log').select('habit_name,date,completed')
@@ -8352,12 +8322,12 @@ async function renderMoveWeekStrip(){
     doneByDate[r.date].add(r.habit_name);
   });
 
-  wrap.innerHTML = JP_SPLIT_DAY_NAMES.map((day,i) => {
+  wrap.innerHTML = JP_WEEKDAY_NAMES.map((day,i) => {
     const { date } = dayDates[i];
     const required = JP_MOVE_DAY_REQUIRED_KEYS[day] || [];
     const done = doneByDate[date] || new Set();
     const complete = required.length > 0 && required.every(k => done.has(k));
-    const diff = i - todayIdx; // <0 earlier this cycle, 0 today, >0 not reached yet
+    const diff = i - todayIdx; // <0 earlier this week, 0 today, >0 not reached yet
     let bg = 'transparent', title = '';
     if (complete) { bg = 'var(--teal)'; title = 'Full routine done'; }
     else if (diff < 0) { bg = '#f87171'; title = 'Missed'; }
@@ -8432,94 +8402,33 @@ async function loadOnboardingData() {
   applyJPRealProtocol();
 }
 
-// ── JP's rolling split-day system (31 Jul 2026) ──────────────────────────
-// Muay Thai's fixed external class times used to be the one real reason the
-// split stayed pinned to actual calendar weekdays (Mon=Push A, Wed=Pull A,
-// etc.) — now that MMA/team sport is gone, nothing external anchors it to
-// specific weekdays any more. JP confirmed he trains on a rolling cycle
-// instead: whatever session comes next in the rotation, not whatever the
-// calendar says. JP_TRAINING_PLAN/JP_MOBILITY_PLAN/JP_NUTRITION_PLAN's
-// 'Monday'..'Sunday' keys are now just fixed position labels in that 7-day
-// rotation, not real weekday names — this resolver is the only place that
-// converts between a real calendar date and which position label applies.
-// Every other user keeps the original real-calendar-weekday behaviour
-// untouched (effectiveDayName() falls through to it directly).
-const JP_SPLIT_DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-function jpSplitAnchorDate(){
-  OB.train = OB.train || {};
-  if (!OB.train.splitAnchorDate) {
-    // One-time seed (31 Jul 2026): JP confirmed Monday's session (Push A)
-    // was completed the day before this shipped — 30 Jul 2026 — with
-    // Tuesday's (Legs A) due the day it shipped. Every load after this one
-    // just reads the persisted value; only jpRealignSplit() moves it again.
-    OB.train.splitAnchorDate = '2026-07-30';
-    localStorage.setItem('jpt_ob', JSON.stringify(OB));
-    saveOB().catch(()=>{});
-  }
-  return OB.train.splitAnchorDate;
-}
-function jpSplitDayName(dateStr){
-  const anchor = new Date(jpSplitAnchorDate()+'T00:00:00');
-  const d = new Date(dateStr+'T00:00:00');
-  const daysSince = Math.round((d-anchor)/86400000);
-  const idx = ((daysSince % 7) + 7) % 7;
-  return JP_SPLIT_DAY_NAMES[idx];
-}
-// Real calendar date within the current rotation (never future) that a
-// given split-day label corresponds to — JP's rolling-cycle equivalent of
-// _dateForWeekday().
-function jpDateForSplitDay(dayName){
-  const liveToday = _localDateStr();
-  const targetIdx = JP_SPLIT_DAY_NAMES.indexOf(dayName);
-  if (targetIdx < 0) return liveToday;
-  const todayIdx = JP_SPLIT_DAY_NAMES.indexOf(jpSplitDayName(liveToday));
-  const back = ((todayIdx - targetIdx) + 7) % 7;
-  const d = new Date(liveToday + 'T00:00:00'); d.setDate(d.getDate() - back);
-  return _localDateStr(d);
-}
+// Plain "all 7 real weekday names" list — used both as the resolver's
+// output alphabet and independently reused across ~15 custom-habit
+// definitions below that just need "every day" as a days:[] value, with
+// nothing to do with any rotation. (Renamed from JP_SPLIT_DAY_NAMES on
+// 2 Sep 2026 — JP's account used to resolve "today" via a rolling 7-day
+// cycle position instead of the real calendar weekday, which drifted out
+// of sync with his MMA classes and D2D schedule once those were pinned
+// to real days. Removed entirely — JP now resolves exactly like every
+// other user, real calendar weekday, no rotation, no drift possible.)
+const JP_WEEKDAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 // The one function every "what day is it, for plan/nutrition/mobility
-// purposes" call site should use — routes JP through the rolling split,
-// everyone else through the real calendar weekday exactly as before.
+// purposes" call site should use — real calendar weekday for everyone,
+// including JP.
 function effectiveDayName(dateStr){
-  if (USER?.id === JP_USER_ID) return jpSplitDayName(dateStr);
   return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(dateStr+'T00:00:00').getDay()];
 }
-// "What day is it right NOW" for JP's rolling split — every call site that
-// used to pass the stale page-load TODAY const into effectiveDayName()/
-// jpSplitDayName() got wrong answers whenever the tab had been open since
-// before the real day turned over (this app is a PWA, tabs stay open for
-// days). TODAY itself is left alone (used in far too many other places —
-// logging dates, save timestamps — to safely replace everywhere in one
-// pass), but every "what's today's day-NAME for display/selection"
-// lookup now goes through this instead, computing the date fresh each
-// time rather than trusting a value that might be a day stale.
+// "What day is it right NOW" — every call site that used to pass the
+// stale page-load TODAY const into effectiveDayName() got wrong answers
+// whenever the tab had been open since before the real day turned over
+// (this app is a PWA, tabs stay open for days). TODAY itself is left
+// alone (used in far too many other places — logging dates, save
+// timestamps — to safely replace everywhere in one pass), but every
+// "what's today's day-NAME for display/selection" lookup goes through
+// this instead, computing the date fresh each time rather than trusting
+// a value that might be a day stale.
 function effectiveTodayName(){
   return effectiveDayName(_localDateStr());
-}
-// Manual realignment for when the rolling cycle drifts (skipped day, extra
-// rest day, etc.) — JP picks which split-day label today should be, and the
-// anchor is recomputed so the whole rotation shifts to match.
-//
-// Real bug fixed here: TODAY is a const computed once when the page loads
-// (new Date().toISOString().split('T')[0]), not recomputed live. If the
-// tab had been open since before the real day turned over, realigning to
-// "Monday" would anchor against yesterday's stale TODAY instead of the
-// actual current date — landing one full day off (confirmed: JP realigned
-// to Monday, the app showed Tuesday). Computing the date fresh here,
-// independent of the stale module-level TODAY, makes realignment correct
-// regardless of how long the tab's been open.
-function jpRealignSplit(dayName){
-  const targetIdx = JP_SPLIT_DAY_NAMES.indexOf(dayName);
-  if (targetIdx < 0) return;
-  OB.train = OB.train || {};
-  const liveToday = _localDateStr();
-  const d = new Date(liveToday + 'T00:00:00'); d.setDate(d.getDate() - targetIdx);
-  OB.train.splitAnchorDate = _localDateStr(d);
-  localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  saveOB().catch(()=>{});
-  showToast(`Split realigned — today is ${dayName}`);
-  applyJPRealProtocol();
-  if (OB.train.weeklyPlan) renderWeeklyCalendar(OB.train.weeklyPlan);
 }
 
 // Bump this string to push a real protocol update (overwrites whatever's in
@@ -8576,28 +8485,27 @@ function applyJPRealProtocol() {
   // (0=Sun..6=Sat). Re-derived on every load so additions/removals here
   // take effect immediately without leaving stale entries behind.
   // Sauna excluded — no access currently (JP's call, not a gap).
-  // `days` now holds split-day LABELS (JP_SPLIT_DAY_NAMES), not calendar
-  // getDay() numbers — matches the rolling split system (see jpSplitDayName
-  // above), since "pre-Speed-Session" etc. now means "whichever real date
-  // Monday's slot lands on this cycle," not calendar Monday specifically.
+  // `days` holds real weekday LABELS (JP_WEEKDAY_NAMES) — JP resolves
+  // "today" the same way every other user does now (see effectiveDayName()
+  // above), no rotation, so a day label here means that actual calendar day.
   const JP_CUSTOM_HABITS = [
-    { key: 'make_bed',         name: 'Make Bed / Tidy Room',        desc: 'One fully-finished task before anything else — real behavioural-science basis (keystone habit: momentum + lower activation energy for the rest of the day), not tidiness for its own sake. First 5 min after waking.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:false },
-    { key: 'morning_mobility', name: 'Morning Mobility Block',      desc: 'Hip flexor hold 90s each side + dead bug 2×8 (daily core, before any axial loading) plus a rotating day-specific focus tied to what you\'re training — see the Move tab for today\'s exact focus. ~10 min, right after wake, before breakfast.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:true },
-    { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:true },
-    { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:false },
+    { key: 'make_bed',         name: 'Make Bed / Tidy Room',        desc: 'One fully-finished task before anything else — real behavioural-science basis (keystone habit: momentum + lower activation energy for the rest of the day), not tidiness for its own sake. First 5 min after waking.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
+    { key: 'morning_mobility', name: 'Morning Mobility Block',      desc: 'Hip flexor hold 90s each side + dead bug 2×8 (daily core, before any axial loading) plus a rotating day-specific focus tied to what you\'re training — see the Move tab for today\'s exact focus. ~10 min, right after wake, before breakfast.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
+    { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
+    { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Tuesday (Lower A plyo), Thursday (Sprint Day), Friday (Lower B plyo).', days: ['Tuesday','Thursday','Friday'], time:'Pre-Training', priority:true },
     { key: 'pretrain_warmup',  name: 'Pre-Training Warm-Up',        desc: 'Dynamic warm-up before lifting — see the mobility card on the Train tab for today\'s exact drills.', days: ['Monday','Wednesday','Saturday'], time:'Pre-Training', priority:true },
     { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], time:'Post-Training', priority:false },
-    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, chin tucks — 10 min, evening, same every day (real 1-3cm functional height payoff, needs daily consistency to work) — plus a rotating day-specific focus on top, see the Move tab for today\'s exact addition.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:true },
-    { key: 'morning_focus',    name: 'Morning Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Morning Mobility Core — see the Move tab for today\'s exact stretches.', days: JP_SPLIT_DAY_NAMES, time:'Morning', priority:false },
+    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, chin tucks — 10 min, evening, same every day (real 1-3cm functional height payoff, needs daily consistency to work) — plus a rotating day-specific focus on top, see the Move tab for today\'s exact addition.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:true },
+    { key: 'morning_focus',    name: 'Morning Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Morning Mobility Core — see the Move tab for today\'s exact stretches.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
     { key: 'evening_focus',    name: 'Evening Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Postural Protocol — see the Move tab for today\'s exact stretches. No separate item on Saturday (Yoga Flow/NSDR already covers that slot).', days: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'], time:'Evening', priority:false },
-    { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: JP_SPLIT_DAY_NAMES, time:'Post-Training', priority:true },
-    { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
-    { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
-    { key: 'prebed_stack',     name: 'Pre-Bed Stack',               desc: 'Magnesium glycinate 200mg + L-theanine 200mg, 21:00 — sleep quality, feeds directly into the recovery/height/muscle levers.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:false },
-    { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:false },
-    { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: JP_SPLIT_DAY_NAMES, time:'Anytime', priority:false },
-    { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: JP_SPLIT_DAY_NAMES, time:'Evening', priority:true },
+    { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: JP_WEEKDAY_NAMES, time:'Post-Training', priority:true },
+    { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
+    { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
+    { key: 'prebed_stack',     name: 'Pre-Bed Stack',               desc: 'Magnesium glycinate 200mg + L-theanine 200mg, 21:00 — sleep quality, feeds directly into the recovery/height/muscle levers.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
+    { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:true },
   ];
   const todayDayLabel = effectiveTodayName();
   const jpCustomKeys = new Set(JP_CUSTOM_HABITS.map(h => h.key));
