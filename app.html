@@ -8397,9 +8397,17 @@ function mobCheckbox(key){
 function mobItemRow(si){
   const done = !!habitState[si.key];
   const name = escHtml(si.name);
-  return `<div onclick="event.stopPropagation();toggleStretchItem('${si.key}');this.classList.toggle('done');const isDone=this.classList.contains('done');this.style.borderColor=isDone?'var(--teal)':'var(--border)';const n=this.querySelector('.mob-item-name');n.style.color=isDone?'var(--teal)':'var(--muted)';n.textContent=(isDone?'✓ ':'')+${JSON.stringify(si.name)};"
+  // Real bug fixed here: the previous version spliced JSON.stringify(si.name)
+  // straight into this double-quoted onclick="..." attribute. JSON.stringify
+  // always wraps strings in literal double quotes, which prematurely
+  // terminated the attribute value for every single stretch name — the
+  // browser silently truncated the handler at the first embedded quote, so
+  // toggleStretchItem() never actually ran. Reading the name back from a
+  // data-name attribute (escHtml already makes it attribute-safe) instead
+  // of re-embedding it as a JS string literal avoids the collision entirely.
+  return `<div onclick="event.stopPropagation();toggleStretchItem('${si.key}');this.classList.toggle('done');const isDone=this.classList.contains('done');this.style.borderColor=isDone?'var(--teal)':'var(--border)';const n=this.querySelector('.mob-item-name');n.style.color=isDone?'var(--teal)':'var(--muted)';n.textContent=(isDone?'✓ ':'')+n.dataset.name;"
     class="${done?'done':''}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px;border:1px solid ${done?'var(--teal)':'var(--border)'};cursor:pointer;font-size:11px;margin-bottom:3px">
-    <span class="mob-item-name" style="color:${done?'var(--teal)':'var(--muted)'}">${done?'✓ ':''}${name}</span>
+    <span class="mob-item-name" data-name="${name}" style="color:${done?'var(--teal)':'var(--muted)'}">${done?'✓ ':''}${name}</span>
     <span style="color:var(--dim);font-size:10px;flex-shrink:0">${escHtml(si.sets_reps||'')}</span>
   </div>`;
 }
