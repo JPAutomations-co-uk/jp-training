@@ -3202,7 +3202,7 @@ function saveStepsToday(count) {
     habitState['steps'] = true;
     renderHabits();
     try { localStorage.setItem(`jpt_habits_${USER.id}_${HABIT_DATE}`, JSON.stringify(habitState)); } catch(e){}
-    sb.from('habit_log').upsert({ user_id:USER.id, date:HABIT_DATE, habit_name:'steps', completed:true }, { onConflict:'user_id,date,habit_name' }).catch(()=>{});
+    (async () => { try { await sb.from('habit_log').upsert({ user_id:USER.id, date:HABIT_DATE, habit_name:'steps', completed:true }, { onConflict:'user_id,date,habit_name' }); } catch(e){} })();
     earnXP('habit','steps',10);
     checkPerfectDay();
     showToast('✓ Step goal hit');
@@ -5127,9 +5127,20 @@ async function toggleStretchItem(key){
 // always targets today regardless, so it's correct next time today is opened.
 async function autoCompleteHabit(key) {
   if(HABIT_DATE === TODAY && habitState[key]) return; // already logged
-  sb.from('habit_log').upsert({
-    user_id: USER.id, date: TODAY, habit_name: key, completed: true
-  }, { onConflict: 'user_id,date,habit_name' }).catch(()=>{});
+  // Real bug, found live: this app's hand-rolled Supabase client doesn't
+  // return a full native Promise from upsert(), so chaining .catch()
+  // straight onto it throws ("...catch is not a function") every single
+  // time — silently, since it's inside an async function the throw just
+  // becomes an unhandled rejection rather than stopping the caller, but
+  // it meant this write never actually happened for ANY call site
+  // (saveWorkout()'s post-save 'training'/'custom_static_stretch'/
+  // 'custom_creatine'/'custom_explosive_warmup' auto-completes). await +
+  // try/catch instead of a bare .catch() chain.
+  try {
+    await sb.from('habit_log').upsert({
+      user_id: USER.id, date: TODAY, habit_name: key, completed: true
+    }, { onConflict: 'user_id,date,habit_name' });
+  } catch(e) {}
   if(HABIT_DATE === TODAY) {
     habitState[key] = true;
     renderHabits();
