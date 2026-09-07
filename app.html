@@ -6424,6 +6424,7 @@ const HABIT_TIME_LOOKUP = {
   custom_pretrain_warmup:'Pre-Training', custom_morning_focus:'Morning', custom_evening_focus:'Evening',
   custom_voice_practice:'Morning', custom_skincare_am:'Morning', custom_skincare_pm:'Evening',
   custom_tongue_posture:'Anytime', custom_gut_meals:'Anytime', custom_weekly_grooming:'Anytime',
+  custom_eyelash_care:'Evening', custom_eyebrow_care:'Anytime',
 };
 
 /* ════════════════════════════════════════
@@ -11449,19 +11450,18 @@ async function loadTrainingHistory() {
     // user, without deleting any of the underlying rows.
     const cutoffLocal = _localDateStr(cutoff);
     const cutoffStr = cutoffLocal > APP_LAUNCH_DATE ? cutoffLocal : APP_LAUNCH_DATE;
-    const [{ data: sessions }, { data: trainedHabitDays }] = await Promise.all([
+    const [{ data: sessions }] = await Promise.all([
       sb.from('workout_sessions').select('id,date,session_type').eq('user_id',USER.id).gte('date',cutoffStr).order('date',{ascending:false}),
-      sb.from('habit_log').select('date').eq('user_id',USER.id).eq('habit_name','training').eq('completed',true).gte('date',cutoffStr),
     ]);
-    // A day counts as trained if EITHER a real Save-Session row exists OR the
-    // "Complete Training Session" habit was ticked directly from the Habits
-    // tab — these are two independent ways to mark a day done, and the
-    // day-tab dot shouldn't show a day as missed just because one path was
-    // used instead of the other.
-    _loggedSessionDates = new Set([
-      ...(sessions||[]).map(s=>s.date),
-      ...(trainedHabitDays||[]).map(h=>h.date),
-    ]);
+    // Deliberately real-session-only. This used to also count a day as
+    // "trained" if the "Complete Training Session" habit was ticked
+    // directly from the Habits tab — but that checkbox has zero connection
+    // to actual reps/sets/weights (it's just a habit_log row), so it let
+    // the day-tab dot show "Logged" on days with no real session data at
+    // all: a real, live incident, caught when a session showed as saved
+    // with zero workout_sessions/session_sets rows behind it. The dot must
+    // only ever reflect a real saved session.
+    _loggedSessionDates = new Set((sessions||[]).map(s=>s.date));
     renderDayTabIndicators();
     if(!sessions?.length) return;
 
