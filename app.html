@@ -14,9 +14,31 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="JP Training">
   <script>
+    // Real gap found 7 Sep 2026: sw.js already does skipWaiting()+
+    // clients.claim() so a new deploy takes over immediately, but nothing
+    // told an ALREADY-OPEN tab/PWA session to actually reload — the old
+    // JavaScript kept running in memory indefinitely (a fix could be live
+    // on the server and confirmed working via direct testing, while a real
+    // open session still silently ran yesterday's code with no way to tell
+    // the two apart from the UI). controllerchange fires exactly once when
+    // a new service worker takes control — reload then, guarded so a
+    // double-fire can't loop. Also actively checks for updates on load and
+    // whenever the tab regains focus, rather than only whenever the
+    // browser happens to check on its own schedule.
     if ('serviceWorker' in navigator) {
+      let _swReloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (_swReloaded) return;
+        _swReloaded = true;
+        window.location.reload();
+      });
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').catch(function () {});
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+          reg.update().catch(function () {});
+          document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') reg.update().catch(function () {});
+          });
+        }).catch(function () {});
       });
     }
   </script>
@@ -5421,9 +5443,12 @@ function renderDayDetail(day, isToday) {
             <button class="ex-ctrl-btn ex-swap-btn" onclick="swapExercise('${escHtml(day.day)}',${ei})" title="Swap">⇄</button>
             <button class="ex-ctrl-btn del" onclick="removeExercise('${escHtml(day.day)}',${ei})">✕</button>
           </div>`;
-    return `<div class="workout-ex">
+    return `<div class="workout-ex" id="workout-ex-${ei}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:6px">
-          <div class="ex-name" style="margin:0;flex:1;min-width:0">${escHtml(ex.name)}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
+            <span class="ex-done-badge" id="ex-done-${ei}" style="display:none;color:var(--teal);font-size:13px;flex-shrink:0">✓</span>
+            <div class="ex-name" style="margin:0">${escHtml(ex.name)}</div>
+          </div>
           <button class="progress-btn" onclick="showExProgress('${escHtml(ex.name)}')" title="View progress">↗</button>
           ${controls}
         </div>
@@ -5486,6 +5511,18 @@ function renderDayDetail(day, isToday) {
 function checkSet(id){
   const btn=document.getElementById('sd-'+id);
   btn.classList.toggle('checked');
+  // Real request: a way to see at a glance which EXERCISES are done, not
+  // just which individual sets — this is purely visual (same as the
+  // per-set checkmark it's built on), not a new persisted concept. `id`
+  // is "ei-si"; find every set row for this exercise index and light up
+  // the exercise-level badge once all of them are checked.
+  const ei = id.split('-')[0];
+  const exWrap = document.getElementById('workout-ex-'+ei);
+  const badge = document.getElementById('ex-done-'+ei);
+  if(!exWrap || !badge) return;
+  const setBtns = exWrap.querySelectorAll('.set-done');
+  const allChecked = setBtns.length > 0 && Array.from(setBtns).every(b=>b.classList.contains('checked'));
+  badge.style.display = allChecked ? '' : 'none';
 }
 
 async function saveWorkout(asToday){
@@ -6385,6 +6422,8 @@ const HABIT_TIME_LOOKUP = {
   custom_prebed_stack:'Evening', custom_nsdr_yoga:'Evening',
   custom_breathing_protocol:'Anytime', custom_meal_plan:'Evening',
   custom_pretrain_warmup:'Pre-Training', custom_morning_focus:'Morning', custom_evening_focus:'Evening',
+  custom_voice_practice:'Morning', custom_skincare_am:'Morning', custom_skincare_pm:'Evening',
+  custom_tongue_posture:'Anytime', custom_gut_meals:'Anytime', custom_weekly_grooming:'Anytime',
 };
 
 /* ════════════════════════════════════════
@@ -7807,6 +7846,7 @@ const JP_TRAINING_PLAN = [
     { name: 'Overhead Cable Tricep Extension', sets: 3, reps: '10-12', load: '20kg', notes: 'Rest: 75-90 sec. Double progression.' },
     { name: 'Face Pull', sets: 3, reps: '15', load: '12.5kg', notes: 'Rest: 45-60 sec. Rear delt/rotator cuff health — keep light, high rep.' },
     { name: 'Cable Crunch', sets: 3, reps: '15-20', load: '~15-20kg — establish baseline first session', notes: 'Rest: 45-60 sec. 1 of 5 weekly ab/core exercises across the 4 lifting days.' },
+    { name: 'Neck Isometric Holds (4-way)', sets: 2, reps: '20-30 sec each direction (flexion/extension/left lateral/right lateral)', load: 'Manual hand resistance', notes: 'Rest: 30-45 sec between directions. Reinstated without the MMA-timing dependency — general neck strength/aesthetic/posture work. Progress to a weighted neck harness once all 4 directions feel easy for the full 30 sec.' },
   ], keyLifts: 'Flat Barbell Bench Press, Weighted Pull-Ups, Weighted Dips' },
   { day: 'Tuesday', type: 'lower', sessionName: 'Lower A — Quad + Upper Glute + Plyometrics A', exercises: [
     { name: 'Box Jump', sets: 4, reps: '5', load: 'Bodyweight', notes: 'Rest: 90 sec. Step down, don\'t jump down. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
@@ -7831,6 +7871,7 @@ const JP_TRAINING_PLAN = [
     { name: 'Hammer Curl', sets: 3, reps: '10-12', load: 'Establish baseline first session', notes: 'Rest: 60-75 sec. Neutral grip — brachialis/brachioradialis emphasis, arm thickness distinct from the two supinated curls.' },
     { name: 'Bar Tricep Pressdown', sets: 3, reps: '10-12', load: '35kg', notes: 'Rest: 60-75 sec. Double progression.' },
     { name: 'Hanging Leg Raise', sets: 3, reps: '12-15', load: 'BW', notes: 'Rest: 45-60 sec. 3 of 5 weekly ab/core exercises.' },
+    { name: 'Neck Isometric Holds (4-way)', sets: 2, reps: '20-30 sec each direction (flexion/extension/left lateral/right lateral)', load: 'Manual hand resistance', notes: 'Rest: 30-45 sec between directions. Second weekly slot alongside Monday — progress to a weighted neck harness once all 4 directions feel easy for the full 30 sec.' },
   ], keyLifts: 'Incline Barbell Press, Machine Shoulder Press' },
   { day: 'Thursday', type: 'sprint', sessionName: 'Sprint Day — Speed, Power & Agility', exercises: [
     { name: '3-Point Stance Starts', sets: 5, reps: '10m', load: 'Bodyweight', notes: 'Rest: 90 sec. Full recovery between reps — speed work, not conditioning.' },
@@ -8752,6 +8793,14 @@ function applyJPRealProtocol() {
     { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:true },
+    { key: 'voice_practice',   name: 'Voice Practice',              desc: '5-8 min: diaphragmatic breathing, 5-10 yawns (laryngeal tension release), 1-2 min reading aloud in a deliberately breathier tone, 1 min reading with controlled/reduced pitch variation.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
+    { key: 'skincare_am',      name: 'AM Skincare',                 desc: 'SPF 30+, cleanse — single most evidence-backed skin intervention there is, non-negotiable.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
+    { key: 'skincare_pm',      name: 'PM Skincare',                 desc: 'Cleanse, moisturise, hyaluronic acid sealed under moisturiser.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'eyelash_care',     name: 'Eyelash Care',                desc: 'Nightly: castor or rosemary oil along the lash line (base of upper lashes, avoid direct eye contact). As desired for a specific day: curl at the base (not tips) 1-2x for a natural curve; optional clear/tinted brow-gel pinch from base to tip for definition; mascara base-to-tip, one coat, de-clump with a spoolie/finger, always remove before bed. Trim 2-5mm off the outer-corner lashes every 4-6 weeks, done dry (not wet).', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'eyebrow_care',     name: 'Eyebrow Care',                desc: 'Weekly tweeze right after a shower — only clear strays outside your natural shape (below the arch, between brows, past the tail), plucked in the direction of growth, never thinning the main body. Dye separately every 3-4 weeks: patch test 24-48h before first use, barrier cream around the brow, apply per product timing, remove with a damp pad.', days: ['Sunday'], time:'Anytime', priority:false },
+    { key: 'tongue_posture',   name: 'Tongue Posture Check',        desc: 'Tongue resting against the palate when not eating/talking/drinking — background awareness habit. Notice if you\'re mouth-breathing.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
+    { key: 'gut_meals',        name: 'Chew + Destress Before Meals',desc: 'Chew each mouthful thoroughly. A minute of slow breathing before eating if rushed/stressed.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
+    { key: 'weekly_grooming',  name: 'Weekly Grooming Check',       desc: 'Postural self-photo (shoulder/hip/knee symmetry), swallow-pattern self-check.', days: ['Sunday'], time:'Anytime', priority:false },
   ];
   const todayDayLabel = effectiveTodayName();
   const jpCustomKeys = new Set(JP_CUSTOM_HABITS.map(h => h.key));
