@@ -10,9 +10,9 @@ Respond with valid JSON only — no markdown, no explanation outside the JSON.
   "carbs": <number>,
   "fat": <number>,
   "score": <1-10 integer>,
-  "headline": "<one sentence verdict, max 12 words>",
-  "reasons": "<2-3 sentences: rate this food/drink for THIS person given their context and goal. Connect it to what they are about to do. Name specific mechanisms — e.g. caffeine raising power output and focus, fast carbs topping up glycogen, cholesterol for testosterone synthesis, zinc for T. Be direct.>",
-  "tips": ["<specific, practical improvement or pairing for this context>", "<second tip>"],
+  "headline": "<one sentence verdict, max 12 words, plain everyday language — no jargon>",
+  "reasons": "<ONE short clause, HARD LIMIT 12 words. No semicolon, no colon, no 'but'/'and'/'while' stitching two ideas into one long sentence — pick the single most important point and cut the rest. Plain everyday words only — these specific words are BANNED: glycogen, cortisol, insulin, HOMA-IR, synthesis, mechanism, metabolic, hormonal, ergogenic, CNS. Good example (11 words): 'Good pre-training fuel, but you need protein too.' Bad example — too long, uses banned words: 'Caffeine boosts power and focus; banana refills glycogen for energy.'>",
+  "tips": ["<the single most valuable, specific, actionable tip for this context — exactly one, never a second filler tip>"],
   "to_ten": "<ALWAYS fill this. The concrete change(s) that would make THIS item a 10/10 for their context and goal — specific and actionable, e.g. 'Skip the sugar, add a splash of raw milk, and take it 45 min before training.' If it is genuinely already a 10/10 for this moment, say so plainly, e.g. 'Already a 10 for this moment — nothing to change.'>",
   "tagline": "<ONE short sentence, max ~10 words, brutal and funny. See TAGLINE VOICE below — this is not the same tone as headline/reasons.>",
   "needsClarification": <true only if the item is too vague to estimate macros — e.g. just "eggs" with no quantity, or "meat" with no cut or weight>,
@@ -174,6 +174,27 @@ export default async function handler(req) {
   // of hoping a small, fast model follows a conditional instruction.
   if (typeof result.to_ten === 'string' && /already (a )?10|already optimal|nothing to change/i.test(result.to_ten)) {
     result.score = 10
+  }
+
+  // Same lesson as above, applied to brevity/jargon: the prompt asks for
+  // one short clause with no semicolon/colon and a banned-word list, but
+  // tested live it does not reliably hold — the model still occasionally
+  // stitches two clauses together with a semicolon and still occasionally
+  // says "glycogen"/"ergogenic" despite being told not to. Enforced here
+  // instead of re-prompting indefinitely: cut "reasons" at the first
+  // semicolon/colon (keeps only the single most important point, which is
+  // also what was making it run long) and swap the handful of jargon words
+  // that keep recurring for their plain-English equivalent.
+  if (typeof result.reasons === 'string') {
+    const cut = result.reasons.search(/[;:]/)
+    if (cut !== -1) result.reasons = result.reasons.slice(0, cut).trim()
+    const JARGON_SWAP = {
+      glycogen: 'energy stores', ergogenic: 'performance-boosting', cortisol: 'stress hormone',
+      synthesis: 'production', metabolic: 'energy', hormonal: 'hormone', insulin: 'blood sugar',
+    }
+    for (const [word, plain] of Object.entries(JARGON_SWAP)) {
+      result.reasons = result.reasons.replace(new RegExp(`\\b${word}\\b`, 'gi'), plain)
+    }
   }
 
   return json(result)

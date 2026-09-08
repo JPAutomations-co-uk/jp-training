@@ -5,3 +5,4 @@ node_modules
 jp-training-emails/
 test_*.html
 v[0-9]*.html
+.env*.local
