@@ -5808,8 +5808,8 @@ const FOOD_NUTRIENT_DB = {
   // cooked/as-eaten basis matching the rest of this database, sourced from
   // USDA FoodData Central. Pure fats (tallow/coconut oil/ghee/olive oil)
   // left as-is — genuinely near-zero magnesium, not a gap.
-  'beef mince':      { b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, zn:4.8, fe:2.1, se:15, p:165, k:260, mg:20, choline:75, satfat:8.5, monofat:9, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
-  'beef steak':      { b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, zn:4.8, fe:2.1, se:15, p:165, k:260, mg:20, choline:75, satfat:6, monofat:6.5, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
+  'beef mince':      { b1:.05, b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, b7:3, zn:4.8, fe:2.1, se:15, cu:.09, p:165, k:260, mg:20, choline:75, satfat:8.5, monofat:9, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
+  'beef steak':      { b1:.08, b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, b7:3, zn:4.8, fe:2.1, se:15, cu:.09, p:165, k:260, mg:20, choline:75, satfat:6, monofat:6.5, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
   'beef liver':      { vitA:4968, b12:59, b9:145, b2:2.8, b3:13, b6:.9, b5:6.2, b7:41, fe:4.9, zn:4, cu:9.8, se:24, p:387, mg:18, choline:333, coq10:3.9, antiox:['beta-carotene'] },
   'beef heart':      { b12:9.1, b3:6.5, b2:.88, fe:4.3, zn:2, p:213, se:23, mg:20, taurine:63, coq10:11.3, creatine:280 },
   'bone marrow':     { b12:.5, choline:20, mg:2, satfat:40, monofat:38 },
@@ -5817,9 +5817,9 @@ const FOOD_NUTRIENT_DB = {
   'bison':           { b12:2.9, zn:4.5, fe:2.8, se:12, b3:5.5, mg:21, satfat:2.5, monofat:2 },
   'venison':         { b12:3.9, zn:3.4, fe:3.8, b3:6.6, se:10, mg:21, satfat:1.5, monofat:1 },
   // ── Eggs ──
-  'whole eggs':      { vitA:160, vitD:82, vitE:1, vitK:.6, b2:.5, b5:1.4, b12:.9, b9:47, choline:294, se:30, iodine:24, p:198, fe:1.8, zn:1.3, mg:10, satfat:3.1, monofat:4 },
+  'whole eggs':      { vitA:160, vitD:82, vitE:1, vitK:.6, b1:.04, b2:.5, b5:1.4, b7:10, b12:.9, b9:47, choline:294, se:30, iodine:24, p:198, fe:1.8, zn:1.3, cu:.07, mg:10, satfat:3.1, monofat:4 },
   // ── Fish & shellfish ──
-  'salmon':          { vitD:526, b12:3.2, b3:8.5, b6:.6, epa:411, dha:671, se:36, p:240, k:384, mg:29, antiox:['astaxanthin'] },
+  'salmon':          { vitD:526, b1:.2, b12:3.2, b3:8.5, b6:.6, b7:5, epa:411, dha:671, se:36, cu:.3, p:240, k:384, mg:29, antiox:['astaxanthin'] },
   'sardines':        { vitD:193, b12:8.9, ca:100, epa:500, dha:1000, se:33, p:490, mg:39 },
   'mackerel':        { vitD:360, b12:8.7, b3:9, epa:1000, dha:1400, se:44, mg:76 },
   'herring':         { vitD:216, b12:13, epa:900, dha:1100, se:37, mg:32 },
@@ -5839,17 +5839,18 @@ const FOOD_NUTRIENT_DB = {
   'coconut oil':     { satfat:87 },
   'olive oil':       { vitE:14, monofat:73, antiox:['polyphenols'] },
   // ── Carbs ──
-  'potato':          { vitC:20, b6:.3, k:425, mg:23, fiber:2.2 },
-  'sweet potato':    { vitA:961, vitC:2.4, k:337, fiber:3, mn:.3, mg:25, antiox:['beta-carotene'] },
+  'potato':          { vitC:20, b1:.1, b6:.3, b7:.4, k:425, cu:.2, mg:23, fiber:2.2 },
+  'sweet potato':    { vitA:961, vitC:2.4, b1:.1, b7:.5, k:337, fiber:3, mn:.3, cu:.15, mg:25, antiox:['beta-carotene'] },
   'white rice':      { mn:.4, se:7, mg:12 },
   'squash':          { vitA:358, vitC:21, k:352, fiber:2, mn:.2, mg:12 },
   // ── Fruit & veg ──
-  'banana':          { k:358, b6:.4, vitC:8.7, fiber:2.6, mn:.27, mg:27 },
-  'avocado':         { k:485, b9:81, vitE:2.1, vitK:21, fiber:6.7, monofat:9.8, mg:29 },
+  'banana':          { k:358, b1:.03, b6:.4, vitC:8.7, fiber:2.6, mn:.27, cu:.08, mg:27 },
+  'avocado':         { k:485, b9:81, vitE:2.1, vitK:21, b1:.07, b5:1.39, b7:3, fiber:6.7, monofat:9.8, cu:.19, mg:29 },
   'berries':         { vitC:45, fiber:2.5, mn:.4, mg:8, antiox:['anthocyanins'] },
   'pineapple':       { vitC:47.8, mn:.9, mg:12 },
   'mango':           { vitC:36.4, vitA:54, b9:43, fiber:1.6, mg:10 },
   'watermelon':      { vitC:8.1, vitA:28, mg:10, antiox:['lycopene'] },
+  'kiwi':            { vitC:92.7, vitK:40.3, vitE:1.5, fiber:3, mg:17, k:312, cu:.13, b9:25 },
   'papaya':          { vitC:60.9, vitA:47, b9:37, mg:10 },
   'pomegranate':     { vitC:10.2, vitK:16.4, b9:38, mg:12, antiox:['punicalagins'] },
   'dates':           { k:696, fiber:6.7, mn:.3, b6:.25, mg:43 },
@@ -5917,30 +5918,75 @@ const FOOD_ALIASES = {
   'coffee':'black coffee', 'espresso':'black coffee', 'mate':'yerba mate',
   'mixed berries':'berries', 'blueberries':'berries', 'strawberries':'berries', 'raspberries':'berries',
   'bell pepper':'bell peppers', 'chocolate':'dark chocolate', 'honey':'raw honey',
+  'kiwis':'kiwi', 'avacado':'avocado', 'avocados':'avocado',
 };
+// Default weight (g) for ONE typical unit of foods commonly logged by count
+// ("4 eggs", "one avocado") rather than explicit grams — added 8 Sep 2026.
+// Without this, matchFoodToDatabase() fell back to a flat 100g regardless of
+// count or real food size, silently halving (or worse) verified nutrient
+// totals for anything logged by count instead of weight — which is how most
+// people naturally log whole/countable foods ("4 large eggs" was credited
+// as ~1 egg's worth, "one avocado" as half an avocado).
+const FOOD_UNIT_WEIGHTS = {
+  'whole eggs': 50, 'banana': 118, 'avocado': 200, 'potato': 170,
+  'sweet potato': 180, 'carrot': 60, 'mango': 200, 'kiwi': 75,
+};
+const WORD_NUMBERS = { 'a':1,'an':1,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'half':.5 };
 function matchFoodToDatabase(name){
   const text = name.toLowerCase();
   const qtyRe = /~?(\d+(?:\.\d+)?)\s*(g|ml|kg|l)\b/gi;
-  const foodKeys = Object.keys(FOOD_NUTRIENT_DB).concat(Object.keys(FOOD_ALIASES));
+  // Longest-key-first: prevents a shorter key that's a substring of a
+  // longer one ('potato' inside 'sweet potato', 'egg' inside 'eggs') from
+  // creating a spurious second/duplicate match for the same food mention.
+  // Known limitation: if both a shorter and longer food are genuinely,
+  // separately logged in one entry (e.g. "one potato and one sweet
+  // potato"), the shorter one is dropped rather than double-counted —
+  // log them as separate entries if that combination matters.
+  const foodKeys = Object.keys(FOOD_NUTRIENT_DB).concat(Object.keys(FOOD_ALIASES)).sort((a,b)=>b.length-a.length);
   const matched = [];
+  const consumedKeys = [];
   let matchedAnyText = false;
   foodKeys.forEach(key=>{
     if(!text.includes(key)) return;
+    if(consumedKeys.some(ck=>ck.includes(key))) return;
     matchedAnyText = true;
+    consumedKeys.push(key);
     const dbKey = FOOD_NUTRIENT_DB[key] ? key : FOOD_ALIASES[key];
-    // Find the nearest preceding quantity in the text, default to 100g if none found
+    // Find the nearest preceding quantity in the text, default to 100g if none found.
+    // Capped at 20 chars: without a proximity limit, a single explicit unit
+    // anywhere in a long run-on food-log sentence ("...with 10ml olive oil")
+    // was being claimed as the "nearest" quantity by every OTHER food in
+    // that same sentence too (nothing closer to compete with it), flattening
+    // them all to that one unrelated gram figure instead of falling through
+    // to the count-based estimate below.
     let grams = 100;
     const idx = text.indexOf(key);
     let best = null, bestDist = Infinity;
     let m; qtyRe.lastIndex = 0;
     while((m = qtyRe.exec(text))){
       const dist = Math.abs(m.index - idx);
-      if(dist < bestDist){ bestDist = dist; best = m; }
+      if(dist < bestDist && dist <= 20){ bestDist = dist; best = m; }
     }
     if(best){
       let qty = parseFloat(best[1]); let unit = best[2].toLowerCase();
       if(unit==='kg') qty*=1000; if(unit==='l') qty*=1000;
       grams = qty;
+    } else if(FOOD_UNIT_WEIGHTS[dbKey]){
+      // No explicit weight given — look for a count (digit, fraction, or
+      // word-number) in the text just before this food mention instead of
+      // silently assuming a flat, often-wrong 100g.
+      // Allow ONE arbitrary descriptor word between the count and the food
+      // ("4 large eggs", "two baking potatoes") rather than a fixed
+      // adjective list — a fixed list missed "baking" on first pass here.
+      const before = text.slice(Math.max(0, idx-25), idx);
+      const fracM = before.match(/(\d+)\s*\/\s*(\d+)\s*(?:\w+\s+)?$/);
+      const numM = before.match(/(\d+(?:\.\d+)?)\s*(?:\w+\s+)?$/);
+      const wordM = before.match(/\b(a|an|one|two|three|four|five|six|seven|eight|half)\b\s*(?:\w+\s+)?$/);
+      let count = 1;
+      if(fracM) count = parseFloat(fracM[1])/parseFloat(fracM[2]);
+      else if(numM) count = parseFloat(numM[1]);
+      else if(wordM) count = WORD_NUMBERS[wordM[1]];
+      grams = count * FOOD_UNIT_WEIGHTS[dbKey];
     }
     matched.push({ key: dbKey, grams, data: FOOD_NUTRIENT_DB[dbKey] });
   });
@@ -9350,8 +9396,8 @@ function applyJPRealProtocol() {
     { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:true },
     { key: 'voice_practice',   name: 'Voice Practice',              desc: '5-8 min: diaphragmatic breathing, 5-10 yawns (laryngeal tension release), 1-2 min reading aloud in a deliberately breathier tone, 1 min reading with controlled/reduced pitch variation.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
-    { key: 'skincare_am',      name: 'AM Skincare',                 desc: 'Honey cleanse (raw or manuka, UMF 10+ if available) — massage a pea-to-dime amount into damp skin 30-60 sec, rinse with warm water. Brush eyebrows into shape with a spoolie (dry, or a touch of clear brow gel for hold). Eye squeeze with resistance: fingers gently at the outer corners holding skin taut (not tugging), close eyes tightly for a few reps — resistance is meant to let the muscle work without the skin creasing into a fold. Unproven for lasting change, same evidence tier as other facial exercises here; keep it gentle given how thin the skin is in that area.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
-    { key: 'skincare_pm',      name: 'PM Skincare',                 desc: 'Honey cleanse (raw or manuka, UMF 10+ if available) — massage into damp skin 30-60 sec, rinse warm. Moisturise, hyaluronic acid sealed under moisturiser.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'skincare_am',      name: 'AM Skincare',                 desc: 'SPF 30+, cleanse — single most evidence-backed skin intervention there is, non-negotiable. Brush eyebrows into shape with a spoolie (dry, or a touch of clear brow gel for hold). Eye squeeze with resistance: fingers gently at the outer corners holding skin taut (not tugging), close eyes tightly for a few reps — resistance is meant to let the muscle work without the skin creasing into a fold. Unproven for lasting change, same evidence tier as other facial exercises here; keep it gentle given how thin the skin is in that area.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
+    { key: 'skincare_pm',      name: 'PM Skincare',                 desc: 'Cleanse, moisturise, hyaluronic acid sealed under moisturiser.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'eyelash_care',     name: 'Eyelash Care',                desc: 'Nightly: castor or rosemary oil along the lash line (base of upper lashes, avoid direct eye contact). Daily: curl at the base (not tips) 1-2x for a natural curve; mascara applied mid-lash-to-tip (not at the base/waterline), one coat, twist the wand out rather than pumping it (pumping dries the product and speeds up bacterial growth), de-clump with a clean spoolie/finger; remove gently before bed every time — soak a pad and hold a few seconds, don\'t scrub. Every 4-6 weeks: trim 2-5mm off the outer-corner lashes (dry, not wet), replace the mascara tube outright regardless of how much is left, check the curler\'s rubber pad and replace if hardened/cracked.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'eyebrow_care',     name: 'Eyebrow Care',                desc: 'Weekly tweeze right after a shower — only clear strays outside your natural shape (below the arch, between brows, past the tail), plucked in the direction of growth, never thinning the main body. Trim any individual hairs that grow noticeably longer than the rest with fine scissors — shorten, don\'t pluck. Shape check: start above the inner eye/nostril edge, arch peak above the outer iris, tail on the diagonal from nostril through outer eye corner. Dye separately every 3-4 weeks: patch test 24-48h before first use, barrier cream around the brow, apply per product timing, remove with a damp pad.', days: ['Sunday'], time:'Anytime', priority:false },
     { key: 'facial_exercises', name: 'Zygomaticus Training',        desc: '5 exercises: (1) Pull mouth corners upward. (2) Max-effort smile hold, 5 sec, 10 sets AM + 10 sets PM. (3) Cheek pushes — fingers at mouth corners, smile against resistance, 10 slow reps, 5 sec hold each. (4) Smirk hold while mewing, 5-10 sec, 10-15 sets. (5) Unilateral — one side relaxed, other side smiles against opposing finger resistance, 10 reps each side, 5 sec hold. Real muscle (zygomaticus major/minor), and (3)/(5) mirror actual facial-rehab resistance technique. Unproven for changing resting/structural smile shape — visible role is dynamic, not static. (2) carries a real trade-off: repeated maximal-effort expression is the same mechanism that deepens nasolabial folds/expression lines over time (same principle as squinting and crow\'s feet) — kept at your explicit request despite the flag. (4) stacks mewing, which is separately unsupported for structural change.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
@@ -9398,7 +9444,8 @@ function applyJPRealProtocol() {
 // them is progress-tracking only, deliberately not gating something already
 // running, which would make currently-live habits vanish unexpectedly.
 const JP_SHOPPING_LIST = [
-  { key:'honey', name:'Raw/Manuka Honey (UMF 10+)', cost:'£8-20', tier:1 },
+  { key:'spf', name:'SPF 30+', cost:'£5-15', tier:1 },
+  { key:'cleanser', name:'Facial Cleanser', cost:'£5-10', tier:1 },
   { key:'moisturiser', name:'Moisturiser', cost:'£5-15', tier:1 },
   { key:'coconut_oil', name:'Cold-Pressed Coconut Oil', cost:'£5-10', tier:1, unlocks:'oral_health' },
   { key:'hydroxyapatite_toothpaste', name:'Hydroxyapatite Toothpaste', cost:'£10-15', tier:1, unlocks:'oral_health' },
