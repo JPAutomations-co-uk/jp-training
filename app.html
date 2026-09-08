@@ -1339,6 +1339,20 @@
       <div id="habits-restore-wrap" style="display:none;text-align:center;padding:6px 0">
         <button onclick="restoreAllHabits()" style="background:none;border:none;color:var(--dim);font-size:11px;cursor:pointer;font-family:var(--B)">Restore hidden habits</button>
       </div>
+    </div>
+
+    <!-- LOOKSMAX — non-gym exercise/technique split (facial, jaw, neck/spine,
+         circulation, mouth/tongue) kept separate from Train (gym) and Habits
+         (daily-life care), same completion/streak/XP tracking underneath.
+         JP-account only, same pattern as Move/Mobility elsewhere. -->
+    <div id="pane-looksmax" class="pane">
+      <div class="sh">
+        <div class="sh-label">Non-Gym Split</div>
+        <div class="sh-title">Looksmax</div>
+      </div>
+      <div class="prog-label"><span>Progress</span><span id="looksmax-count">0 / 0</span></div>
+      <div class="prog-bar-wrap"><div class="prog-bar-fill" id="looksmax-bar" style="width:0%"></div></div>
+      <div style="margin-top:10px" id="looksmax-list"></div>
       <div id="shopping-list-wrap"></div>
     </div>
 
@@ -2434,6 +2448,10 @@
       <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       <span>Progress</span>
     </button>
+    <button class="sidebar-tab" data-tab="looksmax" onclick="switchTab('looksmax')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      <span>Looksmax</span>
+    </button>
     <div class="sidebar-divider"></div>
     <button class="sidebar-tab" data-tab="coach" onclick="switchTab('coach')">
       <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -2489,6 +2507,9 @@
         <div style="font-family:var(--D);font-size:20px;font-weight:900">MORE</div>
         <button onclick="toggleMoreMenu()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
       </div>
+      <button class="bn-more-item" data-tab="looksmax" onclick="switchTab('looksmax');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg> Looksmax
+      </button>
       <button class="bn-more-item" data-tab="coach" onclick="switchTab('coach');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Coach
       </button>
@@ -3286,7 +3307,7 @@ function switchTab(tab){
     closeDmList();
     closePostThread();
   }
-  const overflowTabs = ['coach','lab','move','future-self'];
+  const overflowTabs = ['coach','lab','move','future-self','looksmax'];
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.getElementById('bn-more-btn')?.classList.toggle('active', overflowTabs.includes(tab));
   document.querySelectorAll('.sidebar-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
@@ -3302,6 +3323,7 @@ function switchTab(tab){
   }
   if(tab==='progress') { setTimeout(()=>renderMilestones(), 50); }
   if(tab==='move') { setTimeout(()=>initMove(), 50); return; }
+  if(tab==='looksmax') { setTimeout(()=>{ renderLooksmax(); renderShoppingList(); }, 50); return; }
   if(tab==='community') { setTimeout(()=>initCommunity(), 50); return; }
   if(tab==='coach') { setTimeout(()=>{ resumeCoachSession(); renderCoachSuggestedPrompts(); }, 50); }
   if(tab==='future-self') { setTimeout(()=>{ initFutureSelf(); resumeFutureSelfSession(); _fsEnsureGreeting(); }, 50); return; }
@@ -5037,10 +5059,10 @@ async function loadHabitStreaks(){
 // Same underlying tracking as everything else (habitState/habit_log/streaks/
 // XP via toggleHabit()) — this only changes WHERE these are displayed, not
 // how completion is stored, so nothing about persistence needed to change.
-const JP_LOOKSMAX_KEYS = new Set(['facial_exercises','positive_tilt','mpr','hyoid_training','chewing_split','gua_sha_face','lymphatic_drainage','spine_decompression','tongue_posture']);
+const JP_LOOKSMAX_KEYS = new Set(['facial_exercises','positive_tilt','mpr','hyoid_training','chewing_split','gua_sha_face','lymphatic_drainage','spine_decompression','tongue_posture','inversion_table']);
 const JP_LOOKSMAX_GROUPS = {
   'Face & Jaw': ['facial_exercises','positive_tilt','mpr','chewing_split'],
-  'Neck & Spine': ['spine_decompression'],
+  'Neck & Spine': ['spine_decompression','inversion_table'],
   'Circulation & Skin': ['gua_sha_face','lymphatic_drainage'],
   'Mouth & Tongue': ['tongue_posture','hyoid_training'],
 };
@@ -9386,7 +9408,8 @@ async function toggleOwnedItem(key){
   try { await saveOB(); } catch(e){ /* localStorage already saved */ }
   applyJPRealProtocol(); // rebuild OB.custom_habits so any newly-unlocked habit appears immediately
   renderShoppingList();
-  renderHabits();
+  renderHabits();     // oral_health lands here
+  renderLooksmax();   // inversion_table lands here — both cheap to call even if their pane isn't currently visible
 }
 
 async function saveOnboardingSection(section, data) {
