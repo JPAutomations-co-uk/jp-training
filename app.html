@@ -1510,6 +1510,16 @@
         <canvas id="chart-bodycomp" height="110"></canvas>
         <div id="chart-bodycomp-empty" class="chart-empty" style="display:none">Log your weight/body fat a few times to see the trend.</div>
       </div>
+
+      <!-- PROGRESS PHOTOS -->
+      <div style="margin-top:14px">
+        <input type="file" id="progress-photo-file" accept="image/*" style="display:none" onchange="onProgressPhotoChosen(event)">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button onclick="document.getElementById('progress-photo-file').click()" style="padding:8px 14px;background:var(--s1);border:1px solid rgba(44,212,196,.3);color:var(--teal);font-weight:600;font-size:12px;cursor:pointer">📷 Add Photo</button>
+          <div id="photo-angle-chips" style="display:flex;gap:6px"></div>
+        </div>
+        <div id="progress-photos-strip" class="reveal-on-scroll" style="margin-top:10px"></div>
+      </div>
       <div class="divider"></div>
 
       <!-- MICRONUTRIENTS -->
@@ -6459,6 +6469,8 @@ const HABIT_TIME_LOOKUP = {
   custom_bedding_laundry:'Anytime', custom_towel_care:'Anytime',
   custom_chewing_split:'Anytime', custom_gua_sha_face:'Anytime', custom_mpr:'Anytime',
   custom_positive_tilt:'Anytime', custom_lymphatic_drainage:'Anytime',
+  custom_hair_care:'Evening', custom_eye_bags:'Morning', custom_beard_growth:'Evening',
+  custom_hyoid_training:'Anytime', custom_shaving:'Morning',
 };
 
 /* ════════════════════════════════════════
@@ -6471,6 +6483,8 @@ async function initProgress(){
   renderQuarterlyRetest();
   loadStrengthExerciseOptions();
   renderBodyCompChart();
+  renderPhotoAngleChips();
+  loadProgressPhotos();
   renderNutrientTracker();
   renderHabitCategoryBreakdown();
   renderAdherenceCorrelation();
@@ -6697,6 +6711,136 @@ function renderBodyCompChart(){
       y1:{position:'right',ticks:{color:cssVar('--dim')},grid:{display:false},border:{display:false}},
       x:{ticks:{color:cssVar('--muted')},grid:{display:false},border:{display:false}}
     }}});
+}
+
+// ── Progress photos — private storage bucket + dedicated table (unlike
+// body comp above, which is stuck in the OB blob). Deliberately NOT the
+// avatar/post-media upload pattern: those buckets are public (meant to be
+// seen by other people); these are personal face/physique photos and must
+// only ever resolve via a signed URL scoped to the uploader. ──
+const PHOTO_ANGLES = [
+  {key:'front', label:'Front'}, {key:'side', label:'Side'}, {key:'back', label:'Back'}, {key:'general', label:'General'},
+];
+let _photoAngle = null;
+let _selectedPhotoIds = new Set();
+
+function renderPhotoAngleChips(){
+  const el = document.getElementById('photo-angle-chips');
+  if(!el) return;
+  el.innerHTML = PHOTO_ANGLES.map(a => `<button type="button" onclick="pickPhotoAngle('${a.key}')"
+    style="padding:5px 10px;font-size:11px;border:1px solid ${_photoAngle===a.key?'var(--teal)':'var(--border)'};background:${_photoAngle===a.key?'rgba(44,212,196,.12)':'var(--s1)'};color:${_photoAngle===a.key?'var(--teal)':'var(--muted)'};cursor:pointer">${a.label}</button>`).join('');
+}
+function pickPhotoAngle(key){
+  _photoAngle = (_photoAngle === key) ? null : key; // tap again to deselect — angle is always optional
+  renderPhotoAngleChips();
+}
+
+async function onProgressPhotoChosen(event){
+  const file = event.target.files?.[0];
+  event.target.value = ''; // allow choosing the same file again later
+  if(!file) return;
+  await uploadProgressPhoto(file, _photoAngle);
+}
+
+const PROGRESS_PHOTOS_SETUP_SQL = `CREATE TABLE progress_photos (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  date date NOT NULL DEFAULT CURRENT_DATE,
+  storage_path text NOT NULL,
+  angle text,
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+ALTER TABLE progress_photos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own progress photos"
+  ON progress_photos FOR ALL
+  USING (auth.uid() = user_id);
+
+INSERT INTO storage.buckets (id, name, public)
+  VALUES ('progress-photos', 'progress-photos', false)
+  ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Users manage own progress photos in storage"
+  ON storage.objects FOR ALL
+  USING (bucket_id = 'progress-photos' AND (storage.foldername(name))[1] = auth.uid()::text)
+  WITH CHECK (bucket_id = 'progress-photos' AND (storage.foldername(name))[1] = auth.uid()::text);`;
+
+function renderProgressPhotosSetupCard(){
+  const el = document.getElementById('progress-photos-strip');
+  if(!el) return;
+  el.innerHTML = `<div style="background:#0C0C0C;border:1px solid rgba(44,212,196,0.2);padding:16px">
+    <p style="font-size:12px;color:var(--teal);margin-bottom:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">One-time setup needed</p>
+    <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px">Run this SQL in your <a href="https://supabase.com/dashboard/project/xmynwdyadrwuvzdclvfh/sql" target="_blank" style="color:var(--teal)">Supabase SQL editor</a>:</p>
+    <pre style="font-size:10px;color:#888;white-space:pre-wrap;background:#000;padding:10px;line-height:1.5">${escHtml(PROGRESS_PHOTOS_SETUP_SQL)}</pre>
+  </div>`;
+}
+
+async function uploadProgressPhoto(file, angle){
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${USER.id}/${Date.now()}.${ext}`;
+  const { error: uploadError } = await sb.storage.from('progress-photos').upload(path, file);
+  if(uploadError){
+    if(uploadError.message?.includes('not found') || uploadError.statusCode==='404'){ renderProgressPhotosSetupCard(); return; }
+    showToast('Upload failed — try again');
+    return;
+  }
+  const { error } = await sb.from('progress_photos').insert({ user_id: USER.id, date: TODAY, storage_path: path, angle: angle||null });
+  if(error?.code==='42P01' || error?.code==='PGRST205'){ renderProgressPhotosSetupCard(); return; }
+  if(error){ showToast('Save failed — try again'); return; }
+  showToast('Photo added');
+  loadProgressPhotos();
+}
+
+async function loadProgressPhotos(){
+  const el = document.getElementById('progress-photos-strip');
+  if(!el || !USER) return;
+  const { data: rows, error } = await sb.from('progress_photos')
+    .select('*').eq('user_id',USER.id).gte('date',APP_LAUNCH_DATE).order('date',{ascending:false});
+  if(error?.code==='42P01' || error?.code==='PGRST205'){ renderProgressPhotosSetupCard(); return; }
+  if(!rows?.length){ el.innerHTML = ''; return; }
+  const withUrls = (await Promise.all(rows.map(async r => {
+    const { data } = await sb.storage.from('progress-photos').createSignedUrl(r.storage_path, 3600);
+    return data?.signedUrl ? { ...r, url: data.signedUrl } : null;
+  }))).filter(Boolean);
+  _selectedPhotoIds = new Set([...(_selectedPhotoIds)].filter(id => withUrls.some(p=>p.id===id)));
+  _progressPhotosCache = withUrls;
+  renderProgressPhotosStrip(withUrls);
+}
+
+// Signed URLs (long tokenised query strings) make these thumbnails unsafe
+// to pass through an inline onclick argument — same class of bug as the
+// earlier mobItemRow() onclick-injection fix this session. Read from this
+// cache by id instead of ever serialising photo data into HTML.
+let _progressPhotosCache = [];
+function togglePhotoSelect(id){
+  if(_selectedPhotoIds.has(id)) _selectedPhotoIds.delete(id);
+  else {
+    if(_selectedPhotoIds.size >= 2) _selectedPhotoIds.delete([..._selectedPhotoIds][0]); // oldest selection drops first
+    _selectedPhotoIds.add(id);
+  }
+  renderProgressPhotosStrip(_progressPhotosCache);
+}
+
+function renderProgressPhotosStrip(photos){
+  const el = document.getElementById('progress-photos-strip');
+  if(!el) return;
+  const dateLabel = d => new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  const selected = photos.filter(p => _selectedPhotoIds.has(p.id));
+  const compareHtml = selected.length === 2 ? `<div style="display:flex;gap:8px;margin-bottom:10px">
+    ${selected.map(p => `<div style="flex:1;text-align:center">
+      <img src="${p.url}" style="width:100%;border:1px solid var(--border);object-fit:cover;aspect-ratio:3/4">
+      <div style="font-size:11px;color:var(--dim);margin-top:4px">${dateLabel(p.date)}${p.angle?' · '+escHtml(p.angle):''}</div>
+    </div>`).join('')}
+  </div>` : '';
+  el.innerHTML = compareHtml + `<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">
+    ${photos.map(p => `<div class="progress-photo-thumb" data-id="${escHtml(p.id)}"
+      style="flex-shrink:0;width:70px;cursor:pointer;border:2px solid ${_selectedPhotoIds.has(p.id)?'var(--teal)':'transparent'}">
+      <img src="${p.url}" style="width:100%;height:90px;object-fit:cover;display:block">
+      <div style="font-size:9px;color:var(--dim);text-align:center;margin-top:2px">${dateLabel(p.date)}</div>
+    </div>`).join('')}
+  </div>`;
+  el.querySelectorAll('.progress-photo-thumb').forEach(t => {
+    t.addEventListener('click', () => togglePhotoSelect(t.dataset.id));
+  });
 }
 
 // ── Micronutrient tracking — general, every user ──
@@ -7029,7 +7173,7 @@ async function loadCheckinHistory(){
     .select('*').eq('user_id',USER.id).gte('date',APP_LAUNCH_DATE)
     .order('date',{ascending:false}).limit(6);
   const hist=document.getElementById('checkin-history');
-  if(error?.code==='42P01'){
+  if(error?.code==='42P01' || error?.code==='PGRST205'){
     renderCheckinGate(null);
     hist.innerHTML=`<div style="background:#0C0C0C;border:1px solid rgba(44,212,196,0.2);padding:16px">
       <p style="font-size:12px;color:var(--teal);margin-bottom:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">One-time setup needed</p>
@@ -9074,9 +9218,14 @@ function applyJPRealProtocol() {
     { key: 'towel_care',       name: 'Face Towel Wash',             desc: 'Wash/replace face towel — microfiber or soft cotton (not bamboo — the "antibacterial" marketing claim is largely degraded by the chemical processing bamboo fabric goes through). Hot water wash, fragrance-free detergent, full dry every time, no fabric softener (reduces absorbency).', days: ['Sunday','Wednesday'], time:'Anytime', priority:false },
     { key: 'chewing_split',    name: 'Chewing-Side Check',           desc: 'Check-in: clench and feel which side of your jaw (masseter) is less developed. Bias chewing toward that weaker side, roughly a 70/30 split rather than favoring your natural/dominant side. Real mechanism — masseter is a real muscle, unilateral chewing habits are a documented cause of jaw/facial asymmetry — but the 70/30 ratio isn\'t from a specific study, just a sensible moderate starting point. Stop or ease off if you get any jaw pain or clicking on either side.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'gua_sha_face',     name: 'Gua Sha',                      desc: 'Jawline, cheeks, and temples, pushing motions, with oil or moisturiser (always use a lubricant to reduce skin friction) — 20 reps each area. Thin evidence base, mostly anecdotal; genuinely low risk. Addresses soft-tissue puffiness/circulation, not underlying bone or muscle asymmetry — helps how one side looks on a given puffy day, not a lasting structural fix.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
+    { key: 'hyoid_training',   name: 'Hyoid Training',               desc: 'Chin tucks: no extra volume needed — already delivered by the daily Postural Protocol (2×10 reps), which covers the "20/day" target for real forward-head-posture reasons; hyoid-positioning claim itself stays unproven, same as when this first came up. Mewing while swallowing: 10 slow reps, tongue against palate during the swallow rather than pushing on teeth — genuinely legitimate, this is standard myofunctional-therapy/SLP practice technique, brief and controlled (different risk category from "hard mewing held all day," which stays excluded). Humming + jaw resistance: sit upright, low-pitch hum with light-moderate resistance on the jaw, 15 sec × 5 sets daily — humming is a real voice-therapy technique (resonant voice therapy), connects to the existing voice-practice habit; jaw resistance loads the TMJ similarly to MPR, keep it moderate and back off if uncomfortable. Hyoid-bone-repositioning claim overall stays unproven across all three, same standing caveat as the rest of this protocol.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'mpr',              name: 'MPR (Jaw Resistance)',         desc: 'Hands together (prayer position) under the jaw, providing upward resistance — open and close your mouth against it. 20 reps × 8 sets. Loads the suprahyoid muscles (digastric, mylohyoid, geniohyoid) on opening and the jaw-elevators (masseter, temporalis) on closing — real muscle, and resisted suprahyoid strengthening is genuinely documented in dysphagia/swallowing rehabilitation literature (measured increases in muscle thickness/strength). Visible jawline/under-chin definition is driven more by submental fat and skin laxity than this muscle group\'s size, so don\'t expect a dramatic cosmetic change from it alone. Keep resistance moderate — this loads the TMJ directly, more than the cheek/eye exercises — back off if you get jaw clicking or discomfort.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'positive_tilt',    name: 'Positive Tilt (Occipitalis)',  desc: 'Two exercises, frontalis kept relaxed throughout (avoids forehead wrinkling) — practice in front of a mirror: (1) Occipitalis: sit upright, focus on pulling the scalp backward, feel tightening at the back of the head, 5 sec hold × 15 reps daily. Real, learnable movement for most people, and genuinely connected to brow position via the galea aponeurotica (frontalis and occipitalis share this fibrous sheet as one functional muscle, occipitofrontalis) — the most anatomically grounded exercise in this protocol. (2) Auricularis posterior (corrected from "temporalis" in the source — temporalis is an unrelated jaw-closing muscle with no connection to the ears): pull ears back, palms applying slight assisting pressure to the head, 5 sec hold × 15 reps daily. Caveat: most people have little to no voluntary control over this largely vestigial muscle regardless of practice — if you can\'t feel actual ear movement, that\'s normal anatomy, not a failure of effort, and the hand-pressure version is really a passive scalp stretch rather than true muscular resistance in that case. Both: no evidence daily practice creates a lasting resting-state brow change, same as other facial exercises here — effect (if any) is most plausible during active contraction only.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'lymphatic_drainage', name: 'Lymphatic Drainage',        desc: 'Light finger pressure (barely indenting skin — pain or marks means too hard), in sequence: (1) neck/collarbone strokes first — clears the actual drainage endpoint before moving fluid toward it, (2) under-jaw, (3) behind ears, (4) face itself working outward/downward toward those cleared points — forehead to temples, cheeks nose-to-ears, under-eyes very gently outward, (5) repeat neck/collarbone to finish. Different technique from gua sha: much lighter pressure, fingers not a tool, specific proximal-to-distal sequence. Real clinical basis (Vodder method, genuine evidence for post-surgical lymphedema) but for general de-puffing the evidence is modest/plausible rather than proven — same tier as gua sha. Skip over active skin infection or acutely swollen/tender nodes.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
+    { key: 'hair_care',        name: 'Hair Care (No-Shampoo)',       desc: 'Daily: scalp massage a few minutes (real evidence — Koyama 2016 — for increased thickness over time via mechanical stretch on dermal papilla cells), gentle detangling with a wide-tooth comb from ends up (not root-to-tip), never dry-force through tangles. No co-wash/plant cleanser (removed at your request 7 Sep 2026) — be aware this reopens the buildup/scalp-health tradeoff (Malassezia yeast feeding on accumulated oil can worsen dandruff), worth revisiting if you notice scalp issues. NEVER baking soda/ACV "no-poo" — pH mismatch (baking soda ~9, hair/scalp ~4.5-5.5) genuinely damages the cuticle despite the natural reputation. Weekly: egg yolk mask — real lecithin/protein/fatty-acid conditioning benefit, rinse with cool/lukewarm water only (hot water cooks the egg in your hair). Minimize heat styling, avoid tight hairstyles pulling the hairline (real traction alopecia risk), silk pillowcase already covers the friction-reduction angle. Trim every 8-12 weeks — counterintuitive but correct: removes split ends before they travel up the shaft, preserves more length over time than skipping trims. Growth rate/max length is mostly genetic — the actual lever here is minimizing breakage, not stimulating faster growth.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'eye_bags',         name: 'Eye Bags / Dark Circles',      desc: 'Puffiness (fluid, reversible): already covered by elevated-head sleeping, cold spoons, topical caffeine, lymphatic drainage, and reduced sodium/alcohol elsewhere in this protocol. Dark circles: never rub/scratch the area (repeat mechanical irritation risks post-inflammatory hyperpigmentation, on top of the wrinkle risk already flagged); sunglasses as a targeted UV addition since sunscreen often under-applies right at the lash line; if seasonal allergies ever apply, manage those directly — "allergic shiners" (dark circles from allergy-driven congestion affecting local circulation) is a real, named phenomenon, not an eye-cream problem. Eye-specific low-concentration retinol is a real option if wanting to go further (thickens skin/boosts collagen, reduces visible blood vessels) — must be eye-specific, standard face retinol is too aggressive for this skin. Structural fat-pad herniation (the literal "bag") is NOT fixable topically — age-related orbital septum weakening, only real fix is blepharoplasty, not relevant at 18 but nothing above prevents that specific future mechanism.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
+    { key: 'beard_growth',     name: 'Beard Growth',                 desc: 'Current style: goatee + mustache, cheeks/neck kept clean — chosen because growth is currently patchy (normal at 18, density keeps maturing through the mid-20s) and short/defined beats long/scraggly for minimizing visible patchiness. Myth correction: shaving frequency/technique has ZERO effect on growth rate, thickness, or density — shaving only removes hair above the skin, growth is entirely follicle-driven. Nightly: castor/emu/rosemary oil (rosemary diluted in jojoba or almond) on the goatee/mustache — real conditioning benefit, weak-to-no evidence of actual growth stimulation. Beard balm is conditioning, not growth. Twice weekly: derma stamp 0.5-1mm on the goatee/mustache area, alcohol-clean before AND after, cleanse face first, never share the tool, avoid active acne/broken skin. Most evidence-grounded item here: real mechanism (Dhurat 2013) for microneedling + topical minoxidil on scalp AGA — strongest-evidence version would pair with minoxidil, not natural oils, if wanting that later. Nutrition — whole food: zinc (oysters/beef/pumpkin seeds, cofactor for 5-alpha-reductase which drives beard growth via DHT), cysteine-rich protein (eggs/garlic/onions/Brussels sprouts/meat/fish) instead of "keratin." Reassess every 2-3 months whether a fuller style is becoming viable as density naturally improves — see `shaving` habit for the goatee/mustache trim + clean-area shave schedule.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'shaving',          name: 'Shaving & Goatee/Mustache Trim', desc: 'Clean areas (cheeks/neck): shave every 2 days — sharp contrast between clean skin and the goatee/mustache is what makes the style read as deliberate rather than "haven\'t shaved." Technique: define the goatee/mustache boundary first with a detail trimmer or careful razor outline before shaving the surrounding area — neckline follows roughly where your head meets your neck when tilted back, don\'t shave too high under the jaw. Shave WITH the grain first (against-grain increases razor burn/ingrown hairs meaningfully at this frequency); a second gentle pass across (not against) the grain only if wanting closer. Prep: warm water/shower + actual shaving cream/gel, not dry. Aftercare: cool water rinse, alcohol-free balm/moisturiser. Replace blade every 5-7 shaves — a dulling blade is a bigger ingrown-hair risk than the shaving itself. Goatee/mustache itself: don\'t shave, trim every few days to weekly — trimmer with a guard for the goatee (consistent length), scissors for the mustache specifically (keep it above the lip line). Existing 1-2x/week exfoliation habit doubles as ingrown-hair prevention for the now-more-frequently-shaved zones.', days: ['Monday','Wednesday','Friday','Sunday'], time:'Morning', priority:false },
     { key: 'tongue_posture',   name: 'Hard Mewing (throughout day)',desc: 'Firm, active tongue pressure against the palate, maintained throughout the day (upgraded from passive resting posture at your request). Notice if you\'re mouth-breathing. Real trade-off, kept despite the flag: sustained forceful, uncalibrated tongue pressure held all day is a different risk category than gentle resting contact — teeth can be moved by forces as light as ~1.7g sustained over time, and the tongue can exert up to 500g, so hard pressure held for hours risks genuinely unplanned tooth movement, plus tongue fatigue and inadvertent jaw clenching. Going harder doesn\'t make mewing\'s structural bone-change claim more true for an adult — it stays unproven regardless of force or duration.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'gut_meals',        name: 'Chew + Destress Before Meals',desc: 'Chew each mouthful thoroughly. A minute of slow breathing before eating if rushed/stressed.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'weekly_grooming',  name: 'Weekly Grooming Check',       desc: 'Postural self-photo (shoulder/hip/knee symmetry), swallow-pattern self-check.', days: ['Sunday'], time:'Anytime', priority:false },
