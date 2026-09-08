@@ -1477,6 +1477,19 @@
         <button onclick="getMealSuggestion()" style="width:100%;padding:12px;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--B);font-size:12px;cursor:pointer;margin-top:6px;margin-bottom:12px;transition:all .2s" onmouseover="this.style.borderColor='rgba(44,212,196,.3)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Build my meal plan →</button>
       </div>
       <div class="food-list" id="food-list"></div>
+
+      <div class="divider"></div>
+      <!-- MICRONUTRIENTS -->
+      <div class="sh-label" style="margin-bottom:6px">Micronutrients — Today</div>
+      <p class="sh-sub" style="margin-bottom:10px">Verified against the approved-food database where matched; estimated (AI, less precise) where a logged food isn't on it.</p>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button id="nutrient-tab-vitamins" onclick="setNutrientView('vitamins')" style="flex:1;padding:6px;font-size:10px;background:var(--teal);color:#000;border:1px solid var(--teal);cursor:pointer">Vitamins</button>
+        <button id="nutrient-tab-minerals" onclick="setNutrientView('minerals')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Minerals</button>
+        <button id="nutrient-tab-other" onclick="setNutrientView('other')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Fats/Fibre</button>
+        <button id="nutrient-tab-extra" onclick="setNutrientView('extra')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Other</button>
+      </div>
+      <div id="nutrient-tracker-body" class="reveal-on-scroll"></div>
+      <button onclick="askCoachAboutGaps()" style="margin-top:10px;width:100%;padding:9px;font-size:12px;background:transparent;border:1px solid rgba(44,212,196,.3);color:var(--teal);cursor:pointer">Ask Coach how to close today's gaps →</button>
     </div>
 
     <!-- PROGRESS -->
@@ -1486,11 +1499,6 @@
         <div class="sh-title">Progress</div>
         <p class="sh-sub">Auto-tracked from your habits, training, and nutrition logs.</p>
       </div>
-
-      <!-- MILESTONES ROADMAP -->
-      <div class="sh-label" style="margin-bottom:12px">Milestones</div>
-      <div id="milestones-wrap" class="reveal-on-scroll"></div>
-      <div class="divider"></div>
 
       <!-- STRENGTH PROGRESS -->
       <div class="sh-label" style="margin-bottom:6px">Strength Progress</div>
@@ -1537,39 +1545,15 @@
       </div>
       <div class="divider"></div>
 
-      <!-- MICRONUTRIENTS -->
-      <div class="sh-label" style="margin-bottom:6px">Micronutrients — Today</div>
-      <p class="sh-sub" style="margin-bottom:10px">Verified against the approved-food database where matched; estimated (AI, less precise) where a logged food isn't on it.</p>
-      <div style="display:flex;gap:6px;margin-bottom:10px">
-        <button id="nutrient-tab-vitamins" onclick="setNutrientView('vitamins')" style="flex:1;padding:6px;font-size:10px;background:var(--teal);color:#000;border:1px solid var(--teal);cursor:pointer">Vitamins</button>
-        <button id="nutrient-tab-minerals" onclick="setNutrientView('minerals')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Minerals</button>
-        <button id="nutrient-tab-other" onclick="setNutrientView('other')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Fats/Fibre</button>
-        <button id="nutrient-tab-extra" onclick="setNutrientView('extra')" style="flex:1;padding:6px;font-size:10px;background:var(--s1);color:var(--muted);border:1px solid var(--border);cursor:pointer">Other</button>
-      </div>
-      <div id="nutrient-tracker-body" class="reveal-on-scroll"></div>
-      <button onclick="askCoachAboutGaps()" style="margin-top:10px;width:100%;padding:9px;font-size:12px;background:transparent;border:1px solid rgba(44,212,196,.3);color:var(--teal);cursor:pointer">Ask Coach how to close today's gaps →</button>
-      <div class="divider"></div>
-
       <!-- HABIT CATEGORY BREAKDOWN -->
       <div class="sh-label" style="margin-bottom:6px">Habit Completion by Time of Day</div>
       <div id="habit-category-breakdown" class="reveal-on-scroll" style="margin-bottom:4px"></div>
-      <div class="divider"></div>
-
-      <!-- ADHERENCE vs OUTCOMES -->
-      <div class="sh-label" style="margin-bottom:6px">Adherence vs. Wellbeing</div>
-      <p class="sh-sub" style="margin-bottom:10px">Weekly habit completion next to your check-in scores — does higher adherence actually track with feeling better?</p>
-      <div id="adherence-correlation" class="reveal-on-scroll"></div>
       <div class="divider"></div>
 
       <div class="chart-card reveal-on-scroll">
         <div class="chart-lbl">Habit Completion — Last 7 Days</div>
         <canvas id="chart-habits" height="110"></canvas>
         <div id="chart-habits-empty" class="chart-empty" style="display:none">Log habits for a few days to see your trend.</div>
-      </div>
-      <div class="chart-card reveal-on-scroll">
-        <div class="chart-lbl">Wellbeing — Check-in Scores</div>
-        <canvas id="chart-checkin" height="110"></canvas>
-        <div id="chart-checkin-empty" class="chart-empty" style="display:none">Submit a few check-ins to see your trend.</div>
       </div>
       <div class="chart-card reveal-on-scroll">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
@@ -1584,8 +1568,13 @@
         <canvas id="chart-cals" height="110"></canvas>
         <div id="chart-cals-empty" class="chart-empty" style="display:none">Log meals in the Eat tab to track this.</div>
       </div>
-
       <div class="divider"></div>
+
+      <!-- MILESTONES ROADMAP -->
+      <div class="sh-label" style="margin-bottom:12px">Milestones</div>
+      <div id="milestones-wrap" class="reveal-on-scroll"></div>
+      <div class="divider"></div>
+
       <div class="sh-label" style="margin-bottom:6px">Check-in</div>
       <p class="sh-sub" id="checkin-sub" style="margin-bottom:14px"></p>
       <div id="checkin-week-stats" class="reveal-on-scroll" style="margin-bottom:14px"></div>
@@ -2884,12 +2873,22 @@ function getHabits(){
 }
 const HABITS=getHabits();
 
+// Replaced the old 5 generic sliders (Energy/Sleep Quality/Mood/Libido/
+// Training) with markers actually cited as evidence-based proxies in this
+// project's own coaching knowledge base (.claude/knowledge-base/) — every
+// entry below traces to a real source file, not an invented metric. "Training"
+// dropped entirely: real session/nutrition/step adherence is already shown
+// live in renderCheckinWeekStats(), so a subjective duplicate added nothing.
+// bool-type entries render as a single Yes/No tap rather than a slider —
+// genuinely faster to answer for something that's actually binary, and
+// morning_erection is JP's own example of a free, no-equipment signal.
 const CHECK_METRICS=[
-  {key:'energy',      label:'Energy'},
-  {key:'sleep_q',     label:'Sleep Quality'},
-  {key:'mood',        label:'Mood'},
-  {key:'libido',      label:'Libido'},
-  {key:'adherence',   label:'Training'},
+  {key:'libido',              label:'Libido',              type:'slider'},
+  {key:'waking_energy',       label:'Energy on Waking',    type:'slider'},
+  {key:'cognitive_sharpness', label:'Cognitive Sharpness',  type:'slider'},
+  {key:'stress_load',         label:'Stress Load',         type:'slider', invert:true},
+  {key:'morning_erection',    label:'Morning Erection',    type:'bool', goodValue:true},
+  {key:'waking_3am',          label:'Woke at 3am',         type:'bool', goodValue:false},
 ];
 
 // Sample programme — will be personalised per user in future
@@ -5777,6 +5776,7 @@ async function initEat(){
   });
   renderFoods();
   renderNutritionPlan(); // re-render now foods is populated, for the live macro progress bar
+  renderNutrientTracker(); // Micronutrients now lives in the Eat tab, not Progress
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -5808,8 +5808,8 @@ const FOOD_NUTRIENT_DB = {
   // cooked/as-eaten basis matching the rest of this database, sourced from
   // USDA FoodData Central. Pure fats (tallow/coconut oil/ghee/olive oil)
   // left as-is — genuinely near-zero magnesium, not a gap.
-  'beef mince':      { b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, zn:4.8, fe:2.1, se:15, p:165, k:260, mg:20, choline:75, satfat:8.5, monofat:9, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
-  'beef steak':      { b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, zn:4.8, fe:2.1, se:15, p:165, k:260, mg:20, choline:75, satfat:6, monofat:6.5, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
+  'beef mince':      { b1:.05, b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, b7:3, zn:4.8, fe:2.1, se:15, cu:.09, p:165, k:260, mg:20, choline:75, satfat:8.5, monofat:9, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
+  'beef steak':      { b1:.08, b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, b7:3, zn:4.8, fe:2.1, se:15, cu:.09, p:165, k:260, mg:20, choline:75, satfat:6, monofat:6.5, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
   'beef liver':      { vitA:4968, b12:59, b9:145, b2:2.8, b3:13, b6:.9, b5:6.2, b7:41, fe:4.9, zn:4, cu:9.8, se:24, p:387, mg:18, choline:333, coq10:3.9, antiox:['beta-carotene'] },
   'beef heart':      { b12:9.1, b3:6.5, b2:.88, fe:4.3, zn:2, p:213, se:23, mg:20, taurine:63, coq10:11.3, creatine:280 },
   'bone marrow':     { b12:.5, choline:20, mg:2, satfat:40, monofat:38 },
@@ -5817,9 +5817,9 @@ const FOOD_NUTRIENT_DB = {
   'bison':           { b12:2.9, zn:4.5, fe:2.8, se:12, b3:5.5, mg:21, satfat:2.5, monofat:2 },
   'venison':         { b12:3.9, zn:3.4, fe:3.8, b3:6.6, se:10, mg:21, satfat:1.5, monofat:1 },
   // ── Eggs ──
-  'whole eggs':      { vitA:160, vitD:82, vitE:1, vitK:.6, b2:.5, b5:1.4, b12:.9, b9:47, choline:294, se:30, iodine:24, p:198, fe:1.8, zn:1.3, mg:10, satfat:3.1, monofat:4 },
+  'whole eggs':      { vitA:160, vitD:82, vitE:1, vitK:.6, b1:.04, b2:.5, b5:1.4, b7:10, b12:.9, b9:47, choline:294, se:30, iodine:24, p:198, fe:1.8, zn:1.3, cu:.07, mg:10, satfat:3.1, monofat:4 },
   // ── Fish & shellfish ──
-  'salmon':          { vitD:526, b12:3.2, b3:8.5, b6:.6, epa:411, dha:671, se:36, p:240, k:384, mg:29, antiox:['astaxanthin'] },
+  'salmon':          { vitD:526, b1:.2, b12:3.2, b3:8.5, b6:.6, b7:5, epa:411, dha:671, se:36, cu:.3, p:240, k:384, mg:29, antiox:['astaxanthin'] },
   'sardines':        { vitD:193, b12:8.9, ca:100, epa:500, dha:1000, se:33, p:490, mg:39 },
   'mackerel':        { vitD:360, b12:8.7, b3:9, epa:1000, dha:1400, se:44, mg:76 },
   'herring':         { vitD:216, b12:13, epa:900, dha:1100, se:37, mg:32 },
@@ -5839,17 +5839,18 @@ const FOOD_NUTRIENT_DB = {
   'coconut oil':     { satfat:87 },
   'olive oil':       { vitE:14, monofat:73, antiox:['polyphenols'] },
   // ── Carbs ──
-  'potato':          { vitC:20, b6:.3, k:425, mg:23, fiber:2.2 },
-  'sweet potato':    { vitA:961, vitC:2.4, k:337, fiber:3, mn:.3, mg:25, antiox:['beta-carotene'] },
+  'potato':          { vitC:20, b1:.1, b6:.3, b7:.4, k:425, cu:.2, mg:23, fiber:2.2 },
+  'sweet potato':    { vitA:961, vitC:2.4, b1:.1, b7:.5, k:337, fiber:3, mn:.3, cu:.15, mg:25, antiox:['beta-carotene'] },
   'white rice':      { mn:.4, se:7, mg:12 },
   'squash':          { vitA:358, vitC:21, k:352, fiber:2, mn:.2, mg:12 },
   // ── Fruit & veg ──
-  'banana':          { k:358, b6:.4, vitC:8.7, fiber:2.6, mn:.27, mg:27 },
-  'avocado':         { k:485, b9:81, vitE:2.1, vitK:21, fiber:6.7, monofat:9.8, mg:29 },
+  'banana':          { k:358, b1:.03, b6:.4, vitC:8.7, fiber:2.6, mn:.27, cu:.08, mg:27 },
+  'avocado':         { k:485, b9:81, vitE:2.1, vitK:21, b1:.07, b5:1.39, b7:3, fiber:6.7, monofat:9.8, cu:.19, mg:29 },
   'berries':         { vitC:45, fiber:2.5, mn:.4, mg:8, antiox:['anthocyanins'] },
   'pineapple':       { vitC:47.8, mn:.9, mg:12 },
   'mango':           { vitC:36.4, vitA:54, b9:43, fiber:1.6, mg:10 },
   'watermelon':      { vitC:8.1, vitA:28, mg:10, antiox:['lycopene'] },
+  'kiwi':            { vitC:92.7, vitK:40.3, vitE:1.5, fiber:3, mg:17, k:312, cu:.13, b9:25 },
   'papaya':          { vitC:60.9, vitA:47, b9:37, mg:10 },
   'pomegranate':     { vitC:10.2, vitK:16.4, b9:38, mg:12, antiox:['punicalagins'] },
   'dates':           { k:696, fiber:6.7, mn:.3, b6:.25, mg:43 },
@@ -5917,30 +5918,75 @@ const FOOD_ALIASES = {
   'coffee':'black coffee', 'espresso':'black coffee', 'mate':'yerba mate',
   'mixed berries':'berries', 'blueberries':'berries', 'strawberries':'berries', 'raspberries':'berries',
   'bell pepper':'bell peppers', 'chocolate':'dark chocolate', 'honey':'raw honey',
+  'kiwis':'kiwi', 'avacado':'avocado', 'avocados':'avocado',
 };
+// Default weight (g) for ONE typical unit of foods commonly logged by count
+// ("4 eggs", "one avocado") rather than explicit grams — added 8 Sep 2026.
+// Without this, matchFoodToDatabase() fell back to a flat 100g regardless of
+// count or real food size, silently halving (or worse) verified nutrient
+// totals for anything logged by count instead of weight — which is how most
+// people naturally log whole/countable foods ("4 large eggs" was credited
+// as ~1 egg's worth, "one avocado" as half an avocado).
+const FOOD_UNIT_WEIGHTS = {
+  'whole eggs': 50, 'banana': 118, 'avocado': 200, 'potato': 170,
+  'sweet potato': 180, 'carrot': 60, 'mango': 200, 'kiwi': 75,
+};
+const WORD_NUMBERS = { 'a':1,'an':1,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'half':.5 };
 function matchFoodToDatabase(name){
   const text = name.toLowerCase();
   const qtyRe = /~?(\d+(?:\.\d+)?)\s*(g|ml|kg|l)\b/gi;
-  const foodKeys = Object.keys(FOOD_NUTRIENT_DB).concat(Object.keys(FOOD_ALIASES));
+  // Longest-key-first: prevents a shorter key that's a substring of a
+  // longer one ('potato' inside 'sweet potato', 'egg' inside 'eggs') from
+  // creating a spurious second/duplicate match for the same food mention.
+  // Known limitation: if both a shorter and longer food are genuinely,
+  // separately logged in one entry (e.g. "one potato and one sweet
+  // potato"), the shorter one is dropped rather than double-counted —
+  // log them as separate entries if that combination matters.
+  const foodKeys = Object.keys(FOOD_NUTRIENT_DB).concat(Object.keys(FOOD_ALIASES)).sort((a,b)=>b.length-a.length);
   const matched = [];
+  const consumedKeys = [];
   let matchedAnyText = false;
   foodKeys.forEach(key=>{
     if(!text.includes(key)) return;
+    if(consumedKeys.some(ck=>ck.includes(key))) return;
     matchedAnyText = true;
+    consumedKeys.push(key);
     const dbKey = FOOD_NUTRIENT_DB[key] ? key : FOOD_ALIASES[key];
-    // Find the nearest preceding quantity in the text, default to 100g if none found
+    // Find the nearest preceding quantity in the text, default to 100g if none found.
+    // Capped at 20 chars: without a proximity limit, a single explicit unit
+    // anywhere in a long run-on food-log sentence ("...with 10ml olive oil")
+    // was being claimed as the "nearest" quantity by every OTHER food in
+    // that same sentence too (nothing closer to compete with it), flattening
+    // them all to that one unrelated gram figure instead of falling through
+    // to the count-based estimate below.
     let grams = 100;
     const idx = text.indexOf(key);
     let best = null, bestDist = Infinity;
     let m; qtyRe.lastIndex = 0;
     while((m = qtyRe.exec(text))){
       const dist = Math.abs(m.index - idx);
-      if(dist < bestDist){ bestDist = dist; best = m; }
+      if(dist < bestDist && dist <= 20){ bestDist = dist; best = m; }
     }
     if(best){
       let qty = parseFloat(best[1]); let unit = best[2].toLowerCase();
       if(unit==='kg') qty*=1000; if(unit==='l') qty*=1000;
       grams = qty;
+    } else if(FOOD_UNIT_WEIGHTS[dbKey]){
+      // No explicit weight given — look for a count (digit, fraction, or
+      // word-number) in the text just before this food mention instead of
+      // silently assuming a flat, often-wrong 100g.
+      // Allow ONE arbitrary descriptor word between the count and the food
+      // ("4 large eggs", "two baking potatoes") rather than a fixed
+      // adjective list — a fixed list missed "baking" on first pass here.
+      const before = text.slice(Math.max(0, idx-25), idx);
+      const fracM = before.match(/(\d+)\s*\/\s*(\d+)\s*(?:\w+\s+)?$/);
+      const numM = before.match(/(\d+(?:\.\d+)?)\s*(?:\w+\s+)?$/);
+      const wordM = before.match(/\b(a|an|one|two|three|four|five|six|seven|eight|half)\b\s*(?:\w+\s+)?$/);
+      let count = 1;
+      if(fracM) count = parseFloat(fracM[1])/parseFloat(fracM[2]);
+      else if(numM) count = parseFloat(numM[1]);
+      else if(wordM) count = WORD_NUMBERS[wordM[1]];
+      grams = count * FOOD_UNIT_WEIGHTS[dbKey];
     }
     matched.push({ key: dbKey, grams, data: FOOD_NUTRIENT_DB[dbKey] });
   });
@@ -6596,9 +6642,7 @@ async function initProgress(){
   renderBodyCompChart();
   renderPhotoAngleChips();
   loadProgressPhotos();
-  renderNutrientTracker();
   renderHabitCategoryBreakdown();
-  renderAdherenceCorrelation();
   loadProgressCharts();
   if (USER?.id === JP_USER_ID) {
     renderPRHistory();
@@ -6615,9 +6659,8 @@ async function loadProgressCharts(){
   const dLocal = _localDateStr(d);
   const from = dLocal > APP_LAUNCH_DATE ? dLocal : APP_LAUNCH_DATE;
 
-  const [{ data: habitData }, { data: checkinData }, { data: calData }] = await Promise.all([
+  const [{ data: habitData }, { data: calData }] = await Promise.all([
     sb.from('habit_log').select('date,completed').eq('user_id',USER.id).gte('date',from),
-    sb.from('progress_checkins').select('*').eq('user_id',USER.id).gte('date',APP_LAUNCH_DATE).order('date',{ascending:true}).limit(10),
     sb.from('nutrition_logs').select('date,calories,protein_g,carbs_g,fat_g').eq('user_id',USER.id).gte('date',from),
   ]);
 
@@ -6626,7 +6669,7 @@ async function loadProgressCharts(){
   // concurrently (fire-and-forget from initProgress()), so a blanket
   // "destroy everything, reset the object" here would race-condition-wipe
   // whichever of those finished first, leaving their canvases blank.
-  ['habits','checkin','cals'].forEach(k=>{ if(_charts[k]){ try{_charts[k].destroy()}catch(e){} delete _charts[k]; } });
+  ['habits','cals'].forEach(k=>{ if(_charts[k]){ try{_charts[k].destroy()}catch(e){} delete _charts[k]; } });
 
   const days=[], pcts=[], calMap={}, proteinMap={}, carbsMap={}, fatMap={};
   for(let i=6;i>=0;i--){
@@ -6658,19 +6701,6 @@ async function loadProgressCharts(){
     _charts.habits = new Chart(hc,{type:'bar',data:{labels:days,datasets:[{
       data:pcts,backgroundColor:pcts.map(tealAlpha),borderRadius:3,
     }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,max:100,ticks:{...gridOpts.y.ticks,callback:v=>v+'%'}}}}});
-  }
-
-  // Check-in scores
-  const cc = document.getElementById('chart-checkin');
-  const hasCheckin = (checkinData||[]).length > 1;
-  document.getElementById('chart-checkin-empty').style.display = hasCheckin?'none':'block';
-  if(cc && hasCheckin){
-    const labs = checkinData.map(r=>new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
-    const avgs = checkinData.map(r=>Math.round(CHECK_METRICS.reduce((s,m)=>s+(+r[m.key]||5),0)/CHECK_METRICS.length*10)/10);
-    _charts.checkin = new Chart(cc,{type:'line',data:{labels:labs,datasets:[{
-      data:avgs,borderColor:cssVar('--teal'),backgroundColor:'rgba(44,212,196,.08)',
-      fill:true,tension:.4,pointBackgroundColor:cssVar('--teal'),pointRadius:4,
-    }]},options:{responsive:true,plugins:noLegend,scales:{...gridOpts,y:{...gridOpts.y,min:1,max:10}}}});
   }
 
   // Nutrition chart — calories by default, switchable to protein/carbs/fat
@@ -7117,37 +7147,6 @@ async function renderHabitCategoryBreakdown(){
 
 // ── Weekly habit adherence vs. check-in wellbeing — does higher completion
 // actually track with feeling better, for this specific person ──
-async function renderAdherenceCorrelation(){
-  const el = document.getElementById('adherence-correlation');
-  if(!el || !USER) return;
-  const from = new Date(); from.setDate(from.getDate()-28);
-  const fromLocal = _localDateStr(from);
-  const fromStr = fromLocal > APP_LAUNCH_DATE ? fromLocal : APP_LAUNCH_DATE;
-  const [{data:habitData}, {data:checkinData}] = await Promise.all([
-    sb.from('habit_log').select('date,completed').eq('user_id',USER.id).gte('date',fromStr),
-    sb.from('progress_checkins').select('date,energy,mood,sleep_q').eq('user_id',USER.id).gte('date',fromStr).order('date',{ascending:true}),
-  ]);
-  if(!checkinData?.length){ el.innerHTML = '<p style="font-size:12px;color:var(--dim)">Submit a few weekly check-ins to see this.</p>'; return; }
-  // Group into weeks (Mon-Sun) ending at each check-in date
-  const rows = checkinData.map(c=>{
-    const end = new Date(c.date+'T00:00:00');
-    const start = new Date(end); start.setDate(end.getDate()-6);
-    const startStr = _localDateStr(start);
-    const weekHabits = (habitData||[]).filter(h=>h.date>=startStr && h.date<=c.date);
-    const pct = weekHabits.length ? Math.round(weekHabits.filter(h=>h.completed).length/weekHabits.length*100) : null;
-    const wellbeing = Math.round(((+c.energy||0)+(+c.mood||0)+(+c.sleep_q||0))/3*10)/10;
-    return { date:c.date, pct, wellbeing };
-  }).filter(r=>r.pct!==null);
-  if(!rows.length){ el.innerHTML = '<p style="font-size:12px;color:var(--dim)">Not enough overlapping data yet — need both habit logs and check-ins in the same week.</p>'; return; }
-  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
-    ${rows.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)">
-      <span style="color:var(--dim)">${new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>
-      <span style="color:var(--muted)">${r.pct}% habits</span>
-      <span style="color:var(--white);font-weight:600">${r.wellbeing}/10 wellbeing</span>
-    </div>`).join('')}
-  </div>`;
-}
-
 // Shared week/pace math for the check-in cadence system below — one
 // definition of "start of week" reused by renderWeeklyPRs() too.
 function _mondayOfWeek(dateStr){
@@ -7223,8 +7222,28 @@ async function renderCheckinWeekStats(){
 // yet this week) or a locked read-only recap of savedRow's values — same
 // markup either way, just disabled + pre-filled when locked, so there's no
 // separate "locked" layout to maintain.
+// Editable (non-locked) Yes/No selections only — reset each time an
+// unlocked grid renders so a stale pick from a previous week never leaks
+// into a new submission. Sliders don't need this: their value lives
+// directly on the DOM input, but a two-button toggle has no single
+// underlying element to read back from at submit time.
+let _boolScores = {};
 function renderScoreGrid(savedRow){
+  if(!savedRow) _boolScores = {};
   document.getElementById('score-grid').innerHTML=CHECK_METRICS.map(m=>{
+    if(m.type==='bool'){
+      const val = savedRow ? (savedRow[m.key] ?? null) : null;
+      const btn = (label,bval) => {
+        const isSel = val===bval;
+        return `<button type="button" class="checkin-bool-btn" data-key="${m.key}" data-val="${bval}" ${savedRow?'disabled':''} onclick="pickBoolScore('${m.key}',${bval})"
+          style="flex:1;padding:8px;font-size:12px;border:1px solid ${isSel?'var(--teal)':'var(--border)'};background:${isSel?'rgba(44,212,196,.12)':'var(--s1)'};color:${isSel?'var(--teal)':'var(--muted)'};cursor:${savedRow?'default':'pointer'}">${label}</button>`;
+      };
+      return `
+    <div class="score-item">
+      <div class="score-label">${m.label}</div>
+      <div style="display:flex;gap:6px;margin-top:8px">${btn('Yes',true)}${btn('No',false)}</div>
+    </div>`;
+    }
     const val = savedRow ? (savedRow[m.key] ?? 5) : 5;
     return `
     <div class="score-item">
@@ -7235,6 +7254,15 @@ function renderScoreGrid(savedRow){
       <div class="score-val" id="sv-${m.key}">${val}</div>
     </div>
   `;}).join('');
+}
+function pickBoolScore(key, val){
+  _boolScores[key] = val;
+  document.querySelectorAll(`.checkin-bool-btn[data-key="${key}"]`).forEach(b=>{
+    const isSel = b.dataset.val === String(val);
+    b.style.borderColor = isSel ? 'var(--teal)' : 'var(--border)';
+    b.style.background = isSel ? 'rgba(44,212,196,.12)' : 'var(--s1)';
+    b.style.color = isSel ? 'var(--teal)' : 'var(--muted)';
+  });
 }
 
 // Real weekly gate: compares the most recent progress_checkins row against
@@ -7270,13 +7298,44 @@ async function submitCheckin(){
   const btn=document.getElementById('checkin-btn');
   btn.disabled=true;btn.textContent='Saving...';
   const scores={};
-  CHECK_METRICS.forEach(m=>scores[m.key]=+document.getElementById('score-'+m.key).value);
+  CHECK_METRICS.forEach(m=>{
+    scores[m.key] = m.type==='bool' ? (_boolScores[m.key] ?? null) : +document.getElementById('score-'+m.key).value;
+  });
   const weekStart = _mondayOfWeek(_localDateStr());
   const{error}=await sb.from('progress_checkins').upsert({user_id:USER.id,date:weekStart,...scores});
   btn.disabled=false;btn.textContent='Submit Check-in';
-  if(error){showToast('Set up the table first — see below');loadCheckinHistory();return;}
+  if(error){
+    // A table-missing error would already show up via loadCheckinHistory()'s
+    // own read query — this path only ever fires for a genuinely different
+    // failure: the table exists but is missing one of the newer columns
+    // (upsert is a write, so it's the first place that can hit this; a
+    // plain `select('*')` never errors just because an optional column
+    // isn't there yet). Show the matching setup card instead of a vague toast.
+    if(error.code==='PGRST204' || /column/i.test(error.message||'')){
+      renderCheckinColumnSetupCard();
+    } else {
+      showToast('Save failed — see below');
+      loadCheckinHistory();
+    }
+    return;
+  }
   showToast('Check-in saved');
   loadCheckinHistory();
+}
+
+function renderCheckinColumnSetupCard(){
+  const hist = document.getElementById('checkin-history');
+  if(!hist) return;
+  hist.innerHTML = `<div style="background:#0C0C0C;border:1px solid rgba(44,212,196,0.2);padding:16px">
+    <p style="font-size:12px;color:var(--teal);margin-bottom:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">One-time setup needed</p>
+    <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px">The check-in table needs a few new columns for the redesigned questions. Run this once in your <a href="https://supabase.com/dashboard/project/xmynwdyadrwuvzdclvfh/sql" target="_blank" style="color:var(--teal)">Supabase SQL editor</a>:</p>
+    <pre style="font-size:10px;color:#888;white-space:pre-wrap;background:#000;padding:10px;line-height:1.5">ALTER TABLE progress_checkins
+  ADD COLUMN IF NOT EXISTS waking_energy int CHECK (waking_energy BETWEEN 1 AND 10),
+  ADD COLUMN IF NOT EXISTS cognitive_sharpness int CHECK (cognitive_sharpness BETWEEN 1 AND 10),
+  ADD COLUMN IF NOT EXISTS stress_load int CHECK (stress_load BETWEEN 1 AND 10),
+  ADD COLUMN IF NOT EXISTS morning_erection boolean,
+  ADD COLUMN IF NOT EXISTS waking_3am boolean;</pre>
+  </div>`;
 }
 
 async function loadCheckinHistory(){
@@ -7293,11 +7352,12 @@ async function loadCheckinHistory(){
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   date date NOT NULL DEFAULT CURRENT_DATE,
-  energy int CHECK (energy BETWEEN 1 AND 10),
-  sleep_q int CHECK (sleep_q BETWEEN 1 AND 10),
-  mood int CHECK (mood BETWEEN 1 AND 10),
   libido int CHECK (libido BETWEEN 1 AND 10),
-  adherence int CHECK (adherence BETWEEN 1 AND 10),
+  waking_energy int CHECK (waking_energy BETWEEN 1 AND 10),
+  cognitive_sharpness int CHECK (cognitive_sharpness BETWEEN 1 AND 10),
+  stress_load int CHECK (stress_load BETWEEN 1 AND 10),
+  morning_erection boolean,
+  waking_3am boolean,
   notes text,
   created_at timestamptz DEFAULT now() NOT NULL,
   UNIQUE(user_id, date)
@@ -7311,21 +7371,39 @@ CREATE POLICY "Users manage own checkins"
   }
   renderCheckinGate(data?.[0]);
   if(!data?.length){hist.innerHTML='<p style="font-size:13px;color:var(--dim)">No check-ins yet. Submit your first one above.</p>';return;}
-  const scoreColor=v=>{
+  const sliderColor=v=>{
     if(v>=8)return'#2CD4C4';
     if(v>=6)return'rgba(44,212,196,.6)';
     if(v>=4)return'rgba(44,212,196,.35)';
     return'rgba(44,212,196,.15)';
   };
-  hist.innerHTML=data.map(r=>`
+  // A Yes/No signal doesn't average into a /10 score meaningfully, so
+  // booleans render as their own true/false-colored dot instead of being
+  // folded into the numeric average below (which covers sliders only).
+  const dotFor = (m,r) => {
+    if(m.type==='bool'){
+      const v = r[m.key];
+      if(v===null || v===undefined) return { color:'rgba(255,255,255,.15)', label:'–' };
+      const isGood = v === m.goodValue;
+      return { color: isGood?'#2CD4C4':'rgba(248,113,113,.55)', label: v?'Yes':'No' };
+    }
+    let v = +r[m.key] || 5;
+    if(m.invert) v = 11 - v;
+    return { color: sliderColor(v), label: r[m.key]||'–' };
+  };
+  hist.innerHTML=data.map(r=>{
+    const sliders = CHECK_METRICS.filter(m=>m.type==='slider');
+    const avgVals = sliders.map(m=>{ const v=+r[m.key]||5; return m.invert?(11-v):v; });
+    const avg = Math.round(avgVals.reduce((a,b)=>a+b,0)/avgVals.length*10)/10;
+    return `
     <div class="checkin-row">
       <div class="checkin-date">Wk ${new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
       <div class="checkin-dots">
-        ${CHECK_METRICS.map(m=>`<div class="dot" style="background:${scoreColor(r[m.key]||5)}" title="${m.label}: ${r[m.key]||'–'}"></div>`).join('')}
+        ${CHECK_METRICS.map(m=>{ const d=dotFor(m,r); return `<div class="dot" style="background:${d.color}" title="${m.label}: ${d.label}"></div>`; }).join('')}
       </div>
-      <div style="font-family:var(--D);font-size:20px;font-weight:900;color:var(--teal)">${Math.round(CHECK_METRICS.reduce((s,m)=>s+(+r[m.key]||5),0)/CHECK_METRICS.length*10)/10}</div>
+      <div style="font-family:var(--D);font-size:20px;font-weight:900;color:var(--teal)">${avg}</div>
     </div>
-  `).join('');
+  `;}).join('');
 }
 
 // Monthly body-comp checkpoint — weight is the primary, always-eligible
