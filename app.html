@@ -1339,6 +1339,7 @@
       <div id="habits-restore-wrap" style="display:none;text-align:center;padding:6px 0">
         <button onclick="restoreAllHabits()" style="background:none;border:none;color:var(--dim);font-size:11px;cursor:pointer;font-family:var(--B)">Restore hidden habits</button>
       </div>
+      <div id="shopping-list-wrap"></div>
     </div>
 
     <!-- TRAIN -->
@@ -5029,16 +5030,31 @@ async function loadHabitStreaks(){
   renderHabits();
 }
 
+// Looksmax split — every non-gym exercise/technique habit (facial muscle
+// work, jaw/neck/spine routines, circulation techniques, mouth/tongue
+// practice) lives here instead of the flat Habits list, mirroring how gym
+// training already gets its own Train tab rather than sitting in Habits.
+// Same underlying tracking as everything else (habitState/habit_log/streaks/
+// XP via toggleHabit()) — this only changes WHERE these are displayed, not
+// how completion is stored, so nothing about persistence needed to change.
+const JP_LOOKSMAX_KEYS = new Set(['facial_exercises','positive_tilt','mpr','hyoid_training','chewing_split','gua_sha_face','lymphatic_drainage','spine_decompression','tongue_posture']);
+const JP_LOOKSMAX_GROUPS = {
+  'Face & Jaw': ['facial_exercises','positive_tilt','mpr','chewing_split'],
+  'Neck & Spine': ['spine_decompression'],
+  'Circulation & Skin': ['gua_sha_face','lymphatic_drainage'],
+  'Mouth & Tongue': ['tongue_posture','hyoid_training'],
+};
+
 function renderHabits(){
-  const allH=getHabits();
-  const done=Object.values(habitState).filter(Boolean).length;
+  const allH=getHabits().filter(h=>!JP_LOOKSMAX_KEYS.has(h.key));
+  const done=allH.filter(h=>habitState[h.key]).length;
   document.getElementById('habits-count').textContent=`${done} / ${allH.length}`;
   document.getElementById('habits-bar').style.width=`${(done/allH.length)*100}%`;
   const restoreWrap = document.getElementById('habits-restore-wrap');
   if(restoreWrap) restoreWrap.style.display = (OB.hidden_habits?.length) ? 'block' : 'none';
 
   const list=document.getElementById('habits-list');
-  let allHabits=getHabits();
+  let allHabits=allH;
   if(_habitFilterPriority) allHabits = allHabits.filter(h=>h.priority);
 
   // Group by time bucket, in chronological order, so the list maps to the
@@ -5082,10 +5098,53 @@ function renderHabits(){
   `).join('');
 }
 
+function renderLooksmax(){
+  if (USER?.id !== JP_USER_ID) return;
+  const allLM = getHabits().filter(h=>JP_LOOKSMAX_KEYS.has(h.key));
+  const done = allLM.filter(h=>habitState[h.key]).length;
+  const countEl = document.getElementById('looksmax-count');
+  const barEl = document.getElementById('looksmax-bar');
+  if (countEl) countEl.textContent = `${done} / ${allLM.length}`;
+  if (barEl) barEl.style.width = allLM.length ? `${(done/allLM.length)*100}%` : '0%';
+
+  const list = document.getElementById('looksmax-list');
+  if (!list) return;
+  if (!allLM.length){
+    list.innerHTML = `<p style="font-size:12px;color:var(--dim);text-align:center;padding:16px 0">No looksmax exercises today.</p>`;
+    return;
+  }
+  const byKey = Object.fromEntries(allLM.map(h=>[h.key,h]));
+  list.innerHTML = Object.entries(JP_LOOKSMAX_GROUPS).map(([group,keys])=>{
+    const items = keys.map(k=>byKey[k]).filter(Boolean);
+    if (!items.length) return '';
+    return `
+    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:14px 0 6px">${escHtml(group)}</div>
+    ${items.map(h=>{
+      const streak = habitStreaks[h.key] || 0;
+      return `
+    <div class="habit-item ${habitState[h.key]?'done':''}" data-key="${h.key}" onclick="toggleHabit('${h.key}')">
+      <div class="habit-check">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="habit-info">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="habit-name">${escHtml(h.name)}</div>
+          ${streak>1?`<span style="font-size:10px;color:#fb923c">🔥${streak}</span>`:''}
+        </div>
+        <button onclick="event.stopPropagation();toggleHabitWhy(this)" style="background:none;border:none;color:var(--dim);font-size:10px;padding:0;cursor:pointer;font-family:var(--B)">why →</button>
+        <div class="habit-desc" style="display:none">${escHtml(h.desc)}</div>
+      </div>
+      ${HABIT_PROTOCOLS[h.key]?`<button class="habit-expand" onclick="event.stopPropagation();showHabitDetail('${h.key}')">Guide →</button>`:''}
+      <button class="habit-del" style="color:var(--teal);font-size:11px;padding:4px 6px" onclick="event.stopPropagation();editCustomHabit('${h.key}')">Edit</button><button class="habit-del" onclick="event.stopPropagation();removeCustomHabit('${h.key}')">×</button>
+    </div>
+  `;}).join('')}`;
+  }).join('');
+}
+
 async function toggleHabit(key){
   const _d = HABIT_DATE;
   habitState[key]=!habitState[key];
-  renderHabits();
+  if (JP_LOOKSMAX_KEYS.has(key)) renderLooksmax(); else renderHabits();
   // Targeted (not "every done item on every render") pop feedback — only
   // the item that was just actually toggled on animates, via a fresh
   // querySelector after the re-render rather than baking the animation
@@ -6153,6 +6212,10 @@ function renderFoods(){
     const t = f.meal_time || foodRatings[f.id]?.mealTime;
     return t ? `<span style="font-size:10px;color:var(--dim);margin-left:6px">${String(t).slice(0,5)}</span>` : '';
   };
+  const ctxStr = f => {
+    const c = foodRatings[f.id]?.context;
+    return c ? `<span style="font-size:9px;color:var(--teal);border:1px solid rgba(44,212,196,.3);padding:1px 5px;margin-left:6px;text-transform:uppercase;letter-spacing:.04em">${escHtml(FOOD_CTX_LABELS[c]||c)}</span>` : '';
+  };
   if(!foods.length){
     document.getElementById('food-list').innerHTML = '<p style="font-size:12px;color:var(--dim);text-align:center;padding:16px 0">No foods logged yet today.</p>';
     return;
@@ -6171,7 +6234,7 @@ function renderFoods(){
     </div>` : '';
     return `<div style="background:var(--s1);border:1px solid var(--border);margin-bottom:8px">
       <div class="food-row" onclick="${hasRating?`toggleFoodTips('${f.id}')`:''}" style="${hasRating?'cursor:pointer':''}">
-        <div class="food-name">${escHtml(f.food_name)}${timeStr(f)}</div>
+        <div class="food-name">${escHtml(f.food_name)}${timeStr(f)}${ctxStr(f)}</div>
         <div class="food-macros">${Math.round(f.protein_g||0)}P · ${Math.round(f.carbs_g||0)}C · ${Math.round(f.fat_g||0)}F<br>${Math.round(f.calories||0)} kcal</div>
         ${scoreHtml}
         <button class="food-share" onclick="event.stopPropagation();shareFoodCard('${f.id}')" title="Share">⤴</button>
@@ -6188,6 +6251,10 @@ function toggleFoodTips(id){
   if(el) el.classList.toggle('open');
 }
 
+const FOOD_CTX_LABELS = {
+  'general': 'General', 'pre-training': 'Pre-training', 'post-workout': 'Post-workout',
+  'deep-work': 'Deep work', 'pre-work': 'Before work', 'wind-down': 'Winding down',
+};
 let _foodContext = 'general';
 // Real bug: for JP's account, callFoodAPI() always overrode this with
 // inferJPMealContext() — even after he explicitly tapped a chip — because
@@ -6257,6 +6324,7 @@ async function callFoodAPI(name, timeVal) {
   // for being macro-light when that was never the point of logging it.
   const dayCalories = foods.reduce((a,f)=>a+(+f.calories||0), 0);
   const dayProtein  = foods.reduce((a,f)=>a+(+f.protein_g||0), 0);
+  const resolvedContext = isJP ? (_foodCtxTouched ? _foodContext : inferJPMealContext(name, timeVal)) : (_foodContext || 'general');
   const res = await fetch('/api/food', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -6266,12 +6334,19 @@ async function callFoodAPI(name, timeVal) {
       weight: isJP ? JP_NUTRITION_WEIGHT_KG : e.weight_kg,
       bodyFat: e.body_fat,
       primaryGoal: isJP ? JP_NUTRITION_GOALS : t.goal,
-      context: isJP ? (_foodCtxTouched ? _foodContext : inferJPMealContext(name, timeVal)) : (_foodContext || 'general'),
+      context: resolvedContext,
       time: timeVal || null,
       dayCalories, dayProtein
     })
   });
-  return res.json();
+  const json = await res.json();
+  // The API only ever sees/returns the score+reasons — it never echoes the
+  // context back, so nothing in the UI could show which one was actually
+  // used. Real gap: the score itself was already correctly context-aware
+  // after the earlier fix, but with zero visible confirmation of that, it
+  // looked from the outside like picking a chip did nothing at all.
+  json._context = resolvedContext;
+  return json;
 }
 
 async function logFoodEntry(name, timeVal, d) {
@@ -6286,8 +6361,8 @@ async function logFoodEntry(name, timeVal, d) {
     score: d.score, headline: d.headline||null,
     reasons: d.reasons||null, tips: Array.isArray(d.tips)?d.tips:[],
     toTen: d.to_ten||null, tagline: d.tagline||null,
-    micros: d.micros||null, mealTime: timeVal||null
-  } : (timeVal ? { mealTime: timeVal } : null);
+    micros: d.micros||null, mealTime: timeVal||null, context: d._context||null
+  } : (timeVal || d?._context ? { mealTime: timeVal||null, context: d?._context||null } : null);
 
   // Insert only guaranteed columns — meal_time excluded (may not exist in
   // schema). score/notes DO exist (confirmed against the real rebuilt
@@ -9229,13 +9304,89 @@ function applyJPRealProtocol() {
     { key: 'tongue_posture',   name: 'Hard Mewing (throughout day)',desc: 'Firm, active tongue pressure against the palate, maintained throughout the day (upgraded from passive resting posture at your request). Notice if you\'re mouth-breathing. Real trade-off, kept despite the flag: sustained forceful, uncalibrated tongue pressure held all day is a different risk category than gentle resting contact — teeth can be moved by forces as light as ~1.7g sustained over time, and the tongue can exert up to 500g, so hard pressure held for hours risks genuinely unplanned tooth movement, plus tongue fatigue and inadvertent jaw clenching. Going harder doesn\'t make mewing\'s structural bone-change claim more true for an adult — it stays unproven regardless of force or duration.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'gut_meals',        name: 'Chew + Destress Before Meals',desc: 'Chew each mouthful thoroughly. A minute of slow breathing before eating if rushed/stressed.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'weekly_grooming',  name: 'Weekly Grooming Check',       desc: 'Postural self-photo (shoulder/hip/knee symmetry), swallow-pattern self-check.', days: ['Sunday'], time:'Anytime', priority:false },
+    { key: 'oral_health',      name: 'Oral Health (Full Protocol)', desc: 'Unlocked once copper scraper + hydroxyapatite toothpaste + coconut oil are all owned (see Shopping List). AM: copper tongue scrape, floss, brush 2 min with hydroxyapatite toothpaste, spit don\'t rinse. Midday: coconut oil pulling 15-20 min (cold-pressed), spit in a bin not the sink, rinse, brush. PM: floss, brush with hydroxyapatite toothpaste, spit don\'t rinse. Fluoride-free by your choice — hydroxyapatite is the strongest evidence-based substitute (real, non-inferiority trial data) but narrows the gap rather than closing it; revisit fluoride at minimum the nighttime brush if a checkup ever flags rising cavity risk. Whitening strips (once owned): 1-2 week course a few times a year, brush/floss first, follow the product\'s exact timing, don\'t brush for 30-60 min after — UK products are capped at a much lower peroxide concentration than US ones (0.1% OTC vs up to 6% dentist-supervised).', requiresItems:['copper_scraper','hydroxyapatite_toothpaste','coconut_oil'], days: JP_WEEKDAY_NAMES, time:'Anytime', priority:true },
+    { key: 'inversion_table',  name: 'Inversion Table',             desc: 'Unlocked once owned (see Shopping List). 1-2 min/day. Start with a partial angle (20-30°), not full 180° inversion immediately. Real mechanism (fuller axial traction than dead hangs alone), modest evidence specifically for people with diagnosed disc-related back pain — you don\'t have a diagnosed issue this treats, so this is a genuine "nice to have" layered on top of the dead hangs already in spine_decompression, not a gap without it. Skip/avoid if any dizziness, headache, or vision changes occur — stop and don\'t push through it.', requiresItems:['inversion_table'], days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
   ];
   const todayDayLabel = effectiveTodayName();
   const jpCustomKeys = new Set(JP_CUSTOM_HABITS.map(h => h.key));
   OB.custom_habits = (OB.custom_habits || []).filter(h => !jpCustomKeys.has(h.key));
   JP_CUSTOM_HABITS.forEach(h => {
-    if (h.days.includes(todayDayLabel)) OB.custom_habits.push({ key: h.key, name: h.name, desc: h.desc, time: h.time, priority: h.priority });
+    // requiresItems: habit only goes live once every listed JP_SHOPPING_LIST
+    // item key is in OB.owned_items — see JP_SHOPPING_LIST/toggleOwnedItem().
+    // Habits with no requiresItems field are always live (unchanged behaviour).
+    const unlocked = !h.requiresItems || h.requiresItems.every(k => (OB.owned_items || []).includes(k));
+    if (h.days.includes(todayDayLabel) && unlocked) OB.custom_habits.push({ key: h.key, name: h.name, desc: h.desc, time: h.time, priority: h.priority });
   });
+}
+
+// Shopping/acquisition roadmap for JP's account — built 7 Sep 2026 from the
+// full session's product recommendations. Two purposes: (1) lets JP tick off
+// purchase progress against the tiered roadmap already in his memory file,
+// (2) items tagged `unlocks` gate a JP_CUSTOM_HABITS entry via requiresItems
+// — once every item in an unlock group is checked, that habit starts
+// appearing in the daily list automatically (see applyJPRealProtocol()
+// above). Items with no `unlocks` support an already-active habit
+// (skincare/hair/beard already run regardless of purchase status) — ticking
+// them is progress-tracking only, deliberately not gating something already
+// running, which would make currently-live habits vanish unexpectedly.
+const JP_SHOPPING_LIST = [
+  { key:'spf', name:'SPF 30+', cost:'£5-15', tier:1 },
+  { key:'cleanser', name:'Facial Cleanser', cost:'£5-10', tier:1 },
+  { key:'moisturiser', name:'Moisturiser', cost:'£5-15', tier:1 },
+  { key:'coconut_oil', name:'Cold-Pressed Coconut Oil', cost:'£5-10', tier:1, unlocks:'oral_health' },
+  { key:'hydroxyapatite_toothpaste', name:'Hydroxyapatite Toothpaste', cost:'£10-15', tier:1, unlocks:'oral_health' },
+  { key:'glass_water', name:'Glass/Spring Water (or glass filter jug)', cost:'~£15-25 jug, or bottled', tier:1, note:'Reduces plastic/BPA exposure — supports the existing hydration habit, no new protocol to unlock.' },
+  { key:'ha_serum', name:'Hyaluronic Acid Serum', cost:'£8-15', tier:2 },
+  { key:'ltheanine', name:'L-Theanine', cost:'~£10', tier:2, note:'Glycine dropped — bone broth/gelatin covers it, see memory file.' },
+  { key:'copper_scraper', name:'Copper Tongue Scraper', cost:'£5-10', tier:2, unlocks:'oral_health' },
+  { key:'scalp_tool', name:'Scalp Massage Tool', cost:'£5-10', tier:2, note:'Supports the already-active hair_care habit.' },
+  { key:'derma_stamp', name:'Derma Stamp', cost:'£10-20', tier:2, note:'Supports the already-active beard_growth habit.' },
+  { key:'exfoliant', name:'Chemical Exfoliant (AHA/BHA)', cost:'£8-15', tier:3 },
+  { key:'eyelash_oil', name:'Eyelash Oil (castor/rosemary + carrier)', cost:'£10-15', tier:3, note:'Supports the already-active eyelash_care habit.' },
+  { key:'beard_oil', name:'Beard Oils (castor/emu/rosemary + carrier)', cost:'£15-25', tier:3, note:'Supports the already-active beard_growth habit.' },
+  { key:'whitening_strips', name:'Whitening Strips', cost:'£20-35', tier:3, unlocks:'oral_health' },
+  { key:'kojic_vitc', name:'Kojic Acid + Vitamin C', cost:'£10-20', tier:3 },
+  { key:'inversion_table', name:'Inversion Table', cost:'£50-150', tier:'roadmap', unlocks:'inversion_table' },
+];
+
+function renderShoppingList(){
+  if (USER?.id !== JP_USER_ID) return;
+  const el = document.getElementById('shopping-list-wrap');
+  if (!el) return;
+  const owned = new Set(OB.owned_items || []);
+  const tierLabel = { 1:'Tier 1 — Buy First', 2:'Tier 2 — Buy Next', 3:'Tier 3 — When Convenient', roadmap:'Roadmap — Bigger Purchase' };
+  const groups = {};
+  JP_SHOPPING_LIST.forEach(it => (groups[it.tier] = groups[it.tier] || []).push(it));
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px">Shopping / Acquisition Roadmap</div>
+    ${[1,2,3,'roadmap'].filter(t=>groups[t]).map(t => `
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:10px 0 4px">${tierLabel[t]}</div>
+      ${groups[t].map(it => `
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;cursor:pointer" onclick="toggleOwnedItem('${it.key}')">
+          <div style="width:16px;height:16px;flex:0 0 auto;border:1px solid var(--border);margin-top:1px;display:flex;align-items:center;justify-content:center;${owned.has(it.key)?'background:var(--teal);border-color:var(--teal)':''}">
+            ${owned.has(it.key)?'<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:var(--black);stroke-width:3;fill:none"><polyline points="20 6 9 17 4 12"/></svg>':''}
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;color:var(--white);${owned.has(it.key)?'text-decoration:line-through;opacity:.6':''}">${escHtml(it.name)} <span style="color:var(--dim)">— ${escHtml(it.cost)}</span></div>
+            ${it.unlocks?`<div style="font-size:10px;color:var(--teal);margin-top:1px">${owned.has(it.key)?'✓ contributing to':'unlocks'} the "${it.unlocks}" protocol once all its items are checked</div>`:''}
+            ${it.note?`<div style="font-size:10px;color:var(--dim);margin-top:1px">${escHtml(it.note)}</div>`:''}
+          </div>
+        </div>
+      `).join('')}
+    `).join('')}
+  `;
+}
+
+async function toggleOwnedItem(key){
+  OB.owned_items = OB.owned_items || [];
+  const i = OB.owned_items.indexOf(key);
+  if (i === -1) OB.owned_items.push(key); else OB.owned_items.splice(i, 1);
+  localStorage.setItem('jpt_uid', USER.id);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await saveOB(); } catch(e){ /* localStorage already saved */ }
+  applyJPRealProtocol(); // rebuild OB.custom_habits so any newly-unlocked habit appears immediately
+  renderShoppingList();
+  renderHabits();
 }
 
 async function saveOnboardingSection(section, data) {
