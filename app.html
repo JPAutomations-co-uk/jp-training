@@ -5059,12 +5059,20 @@ async function loadHabitStreaks(){
 // Same underlying tracking as everything else (habitState/habit_log/streaks/
 // XP via toggleHabit()) — this only changes WHERE these are displayed, not
 // how completion is stored, so nothing about persistence needed to change.
-const JP_LOOKSMAX_KEYS = new Set(['facial_exercises','positive_tilt','mpr','hyoid_training','chewing_split','gua_sha_face','lymphatic_drainage','spine_decompression','tongue_posture','inversion_table']);
+// NOTE: getHabits() prefixes every OB.custom_habits key with 'custom_'
+// (see the `const key = 'custom_'+ch.key;` line in getHabits() above) —
+// established convention already used throughout HABIT_TIME_LOOKUP. These
+// sets/groups must use the SAME prefixed form, since they filter h.key from
+// getHabits() output, not the raw JP_CUSTOM_HABITS key. (Bug fixed 8 Sep
+// 2026: these were originally unprefixed, so the filter never matched
+// anything — Looksmax showed empty and nothing was actually excluded from
+// Habits either, since both filters silently failed the same way.)
+const JP_LOOKSMAX_KEYS = new Set(['custom_facial_exercises','custom_positive_tilt','custom_mpr','custom_hyoid_training','custom_chewing_split','custom_gua_sha_face','custom_lymphatic_drainage','custom_spine_decompression','custom_tongue_posture','custom_inversion_table']);
 const JP_LOOKSMAX_GROUPS = {
-  'Face & Jaw': ['facial_exercises','positive_tilt','mpr','chewing_split'],
-  'Neck & Spine': ['spine_decompression','inversion_table'],
-  'Circulation & Skin': ['gua_sha_face','lymphatic_drainage'],
-  'Mouth & Tongue': ['tongue_posture','hyoid_training'],
+  'Face & Jaw': ['custom_facial_exercises','custom_positive_tilt','custom_mpr','custom_chewing_split'],
+  'Neck & Spine': ['custom_spine_decompression','custom_inversion_table'],
+  'Circulation & Skin': ['custom_gua_sha_face','custom_lymphatic_drainage'],
+  'Mouth & Tongue': ['custom_tongue_posture','custom_hyoid_training'],
 };
 
 function renderHabits(){
