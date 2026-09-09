@@ -6271,18 +6271,18 @@ async function saveWorkout(asToday){
   // separate events, not part of finishing the lift.
   if(saveDate === TODAY) {
     autoCompleteHabit('training');
-    // v24: Sunday is a real full rest day again (no exercises, nothing to
-    // save), so this only ever fires on Mon-Sat — no rest-day special-case
-    // needed, saveWorkout() simply won't run on a day with nothing to log.
+    // Wednesday and Sunday are real full rest days (no exercises, nothing
+    // to save) — no rest-day special-case needed, saveWorkout() simply
+    // won't run on a day with nothing to log.
     autoCompleteHabit('custom_static_stretch');
     autoCompleteHabit('custom_creatine');
     // Explosive/plyo warm-up covers every session with a jump/sprint
-    // component: Tue (Lower A plyo), Thu (Sprint Day), Fri (Lower B plyo)
-    // — checked against the plan-day LABEL just saved (selDay.day), not
-    // the real calendar weekday, since JP's split rotates independently
-    // of the calendar now.
+    // component: Tue (Lower A plyo), Fri (Sprint Day), Sat (Lower B plyo)
+    // — reorganised 9 Sep 2026 (was Tue/Thu/Fri). Checked against the
+    // plan-day LABEL just saved (selDay.day) rather than re-deriving it,
+    // simplest given it's already on hand here.
     const savedDayLabel = selDay ? selDay.day : effectiveDayName(saveDate);
-    if(['Tuesday','Thursday','Friday'].includes(savedDayLabel)) autoCompleteHabit('custom_explosive_warmup');
+    if(['Tuesday','Friday','Saturday'].includes(savedDayLabel)) autoCompleteHabit('custom_explosive_warmup');
   }
   // Bonus: all sets ticked
   const allDone = document.querySelectorAll('.set-done');
@@ -9044,6 +9044,19 @@ const OB_DEFS = {
 // existing Incline DB Curl (Wednesday, arm behind torso — long head
 // under full stretch) — three distinct mechanisms, not three variations
 // on the same curl.
+// Reorganised 9 Sep 2026: split changed from Upper/Lower/Upper/Sprint/
+// Lower/Zone2/Rest to Upper/Lower/Rest/Upper/Sprint/Lower/Rest — caps the
+// week at 3 consecutive hard days (was 5 straight Mon-Fri), evens out the
+// gap between both Upper sessions and both Lower sessions, and moves
+// Sprint so it's preceded by an Upper day instead of a heavy Lower day
+// (sprinting on legs pre-fatigued by RDL/hip thrust is a real hamstring-
+// strain risk). Zone 2 Cardio dropped per JP's call — MMA will cover that
+// conditioning role once it resumes. The MMA-layering guidance above is
+// now stale in two respects (no more Zone 2 slot to layer onto; Upper B
+// moved Wed→Thu) — still not actually built into this plan (exact MMA
+// days remain unconfirmed), so re-evaluate against the new day layout
+// once they're known rather than trusting the "Upper A, Upper B, Zone 2"
+// list above verbatim.
 const JP_TRAINING_PLAN = [
   { day: 'Monday', type: 'upper', sessionName: 'Upper A — Chest/Lat Emphasis', exercises: [
     { name: 'Flat Barbell Bench Press', sets: 3, reps: '3-4 top / 8-10 back-off', load: '87.5kg / 75kg', notes: 'Rest: 3-4 min top set, 2-3 min back-off. Add load once back-off hits 10.' },
@@ -9053,10 +9066,10 @@ const JP_TRAINING_PLAN = [
     { name: 'Incline DB Press', sets: 3, reps: '10-12', load: '25-27.5kg each', notes: 'Rest: 90 sec. Double progression — reps first, then weight.' },
     { name: 'Cable Lateral Raise', sets: 5, reps: '12-15', load: '10kg', notes: 'Rest: 60-75 sec. Side delt priority — consolidated from cable+DB into one exercise, bumped to 5 sets to hold weekly volume.' },
     { name: 'EZ Bar Curl', sets: 3, reps: '8-12', load: 'Establish baseline first session', notes: 'Rest: 75-90 sec. Overall bicep mass, supinated grip — 1 of 3 weekly bicep exercises, each a different mechanism (see Hammer Curl/Incline DB Curl on Wednesday).' },
-    { name: 'Hammer Curl', sets: 3, reps: '12-15', load: 'Establish baseline first session', notes: 'Rest: 60-75 sec. Neutral grip — brachioradialis, the muscle that runs directly under the visible forearm veins. Added for forearm size/vascularity — 2nd weekly slot alongside Wednesday.' },
+    { name: 'Hammer Curl', sets: 3, reps: '12-15', load: 'Establish baseline first session', notes: 'Rest: 60-75 sec. Neutral grip — brachioradialis, the muscle that runs directly under the visible forearm veins. Added for forearm size/vascularity — 2nd weekly slot alongside Thursday.' },
     { name: 'Overhead Cable Tricep Extension', sets: 3, reps: '10-12', load: '20kg', notes: 'Rest: 75-90 sec. Double progression.' },
     { name: 'Face Pull', sets: 3, reps: '15', load: '12.5kg', notes: 'Rest: 45-60 sec. Rear delt/rotator cuff health — keep light, high rep.' },
-    { name: 'Wrist Curl × Reverse Wrist Curl (superset)', sets: 3, reps: '15-20 each', load: 'Light barbell/DB — establish baseline first session', notes: '30 sec rest between the pair, 60 sec between rounds — 3 rounds total. Direct flexor + extensor work, the two muscles that actually sit under visible forearm veins — chase pump (higher reps, short rest) over load here, not strength. 2nd weekly slot alongside Wednesday.' },
+    { name: 'Wrist Curl × Reverse Wrist Curl (superset)', sets: 3, reps: '15-20 each', load: 'Light barbell/DB — establish baseline first session', notes: '30 sec rest between the pair, 60 sec between rounds — 3 rounds total. Direct flexor + extensor work, the two muscles that actually sit under visible forearm veins — chase pump (higher reps, short rest) over load here, not strength. 2nd weekly slot alongside Thursday.' },
     { name: 'Cable Crunch', sets: 3, reps: '15-20', load: '~15-20kg — establish baseline first session', notes: 'Rest: 45-60 sec. 1 of 5 weekly ab/core exercises across the 4 lifting days.' },
     { name: 'Neck Isometric Holds (4-way)', sets: 2, reps: '20-30 sec each direction (flexion/extension/left lateral/right lateral)', load: 'Manual hand resistance', notes: 'Rest: 30-45 sec between directions. Reinstated without the MMA-timing dependency — general neck strength/aesthetic/posture work. Progress to a weighted neck harness once all 4 directions feel easy for the full 30 sec.' },
   ], keyLifts: 'Flat Barbell Bench Press, Weighted Pull-Ups, Weighted Dips' },
@@ -9072,7 +9085,8 @@ const JP_TRAINING_PLAN = [
     { name: 'Single-Leg Calf Raise', sets: 3, reps: '12-15 each', load: 'BW or +10kg', notes: 'Rest: 45-60 sec. Full stretch at the bottom.' },
     { name: 'Pallof Press', sets: 3, reps: '12-15 each side', load: 'Light cable stack', notes: 'Rest: 45-60 sec. Anti-rotation core, low fatigue cost — 2 of 5 weekly ab/core exercises.' },
   ], keyLifts: 'Hack Squat, Bulgarian Split Squat' },
-  { day: 'Wednesday', type: 'upper', sessionName: 'Upper B — Shoulder/Back-Thickness Emphasis', exercises: [
+  { day: 'Wednesday', type: 'rest', sessionName: 'Full Rest', exercises: [], keyLifts: 'Full rest day — daily walking still applies, no training session. Reorganised 9 Sep 2026: was Upper B (moved to Thursday) — caps the week at 3 consecutive hard days instead of the old 5-straight Mon-Fri run, and evens out the gap between both Upper sessions and both Lower sessions.' },
+  { day: 'Thursday', type: 'upper', sessionName: 'Upper B — Shoulder/Back-Thickness Emphasis', exercises: [
     { name: 'Incline Barbell Press', sets: 4, reps: '3-4 top / 8-10 back-off', load: '80kg / 65kg', notes: 'Rest: 3-4 min top set, 2-3 min back-off. Add load once all back-off sets hit the top of the rep range.' },
     { name: 'Machine Shoulder Press', sets: 3, reps: '3-4 top / 8-10 back-off', load: '60kg each side / 45kg each side', notes: 'Rest: 3 min top set, 2 min back-off. Add load once back-off hits 10.' },
     { name: 'Meadows Row / Single-Arm DB Row', sets: 3, reps: '10-12 each', load: '45-50kg', notes: 'Rest: 90 sec. Double progression, both sides.' },
@@ -9086,7 +9100,7 @@ const JP_TRAINING_PLAN = [
     { name: 'Hanging Leg Raise', sets: 3, reps: '12-15', load: 'BW', notes: 'Rest: 45-60 sec. 3 of 5 weekly ab/core exercises.' },
     { name: 'Neck Isometric Holds (4-way)', sets: 2, reps: '20-30 sec each direction (flexion/extension/left lateral/right lateral)', load: 'Manual hand resistance', notes: 'Rest: 30-45 sec between directions. Second weekly slot alongside Monday — progress to a weighted neck harness once all 4 directions feel easy for the full 30 sec.' },
   ], keyLifts: 'Incline Barbell Press, Machine Shoulder Press' },
-  { day: 'Thursday', type: 'sprint', sessionName: 'Sprint Day — Speed, Power & Agility', exercises: [
+  { day: 'Friday', type: 'sprint', sessionName: 'Sprint Day — Speed, Power & Agility', exercises: [
     { name: '3-Point Stance Starts', sets: 5, reps: '10m', load: 'Bodyweight', notes: 'Rest: 90 sec. Full recovery between reps — speed work, not conditioning.' },
     { name: 'Acceleration Sprints', sets: 4, reps: '20m', load: 'Bodyweight', notes: 'Rest: 2 min.' },
     { name: 'Multi-Directional Sprints', sets: 4, reps: 'variable, max effort', load: 'Bodyweight', notes: 'Rest: 2 min. Forward, backward, lateral shuffle into sprint.' },
@@ -9096,8 +9110,8 @@ const JP_TRAINING_PLAN = [
     { name: 'Resisted Bounds', sets: 3, reps: '6', load: 'Bodyweight', notes: 'Rest: 90 sec. Band or partner resistance if available.' },
     { name: 'Copenhagen Plank', sets: 3, reps: '20 sec each side', load: 'Bodyweight', notes: 'Rest: 30 sec. Adductor/groin strength — cooldown.' },
     { name: 'Single-Leg Wall Sit', sets: 3, reps: '30 sec each leg', load: 'Bodyweight', notes: 'Rest: 30 sec. Cooldown.' },
-  ], keyLifts: 'Top Speed Sprints, Flying Sprints — plus a rotating PB test (30m sprint / standing vertical jump / standing broad jump / 5-10-5 shuttle, one per week on a 4-week cycle, moved here from the old Sunday Athletic Development slot).' },
-  { day: 'Friday', type: 'lower', sessionName: 'Lower B — Posterior Chain + Glute Priority + Plyometrics B', exercises: [
+  ], keyLifts: 'Top Speed Sprints, Flying Sprints — plus a rotating PB test (30m sprint / standing vertical jump / standing broad jump / 5-10-5 shuttle, one per week on a 4-week cycle, moved here from the old Sunday Athletic Development slot). Reorganised 9 Sep 2026: moved from Thursday so Sprint is preceded by an Upper day (Thursday) instead of a heavy Lower day — sprinting on legs pre-fatigued by RDL/hip thrust is a real hamstring-strain risk factor, not just a performance dip.' },
+  { day: 'Saturday', type: 'lower', sessionName: 'Lower B — Posterior Chain + Glute Priority + Plyometrics B', exercises: [
     { name: 'Depth Drop → Vertical Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Rest: 2 min — highest-impact plyo here, needs the most recovery. Step off box, land and explode immediately. Warm-up first: ankle circles, 5× pogo hops, 3× low box step-downs.' },
     { name: 'Lateral Bounds', sets: 3, reps: '6 each', load: 'Bodyweight', notes: 'Rest: 90 sec. Glute-driven push-off, stick the landing.' },
     { name: 'Broad Jump', sets: 3, reps: '5', load: 'Bodyweight', notes: 'Rest: 90 sec. Max horizontal distance, full reset between reps.' },
@@ -9112,10 +9126,7 @@ const JP_TRAINING_PLAN = [
     { name: 'Standing Calf Machine', sets: 2, reps: '12-15', load: '82.5kg', notes: 'Rest: 45-60 sec. Double progression.' },
     { name: "Farmer's Carry", sets: 4, reps: '30-40m (or 30-45 sec if space-limited)', load: 'Heaviest DBs/farmer handles available — establish baseline first session', notes: 'Rest: 90 sec. Weekly grip/forearm/trap finisher — heaviest load you can hold for the distance without your grip failing first. Placed last so it never competes with the day\'s main lifts.' },
   ], keyLifts: 'Barbell RDL, Barbell Hip Thrust' },
-  { day: 'Saturday', type: 'cardio', sessionName: 'Zone 2 Cardio', exercises: [
-    { name: 'Zone 2 Cardio', sets: 1, reps: '20-25 min, incline treadmill/track or cycling, conversational pace (~120-140bpm)', load: '—', notes: 'Walking/cycling only — never running, running competes with leg hypertrophy. Continuous effort, no set-based rest structure.' },
-  ], keyLifts: 'Zone 2 Cardio' },
-  { day: 'Sunday', type: 'rest', sessionName: 'Full Rest', exercises: [], keyLifts: 'Full rest day — daily walking and the evening Postural Protocol still apply, no training session.' },
+  { day: 'Sunday', type: 'rest', sessionName: 'Full Rest', exercises: [], keyLifts: 'Full rest day — daily walking still applies, no training session. Zone 2 Cardio dropped from the split 9 Sep 2026 (was Saturday) — JP\'s call, MMA will cover that conditioning role once it resumes.' },
 ];
 
 // v23 nutrition rebuild (31 Aug 2026) — full rebuild driven by three real
@@ -9423,29 +9434,26 @@ const JP_MOBILITY_PLAN = {
       { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
     ],
   },
-  Wednesday: {
+  // Wednesday intentionally has no entry — full rest day, same as Sunday
+  // (renderMobilityCard() bails gracefully on a missing day key). Reorganised
+  // 9 Sep 2026: was Upper B, moved to Thursday.
+  Thursday: {
     warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
     staticStretch: { label: 'Lats/rear delts, 2×30-45s', drills: ['Lat overhead stretch', 'Cross-body rear delt', 'Bicep wall stretch', 'Thoracic rotation'] },
     extras: [
       { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
     ],
   },
-  Thursday: {
+  Friday: {
     warmup: { label: 'Sprint warm-up (5 min) then mobility (10-12 min)', drills: ['A-skips, B-skips, high knees, butt kicks, falling starts (pre-sprint)', 'Walking hip circles ×10 each direction', 'Leg swings front-back + lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', '2-3 build-up strides @ 50%/75% effort'] },
     staticStretch: { label: 'Full-body, 2×30-45s — post-session', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Standing quad stretch', 'Seated thoracic rotation ×10 each direction'] },
     extras: [
       { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
     ],
   },
-  Friday: {
+  Saturday: {
     warmup: { label: 'Lower/Explosive (10-12 min) — precedes plyometrics', drills: ['Walking hip circles ×10 each direction', 'Leg swings front-back ×10 each leg', 'Leg swings lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', 'Walking heel flicks 20m ×2', '2 build-up jumps @ 50%/75% effort'] },
     staticStretch: { label: 'Hamstrings/glutes/calves, 2×30-45s', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Hip abductor side-lying'] },
-    extras: [
-      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
-    ],
-  },
-  Saturday: {
-    warmup: { label: 'Light dynamic warm-up (5 min) — steady-state, doesn\'t need the full explosive prep', drills: ['Arm circles ×10 each direction', 'Walking hip circles ×10 each direction', 'Bodyweight squat-to-stand ×10', 'Walking lunge ×8 each side'] },
     extras: [
       { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
     ],
@@ -9464,6 +9472,7 @@ const JP_MOBILITY_PLAN = {
 // v24: Sunday's Athletic Development session moved to the new standalone
 // Thursday Sprint Day (see JP_TRAINING_PLAN) — this display repurposed to
 // match rather than left pointing at a day that's now a full rest day.
+// Reorganised 9 Sep 2026: Sprint Day itself moved Thursday → Friday.
 const JP_ATHLETIC_MOBILITY = {
   before: ['A-skips, B-skips, high knees, butt kicks, falling starts (pre-sprint)', 'Walking hip circles ×10 each direction', 'Leg swings front-back + lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', '2-3 build-up strides @ 50%/75% effort'],
   after: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Standing quad stretch', 'Seated thoracic rotation ×10 each direction'],
@@ -9473,7 +9482,7 @@ function renderMoveSportPanel(){
   const el = document.getElementById('move-sport-panel');
   if(!el) return;
   el.innerHTML = `
-    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Thursday — Sprint Day Mobility</div>
+    <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Friday — Sprint Day Mobility</div>
     <div style="font-size:11px;font-weight:700;color:var(--white);margin-bottom:4px">Before</div>
     <ul style="margin:0 0 10px;padding-left:16px;font-size:12px;color:var(--muted)">${JP_ATHLETIC_MOBILITY.before.map(d=>`<li style="margin-bottom:3px">${escHtml(d)}</li>`).join('')}</ul>
     <div style="font-size:11px;font-weight:700;color:var(--white);margin-bottom:4px">After</div>
@@ -9503,21 +9512,24 @@ const JP_MORNING_ROTATING = {
     { name: 'Calf/Soleus Wall Stretch', sets_reps: '2 × 30 sec each side' },
     { name: 'Figure-4 Hip Stretch', sets_reps: '2 × 30 sec each side' },
   ] },
-  Wednesday: { label: 'Lats/rear delt focus', items: [
+  // Wednesday reorganised 9 Sep 2026 into the week's 2nd rest day — reuses
+  // the old Saturday/Zone2 day's "gentle reset" content (that day is now
+  // Lower B, a hard explosive day, and gets real focus content below).
+  Wednesday: { label: 'Gentle full-body reset — rest day', items: [
+    { name: 'Cat-Cow', sets_reps: '2 × 10 reps' },
+    { name: 'Child\'s Pose', sets_reps: '60 sec' },
+  ] },
+  Thursday:  { label: 'Lats/rear delt focus', items: [
     { name: 'Cross-Body Rear Delt Stretch', sets_reps: '2 × 30 sec' },
     { name: 'Band Pull-Aparts', sets_reps: '2 × 15 reps' },
   ] },
-  Thursday:  { label: 'Quads + ankle mobility focus', items: [
+  Friday:    { label: 'Quads + ankle mobility focus', items: [
     { name: 'Standing Quad Stretch', sets_reps: '2 × 30 sec each side' },
     { name: 'Ankle Circles', sets_reps: '10 each direction' },
   ] },
-  Friday:    { label: 'Hamstrings/glutes focus', items: [
+  Saturday:  { label: 'Hamstrings/glutes focus', items: [
     { name: 'Standing Hamstring Stretch', sets_reps: '2 × 30 sec each side' },
     { name: 'Glute Figure-4', sets_reps: '2 × 30 sec each side' },
-  ] },
-  Saturday:  { label: 'Gentle full-body reset', items: [
-    { name: 'Cat-Cow', sets_reps: '2 × 10 reps' },
-    { name: 'Child\'s Pose', sets_reps: '60 sec' },
   ] },
   Sunday:    { label: 'Deepest session — most time available', items: [
     { name: 'Dead Hang', sets_reps: '3 × 45-60 sec' },
@@ -9533,22 +9545,25 @@ const JP_EVENING_ROTATING = {
     { name: 'Couch Stretch', sets_reps: '2 × 45 sec each side' },
     { name: 'Ankle Dorsiflexion Wall Drill', sets_reps: '2 × 10 reps' },
   ] },
-  Wednesday: { label: 'Lats/rear delt focus', items: [
+  // Wednesday's rotating slot is deliberately empty — Yoga Flow/NSDR
+  // (below, every day) already serves as that day's full integrative
+  // session, a second addition would be redundant. Moved here from the old
+  // Saturday/Zone2 slot 9 Sep 2026 — Wednesday is now the week's lighter
+  // 2nd rest day; Saturday is now Lower B, a hard day, and gets real focus
+  // content below instead.
+  Wednesday: { label: 'Full integrative flow — covered by Yoga Flow/NSDR below, no separate addition needed', items: [] },
+  Thursday:  { label: 'Lats/rear delt focus', items: [
     { name: 'Lat Overhead Stretch', sets_reps: '2 × 45 sec' },
     { name: 'Cross-Body Rear Delt Stretch', sets_reps: '2 × 45 sec' },
   ] },
-  Thursday:  { label: 'Deep glute + calf focus', items: [
+  Friday:    { label: 'Deep glute + calf focus', items: [
     { name: 'Pigeon Pose', sets_reps: '2 × 45 sec each side' },
     { name: 'Standing Calf Stretch', sets_reps: '2 × 45 sec each side' },
   ] },
-  Friday:    { label: 'Hamstrings/glutes focus', items: [
+  Saturday:  { label: 'Hamstrings/glutes focus', items: [
     { name: 'Lying Hamstring Stretch', sets_reps: '2 × 45 sec each side' },
     { name: 'Seated Figure-4', sets_reps: '2 × 45 sec each side' },
   ] },
-  // Saturday's rotating slot is deliberately empty — Yoga Flow/NSDR
-  // (below, every day) already serves as that day's full integrative
-  // session, a second addition would be redundant.
-  Saturday:  { label: 'Full integrative flow — covered by Yoga Flow/NSDR below, no separate addition needed', items: [] },
   Sunday:    { label: 'Full-body deep flush — most time, lowest fatigue', items: [
     { name: 'Doorway Pec Stretch', sets_reps: '60 sec' },
     { name: 'Couch Stretch', sets_reps: '60 sec each side' },
@@ -9581,7 +9596,7 @@ const JP_MOVE_RESULTS_BASE = {
   // own section in mobRenderResults() rather than force-fit somewhere it
   // doesn't belong.
   injury_prevention: [
-    { name: 'Explosive Warm-Up (Tue/Thu/Fri, before any sprint/jump/plyo work)', duration: '10-12 min', how_to: 'Hip circles, leg swings (front-back + lateral), hip flexor lunge + rotation, walking quad stretch, squat-to-stand, lateral band walk, walking high knees/heel flicks, build-up strides/jumps at 50%/75% effort.', why: 'The single highest injury-risk moment in your week — sprinting or jumping cold. Full detail in Train\'s mobility card.', habitKey:'custom_explosive_warmup', readOnce:false },
+    { name: 'Explosive Warm-Up (Tue/Fri/Sat, before any sprint/jump/plyo work)', duration: '10-12 min', how_to: 'Hip circles, leg swings (front-back + lateral), hip flexor lunge + rotation, walking quad stretch, squat-to-stand, lateral band walk, walking high knees/heel flicks, build-up strides/jumps at 50%/75% effort.', why: 'The single highest injury-risk moment in your week — sprinting or jumping cold. Full detail in Train\'s mobility card.', habitKey:'custom_explosive_warmup', readOnce:false },
   ],
   height_protocol: [
     { name: 'The honest ceiling', duration: 'Read once, keep in mind', how_to: 'At 18.5, growth plates in the height-critical bones (femur/tibia) are likely closing or closed — real window status is unconfirmed without a bone-age X-ray.', why: 'Nothing below overrides biology — this is "do everything legitimate on the chance a window remains," not a guarantee.', readOnce:true },
@@ -9681,8 +9696,8 @@ function renderMobilityCard(dayName) {
     : `<ul style="margin:4px 0 0;padding-left:16px;font-size:12px;color:var(--muted)">${drills.map(d=>`<li style="margin-bottom:2px">${escHtml(d)}</li>`).join('')}</ul>`;
   const sections = [];
   if (m.warmup) {
-    const isExplosive = dayName === 'Tuesday' || dayName === 'Thursday' || dayName === 'Friday';
-    const isLightWarmup = dayName === 'Monday' || dayName === 'Wednesday' || dayName === 'Saturday';
+    const isExplosive = dayName === 'Tuesday' || dayName === 'Friday' || dayName === 'Saturday';
+    const isLightWarmup = dayName === 'Monday' || dayName === 'Thursday';
     const warmupKey = isExplosive ? 'custom_explosive_warmup' : isLightWarmup ? 'custom_pretrain_warmup' : null;
     sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}${warmupKey?mobCheckbox(warmupKey):''}</div>${drillList(m.warmup.drills, 'stretch_warmup')}</div>`);
   }
@@ -9706,14 +9721,22 @@ function renderMobilityCard(dayName) {
 // renderMobilityCard()), not a generic "all Move habits" list, since the
 // item set genuinely differs by day (Saturday has no static stretch
 // content or evening rotation, Sunday has no warmup at all, etc).
+// Reorganised 9 Sep 2026 for the new Upper/Lower/Rest/Upper/Sprint/Lower/
+// Rest split. Wednesday and Sunday both correctly omit custom_pretrain_
+// warmup/custom_explosive_warmup/custom_static_stretch/custom_postural_
+// protocol now — no session, no checkbox for any of them, nothing to
+// require. (Sunday's row previously still required custom_postural_
+// protocol despite the habit itself being off on Sunday — a pre-existing
+// bug that meant Sunday could never count as a complete day; fixed here
+// rather than propagated into Wednesday's new row.)
 const JP_MOVE_DAY_REQUIRED_KEYS = {
   Monday:    ['custom_morning_mobility','custom_morning_focus','custom_pretrain_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
   Tuesday:   ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
-  Wednesday: ['custom_morning_mobility','custom_morning_focus','custom_pretrain_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
-  Thursday:  ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
+  Wednesday: ['custom_morning_mobility','custom_morning_focus','custom_evening_focus','custom_nsdr_yoga'],
+  Thursday:  ['custom_morning_mobility','custom_morning_focus','custom_pretrain_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
   Friday:    ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
-  Saturday:  ['custom_morning_mobility','custom_morning_focus','custom_pretrain_warmup','custom_postural_protocol','custom_nsdr_yoga'],
-  Sunday:    ['custom_morning_mobility','custom_morning_focus','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
+  Saturday:  ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
+  Sunday:    ['custom_morning_mobility','custom_morning_focus','custom_evening_focus','custom_nsdr_yoga'],
 };
 
 // Read-only 7-dot completion strip for Move — Train has day-tab dots
@@ -10000,12 +10023,12 @@ function applyJPRealProtocol() {
     { key: 'morning_mobility', name: 'Morning Mobility Block',      desc: 'Hip flexor hold 90s each side + dead bug 2×8 (daily core, before any axial loading) plus a rotating day-specific focus tied to what you\'re training — see the Move tab for today\'s exact focus. ~10 min, right after wake, before breakfast.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
     { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
     { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
-    { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Tuesday (Lower A plyo), Thursday (Sprint Day), Friday (Lower B plyo).', days: ['Tuesday','Thursday','Friday'], time:'Pre-Training', priority:true },
-    { key: 'pretrain_warmup',  name: 'Pre-Training Warm-Up',        desc: 'Dynamic warm-up before lifting — see the mobility card on the Train tab for today\'s exact drills.', days: ['Monday','Wednesday','Saturday'], time:'Pre-Training', priority:true },
-    { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], time:'Post-Training', priority:false },
-    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, chin tucks — 10 min, evening (real 1-3cm functional height payoff) — plus a rotating day-specific focus on top, see the Move tab for today\'s exact addition. Off on Sunday — the one day everything else in the plan already backs off too.', days: JP_WEEKDAY_NAMES.filter(d=>d!=='Sunday'), time:'Evening', priority:true },
+    { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Tuesday (Lower A plyo), Friday (Sprint Day), Saturday (Lower B plyo).', days: ['Tuesday','Friday','Saturday'], time:'Pre-Training', priority:true },
+    { key: 'pretrain_warmup',  name: 'Pre-Training Warm-Up',        desc: 'Dynamic warm-up before lifting — see the mobility card on the Train tab for today\'s exact drills.', days: ['Monday','Thursday'], time:'Pre-Training', priority:true },
+    { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: ['Monday','Tuesday','Thursday','Friday','Saturday'], time:'Post-Training', priority:false },
+    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, chin tucks — 10 min, evening (real 1-3cm functional height payoff) — plus a rotating day-specific focus on top, see the Move tab for today\'s exact addition. Off Sunday and Wednesday — the two rest days everything else in the plan already backs off too.', days: JP_WEEKDAY_NAMES.filter(d=>d!=='Sunday'&&d!=='Wednesday'), time:'Evening', priority:true },
     { key: 'morning_focus',    name: 'Morning Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Morning Mobility Core — see the Move tab for today\'s exact stretches.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
-    { key: 'evening_focus',    name: 'Evening Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Postural Protocol — see the Move tab for today\'s exact stretches. No separate item on Saturday (Yoga Flow/NSDR already covers that slot).', days: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'], time:'Evening', priority:false },
+    { key: 'evening_focus',    name: 'Evening Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Postural Protocol — see the Move tab for today\'s exact stretches. No separate item on Wednesday (Yoga Flow/NSDR already covers that slot — reorganised 9 Sep 2026, was Saturday).', days: ['Sunday','Monday','Tuesday','Thursday','Friday','Saturday'], time:'Evening', priority:false },
     { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work. Unlocked once creatine monohydrate is owned (see Shopping List).', requiresItems:['creatine_monohydrate'], days: JP_WEEKDAY_NAMES, time:'Post-Training', priority:true },
     { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
