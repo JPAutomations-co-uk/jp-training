@@ -5081,6 +5081,7 @@ const JP_LOOKSMAX_EXERCISES = [
   { key:'chewing_bias', name:'Chewing-Side Bias', group:'Face & Jaw', type:'checkbox', note:'70/30 toward your weaker-side masseter today. Stop if jaw pain/clicking.' },
   // Neck & Spine
   { key:'dead_hangs', name:'Dead Hangs', group:'Neck & Spine', type:'sets_duration', targetSets:5, targetVal:30 },
+  { key:'chin_tucks', name:'Chin Tucks', group:'Neck & Spine', type:'sets_reps', targetSets:2, targetVal:10, note:'5 sec hold each rep. Matches the volume already in your daily Postural Protocol (forward-head-posture correction) — logged here separately now so it actually gets progression tracking, which a bundled checkbox can\'t give you.' },
   { key:'cat_cow', name:'Cat-Cow', group:'Neck & Spine', type:'sets_reps', targetSets:2, targetVal:12, note:'AM + PM.' },
   { key:'childs_pose', name:"Child's Pose", group:'Neck & Spine', type:'sets_duration', targetSets:3, targetVal:45, note:'Through the day.' },
   { key:'foam_rolling', name:'Thoracic Foam Rolling', group:'Neck & Spine', type:'duration_min', targetVal:7, note:'Thoracic spine (T4-T12) only — avoid direct lumbar rolling.' },
@@ -5203,9 +5204,9 @@ function renderLooksmax(){
           <div class="habit-desc" style="display:none">${escHtml(ex.note||'')}</div>
         </div>
         ${ex.type!=='checkbox' ? `
-        <div style="display:flex;gap:4px;align-items:center" onclick="event.stopPropagation()">
-          ${ex.type!=='duration_min' ? `<input class="set-field" type="number" min="0" placeholder="sets" style="width:44px" value="${e.sets||''}" oninput="saveLooksmaxLog('${ex.key}','sets',this.value)">` : ''}
-          <input class="set-field" type="number" min="0" step="${ex.type==='duration_min'?'0.5':'1'}" placeholder="${ex.type==='duration_min'?'min':(ex.type==='sets_duration'?'sec':'reps')}" style="width:50px" value="${e.val||''}" oninput="saveLooksmaxLog('${ex.key}','val',this.value)">
+        <div style="display:flex;gap:6px;align-items:center;flex:0 0 auto;width:${ex.type!=='duration_min'?'128px':'70px'}" onclick="event.stopPropagation()">
+          ${ex.type!=='duration_min' ? `<input class="set-field" type="number" min="0" placeholder="sets" value="${e.sets||''}" oninput="saveLooksmaxLog('${ex.key}','sets',this.value)">` : ''}
+          <input class="set-field" type="number" min="0" step="${ex.type==='duration_min'?'0.5':'1'}" placeholder="${ex.type==='duration_min'?'min':(ex.type==='sets_duration'?'sec':'reps')}" value="${e.val||''}" oninput="saveLooksmaxLog('${ex.key}','val',this.value)">
         </div>` : ''}
       </div>
     `;}).join('')}
