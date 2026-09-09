@@ -5488,28 +5488,35 @@ async function loadHabitStreaks(){
 // Behavioural/technique items with no natural rep count (chewing bias,
 // hard mewing, the lymphatic sequence) stay type:'checkbox' rather than
 // forcing a false sets/reps structure onto them.
+// `time` added 9 Sep 2026 so this list groups by time-of-day in the UI
+// (renderLooksmax()), same as the main habits list — most items land on
+// 'Anytime' honestly: none of this has real circadian/physiological timing
+// evidence behind it (unlike sleep/training/light), so precision timing
+// isn't a real lever. Only bucketed into Morning/Evening where there's an
+// actual reason: paired with an existing anchor habit (AM/PM skincare,
+// the morning height/posture block, the evening Postural Protocol block).
 const JP_LOOKSMAX_EXERCISES = [
   // Face & Jaw
-  { key:'smile_hold', name:'Max-Effort Smile Hold', group:'Face & Jaw', type:'sets_duration', targetSets:10, targetVal:5, note:'AM + PM — log combined sets across both sessions. Real trade-off: repeated max-effort expression is the same mechanism that deepens nasolabial folds over time (same as squinting/crow\'s feet) — kept at your request despite the flag.' },
-  { key:'smirk_mew', name:'Smirk Hold + Mewing', group:'Face & Jaw', type:'sets_duration', targetSets:12, targetVal:7, note:'Range 10-15 sets, 5-10 sec — stacks mewing, which is separately unsupported for structural change.' },
-  { key:'mpr_jaw', name:'MPR (Jaw Resistance)', group:'Face & Jaw', type:'sets_reps', targetSets:8, targetVal:20, note:'Hands prayer-position under jaw, open/close against resistance. Loads TMJ directly — keep resistance moderate.' },
-  { key:'chewing_bias', name:'Chewing-Side Bias', group:'Face & Jaw', type:'checkbox', note:'70/30 toward your weaker-side masseter today. Stop if jaw pain/clicking.' },
-  { key:'mastic_gum_chewing', name:'Mastic Gum Chewing', group:'Face & Jaw', type:'duration_min', targetVal:15, requiresItems:['mastic_gum'], note:'Unlocked once mastic gum is owned (see Shopping List). Much harder resistance than regular gum — real mechanism (more chewing force = more masseter work, same principle as MPR/Chewing-Side Bias), but evidence here is anecdotal/community-reported, not clinically trialled specifically for mastic gum. For fixing asymmetry specifically, bias most or all of the time toward your weaker-side masseter (see Chewing-Side Bias) rather than splitting evenly — even chewing on both sides just keeps growing them together, symmetry needs the weaker side to catch up. Stop if jaw pain/clicking — this is a harder resistance than MPR, easier to overdo.' },
-  { key:'expression_training', name:'Expression Training (Mirror)', group:'Face & Jaw', type:'duration_min', targetVal:5, note:'Practice controlled expressions in the mirror — resting face, smile, brow raise, surprise — deliberately, not just pulling faces. Builds conscious awareness/control over your own expressions, not a structural-change exercise; same evidence tier as the rest of this list.' },
+  { key:'smile_hold', name:'Max-Effort Smile Hold', group:'Face & Jaw', time:'Anytime', type:'sets_duration', targetSets:10, targetVal:5, note:'AM + PM — log combined sets across both sessions. Real trade-off: repeated max-effort expression is the same mechanism that deepens nasolabial folds over time (same as squinting/crow\'s feet) — kept at your request despite the flag.' },
+  { key:'smirk_mew', name:'Smirk Hold + Mewing', group:'Face & Jaw', time:'Anytime', type:'sets_duration', targetSets:12, targetVal:7, note:'Range 10-15 sets, 5-10 sec — stacks mewing, which is separately unsupported for structural change.' },
+  { key:'mpr_jaw', name:'MPR (Jaw Resistance)', group:'Face & Jaw', time:'Anytime', type:'sets_reps', targetSets:8, targetVal:20, note:'Hands prayer-position under jaw, open/close against resistance. Loads TMJ directly — keep resistance moderate. Space away from Mastic Gum Chewing/Humming+Jaw Resistance and away from meals — stacking jaw-loading work back to back compounds TMJ fatigue for no benefit.' },
+  { key:'chewing_bias', name:'Chewing-Side Bias', group:'Face & Jaw', time:'Anytime', type:'checkbox', note:'70/30 toward your weaker-side masseter today. Stop if jaw pain/clicking. Inherently spread across whatever meals you eat — nothing to schedule separately.' },
+  { key:'mastic_gum_chewing', name:'Mastic Gum Chewing', group:'Face & Jaw', time:'Anytime', type:'duration_min', targetVal:15, requiresItems:['mastic_gum'], note:'Unlocked once mastic gum is owned (see Shopping List). Much harder resistance than regular gum — real mechanism (more chewing force = more masseter work, same principle as MPR/Chewing-Side Bias), but evidence here is anecdotal/community-reported, not clinically trialled specifically for mastic gum. For fixing asymmetry specifically, bias most or all of the time toward your weaker-side masseter (see Chewing-Side Bias) rather than splitting evenly — even chewing on both sides just keeps growing them together, symmetry needs the weaker side to catch up. Stop if jaw pain/clicking — this is a harder resistance than MPR, easier to overdo. Keep 30-60 min clear of meals and away from your other jaw-loading exercises today.' },
+  { key:'expression_training', name:'Expression Training (Mirror)', group:'Face & Jaw', time:'Morning', type:'duration_min', targetVal:5, note:'Practice controlled expressions in the mirror — resting face, smile, brow raise, surprise — deliberately, not just pulling faces. Builds conscious awareness/control over your own expressions, not a structural-change exercise; same evidence tier as the rest of this list. Paired with AM Skincare — you\'re already at a mirror, zero extra friction.' },
   // Neck & Spine
-  { key:'dead_hangs', name:'Dead Hangs', group:'Neck & Spine', type:'sets_duration', targetSets:5, targetVal:30 },
-  { key:'chin_tucks', name:'Chin Tucks', group:'Neck & Spine', type:'sets_reps', targetSets:2, targetVal:10, note:'5 sec hold each rep. Matches the volume already in your daily Postural Protocol (forward-head-posture correction) — logged here separately now so it actually gets progression tracking, which a bundled checkbox can\'t give you.' },
-  { key:'cat_cow', name:'Cat-Cow', group:'Neck & Spine', type:'sets_reps', targetSets:2, targetVal:12, note:'AM + PM.' },
-  { key:'childs_pose', name:"Child's Pose", group:'Neck & Spine', type:'sets_duration', targetSets:3, targetVal:45, note:'Through the day.' },
-  { key:'foam_rolling', name:'Thoracic Foam Rolling', group:'Neck & Spine', type:'duration_min', targetVal:7, note:'Thoracic spine (T4-T12) only — avoid direct lumbar rolling.' },
-  { key:'inversion', name:'Inversion Table', group:'Neck & Spine', type:'duration_min', targetVal:1.5, requiresItems:['inversion_table'], note:'Start partial angle (20-30°), not full 180°. Stop if dizziness/headache/vision changes.' },
+  { key:'dead_hangs', name:'Dead Hangs', group:'Neck & Spine', time:'Morning', type:'sets_duration', targetSets:5, targetVal:30 },
+  { key:'chin_tucks', name:'Chin Tucks', group:'Neck & Spine', time:'Evening', type:'sets_reps', targetSets:2, targetVal:10, note:'5 sec hold each rep. Matches the volume already in your daily Postural Protocol (forward-head-posture correction) — logged here separately now so it actually gets progression tracking, which a bundled checkbox can\'t give you.' },
+  { key:'cat_cow', name:'Cat-Cow', group:'Neck & Spine', time:'Anytime', type:'sets_reps', targetSets:2, targetVal:12, note:'AM + PM.' },
+  { key:'childs_pose', name:"Child's Pose", group:'Neck & Spine', time:'Anytime', type:'sets_duration', targetSets:3, targetVal:45, note:'Through the day.' },
+  { key:'foam_rolling', name:'Thoracic Foam Rolling', group:'Neck & Spine', time:'Anytime', type:'duration_min', targetVal:7, note:'Thoracic spine (T4-T12) only — avoid direct lumbar rolling.' },
+  { key:'inversion', name:'Inversion Table', group:'Neck & Spine', time:'Anytime', type:'duration_min', targetVal:1.5, requiresItems:['inversion_table'], note:'Start partial angle (20-30°), not full 180°. Stop if dizziness/headache/vision changes.' },
   // Circulation & Skin
-  { key:'gua_sha', name:'Gua Sha', group:'Circulation & Skin', type:'sets_reps', targetSets:3, targetVal:20, requiresItems:['gua_sha_tool'], note:'Unlocked once a gua sha tool is owned (see Shopping List). Jawline, cheeks, temples — one set per area, with oil/moisturiser.' },
-  { key:'lymphatic', name:'Lymphatic Drainage Sequence', group:'Circulation & Skin', type:'checkbox', note:'Neck/collarbone → under-jaw → behind ears → face outward → repeat neck/collarbone.' },
+  { key:'gua_sha', name:'Gua Sha', group:'Circulation & Skin', time:'Morning', type:'sets_reps', targetSets:3, targetVal:20, requiresItems:['gua_sha_tool'], note:'Unlocked once a gua sha tool is owned (see Shopping List). Jawline, cheeks, temples — one set per area, with oil/moisturiser. Paired with AM Skincare — addresses peak overnight facial puffiness, so morning gives the most visible payoff of any time slot.' },
+  { key:'lymphatic', name:'Lymphatic Drainage Sequence', group:'Circulation & Skin', time:'Morning', type:'checkbox', note:'Neck/collarbone → under-jaw → behind ears → face outward → repeat neck/collarbone. Paired with AM Skincare, same de-puffing logic as Gua Sha.' },
   // Mouth & Tongue
-  { key:'hard_mewing', name:'Hard Mewing', group:'Mouth & Tongue', type:'sets_duration', targetSets:20, targetVal:5, note:'Start here, progressively overload from there (more sets, or longer holds) once 20×5s feels easy. Switched from all-day sustained pressure to discrete timed sets per your request — meaningfully lower cumulative tooth-movement exposure than holding it all day (20×5s = 100 sec/session vs. hours of continuous pressure), though the underlying trade-off is the same mechanism, still kept at your request — see memory file for the tooth-movement risk.' },
-  { key:'mewing_swallow', name:'Mewing While Swallowing', group:'Mouth & Tongue', type:'sets_reps', targetSets:1, targetVal:10, note:'Tongue to palate during the swallow, not against teeth.' },
-  { key:'humming_jaw', name:'Humming + Jaw Resistance', group:'Mouth & Tongue', type:'sets_duration', targetSets:5, targetVal:15, note:'Low pitch, light-moderate jaw resistance.' },
+  { key:'hard_mewing', name:'Hard Mewing', group:'Mouth & Tongue', time:'Anytime', type:'sets_duration', targetSets:20, targetVal:5, note:'Start here, progressively overload from there (more sets, or longer holds) once 20×5s feels easy. Switched from all-day sustained pressure to discrete timed sets per your request — meaningfully lower cumulative tooth-movement exposure than holding it all day (20×5s = 100 sec/session vs. hours of continuous pressure), though the underlying trade-off is the same mechanism, still kept at your request — see memory file for the tooth-movement risk. Do as its own discrete session, not spread through the day, now that it\'s sets-based.' },
+  { key:'mewing_swallow', name:'Mewing While Swallowing', group:'Mouth & Tongue', time:'Anytime', type:'sets_reps', targetSets:1, targetVal:10, note:'Tongue to palate during the swallow, not against teeth. Practice this AT each meal specifically — free reps from your existing meal schedule, nothing to add.' },
+  { key:'humming_jaw', name:'Humming + Jaw Resistance', group:'Mouth & Tongue', time:'Anytime', type:'sets_duration', targetSets:5, targetVal:15, note:'Low pitch, light-moderate jaw resistance. Space away from MPR/Mastic Gum Chewing and away from meals — same TMJ-stacking caution.' },
 ];
 function looksmaxTargetLabel(ex){
   if(ex.type==='sets_duration') return `${ex.targetSets} sets × ${ex.targetVal} sec`;
@@ -5621,11 +5628,18 @@ function renderLooksmax(){
     list.innerHTML = `<p style="font-size:12px;color:var(--dim);text-align:center;padding:16px 0">No looksmax exercises today.</p>`;
     return;
   }
+  // Grouped by time-of-day, same pattern/order as renderHabits() — was
+  // grouped by anatomical `group` (Face & Jaw etc.), which buried when
+  // things should actually happen. That anatomical category isn't lost,
+  // just demoted to a small tag on each item instead of the section header.
   const groups = {};
-  visible.forEach(ex => (groups[ex.group] = groups[ex.group] || []).push(ex));
-  list.innerHTML = Object.entries(groups).map(([group, items]) => `
-    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:14px 0 6px">${escHtml(group)}</div>
-    ${items.map(ex => {
+  visible.forEach(ex => {
+    const t = HABIT_TIME_ORDER.includes(ex.time) ? ex.time : 'Anytime';
+    (groups[t] = groups[t] || []).push(ex);
+  });
+  list.innerHTML = HABIT_TIME_ORDER.filter(t=>groups[t]?.length).map(t => `
+    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:14px 0 6px">${t}</div>
+    ${groups[t].map(ex => {
       const e = todayLog[ex.key] || {};
       return `
       <div class="habit-item ${isExDone(ex)?'done':''}" data-key="lm-${ex.key}" style="cursor:default">
@@ -5634,7 +5648,7 @@ function renderLooksmax(){
         </div>
         <div class="habit-info">
           <div class="habit-name">${escHtml(ex.name)}</div>
-          <div style="font-size:10px;color:var(--dim)">${ex.type!=='checkbox' ? escHtml(looksmaxTargetLabel(ex))+' · ' : ''}${escHtml(looksmaxLastLabel(ex))}</div>
+          <div style="font-size:10px;color:var(--dim)">${escHtml(ex.group)} · ${ex.type!=='checkbox' ? escHtml(looksmaxTargetLabel(ex))+' · ' : ''}${escHtml(looksmaxLastLabel(ex))}</div>
           <button onclick="event.stopPropagation();toggleHabitWhy(this)" style="background:none;border:none;color:var(--dim);font-size:10px;padding:0;cursor:pointer;font-family:var(--B)">why →</button>
           <div class="habit-desc" style="display:none">${escHtml(ex.note||'')}</div>
         </div>
