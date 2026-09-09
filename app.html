@@ -5532,8 +5532,24 @@ function looksmaxLastLabel(ex){
   return `Last: ${e.sets||0}×${e.val||0} (${last.date})`;
 }
 
+// "Complete Training Session" is a generic base habit in getHabits(),
+// shown to every user regardless of day — but doesn't actually apply on a
+// real rest day for anyone with a real weekly plan (JP's hardcoded
+// JP_TRAINING_PLAN, or another user's OB.train.weeklyPlan). getHabits()
+// itself deliberately stays day-invariant in both length and order —
+// initHabits() syncs a fresh getHabits() call onto the stable module-level
+// HABITS array purely by index (`if(HABITS[i]) Object.assign(HABITS[i],h)`),
+// so removing an entry there would silently shift every later index and
+// corrupt that sync. Every render site that counts/displays "does this
+// apply today" filters this one habit out itself instead.
+function trainingAppliesOnDay(dayName){
+  const plan = OB.train?.weeklyPlan || (USER?.id === JP_USER_ID ? JP_TRAINING_PLAN : null);
+  if(!plan) return true;
+  const day = plan.find(d => d.day === dayName);
+  return day ? day.type !== 'rest' : true;
+}
 function renderHabits(){
-  const allH=getHabits();
+  const allH=getHabits().filter(h => h.key!=='training' || trainingAppliesOnDay(effectiveDayName(HABIT_DATE)));
   const done=allH.filter(h=>habitState[h.key]).length;
   document.getElementById('habits-count').textContent=`${done} / ${allH.length}`;
   document.getElementById('habits-bar').style.width=`${(done/allH.length)*100}%`;
@@ -5971,7 +5987,11 @@ function renderHabitsWeekCalendar(){
   // `const key = 'custom_'+ch.key`) — match that here too, or this Set never
   // matches anything and baseHabits silently doubles every custom habit.
   const customKeys = new Set(JP_CUSTOM_HABITS.map(h=>'custom_'+h.key));
-  const baseHabits = todayHabits.filter(h=>!customKeys.has(h.key)); // base minus hidden — unconditionally daily for everyone
+  // 'training' pulled out of the "unconditionally daily for everyone" base
+  // set and re-added per day below — it's the one base habit that actually
+  // varies by day (no session on a rest day), unlike every other base habit.
+  const baseHabits = todayHabits.filter(h=>!customKeys.has(h.key) && h.key!=='training');
+  const trainingHabit = todayHabits.find(h=>h.key==='training');
   const owned = new Set(OB.owned_items || []);
   const todayLabel = effectiveTodayName();
 
@@ -5980,7 +6000,7 @@ function renderHabitsWeekCalendar(){
       const unlocked = !h.requiresItems || h.requiresItems.every(k=>owned.has(k));
       return h.days.includes(dayName) && unlocked;
     });
-    const all = [...baseHabits, ...customForDay];
+    const all = [...baseHabits, ...(trainingHabit && trainingAppliesOnDay(dayName) ? [trainingHabit] : []), ...customForDay];
     const isToday = dayName === todayLabel;
     return `<div style="border:1px solid ${isToday?'var(--teal)':'var(--border)'};margin-bottom:6px">
       <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
@@ -7224,9 +7244,17 @@ async function loadProgressCharts(){
     const ds=_localDateStr(dt);
     const dayH=(habitData||[]).filter(h=>h.date===ds);
     const allH=getHabits();
+    // Denominator adjusted per day against the CURRENT weekly plan (no
+    // versioned plan history exists, so this can't be exactly right for
+    // dates before a split reorg — same known limitation as elsewhere in
+    // this file) — without this, a rest day's percentage is permanently
+    // capped below 100% since "Complete Training Session" can never be
+    // ticked on a day with no session.
+    const hasTraining = allH.some(h=>h.key==='training');
+    const denom = (hasTraining && !trainingAppliesOnDay(effectiveDayName(ds))) ? allH.length-1 : allH.length;
     const done=dayH.filter(h=>h.completed).length;
     days.push(dt.toLocaleDateString('en-GB',{weekday:'short'}));
-    pcts.push(allH.length?Math.round((done/allH.length)*100):0);
+    pcts.push(denom?Math.round((done/denom)*100):0);
     const dayFoods = (calData||[]).filter(f=>f.date===ds);
     calMap[ds]=dayFoods.reduce((s,f)=>s+(+f.calories||0),0);
     proteinMap[ds]=dayFoods.reduce((s,f)=>s+(+f.protein_g||0),0);
