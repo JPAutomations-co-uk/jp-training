@@ -1524,14 +1524,9 @@
 
       <!-- BODY COMPOSITION -->
       <div class="sh-label" style="margin-bottom:6px">Body Composition</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <input id="bc-weight-input" type="number" step="0.1" placeholder="Weight (kg)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
-        <input id="bc-bf-input" type="number" step="0.1" placeholder="Body fat (%)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
-        <button onclick="logBodyComp()" style="padding:8px 14px;background:var(--teal);border:none;color:#000;font-weight:600;font-size:12px;cursor:pointer">Log</button>
-      </div>
       <div class="chart-card reveal-on-scroll">
         <canvas id="chart-bodycomp" height="110"></canvas>
-        <div id="chart-bodycomp-empty" class="chart-empty" style="display:none">Log your weight/body fat a few times to see the trend.</div>
+        <div id="chart-bodycomp-empty" class="chart-empty" style="display:none">Log your weight in a check-in below to see the trend.</div>
       </div>
 
       <!-- PROGRESS PHOTOS -->
@@ -1578,6 +1573,13 @@
       <div class="sh-label" style="margin-bottom:6px">Check-in</div>
       <p class="sh-sub" id="checkin-sub" style="margin-bottom:14px"></p>
       <div id="checkin-week-stats" class="reveal-on-scroll" style="margin-bottom:14px"></div>
+      <div id="checkin-weight-wrap" style="margin-bottom:14px">
+        <div class="score-label" style="margin-bottom:8px">Weight & body fat this week</div>
+        <div style="display:flex;gap:8px">
+          <input id="checkin-weight-input" type="number" step="0.1" placeholder="Weight (kg)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
+          <input id="checkin-bf-input" type="number" step="0.1" placeholder="Body fat (%)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
+        </div>
+      </div>
       <div class="score-grid" id="score-grid"></div>
       <button class="btn-primary" id="checkin-btn" onclick="submitCheckin()">Submit Check-in</button>
       <p id="checkin-next-due" style="font-size:11px;color:var(--dim);margin-top:8px;text-align:center"></p>
@@ -6897,23 +6899,8 @@ async function renderPRHistory(){
 
 // ── Body Composition: stored in OB (no dedicated table exists, and no DDL
 // execution path is available from this environment — same constraint
-// documented elsewhere in this project) ──
-async function logBodyComp(){
-  const w = +document.getElementById('bc-weight-input').value || null;
-  const bf = +document.getElementById('bc-bf-input').value || null;
-  if(!w && !bf){ showToast('Enter a weight or body fat %'); return; }
-  OB.bodyCompLog = OB.bodyCompLog || [];
-  OB.bodyCompLog = OB.bodyCompLog.filter(e=>e.date!==TODAY); // one entry per day, latest wins
-  OB.bodyCompLog.push({ date: TODAY, weight_kg: w, body_fat: bf });
-  OB.bodyCompLog.sort((a,b)=>a.date.localeCompare(b.date));
-  if(OB.bodyCompLog.length > 90) OB.bodyCompLog = OB.bodyCompLog.slice(-90);
-  localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await saveOB(); } catch(e){}
-  document.getElementById('bc-weight-input').value = '';
-  document.getElementById('bc-bf-input').value = '';
-  showToast('Logged');
-  renderBodyCompChart();
-}
+// documented elsewhere in this project). Logged via submitCheckin() now,
+// not its own button. ──
 function renderBodyCompChart(){
   const canvas = document.getElementById('chart-bodycomp');
   const empty = document.getElementById('chart-bodycomp-empty');
@@ -7364,6 +7351,8 @@ function renderCheckinGate(latestRow){
   const doneThisWeek = !!latestRow && latestRow.date === weekStart;
   renderScoreGrid(doneThisWeek ? latestRow : null);
   if(btn) btn.style.display = doneThisWeek ? 'none' : '';
+  const weightWrap = document.getElementById('checkin-weight-wrap');
+  if(weightWrap) weightWrap.style.display = doneThisWeek ? 'none' : '';
   if(dueEl){
     if(doneThisWeek){
       const next = new Date(weekStart+'T00:00:00'); next.setDate(next.getDate()+7);
@@ -7383,6 +7372,26 @@ async function submitCheckin(){
     scores[m.key] = m.type==='bool' ? (_boolScores[m.key] ?? null) : +document.getElementById('score-'+m.key).value;
   });
   const weekStart = _mondayOfWeek(_localDateStr());
+
+  // Weight/body fat now lives on the check-in card (moved here from its own
+  // Body Composition input, per JP request) — stored in OB.bodyCompLog same
+  // as before since progress_checkins has no weight column. Fresh date
+  // computed right now, NOT a frozen-at-load constant: this app is a PWA
+  // that routinely stays open across a day rollover.
+  const w = +document.getElementById('checkin-weight-input')?.value || null;
+  const bf = +document.getElementById('checkin-bf-input')?.value || null;
+  if(w || bf){
+    const logDate = _localDateStr();
+    OB.bodyCompLog = OB.bodyCompLog || [];
+    OB.bodyCompLog = OB.bodyCompLog.filter(e=>e.date!==logDate); // one entry per day, latest wins
+    OB.bodyCompLog.push({ date: logDate, weight_kg: w, body_fat: bf });
+    OB.bodyCompLog.sort((a,b)=>a.date.localeCompare(b.date));
+    if(OB.bodyCompLog.length > 90) OB.bodyCompLog = OB.bodyCompLog.slice(-90);
+    localStorage.setItem('jpt_ob', JSON.stringify(OB));
+    try { await saveOB(); } catch(e){}
+    renderBodyCompChart();
+  }
+
   const{error}=await sb.from('progress_checkins').upsert({user_id:USER.id,date:weekStart,...scores});
   btn.disabled=false;btn.textContent='Submit Check-in';
   if(error){
