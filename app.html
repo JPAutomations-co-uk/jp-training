@@ -1323,10 +1323,31 @@
         </div>
       </div>
 
+      <!-- Reading / study tracker -->
+      <div class="steps-card" id="reading-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div class="sh-label" style="margin-bottom:3px">Reading / Study</div>
+            <div style="font-size:11px;color:var(--dim)">Goal: 30 min deep focus</div>
+            <div id="reading-streak-lbl" style="font-size:10px;color:var(--dim);margin-top:2px"></div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:var(--D);font-size:36px;font-weight:900;line-height:1" id="reading-mins-display">0</div>
+            <div style="font-size:10px;color:var(--dim);margin-top:2px" id="reading-pct">0% of goal</div>
+          </div>
+        </div>
+        <div class="steps-bar"><div class="steps-bar-fill" id="reading-bar-fill" style="width:0%"></div></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="steps-btn" onclick="openLogReadingSession()">Log session</button>
+          <button class="steps-btn" onclick="switchTab('library')" style="color:var(--dim)">Open Library →</button>
+        </div>
+      </div>
+
       <div id="overview-card-wrap"></div>
-      <div style="display:flex;gap:6px;margin-top:16px">
+      <div style="display:flex;gap:6px;margin-top:16px;align-items:center">
         <button id="habit-filter-all" class="habit-filter-btn sel" onclick="setHabitFilter(false)">All</button>
         <button id="habit-filter-priority" class="habit-filter-btn" onclick="setHabitFilter(true)">Top Priority</button>
+        <button id="habits-week-btn" onclick="openHabitsCalendar()" style="display:none;margin-left:auto;font-size:11px;padding:6px 10px;background:transparent;border:1px solid rgba(44,212,196,.3);color:var(--teal);cursor:pointer">This Week →</button>
       </div>
       <div style="margin-top:10px" id="habits-list"></div>
       <div id="quests-section"></div>
@@ -2134,6 +2155,96 @@
     </div>
   </div>
 
+  <!-- ══ PANE: LIBRARY — the reading/study catalogue. Every book/article/
+       paper/course you've ever logged a session against, with per-item
+       session history. Feeds the Habits-pane "reading" card (30 min/day
+       goal), doesn't duplicate it — this is where the content lives. ══ -->
+  <div id="pane-library" class="pane">
+    <div class="sh" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div>
+        <div class="sh-label">Reading & Study</div>
+        <div class="sh-title">Your<br><span style="color:var(--teal)">Library</span></div>
+      </div>
+      <button class="ob-edit-btn" style="margin-top:8px" onclick="openAddLibraryItem()">+ Add</button>
+    </div>
+    <div id="library-stats" style="display:flex;gap:8px;margin-bottom:16px"></div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="lib-filter-btn habit-filter-btn sel" data-filter="in_progress" onclick="setLibraryFilter('in_progress')">Reading</button>
+      <button class="lib-filter-btn habit-filter-btn" data-filter="completed" onclick="setLibraryFilter('completed')">Completed</button>
+      <button class="lib-filter-btn habit-filter-btn" data-filter="wishlist" onclick="setLibraryFilter('wishlist')">Wishlist</button>
+      <button class="lib-filter-btn habit-filter-btn" data-filter="abandoned" onclick="setLibraryFilter('abandoned')">Abandoned</button>
+      <button class="lib-filter-btn habit-filter-btn" data-filter="all" onclick="setLibraryFilter('all')">All</button>
+    </div>
+    <div id="library-list"></div>
+  </div>
+
+  <!-- LOG READING SESSION -->
+  <div id="log-reading-modal" onclick="if(event.target===this)closeLogReadingSession()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">LOG SESSION</div>
+        <button onclick="closeLogReadingSession()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <select id="log-reading-item-select" onchange="toggleLogReadingNewFields(this.value==='__new__')"
+        style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:10px"></select>
+      <div id="log-reading-new-fields" style="display:none;margin-bottom:10px">
+        <input id="log-reading-new-title" placeholder="Title" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:8px">
+        <input id="log-reading-new-author" placeholder="Author (optional)" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px">
+      </div>
+      <input id="log-reading-mins" type="number" min="1" placeholder="Minutes"
+        style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:8px">
+      <textarea id="log-reading-notes" placeholder="Notes (optional)" rows="2"
+        style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:12px;resize:vertical"></textarea>
+      <button onclick="submitReadingSession()" style="width:100%;background:var(--teal);color:var(--black);border:none;padding:12px;font-family:var(--D);font-size:14px;font-weight:900;cursor:pointer">Save</button>
+    </div>
+  </div>
+
+  <!-- ADD LIBRARY ITEM -->
+  <div id="add-library-modal" onclick="if(event.target===this)closeAddLibraryItem()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-family:var(--D);font-size:20px;font-weight:900">ADD TO LIBRARY</div>
+        <button onclick="closeAddLibraryItem()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <input id="lib-add-title" placeholder="Title" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:8px">
+      <input id="lib-add-author" placeholder="Author (optional)" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:8px">
+      <select id="lib-add-type" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:8px">
+        <option value="book">Book</option>
+        <option value="article">Article</option>
+        <option value="paper">Paper</option>
+        <option value="course">Course</option>
+        <option value="podcast">Podcast</option>
+        <option value="other">Other</option>
+      </select>
+      <input id="lib-add-category" placeholder="Category / topic (optional)" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:12px">
+      <button onclick="saveNewLibraryItem()" style="width:100%;background:var(--teal);color:var(--black);border:none;padding:12px;font-family:var(--D);font-size:14px;font-weight:900;cursor:pointer">Add</button>
+    </div>
+  </div>
+
+  <!-- LIBRARY ITEM DETAIL -->
+  <div id="library-detail-modal" onclick="if(event.target===this)closeLibraryItem()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:20px 20px 12px">
+        <div style="min-width:0">
+          <div id="lib-detail-title" style="font-family:var(--D);font-size:18px;font-weight:900;color:var(--white)"></div>
+          <div id="lib-detail-meta" style="font-size:11px;color:var(--dim);margin-top:2px"></div>
+          <div id="lib-detail-mins" style="font-size:11px;color:var(--teal);margin-top:4px"></div>
+        </div>
+        <button onclick="closeLibraryItem()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:2px 6px">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 20px 20px">
+        <input id="lib-session-mins" type="number" min="1" placeholder="Minutes just read"
+          style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:8px">
+        <textarea id="lib-session-notes" placeholder="Notes (optional)" rows="2"
+          style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:10px;resize:vertical"></textarea>
+        <button onclick="logSessionForOpenItem()" style="width:100%;background:var(--teal);color:var(--black);border:none;padding:11px;font-family:var(--D);font-size:13px;font-weight:900;cursor:pointer;margin-bottom:10px">Log Session</button>
+        <button id="lib-detail-complete-btn" onclick="markLibraryItemComplete()" style="width:100%;background:transparent;color:var(--teal);border:1px solid rgba(44,212,196,.4);padding:11px;font-family:var(--D);font-size:13px;font-weight:900;cursor:pointer;margin-bottom:14px">Mark Complete</button>
+        <div style="font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Session History</div>
+        <div id="lib-session-history"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ PANE: COMMUNITY — reorganised (2 Aug 2026) into a Skool/Circle-style
        shell: persistent header (title + personal inbox icons), a tab bar for
        the four content sections (Feed/Channels/Members/Events), and
@@ -2347,6 +2458,20 @@
     </div>
   </div>
 
+  <!-- ══ HABITS WEEKLY CALENDAR MODAL ══ -->
+  <div id="habits-calendar-modal" onclick="if(event.target===this)closeHabitsCalendar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px">
+        <div>
+          <div style="font-family:var(--D);font-size:22px;font-weight:900">THIS WEEK</div>
+          <div style="font-size:11px;color:var(--dim);margin-top:2px">What's actually due each day, not everything crammed into one.</div>
+        </div>
+        <button onclick="closeHabitsCalendar()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 20px 20px"><div id="habits-week-list"></div></div>
+    </div>
+  </div>
+
   <!-- ══ EVENTS MODAL ══ -->
   <div id="events-modal" onclick="if(event.target===this)closeEvents()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
     <div class="sheet-panel" style="width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
@@ -2461,6 +2586,10 @@
       <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 7v5l-3 4m3-4l3 4M9 10H6m12 0h-3"/></svg>
       <span>Move</span>
     </button>
+    <button class="sidebar-tab" data-tab="library" onclick="switchTab('library')">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      <span>Library</span>
+    </button>
     <button class="sidebar-tab" data-tab="community" onclick="switchTab('community')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       <span>Community</span>
@@ -2511,8 +2640,11 @@
       <button class="bn-more-item" data-tab="lab" onclick="switchTab('lab');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg> Lab
       </button>
-      <button class="bn-more-item" data-tab="move" onclick="switchTab('move');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+      <button class="bn-more-item" data-tab="move" onclick="switchTab('move');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><circle cx="12" cy="5" r="2"/><path d="M12 7v5l-3 4m3-4l3 4M9 10H6m12 0h-3"/></svg> Move
+      </button>
+      <button class="bn-more-item" data-tab="library" onclick="switchTab('library');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> Library
       </button>
     </div>
   </div>
@@ -2870,6 +3002,9 @@ function getHabits(){
     {key:'hydration', time:'Anytime', priority:false,
      name:'Hydration',
      desc:'2.5–3L water today — every hormone, enzyme, and neurotransmitter in the body depends on adequate hydration; performance and cognition drop before thirst kicks in'},
+    {key:'reading', time:'Evening', priority:true,
+     name:'Deep Reading / Study',
+     desc:'Minimum 30 min of focused reading or study, no phone — log it in the Library tab. Auto-ticks once today\'s logged minutes hit 30.'},
   ];
   const hidden = new Set(OB.hidden_habits || []);
   return [...base.filter(h=>!hidden.has(h.key)), ...custom];
@@ -2940,6 +3075,10 @@ const LEVELS = [
 let XP_STATE = { xp:0, level:1, streak_days:0, last_active_date:null };
 let stepsHistory = {};
 let todaySteps = 0;
+let readingMinutesToday = 0;
+let readingItems = [];        // this user's reading_items rows, cached after loadLibrary()
+let libraryFilter = 'in_progress';
+let _libraryOpenItemId = null;
 
 function getLevelData(xp) {
   let current = LEVELS[0];
@@ -3177,6 +3316,7 @@ async function applyV1LaunchReset(){
 
 function initAll() {
   loadStepsHistory();
+  loadReadingToday();
   initHabits();
   initTrain();
   initEat();
@@ -3270,6 +3410,280 @@ function addSteps(delta) {
   saveStepsToday(todaySteps + delta);
 }
 
+/* ════════════════════════════════════════
+   READING / STUDY LIBRARY
+   Two tables: reading_items (the catalogue — one row per book/article/
+   paper/course) and reading_sessions (one row per logged session against
+   an item, minutes + notes). The Habits-pane "reading" habit auto-ticks
+   off SUM(reading_sessions.minutes) for the viewed day hitting the goal —
+   same pattern as the Steps card's auto-complete, not a separate manual
+   checkbox that could drift out of sync with what was actually logged.
+════════════════════════════════════════ */
+const READING_GOAL_MIN = 30;
+
+async function loadReadingToday(){
+  const { data, error } = await sb.from('reading_sessions')
+    .select('minutes').eq('user_id', USER.id).eq('date', HABIT_DATE);
+  readingMinutesToday = error ? 0 : (data||[]).reduce((a,s)=>a+(+s.minutes||0),0);
+  renderReadingCard();
+  await checkReadingHabitComplete();
+}
+
+function renderReadingCard(){
+  const el = document.getElementById('reading-mins-display');
+  if(!el) return;
+  const pct = Math.min(100, Math.round((readingMinutesToday/READING_GOAL_MIN)*100));
+  const reached = readingMinutesToday >= READING_GOAL_MIN;
+  el.textContent = readingMinutesToday;
+  el.style.color = reached ? 'var(--teal)' : 'var(--white)';
+  const barEl = document.getElementById('reading-bar-fill');
+  if(barEl){ barEl.style.width = pct+'%'; barEl.style.background = reached ? 'var(--teal)' : 'rgba(44,212,196,.5)'; }
+  const pctEl = document.getElementById('reading-pct');
+  if(pctEl) pctEl.textContent = reached ? 'Goal hit ✓' : pct+'% of goal';
+  const lblEl = document.getElementById('reading-streak-lbl');
+  if(lblEl){
+    const inProgress = readingItems.filter(i=>i.status==='in_progress').length;
+    lblEl.textContent = inProgress ? `${inProgress} in progress` : '';
+  }
+}
+
+// Mirrors toggleHabit()'s persistence exactly (localStorage + habit_log
+// upsert against the viewed HABIT_DATE, not hardcoded to TODAY, so
+// backfilling a past day's reading via the date nav credits that day, not
+// today) — deliberately NOT reusing the generic autoCompleteHabit() helper
+// since that one always writes TODAY regardless of what day is on screen.
+async function checkReadingHabitComplete(){
+  if(readingMinutesToday < READING_GOAL_MIN || habitState['reading']) return;
+  habitState['reading'] = true;
+  renderHabits();
+  try{ localStorage.setItem(`jpt_habits_${USER.id}_${HABIT_DATE}`, JSON.stringify(habitState)); }catch(e){}
+  try{
+    await sb.from('habit_log').upsert({
+      user_id: USER.id, date: HABIT_DATE, habit_name: 'reading', completed: true
+    }, { onConflict: 'user_id,date,habit_name' });
+  }catch(e){}
+  const h = getHabits().find(h=>h.key==='reading');
+  showToast('✓ '+(h?.name||'Reading'));
+  await earnXP('habit', 'reading', 10);
+  const allH = getHabits();
+  if(allH.every(hh=>habitState[hh.key])) await earnXP('habits_all', HABIT_DATE, 75);
+  await checkPerfectDay();
+}
+
+function openLogReadingSession(){
+  const sel = document.getElementById('log-reading-item-select');
+  if(sel){
+    sel.innerHTML = '<option value="__new__">+ New item…</option>' +
+      readingItems.filter(i=>i.status!=='completed'&&i.status!=='abandoned')
+        .map(i=>`<option value="${i.id}">${escHtml(i.title)}</option>`).join('');
+  }
+  toggleLogReadingNewFields(readingItems.filter(i=>i.status!=='completed'&&i.status!=='abandoned').length===0);
+  document.getElementById('log-reading-mins').value = '';
+  document.getElementById('log-reading-notes').value = '';
+  document.getElementById('log-reading-new-title').value = '';
+  document.getElementById('log-reading-new-author').value = '';
+  document.getElementById('log-reading-modal').style.display = 'flex';
+}
+function closeLogReadingSession(){
+  document.getElementById('log-reading-modal').style.display = 'none';
+}
+function toggleLogReadingNewFields(show){
+  const wrap = document.getElementById('log-reading-new-fields');
+  if(wrap) wrap.style.display = show ? 'block' : 'none';
+}
+
+async function submitReadingSession(){
+  const sel = document.getElementById('log-reading-item-select');
+  const minutes = parseInt(document.getElementById('log-reading-mins').value, 10);
+  if(!Number.isFinite(minutes) || minutes <= 0){ showToast('Enter minutes first'); return; }
+  const notes = document.getElementById('log-reading-notes').value.trim();
+  let itemId = sel ? sel.value : '__new__';
+
+  if(itemId === '__new__'){
+    const title = document.getElementById('log-reading-new-title').value.trim();
+    if(!title){ showToast('Title required for a new item'); return; }
+    const author = document.getElementById('log-reading-new-author').value.trim();
+    const { data, error } = await sb.from('reading_items').insert({
+      user_id: USER.id, title, author: author||null, type: 'book',
+      status: 'in_progress', date_started: TODAY
+    }).select('id').single();
+    if(error){ showToast('Save failed — try again'); return; }
+    itemId = data.id;
+  }
+
+  const { error: sessErr } = await sb.from('reading_sessions').insert({
+    user_id: USER.id, item_id: itemId, date: HABIT_DATE, minutes, notes: notes||null
+  });
+  if(sessErr){ showToast('Save failed — try again'); return; }
+  await sb.from('reading_items').update({ updated_at: new Date().toISOString() }).eq('id', itemId);
+
+  closeLogReadingSession();
+  showToast(`+${minutes} min logged`);
+  await loadLibrary();
+  await loadReadingToday();
+}
+
+async function initLibrary(){ await loadLibrary(); }
+
+async function loadLibrary(){
+  const list = document.getElementById('library-list');
+  if(list) list.innerHTML = skeletonRows(3);
+  const { data: items, error } = await sb.from('reading_items')
+    .select('*').eq('user_id', USER.id).order('updated_at', { ascending: false });
+  if(error){
+    if(list) list.innerHTML = '<div class="card" style="padding:20px;text-align:center;color:var(--dim);font-size:12px">Couldn\'t load your library — try again.</div>';
+    return;
+  }
+  const { data: sessions } = await sb.from('reading_sessions')
+    .select('item_id,minutes').eq('user_id', USER.id);
+  const minutesByItem = {};
+  (sessions||[]).forEach(s=>{ minutesByItem[s.item_id] = (minutesByItem[s.item_id]||0) + (+s.minutes||0); });
+  readingItems = (items||[]).map(it=>({ ...it, totalMinutes: minutesByItem[it.id]||0 }));
+  renderLibraryStats();
+  renderLibrary();
+}
+
+function renderLibraryStats(){
+  const el = document.getElementById('library-stats');
+  if(!el) return;
+  const completed = readingItems.filter(i=>i.status==='completed').length;
+  const inProgress = readingItems.filter(i=>i.status==='in_progress').length;
+  const totalHrs = Math.round(readingItems.reduce((a,i)=>a+i.totalMinutes,0)/6)/10;
+  el.innerHTML = `
+    <div class="card" style="flex:1;padding:12px;text-align:center">
+      <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--teal)">${inProgress}</div>
+      <div style="font-size:10px;color:var(--dim);margin-top:2px">Reading</div>
+    </div>
+    <div class="card" style="flex:1;padding:12px;text-align:center">
+      <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--teal)">${completed}</div>
+      <div style="font-size:10px;color:var(--dim);margin-top:2px">Completed</div>
+    </div>
+    <div class="card" style="flex:1;padding:12px;text-align:center">
+      <div style="font-family:var(--D);font-size:22px;font-weight:900;color:var(--teal)">${totalHrs}h</div>
+      <div style="font-size:10px;color:var(--dim);margin-top:2px">Total time</div>
+    </div>`;
+}
+
+function setLibraryFilter(f){
+  libraryFilter = f;
+  document.querySelectorAll('.lib-filter-btn').forEach(b=>b.classList.toggle('sel', b.dataset.filter===f));
+  renderLibrary();
+}
+
+function renderLibrary(){
+  const list = document.getElementById('library-list');
+  if(!list) return;
+  const filtered = libraryFilter==='all' ? readingItems : readingItems.filter(i=>i.status===libraryFilter);
+  if(!filtered.length){
+    list.innerHTML = '<div class="card" style="padding:20px;text-align:center;color:var(--dim);font-size:12px">Nothing here yet — add what you\'re reading or studying.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(it=>`
+    <div class="card" style="padding:14px;margin-bottom:8px;cursor:pointer" onclick="openLibraryItem('${it.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="min-width:0">
+          <div style="font-family:var(--B);font-weight:700;font-size:14px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(it.title)}</div>
+          <div style="font-size:11px;color:var(--dim);margin-top:2px">${escHtml(it.author||'')}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">${escHtml(it.type)}</div>
+          <div style="font-size:11px;color:var(--dim);margin-top:4px">${it.totalMinutes} min</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openAddLibraryItem(){
+  document.getElementById('lib-add-title').value = '';
+  document.getElementById('lib-add-author').value = '';
+  document.getElementById('lib-add-category').value = '';
+  document.getElementById('lib-add-type').value = 'book';
+  document.getElementById('add-library-modal').style.display = 'flex';
+  document.getElementById('lib-add-title').focus();
+}
+function closeAddLibraryItem(){
+  document.getElementById('add-library-modal').style.display = 'none';
+}
+async function saveNewLibraryItem(){
+  const title = document.getElementById('lib-add-title').value.trim();
+  if(!title){ showToast('Title required'); return; }
+  const author = document.getElementById('lib-add-author').value.trim();
+  const type = document.getElementById('lib-add-type').value;
+  const category = document.getElementById('lib-add-category').value.trim();
+  const { error } = await sb.from('reading_items').insert({
+    user_id: USER.id, title, author: author||null, type, category: category||null,
+    status: 'in_progress', date_started: TODAY
+  });
+  if(error){ showToast('Save failed — try again'); return; }
+  closeAddLibraryItem();
+  showToast('Added to Library');
+  await loadLibrary();
+}
+
+function openLibraryItem(id){
+  const it = readingItems.find(i=>i.id===id);
+  if(!it) return;
+  _libraryOpenItemId = id;
+  document.getElementById('lib-detail-title').textContent = it.title;
+  document.getElementById('lib-detail-meta').textContent = [it.author, it.type, it.category].filter(Boolean).join(' · ');
+  document.getElementById('lib-detail-mins').textContent = it.totalMinutes + ' min logged';
+  document.getElementById('lib-detail-complete-btn').style.display = it.status==='completed' ? 'none' : 'block';
+  document.getElementById('lib-session-mins').value = '';
+  document.getElementById('lib-session-notes').value = '';
+  document.getElementById('lib-session-history').innerHTML = 'Loading…';
+  loadItemSessions(id);
+  document.getElementById('library-detail-modal').style.display = 'flex';
+}
+function closeLibraryItem(){
+  document.getElementById('library-detail-modal').style.display = 'none';
+  _libraryOpenItemId = null;
+}
+
+async function loadItemSessions(itemId){
+  const wrap = document.getElementById('lib-session-history');
+  const { data, error } = await sb.from('reading_sessions')
+    .select('*').eq('item_id', itemId).order('date', { ascending: false });
+  if(!wrap) return;
+  if(error){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = (data||[]).map(s=>
+    `<div style="font-size:11px;color:var(--muted);padding:6px 0;border-top:1px solid var(--border)">${s.date} — ${s.minutes} min${s.notes?' · '+escHtml(s.notes):''}</div>`
+  ).join('') || '<div style="font-size:11px;color:var(--dim);padding:6px 0">No sessions logged yet.</div>';
+}
+
+async function logSessionForOpenItem(){
+  const itemId = _libraryOpenItemId;
+  if(!itemId) return;
+  const minutes = parseInt(document.getElementById('lib-session-mins').value, 10);
+  if(!Number.isFinite(minutes) || minutes <= 0){ showToast('Enter minutes first'); return; }
+  const notes = document.getElementById('lib-session-notes').value.trim();
+  const { error } = await sb.from('reading_sessions').insert({
+    user_id: USER.id, item_id: itemId, date: HABIT_DATE, minutes, notes: notes||null
+  });
+  if(error){ showToast('Save failed — try again'); return; }
+  await sb.from('reading_items').update({ updated_at: new Date().toISOString() }).eq('id', itemId);
+  showToast(`+${minutes} min logged`);
+  document.getElementById('lib-session-mins').value = '';
+  document.getElementById('lib-session-notes').value = '';
+  await loadLibrary();
+  await loadReadingToday();
+  loadItemSessions(itemId);
+  const it = readingItems.find(i=>i.id===itemId);
+  if(it) document.getElementById('lib-detail-mins').textContent = it.totalMinutes + ' min logged';
+}
+
+async function markLibraryItemComplete(){
+  const itemId = _libraryOpenItemId;
+  if(!itemId) return;
+  if(!await confirmDialog('Mark this as finished?')) return;
+  const { error } = await sb.from('reading_items')
+    .update({ status: 'completed', date_finished: TODAY }).eq('id', itemId);
+  if(error){ showToast('Save failed'); return; }
+  await earnXP('reading_complete', itemId, 25);
+  showToast('✓ Marked complete — nice work');
+  closeLibraryItem();
+  await loadLibrary();
+}
+
 /* ── NAV ── */
 function switchTab(tab){
   // Events/Admin are position:fixed, full-screen, z-index:500 overlays
@@ -3309,7 +3723,7 @@ function switchTab(tab){
     closeDmList();
     closePostThread();
   }
-  const overflowTabs = ['coach','lab','move','future-self','looksmax'];
+  const overflowTabs = ['coach','lab','move','future-self','looksmax','library'];
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.getElementById('bn-more-btn')?.classList.toggle('active', overflowTabs.includes(tab));
   document.querySelectorAll('.sidebar-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
@@ -3325,6 +3739,7 @@ function switchTab(tab){
   }
   if(tab==='progress') { setTimeout(()=>renderMilestones(), 50); }
   if(tab==='move') { setTimeout(()=>initMove(), 50); return; }
+  if(tab==='library') { setTimeout(()=>initLibrary(), 50); return; }
   if(tab==='looksmax') { setTimeout(()=>{ renderLooksmax(); renderShoppingList(); }, 50); return; }
   if(tab==='community') { setTimeout(()=>initCommunity(), 50); return; }
   if(tab==='coach') { setTimeout(()=>{ resumeCoachSession(); renderCoachSuggestedPrompts(); }, 50); }
@@ -4979,6 +5394,7 @@ function shiftHabitDate(delta){
   HABIT_DATE = nd;
   todaySteps = stepsHistory[HABIT_DATE] || 0;
   renderStepsCard();
+  loadReadingToday();
   initHabits();
 }
 
@@ -5125,6 +5541,8 @@ function renderHabits(){
   document.getElementById('habits-bar').style.width=`${(done/allH.length)*100}%`;
   const restoreWrap = document.getElementById('habits-restore-wrap');
   if(restoreWrap) restoreWrap.style.display = (OB.hidden_habits?.length) ? 'block' : 'none';
+  const weekBtn = document.getElementById('habits-week-btn');
+  if(weekBtn) weekBtn.style.display = USER?.id === JP_USER_ID ? '' : 'none';
 
   const list=document.getElementById('habits-list');
   let allHabits=allH;
@@ -5531,6 +5949,52 @@ function renderProgrammeCalendar(){
     </div>`);
   }
   el.innerHTML = rows.join('');
+}
+
+function openHabitsCalendar(){
+  document.getElementById('habits-calendar-modal').style.display = 'flex';
+  renderHabitsWeekCalendar();
+}
+function closeHabitsCalendar(){
+  document.getElementById('habits-calendar-modal').style.display = 'none';
+}
+
+// Read-only preview of the whole week's habit load, JP-only (base habits
+// have no day-gating for anyone else, so a calendar wouldn't show non-JP
+// users anything a flat list doesn't already). Deliberately does NOT touch
+// OB.custom_habits/habitState — that stays exclusively "today", owned by
+// applyJPRealProtocol(); this just re-runs the same days/requiresItems
+// check for all 7 real weekdays at once instead of just effectiveTodayName().
+function renderHabitsWeekCalendar(){
+  const el = document.getElementById('habits-week-list');
+  if(!el || USER?.id !== JP_USER_ID) return;
+  const todayHabits = getHabits(); // hidden-filtered base + today's already-gated custom habits
+  // getHabits() prefixes every custom-habit key with 'custom_' (see its own
+  // `const key = 'custom_'+ch.key`) — match that here too, or this Set never
+  // matches anything and baseHabits silently doubles every custom habit.
+  const customKeys = new Set(JP_CUSTOM_HABITS.map(h=>'custom_'+h.key));
+  const baseHabits = todayHabits.filter(h=>!customKeys.has(h.key)); // base minus hidden — unconditionally daily for everyone
+  const owned = new Set(OB.owned_items || []);
+  const todayLabel = effectiveTodayName();
+
+  el.innerHTML = JP_WEEKDAY_NAMES.map(dayName=>{
+    const customForDay = JP_CUSTOM_HABITS.filter(h=>{
+      const unlocked = !h.requiresItems || h.requiresItems.every(k=>owned.has(k));
+      return h.days.includes(dayName) && unlocked;
+    });
+    const all = [...baseHabits, ...customForDay];
+    const isToday = dayName === todayLabel;
+    return `<div style="border:1px solid ${isToday?'var(--teal)':'var(--border)'};margin-bottom:6px">
+      <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
+        style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer">
+        <span style="font-size:12px;font-family:var(--B);color:${isToday?'var(--teal)':'var(--white)'}">${dayName}${isToday?' · Today':''}</span>
+        <span style="font-size:11px;color:var(--dim)">${all.length} habit${all.length===1?'':'s'}</span>
+      </div>
+      <div style="display:none;padding:0 12px 10px">
+        ${all.map(h=>`<div style="font-size:11px;color:var(--muted);padding:3px 0;border-top:1px solid var(--border)">${escHtml(h.name)}</div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // This week's PRs — _pbData holds ALL-TIME max weight per exercise with the
@@ -7043,6 +7507,10 @@ async function uploadProgressPhoto(file, angle){
   if(error?.code==='42P01' || error?.code==='PGRST205'){ renderProgressPhotosSetupCard(); return; }
   if(error){ showToast('Save failed — try again'); return; }
   showToast('Photo added');
+  // "Take Progress Photos" only exists as a habit for JP (JP_CUSTOM_HABITS) —
+  // guarded so other users' habit_log doesn't pick up a key that isn't part
+  // of their displayed list.
+  if(USER?.id === JP_USER_ID) autoCompleteHabit('progress_photos');
   loadProgressPhotos();
 }
 
@@ -9441,6 +9909,12 @@ async function loadOnboardingData() {
 // to real days. Removed entirely — JP now resolves exactly like every
 // other user, real calendar weekday, no rotation, no drift possible.)
 const JP_WEEKDAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+// Populated by applyJPRealProtocol() (called once at login/boot for JP's
+// account, well before any UI could read this) — hoisted to module scope,
+// unlike the OB.custom_habits it feeds, so the weekly calendar preview
+// (renderHabitsWeekCalendar()) can read the raw day/requiresItems shape for
+// all 7 days at once instead of only "today"'s already-filtered result.
+let JP_CUSTOM_HABITS = [];
 // The one function every "what day is it, for plan/nutrition/mobility
 // purposes" call site should use — real calendar weekday for everyone,
 // including JP.
@@ -9517,7 +9991,7 @@ function applyJPRealProtocol() {
   // `days` holds real weekday LABELS (JP_WEEKDAY_NAMES) — JP resolves
   // "today" the same way every other user does now (see effectiveDayName()
   // above), no rotation, so a day label here means that actual calendar day.
-  const JP_CUSTOM_HABITS = [
+  JP_CUSTOM_HABITS = [
     { key: 'make_bed',         name: 'Make Bed / Tidy Room',        desc: 'One fully-finished task before anything else — real behavioural-science basis (keystone habit: momentum + lower activation energy for the rest of the day), not tidiness for its own sake. First 5 min after waking.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
     { key: 'morning_mobility', name: 'Morning Mobility Block',      desc: 'Hip flexor hold 90s each side + dead bug 2×8 (daily core, before any axial loading) plus a rotating day-specific focus tied to what you\'re training — see the Move tab for today\'s exact focus. ~10 min, right after wake, before breakfast.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
     { key: 'smit',             name: 'Single Most Important Task',  desc: 'Identify the one task that actually moves revenue before anything else pulls your attention — ~08:00-08:15. Without this, busywork crowds out the thing that matters.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
@@ -9525,35 +9999,42 @@ function applyJPRealProtocol() {
     { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Tuesday (Lower A plyo), Thursday (Sprint Day), Friday (Lower B plyo).', days: ['Tuesday','Thursday','Friday'], time:'Pre-Training', priority:true },
     { key: 'pretrain_warmup',  name: 'Pre-Training Warm-Up',        desc: 'Dynamic warm-up before lifting — see the mobility card on the Train tab for today\'s exact drills.', days: ['Monday','Wednesday','Saturday'], time:'Pre-Training', priority:true },
     { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], time:'Post-Training', priority:false },
-    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, chin tucks — 10 min, evening, same every day (real 1-3cm functional height payoff, needs daily consistency to work) — plus a rotating day-specific focus on top, see the Move tab for today\'s exact addition.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:true },
+    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, chin tucks — 10 min, evening (real 1-3cm functional height payoff) — plus a rotating day-specific focus on top, see the Move tab for today\'s exact addition. Off on Sunday — the one day everything else in the plan already backs off too.', days: JP_WEEKDAY_NAMES.filter(d=>d!=='Sunday'), time:'Evening', priority:true },
     { key: 'morning_focus',    name: 'Morning Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Morning Mobility Core — see the Move tab for today\'s exact stretches.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
     { key: 'evening_focus',    name: 'Evening Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Postural Protocol — see the Move tab for today\'s exact stretches. No separate item on Saturday (Yoga Flow/NSDR already covers that slot).', days: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'], time:'Evening', priority:false },
-    { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work.', days: JP_WEEKDAY_NAMES, time:'Post-Training', priority:true },
+    { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work. Unlocked once creatine monohydrate is owned (see Shopping List).', requiresItems:['creatine_monohydrate'], days: JP_WEEKDAY_NAMES, time:'Post-Training', priority:true },
     { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
-    { key: 'prebed_stack',     name: 'Pre-Bed Stack',               desc: 'Magnesium glycinate 200mg + L-theanine 200mg, 21:00 — sleep quality, feeds directly into the recovery/height/muscle levers.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
-    { key: 'nsdr_yoga',        name: 'NSDR / Yoga',                 desc: 'NSDR (guided relaxation, dopamine reset) or actual yoga/flexibility practice — either counts for now. Worth a dedicated pass to build this out properly since you want to explore yoga further.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:true },
-    { key: 'voice_practice',   name: 'Voice Practice',              desc: '5-8 min: diaphragmatic breathing, 5-10 yawns (laryngeal tension release), 1-2 min reading aloud in a deliberately breathier tone, 1 min reading with controlled/reduced pitch variation.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
     { key: 'skincare_am',      name: 'AM Skincare',                 desc: 'Splash face with lukewarm water. Take a pea-to-dime amount of raw or manuka honey (UMF 10+ if you have it), massage into damp skin in circular motions for 30-60 sec — focus on the T-zone and anywhere oily. Rinse fully with warm water (check hairline/jaw for leftover honey), pat dry, don’t rub. While skin is still slightly damp, apply moisturiser (hemp seed oil, rosehip oil, or the tallow/honey/beeswax balm). Then: brush eyebrows into shape with a spoolie (dry, or a touch of clear brow gel for hold). Eye squeeze with resistance: fingers gently at the outer corners holding skin taut (not tugging), close eyes tightly for a few reps — resistance is meant to let the muscle work without the skin creasing into a fold. Unproven for lasting change, same evidence tier as other facial exercises here; keep it gentle given how thin the skin is in that area.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
     { key: 'skincare_pm',      name: 'PM Skincare',                 desc: 'Honey cleanse: pea-to-dime amount of raw or manuka honey, massage into damp skin 30-60 sec, rinse warm, pat dry. Moisturise (hemp seed oil, rosehip oil, or tallow/honey/beeswax balm), hyaluronic acid sealed underneath.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
-    { key: 'eyelash_care',     name: 'Eyelash Care',                desc: 'Nightly: castor or rosemary oil along the lash line (base of upper lashes, avoid direct eye contact). Daily: curl at the base (not tips) 1-2x for a natural curve; mascara applied mid-lash-to-tip (not at the base/waterline), one coat, twist the wand out rather than pumping it (pumping dries the product and speeds up bacterial growth), de-clump with a clean spoolie/finger; remove gently before bed every time — soak a pad and hold a few seconds, don\'t scrub. Every 4-6 weeks: trim 2-5mm off the outer-corner lashes (dry, not wet), replace the mascara tube outright regardless of how much is left, check the curler\'s rubber pad and replace if hardened/cracked.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'eyelash_care',     name: 'Eyelash Care',                desc: 'Unlocked once eyelash oil is owned (see Shopping List). Nightly: castor or rosemary oil along the lash line (base of upper lashes, avoid direct eye contact). Daily: curl at the base (not tips) 1-2x for a natural curve; mascara applied mid-lash-to-tip (not at the base/waterline), one coat, twist the wand out rather than pumping it (pumping dries the product and speeds up bacterial growth), de-clump with a clean spoolie/finger; remove gently before bed every time — soak a pad and hold a few seconds, don\'t scrub. Every 4-6 weeks: trim 2-5mm off the outer-corner lashes (dry, not wet), replace the mascara tube outright regardless of how much is left, check the curler\'s rubber pad and replace if hardened/cracked.', requiresItems:['eyelash_oil'], days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'eyebrow_care',     name: 'Eyebrow Care',                desc: 'Weekly tweeze right after a shower — only clear strays outside your natural shape (below the arch, between brows, past the tail), plucked in the direction of growth, never thinning the main body. Trim any individual hairs that grow noticeably longer than the rest with fine scissors — shorten, don\'t pluck. Shape check: start above the inner eye/nostril edge, arch peak above the outer iris, tail on the diagonal from nostril through outer eye corner. Dye separately every 3-4 weeks: patch test 24-48h before first use, barrier cream around the brow, apply per product timing, remove with a damp pad.', days: ['Sunday'], time:'Anytime', priority:false },
     { key: 'hygiene_habits',   name: 'Face Hygiene Habits',         desc: 'Conscious awareness: stop touching your face through the day. Post-exercise: plain lukewarm/cool water rinse only — not a full cleanser, your AM/PM skincare already covers that and a 3rd full cleanse risks over-cleansing/rebound oil. Use a fresh, soft face towel (separate from body towel) each time — pat dry, never rub.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'bedding_laundry',  name: 'Bedding Laundry',             desc: 'Wash bedsheets weekly — hottest water your fabric allows, fragrance-free detergent, full dry, no fabric softener. Wash pillowcase weekly: if silk, cool water + gentle/mild detergent, no bleach or softener, air dry (not tumble dry) — factor the extra care time into whether weekly is realistic for silk vs. rotating in a cotton one.', days: ['Sunday'], time:'Anytime', priority:false },
     { key: 'towel_care',       name: 'Face Towel Wash',             desc: 'Wash/replace face towel — microfiber or soft cotton (not bamboo — the "antibacterial" marketing claim is largely degraded by the chemical processing bamboo fabric goes through). Hot water wash, fragrance-free detergent, full dry every time, no fabric softener (reduces absorbency).', days: ['Sunday','Wednesday'], time:'Anytime', priority:false },
-    { key: 'hair_care',        name: 'Hair Care (No-Shampoo)',       desc: 'Daily: scalp massage a few minutes (real evidence — Koyama 2016 — for increased thickness over time via mechanical stretch on dermal papilla cells), gentle detangling with a wide-tooth comb from ends up (not root-to-tip), never dry-force through tangles. No co-wash/plant cleanser (removed at your request 7 Sep 2026) — be aware this reopens the buildup/scalp-health tradeoff (Malassezia yeast feeding on accumulated oil can worsen dandruff), worth revisiting if you notice scalp issues. NEVER baking soda/ACV "no-poo" — pH mismatch (baking soda ~9, hair/scalp ~4.5-5.5) genuinely damages the cuticle despite the natural reputation. Weekly: egg yolk mask — real lecithin/protein/fatty-acid conditioning benefit, rinse with cool/lukewarm water only (hot water cooks the egg in your hair). Minimize heat styling, avoid tight hairstyles pulling the hairline (real traction alopecia risk), silk pillowcase already covers the friction-reduction angle. Trim every 8-12 weeks — counterintuitive but correct: removes split ends before they travel up the shaft, preserves more length over time than skipping trims. Growth rate/max length is mostly genetic — the actual lever here is minimizing breakage, not stimulating faster growth.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
-    { key: 'eye_bags',         name: 'Eye Bags / Dark Circles',      desc: 'Puffiness (fluid, reversible): already covered by elevated-head sleeping, cold spoons, topical caffeine, lymphatic drainage, and reduced sodium/alcohol elsewhere in this protocol. Dark circles: never rub/scratch the area (repeat mechanical irritation risks post-inflammatory hyperpigmentation, on top of the wrinkle risk already flagged); sunglasses as a targeted UV addition since sunscreen often under-applies right at the lash line; if seasonal allergies ever apply, manage those directly — "allergic shiners" (dark circles from allergy-driven congestion affecting local circulation) is a real, named phenomenon, not an eye-cream problem. Eye-specific low-concentration retinol is a real option if wanting to go further (thickens skin/boosts collagen, reduces visible blood vessels) — must be eye-specific, standard face retinol is too aggressive for this skin. Structural fat-pad herniation (the literal "bag") is NOT fixable topically — age-related orbital septum weakening, only real fix is blepharoplasty, not relevant at 18 but nothing above prevents that specific future mechanism.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
-    { key: 'beard_growth',     name: 'Beard Growth',                 desc: 'Current style: goatee + mustache, cheeks/neck kept clean — chosen because growth is currently patchy (normal at 18, density keeps maturing through the mid-20s) and short/defined beats long/scraggly for minimizing visible patchiness. Myth correction: shaving frequency/technique has ZERO effect on growth rate, thickness, or density — shaving only removes hair above the skin, growth is entirely follicle-driven. Nightly: castor/emu/rosemary oil (rosemary diluted in jojoba or almond) on the goatee/mustache — real conditioning benefit, weak-to-no evidence of actual growth stimulation. Beard balm is conditioning, not growth. Twice weekly: derma stamp 0.5-1mm on the goatee/mustache area, alcohol-clean before AND after, cleanse face first, never share the tool, avoid active acne/broken skin. Most evidence-grounded item here: real mechanism (Dhurat 2013) for microneedling + topical minoxidil on scalp AGA — strongest-evidence version would pair with minoxidil, not natural oils, if wanting that later. Nutrition — whole food: zinc (oysters/beef/pumpkin seeds, cofactor for 5-alpha-reductase which drives beard growth via DHT), cysteine-rich protein (eggs/garlic/onions/Brussels sprouts/meat/fish) instead of "keratin." Reassess every 2-3 months whether a fuller style is becoming viable as density naturally improves — see `shaving` habit for the goatee/mustache trim + clean-area shave schedule.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'hair_care',        name: 'Hair Care (No-Shampoo)',       desc: 'Unlocked once a scalp massage tool is owned (see Shopping List). Daily: scalp massage a few minutes (real evidence — Koyama 2016 — for increased thickness over time via mechanical stretch on dermal papilla cells), gentle detangling with a wide-tooth comb from ends up (not root-to-tip), never dry-force through tangles. No co-wash/plant cleanser (removed at your request 7 Sep 2026) — be aware this reopens the buildup/scalp-health tradeoff (Malassezia yeast feeding on accumulated oil can worsen dandruff), worth revisiting if you notice scalp issues. NEVER baking soda/ACV "no-poo" — pH mismatch (baking soda ~9, hair/scalp ~4.5-5.5) genuinely damages the cuticle despite the natural reputation. Weekly: egg yolk mask — real lecithin/protein/fatty-acid conditioning benefit, rinse with cool/lukewarm water only (hot water cooks the egg in your hair). Minimize heat styling, avoid tight hairstyles pulling the hairline (real traction alopecia risk), silk pillowcase already covers the friction-reduction angle. Trim every 8-12 weeks — counterintuitive but correct: removes split ends before they travel up the shaft, preserves more length over time than skipping trims. Growth rate/max length is mostly genetic — the actual lever here is minimizing breakage, not stimulating faster growth.', requiresItems:['scalp_tool'], days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'beard_growth',     name: 'Beard Growth',                 desc: 'Unlocked once a derma stamp is owned (see Shopping List). Current style: goatee + mustache, cheeks/neck kept clean — chosen because growth is currently patchy (normal at 18, density keeps maturing through the mid-20s) and short/defined beats long/scraggly for minimizing visible patchiness. Myth correction: shaving frequency/technique has ZERO effect on growth rate, thickness, or density — shaving only removes hair above the skin, growth is entirely follicle-driven. Nightly: castor/emu/rosemary oil (rosemary diluted in jojoba or almond) on the goatee/mustache — real conditioning benefit, weak-to-no evidence of actual growth stimulation. Beard balm is conditioning, not growth. Twice weekly: derma stamp 0.5-1mm on the goatee/mustache area, alcohol-clean before AND after, cleanse face first, never share the tool, avoid active acne/broken skin. Most evidence-grounded item here: real mechanism (Dhurat 2013) for microneedling + topical minoxidil on scalp AGA — strongest-evidence version would pair with minoxidil, not natural oils, if wanting that later. Nutrition — whole food: zinc (oysters/beef/pumpkin seeds, cofactor for 5-alpha-reductase which drives beard growth via DHT), cysteine-rich protein (eggs/garlic/onions/Brussels sprouts/meat/fish) instead of "keratin." Reassess every 2-3 months whether a fuller style is becoming viable as density naturally improves — see `shaving` habit for the goatee/mustache trim + clean-area shave schedule.', requiresItems:['derma_stamp'], days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'shaving',          name: 'Shaving & Goatee/Mustache Trim', desc: 'Clean areas (cheeks/neck): shave every 2 days — sharp contrast between clean skin and the goatee/mustache is what makes the style read as deliberate rather than "haven\'t shaved." Technique: define the goatee/mustache boundary first with a detail trimmer or careful razor outline before shaving the surrounding area — neckline follows roughly where your head meets your neck when tilted back, don\'t shave too high under the jaw. Shave WITH the grain first (against-grain increases razor burn/ingrown hairs meaningfully at this frequency); a second gentle pass across (not against) the grain only if wanting closer. Prep: warm water/shower + actual shaving cream/gel, not dry. Aftercare: cool water rinse, alcohol-free balm/moisturiser. Replace blade every 5-7 shaves — a dulling blade is a bigger ingrown-hair risk than the shaving itself. Goatee/mustache itself: don\'t shave, trim every few days to weekly — trimmer with a guard for the goatee (consistent length), scissors for the mustache specifically (keep it above the lip line). Existing 1-2x/week exfoliation habit doubles as ingrown-hair prevention for the now-more-frequently-shaved zones.', days: ['Monday','Wednesday','Friday','Sunday'], time:'Morning', priority:false },
     { key: 'gut_meals',        name: 'Chew + Destress Before Meals',desc: 'Chew each mouthful thoroughly. A minute of slow breathing before eating if rushed/stressed.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'weekly_grooming',  name: 'Weekly Grooming Check',       desc: 'Postural self-photo (shoulder/hip/knee symmetry), swallow-pattern self-check.', days: ['Sunday'], time:'Anytime', priority:false },
     { key: 'oral_health',      name: 'Oral Health (Full Protocol)', desc: 'Unlocked once copper scraper + hydroxyapatite toothpaste + coconut oil are all owned (see Shopping List). AM: copper tongue scrape, floss, brush 2 min with hydroxyapatite toothpaste, spit don\'t rinse. Midday: coconut oil pulling 15-20 min (cold-pressed), spit in a bin not the sink, rinse, brush. PM: floss, brush with hydroxyapatite toothpaste, spit don\'t rinse. Fluoride-free by your choice — hydroxyapatite is the strongest evidence-based substitute (real, non-inferiority trial data) but narrows the gap rather than closing it; revisit fluoride at minimum the nighttime brush if a checkup ever flags rising cavity risk. Whitening strips (once owned): 1-2 week course a few times a year, brush/floss first, follow the product\'s exact timing, don\'t brush for 30-60 min after — UK products are capped at a much lower peroxide concentration than US ones (0.1% OTC vs up to 6% dentist-supervised).', requiresItems:['copper_scraper','hydroxyapatite_toothpaste','coconut_oil'], days: JP_WEEKDAY_NAMES, time:'Anytime', priority:true },
+    { key: 'progress_photos',  name: 'Take Progress Photos',        desc: 'Face (front + both profiles) and physique (front/side/back, relaxed) — same time every day, 1:30pm, for genuinely comparable photos. Auto-ticks the moment you upload one in Progress → Photos.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
   ];
   const todayDayLabel = effectiveTodayName();
-  const jpCustomKeys = new Set(JP_CUSTOM_HABITS.map(h => h.key));
-  OB.custom_habits = (OB.custom_habits || []).filter(h => !jpCustomKeys.has(h.key));
+  // Real bug, found live: filtering by "key currently in JP_CUSTOM_HABITS"
+  // only strips entries this array STILL defines — a habit removed from
+  // the array (or renamed) leaves its old OB.custom_habits copy behind
+  // forever, since its key is no longer one the filter recognizes as
+  // "protocol-managed". Confirmed live: retired Looksmax habits (moved to
+  // JP_LOOKSMAX_EXERCISES) and habits just removed from this array were
+  // still showing up in getHabits() as permanent zombies. Fix: user-added
+  // custom habits (addCustomHabit()) always get a 'ch_'-prefixed key —
+  // filter on THAT instead of on current JP_CUSTOM_HABITS membership, so
+  // anything protocol-managed (past or present) gets wiped and rebuilt
+  // fresh every time, while a genuine user-added habit is never touched.
+  OB.custom_habits = (OB.custom_habits || []).filter(h => h.key?.startsWith('ch_'));
   JP_CUSTOM_HABITS.forEach(h => {
     // requiresItems: habit only goes live once every listed JP_SHOPPING_LIST
     // item key is in OB.owned_items — see JP_SHOPPING_LIST/toggleOwnedItem().
@@ -9582,14 +10063,15 @@ const JP_SHOPPING_LIST = [
   { key:'ha_serum', name:'Hyaluronic Acid Serum', cost:'£8-15', tier:2 },
   { key:'ltheanine', name:'L-Theanine', cost:'~£10', tier:2, note:'Glycine dropped — bone broth/gelatin covers it, see memory file.' },
   { key:'copper_scraper', name:'Copper Tongue Scraper', cost:'£5-10', tier:2, unlocks:'oral_health' },
-  { key:'scalp_tool', name:'Scalp Massage Tool', cost:'£5-10', tier:2, note:'Supports the already-active hair_care habit.' },
-  { key:'derma_stamp', name:'Derma Stamp', cost:'£10-20', tier:2, note:'Supports the already-active beard_growth habit.' },
+  { key:'scalp_tool', name:'Scalp Massage Tool', cost:'£5-10', tier:2, unlocks:'hair_care' },
+  { key:'derma_stamp', name:'Derma Stamp', cost:'£10-20', tier:2, unlocks:'beard_growth' },
   { key:'exfoliant', name:'Chemical Exfoliant (AHA/BHA)', cost:'£8-15', tier:3 },
-  { key:'eyelash_oil', name:'Eyelash Oil (castor/rosemary + carrier)', cost:'£10-15', tier:3, note:'Supports the already-active eyelash_care habit.' },
-  { key:'beard_oil', name:'Beard Oils (castor/emu/rosemary + carrier)', cost:'£15-25', tier:3, note:'Supports the already-active beard_growth habit.' },
+  { key:'eyelash_oil', name:'Eyelash Oil (castor/rosemary + carrier)', cost:'£10-15', tier:3, unlocks:'eyelash_care' },
+  { key:'beard_oil', name:'Beard Oils (castor/emu/rosemary + carrier)', cost:'£15-25', tier:3, note:'Supports the derma-stamp-gated beard_growth habit once unlocked.' },
   { key:'whitening_strips', name:'Whitening Strips', cost:'£20-35', tier:3, unlocks:'oral_health' },
   { key:'kojic_vitc', name:'Kojic Acid + Vitamin C', cost:'£10-20', tier:3 },
   { key:'inversion_table', name:'Inversion Table', cost:'£50-150', tier:'roadmap', unlocks:'inversion_table' },
+  { key:'creatine_monohydrate', name:'Creatine Monohydrate', cost:'£10-20', tier:1, unlocks:'creatine' },
 ];
 
 function renderShoppingList(){
