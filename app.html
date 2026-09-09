@@ -1570,11 +1570,11 @@
       <div id="milestones-wrap" class="reveal-on-scroll"></div>
       <div class="divider"></div>
 
-      <div class="sh-label" style="margin-bottom:6px">Check-in</div>
+      <div class="sh-label" style="margin-bottom:6px">Daily Check-in</div>
       <p class="sh-sub" id="checkin-sub" style="margin-bottom:14px"></p>
       <div id="checkin-week-stats" class="reveal-on-scroll" style="margin-bottom:14px"></div>
       <div id="checkin-weight-wrap" style="margin-bottom:14px">
-        <div class="score-label" style="margin-bottom:8px">Weight & body fat this week</div>
+        <div class="score-label" style="margin-bottom:8px">Weight & body fat today</div>
         <div style="display:flex;gap:8px">
           <input id="checkin-weight-input" type="number" step="0.1" placeholder="Weight (kg)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
           <input id="checkin-bf-input" type="number" step="0.1" placeholder="Body fat (%)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
@@ -7333,34 +7333,28 @@ function pickBoolScore(key, val){
   });
 }
 
-// Real weekly gate: compares the most recent progress_checkins row against
-// this week's Monday. A match means this week is already locked in — show
-// the saved values read-only and hide the submit button — anything older
-// means a fresh check-in is due. Also carries the JP-vs-Standard-member
-// subtitle branch since this runs every time Progress loads.
+// Daily gate: compares the most recent progress_checkins row against
+// today's date. A match means today is already locked in — show the saved
+// values read-only and hide the submit button — anything older means a
+// fresh check-in is due. Also carries the JP-vs-Standard-member subtitle
+// branch since this runs every time Progress loads.
 function renderCheckinGate(latestRow){
   const subEl = document.getElementById('checkin-sub');
   if(subEl){
     subEl.textContent = USER?.id === JP_USER_ID
-      ? 'Rate each area for this week — used to track your own trend, not reviewed by anyone.'
-      : 'Rate each area for this week — JP reviews these.';
+      ? 'Quick morning check — used to track your own trend, not reviewed by anyone.'
+      : 'Quick morning check — JP reviews these.';
   }
-  const weekStart = _mondayOfWeek(_localDateStr());
+  const today = _localDateStr();
   const btn = document.getElementById('checkin-btn');
   const dueEl = document.getElementById('checkin-next-due');
-  const doneThisWeek = !!latestRow && latestRow.date === weekStart;
-  renderScoreGrid(doneThisWeek ? latestRow : null);
-  if(btn) btn.style.display = doneThisWeek ? 'none' : '';
+  const doneToday = !!latestRow && latestRow.date === today;
+  renderScoreGrid(doneToday ? latestRow : null);
+  if(btn) btn.style.display = doneToday ? 'none' : '';
   const weightWrap = document.getElementById('checkin-weight-wrap');
-  if(weightWrap) weightWrap.style.display = doneThisWeek ? 'none' : '';
+  if(weightWrap) weightWrap.style.display = doneToday ? 'none' : '';
   if(dueEl){
-    if(doneThisWeek){
-      const next = new Date(weekStart+'T00:00:00'); next.setDate(next.getDate()+7);
-      const nextLabel = new Date(_localDateStr(next)+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-      dueEl.textContent = `Locked in for this week — next check-in due ${nextLabel}`;
-    } else {
-      dueEl.textContent = '';
-    }
+    dueEl.textContent = doneToday ? 'Logged for today — next check-in tomorrow morning' : '';
   }
 }
 
@@ -7371,7 +7365,7 @@ async function submitCheckin(){
   CHECK_METRICS.forEach(m=>{
     scores[m.key] = m.type==='bool' ? (_boolScores[m.key] ?? null) : +document.getElementById('score-'+m.key).value;
   });
-  const weekStart = _mondayOfWeek(_localDateStr());
+  const today = _localDateStr();
 
   // Weight/body fat now lives on the check-in card (moved here from its own
   // Body Composition input, per JP request) — stored in OB.bodyCompLog same
@@ -7381,10 +7375,9 @@ async function submitCheckin(){
   const w = +document.getElementById('checkin-weight-input')?.value || null;
   const bf = +document.getElementById('checkin-bf-input')?.value || null;
   if(w || bf){
-    const logDate = _localDateStr();
     OB.bodyCompLog = OB.bodyCompLog || [];
-    OB.bodyCompLog = OB.bodyCompLog.filter(e=>e.date!==logDate); // one entry per day, latest wins
-    OB.bodyCompLog.push({ date: logDate, weight_kg: w, body_fat: bf });
+    OB.bodyCompLog = OB.bodyCompLog.filter(e=>e.date!==today); // one entry per day, latest wins
+    OB.bodyCompLog.push({ date: today, weight_kg: w, body_fat: bf });
     OB.bodyCompLog.sort((a,b)=>a.date.localeCompare(b.date));
     if(OB.bodyCompLog.length > 90) OB.bodyCompLog = OB.bodyCompLog.slice(-90);
     localStorage.setItem('jpt_ob', JSON.stringify(OB));
@@ -7392,7 +7385,7 @@ async function submitCheckin(){
     renderBodyCompChart();
   }
 
-  const{error}=await sb.from('progress_checkins').upsert({user_id:USER.id,date:weekStart,...scores});
+  const{error}=await sb.from('progress_checkins').upsert({user_id:USER.id,date:today,...scores});
   btn.disabled=false;btn.textContent='Submit Check-in';
   if(error){
     // A table-missing error would already show up via loadCheckinHistory()'s
@@ -7431,7 +7424,7 @@ function renderCheckinColumnSetupCard(){
 async function loadCheckinHistory(){
   const{data,error}=await sb.from('progress_checkins')
     .select('*').eq('user_id',USER.id).gte('date',APP_LAUNCH_DATE)
-    .order('date',{ascending:false}).limit(6);
+    .order('date',{ascending:false}).limit(14);
   const hist=document.getElementById('checkin-history');
   if(error?.code==='42P01' || error?.code==='PGRST205'){
     renderCheckinGate(null);
@@ -7487,7 +7480,7 @@ CREATE POLICY "Users manage own checkins"
     const avg = Math.round(avgVals.reduce((a,b)=>a+b,0)/avgVals.length*10)/10;
     return `
     <div class="checkin-row">
-      <div class="checkin-date">Wk ${new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+      <div class="checkin-date">${new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
       <div class="checkin-dots">
         ${CHECK_METRICS.map(m=>{ const d=dotFor(m,r); return `<div class="dot" style="background:${d.color}" title="${m.label}: ${d.label}"></div>`; }).join('')}
       </div>
