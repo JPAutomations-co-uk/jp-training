@@ -5494,6 +5494,7 @@ const JP_LOOKSMAX_EXERCISES = [
   { key:'smirk_mew', name:'Smirk Hold + Mewing', group:'Face & Jaw', type:'sets_duration', targetSets:12, targetVal:7, note:'Range 10-15 sets, 5-10 sec — stacks mewing, which is separately unsupported for structural change.' },
   { key:'mpr_jaw', name:'MPR (Jaw Resistance)', group:'Face & Jaw', type:'sets_reps', targetSets:8, targetVal:20, note:'Hands prayer-position under jaw, open/close against resistance. Loads TMJ directly — keep resistance moderate.' },
   { key:'chewing_bias', name:'Chewing-Side Bias', group:'Face & Jaw', type:'checkbox', note:'70/30 toward your weaker-side masseter today. Stop if jaw pain/clicking.' },
+  { key:'mastic_gum_chewing', name:'Mastic Gum Chewing', group:'Face & Jaw', type:'duration_min', targetVal:15, requiresItems:['mastic_gum'], note:'Unlocked once mastic gum is owned (see Shopping List). Much harder resistance than regular gum — real mechanism (more chewing force = more masseter work, same principle as MPR/Chewing-Side Bias), but evidence here is anecdotal/community-reported, not clinically trialled specifically for mastic gum. For fixing asymmetry specifically, bias most or all of the time toward your weaker-side masseter (see Chewing-Side Bias) rather than splitting evenly — even chewing on both sides just keeps growing them together, symmetry needs the weaker side to catch up. Stop if jaw pain/clicking — this is a harder resistance than MPR, easier to overdo.' },
   { key:'expression_training', name:'Expression Training (Mirror)', group:'Face & Jaw', type:'duration_min', targetVal:5, note:'Practice controlled expressions in the mirror — resting face, smile, brow raise, surprise — deliberately, not just pulling faces. Builds conscious awareness/control over your own expressions, not a structural-change exercise; same evidence tier as the rest of this list.' },
   // Neck & Spine
   { key:'dead_hangs', name:'Dead Hangs', group:'Neck & Spine', type:'sets_duration', targetSets:5, targetVal:30 },
@@ -5503,10 +5504,10 @@ const JP_LOOKSMAX_EXERCISES = [
   { key:'foam_rolling', name:'Thoracic Foam Rolling', group:'Neck & Spine', type:'duration_min', targetVal:7, note:'Thoracic spine (T4-T12) only — avoid direct lumbar rolling.' },
   { key:'inversion', name:'Inversion Table', group:'Neck & Spine', type:'duration_min', targetVal:1.5, requiresItems:['inversion_table'], note:'Start partial angle (20-30°), not full 180°. Stop if dizziness/headache/vision changes.' },
   // Circulation & Skin
-  { key:'gua_sha', name:'Gua Sha', group:'Circulation & Skin', type:'sets_reps', targetSets:3, targetVal:20, note:'Jawline, cheeks, temples — one set per area, with oil/moisturiser.' },
+  { key:'gua_sha', name:'Gua Sha', group:'Circulation & Skin', type:'sets_reps', targetSets:3, targetVal:20, requiresItems:['gua_sha_tool'], note:'Unlocked once a gua sha tool is owned (see Shopping List). Jawline, cheeks, temples — one set per area, with oil/moisturiser.' },
   { key:'lymphatic', name:'Lymphatic Drainage Sequence', group:'Circulation & Skin', type:'checkbox', note:'Neck/collarbone → under-jaw → behind ears → face outward → repeat neck/collarbone.' },
   // Mouth & Tongue
-  { key:'hard_mewing', name:'Hard Mewing (All Day)', group:'Mouth & Tongue', type:'checkbox', note:'Firm tongue-to-palate pressure held throughout the day. Real trade-off kept at your request — see memory file for the tooth-movement risk.' },
+  { key:'hard_mewing', name:'Hard Mewing', group:'Mouth & Tongue', type:'sets_duration', targetSets:20, targetVal:5, note:'Start here, progressively overload from there (more sets, or longer holds) once 20×5s feels easy. Switched from all-day sustained pressure to discrete timed sets per your request — meaningfully lower cumulative tooth-movement exposure than holding it all day (20×5s = 100 sec/session vs. hours of continuous pressure), though the underlying trade-off is the same mechanism, still kept at your request — see memory file for the tooth-movement risk.' },
   { key:'mewing_swallow', name:'Mewing While Swallowing', group:'Mouth & Tongue', type:'sets_reps', targetSets:1, targetVal:10, note:'Tongue to palate during the swallow, not against teeth.' },
   { key:'humming_jaw', name:'Humming + Jaw Resistance', group:'Mouth & Tongue', type:'sets_duration', targetSets:5, targetVal:15, note:'Low pitch, light-moderate jaw resistance.' },
 ];
@@ -10096,6 +10097,8 @@ const JP_SHOPPING_LIST = [
   { key:'kojic_vitc', name:'Kojic Acid + Vitamin C', cost:'£10-20', tier:3 },
   { key:'inversion_table', name:'Inversion Table', cost:'£50-150', tier:'roadmap', unlocks:'inversion_table' },
   { key:'creatine_monohydrate', name:'Creatine Monohydrate', cost:'£10-20', tier:1, unlocks:'creatine' },
+  { key:'gua_sha_tool', name:'Gua Sha Tool', cost:'£5-15', tier:1, unlocks:'gua_sha' },
+  { key:'mastic_gum', name:'Mastic Gum (Chios)', cost:'£10-20', tier:1, unlocks:'mastic_gum_chewing' },
 ];
 
 function renderShoppingList(){
