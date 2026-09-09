@@ -5055,27 +5055,67 @@ async function loadHabitStreaks(){
 // work, jaw/neck/spine routines, circulation techniques, mouth/tongue
 // practice) lives here instead of the flat Habits list, mirroring how gym
 // training already gets its own Train tab rather than sitting in Habits.
-// Same underlying tracking as everything else (habitState/habit_log/streaks/
-// XP via toggleHabit()) — this only changes WHERE these are displayed, not
-// how completion is stored, so nothing about persistence needed to change.
-// NOTE: getHabits() prefixes every OB.custom_habits key with 'custom_'
-// (see the `const key = 'custom_'+ch.key;` line in getHabits() above) —
-// established convention already used throughout HABIT_TIME_LOOKUP. These
-// sets/groups must use the SAME prefixed form, since they filter h.key from
-// getHabits() output, not the raw JP_CUSTOM_HABITS key. (Bug fixed 8 Sep
-// 2026: these were originally unprefixed, so the filter never matched
-// anything — Looksmax showed empty and nothing was actually excluded from
-// Habits either, since both filters silently failed the same way.)
-const JP_LOOKSMAX_KEYS = new Set(['custom_facial_exercises','custom_positive_tilt','custom_mpr','custom_hyoid_training','custom_chewing_split','custom_gua_sha_face','custom_lymphatic_drainage','custom_spine_decompression','custom_tongue_posture','custom_inversion_table']);
-const JP_LOOKSMAX_GROUPS = {
-  'Face & Jaw': ['custom_facial_exercises','custom_positive_tilt','custom_mpr','custom_chewing_split'],
-  'Neck & Spine': ['custom_spine_decompression','custom_inversion_table'],
-  'Circulation & Skin': ['custom_gua_sha_face','custom_lymphatic_drainage'],
-  'Mouth & Tongue': ['custom_tongue_posture','custom_hyoid_training'],
-};
+// Looksmax exercises (rebuilt 9 Sep 2026) — replaces the old model of one
+// grouped habit checkbox + a text blob under "why →" per group. Each
+// movement here is its own trackable, loggable, progressively-overloadable
+// line: a target (sets × reps, sets × duration, or plain duration), an
+// input for what was actually done today, and a last-logged comparison —
+// deliberately NOT a full parallel of the Train tab's PB-detection/draft/
+// chart system (most of these are isometric holds or bodyweight reps with
+// no external weight, so "overload" means more duration/reps/sets over
+// time, not added kg — a much smaller feature than the gym system needs).
+// Logs to OB.looksmax_log[date][key], NOT habitState/habit_log — a separate
+// system since these store numeric sets/reps/duration, not a boolean.
+// Behavioural/technique items with no natural rep count (chewing bias,
+// hard mewing, the lymphatic sequence) stay type:'checkbox' rather than
+// forcing a false sets/reps structure onto them.
+const JP_LOOKSMAX_EXERCISES = [
+  // Face & Jaw
+  { key:'smile_hold', name:'Max-Effort Smile Hold', group:'Face & Jaw', type:'sets_duration', targetSets:10, targetVal:5, note:'AM + PM — log combined sets across both sessions. Real trade-off: repeated max-effort expression is the same mechanism that deepens nasolabial folds over time (same as squinting/crow\'s feet) — kept at your request despite the flag.' },
+  { key:'cheek_push', name:'Cheek Pushes (Resistance)', group:'Face & Jaw', type:'sets_reps', targetSets:1, targetVal:10, note:'5 sec hold each rep. Real muscle, mirrors actual facial-rehab resistance technique.' },
+  { key:'smirk_mew', name:'Smirk Hold + Mewing', group:'Face & Jaw', type:'sets_duration', targetSets:12, targetVal:7, note:'Range 10-15 sets, 5-10 sec — stacks mewing, which is separately unsupported for structural change.' },
+  { key:'unilateral_cheek', name:'Unilateral Cheek Resistance', group:'Face & Jaw', type:'sets_reps', targetSets:1, targetVal:10, note:'Each side, 5 sec hold.' },
+  { key:'occipitalis', name:'Occipitalis Pull', group:'Face & Jaw', type:'sets_reps', targetSets:1, targetVal:15, note:'5 sec hold. Most anatomically grounded exercise here — real galea aponeurotica connection to brow position.' },
+  { key:'auricularis', name:'Ear Pull (Auricularis Posterior)', group:'Face & Jaw', type:'sets_reps', targetSets:1, targetVal:15, note:'5 sec hold. Many people have little/no voluntary control here — normal anatomy, not failed effort.' },
+  { key:'mpr_jaw', name:'MPR (Jaw Resistance)', group:'Face & Jaw', type:'sets_reps', targetSets:8, targetVal:20, note:'Hands prayer-position under jaw, open/close against resistance. Loads TMJ directly — keep resistance moderate.' },
+  { key:'chewing_bias', name:'Chewing-Side Bias', group:'Face & Jaw', type:'checkbox', note:'70/30 toward your weaker-side masseter today. Stop if jaw pain/clicking.' },
+  // Neck & Spine
+  { key:'dead_hangs', name:'Dead Hangs', group:'Neck & Spine', type:'sets_duration', targetSets:5, targetVal:30 },
+  { key:'cat_cow', name:'Cat-Cow', group:'Neck & Spine', type:'sets_reps', targetSets:2, targetVal:12, note:'AM + PM.' },
+  { key:'childs_pose', name:"Child's Pose", group:'Neck & Spine', type:'sets_duration', targetSets:3, targetVal:45, note:'Through the day.' },
+  { key:'foam_rolling', name:'Thoracic Foam Rolling', group:'Neck & Spine', type:'duration_min', targetVal:7, note:'Thoracic spine (T4-T12) only — avoid direct lumbar rolling.' },
+  { key:'inversion', name:'Inversion Table', group:'Neck & Spine', type:'duration_min', targetVal:1.5, requiresItems:['inversion_table'], note:'Start partial angle (20-30°), not full 180°. Stop if dizziness/headache/vision changes.' },
+  // Circulation & Skin
+  { key:'gua_sha', name:'Gua Sha', group:'Circulation & Skin', type:'sets_reps', targetSets:3, targetVal:20, note:'Jawline, cheeks, temples — one set per area, with oil/moisturiser.' },
+  { key:'lymphatic', name:'Lymphatic Drainage Sequence', group:'Circulation & Skin', type:'checkbox', note:'Neck/collarbone → under-jaw → behind ears → face outward → repeat neck/collarbone.' },
+  // Mouth & Tongue
+  { key:'hard_mewing', name:'Hard Mewing (All Day)', group:'Mouth & Tongue', type:'checkbox', note:'Firm tongue-to-palate pressure held throughout the day. Real trade-off kept at your request — see memory file for the tooth-movement risk.' },
+  { key:'mewing_swallow', name:'Mewing While Swallowing', group:'Mouth & Tongue', type:'sets_reps', targetSets:1, targetVal:10, note:'Tongue to palate during the swallow, not against teeth.' },
+  { key:'humming_jaw', name:'Humming + Jaw Resistance', group:'Mouth & Tongue', type:'sets_duration', targetSets:5, targetVal:15, note:'Low pitch, light-moderate jaw resistance.' },
+];
+function looksmaxTargetLabel(ex){
+  if(ex.type==='sets_duration') return `${ex.targetSets} sets × ${ex.targetVal} sec`;
+  if(ex.type==='sets_reps') return ex.targetSets>1 ? `${ex.targetSets} sets × ${ex.targetVal} reps` : `${ex.targetVal} reps`;
+  if(ex.type==='duration_min') return `${ex.targetVal} min`;
+  return '';
+}
+function looksmaxLastLogged(key){
+  const log = OB.looksmax_log || {};
+  const dates = Object.keys(log).filter(d=>d!==HABIT_DATE && log[d][key]).sort().reverse();
+  if(!dates.length) return null;
+  return { date: dates[0], entry: log[dates[0]][key] };
+}
+function looksmaxLastLabel(ex){
+  const last = looksmaxLastLogged(ex.key);
+  if(!last) return 'Last: —';
+  const e = last.entry;
+  if(ex.type==='checkbox') return e.done ? `Last done: ${last.date}` : 'Last: —';
+  if(ex.type==='duration_min') return `Last: ${e.val}min (${last.date})`;
+  return `Last: ${e.sets||0}×${e.val||0} (${last.date})`;
+}
 
 function renderHabits(){
-  const allH=getHabits().filter(h=>!JP_LOOKSMAX_KEYS.has(h.key));
+  const allH=getHabits();
   const done=allH.filter(h=>habitState[h.key]).length;
   document.getElementById('habits-count').textContent=`${done} / ${allH.length}`;
   document.getElementById('habits-bar').style.width=`${(done/allH.length)*100}%`;
@@ -5129,51 +5169,85 @@ function renderHabits(){
 
 function renderLooksmax(){
   if (USER?.id !== JP_USER_ID) return;
-  const allLM = getHabits().filter(h=>JP_LOOKSMAX_KEYS.has(h.key));
-  const done = allLM.filter(h=>habitState[h.key]).length;
+  const owned = new Set(OB.owned_items || []);
+  const visible = JP_LOOKSMAX_EXERCISES.filter(ex => !ex.requiresItems || ex.requiresItems.every(k=>owned.has(k)));
+  const todayLog = (OB.looksmax_log && OB.looksmax_log[HABIT_DATE]) || {};
+  const isExDone = ex => { const e = todayLog[ex.key]; if(!e) return false; return ex.type==='checkbox' ? !!e.done : ((e.sets>0) || (e.val>0)); };
+  const done = visible.filter(isExDone).length;
   const countEl = document.getElementById('looksmax-count');
   const barEl = document.getElementById('looksmax-bar');
-  if (countEl) countEl.textContent = `${done} / ${allLM.length}`;
-  if (barEl) barEl.style.width = allLM.length ? `${(done/allLM.length)*100}%` : '0%';
+  if (countEl) countEl.textContent = `${done} / ${visible.length}`;
+  if (barEl) barEl.style.width = visible.length ? `${(done/visible.length)*100}%` : '0%';
 
   const list = document.getElementById('looksmax-list');
   if (!list) return;
-  if (!allLM.length){
+  if (!visible.length){
     list.innerHTML = `<p style="font-size:12px;color:var(--dim);text-align:center;padding:16px 0">No looksmax exercises today.</p>`;
     return;
   }
-  const byKey = Object.fromEntries(allLM.map(h=>[h.key,h]));
-  list.innerHTML = Object.entries(JP_LOOKSMAX_GROUPS).map(([group,keys])=>{
-    const items = keys.map(k=>byKey[k]).filter(Boolean);
-    if (!items.length) return '';
-    return `
+  const groups = {};
+  visible.forEach(ex => (groups[ex.group] = groups[ex.group] || []).push(ex));
+  list.innerHTML = Object.entries(groups).map(([group, items]) => `
     <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:14px 0 6px">${escHtml(group)}</div>
-    ${items.map(h=>{
-      const streak = habitStreaks[h.key] || 0;
+    ${items.map(ex => {
+      const e = todayLog[ex.key] || {};
       return `
-    <div class="habit-item ${habitState[h.key]?'done':''}" data-key="${h.key}" onclick="toggleHabit('${h.key}')">
-      <div class="habit-check">
-        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <div class="habit-info">
-        <div style="display:flex;align-items:center;gap:6px">
-          <div class="habit-name">${escHtml(h.name)}</div>
-          ${streak>1?`<span style="font-size:10px;color:#fb923c">🔥${streak}</span>`:''}
+      <div class="habit-item ${isExDone(ex)?'done':''}" data-key="lm-${ex.key}" style="cursor:default">
+        <div class="habit-check" style="${ex.type==='checkbox'?'cursor:pointer':'opacity:.5'}" ${ex.type==='checkbox'?`onclick="event.stopPropagation();toggleLooksmaxCheckbox('${ex.key}')"`:''}>
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <button onclick="event.stopPropagation();toggleHabitWhy(this)" style="background:none;border:none;color:var(--dim);font-size:10px;padding:0;cursor:pointer;font-family:var(--B)">why →</button>
-        <div class="habit-desc" style="display:none">${escHtml(h.desc)}</div>
+        <div class="habit-info">
+          <div class="habit-name">${escHtml(ex.name)}</div>
+          <div style="font-size:10px;color:var(--dim)">${ex.type!=='checkbox' ? escHtml(looksmaxTargetLabel(ex))+' · ' : ''}${escHtml(looksmaxLastLabel(ex))}</div>
+          <button onclick="event.stopPropagation();toggleHabitWhy(this)" style="background:none;border:none;color:var(--dim);font-size:10px;padding:0;cursor:pointer;font-family:var(--B)">why →</button>
+          <div class="habit-desc" style="display:none">${escHtml(ex.note||'')}</div>
+        </div>
+        ${ex.type!=='checkbox' ? `
+        <div style="display:flex;gap:4px;align-items:center" onclick="event.stopPropagation()">
+          ${ex.type!=='duration_min' ? `<input class="set-field" type="number" min="0" placeholder="sets" style="width:44px" value="${e.sets||''}" oninput="saveLooksmaxLog('${ex.key}','sets',this.value)">` : ''}
+          <input class="set-field" type="number" min="0" step="${ex.type==='duration_min'?'0.5':'1'}" placeholder="${ex.type==='duration_min'?'min':(ex.type==='sets_duration'?'sec':'reps')}" style="width:50px" value="${e.val||''}" oninput="saveLooksmaxLog('${ex.key}','val',this.value)">
+        </div>` : ''}
       </div>
-      ${HABIT_PROTOCOLS[h.key]?`<button class="habit-expand" onclick="event.stopPropagation();showHabitDetail('${h.key}')">Guide →</button>`:''}
-      <button class="habit-del" style="color:var(--teal);font-size:11px;padding:4px 6px" onclick="event.stopPropagation();editCustomHabit('${h.key}')">Edit</button><button class="habit-del" onclick="event.stopPropagation();removeCustomHabit('${h.key}')">×</button>
-    </div>
-  `;}).join('')}`;
-  }).join('');
+    `;}).join('')}
+  `).join('');
+}
+
+async function saveLooksmaxLog(key, field, value){
+  OB.looksmax_log = OB.looksmax_log || {};
+  OB.looksmax_log[HABIT_DATE] = OB.looksmax_log[HABIT_DATE] || {};
+  const entry = OB.looksmax_log[HABIT_DATE][key] = OB.looksmax_log[HABIT_DATE][key] || {};
+  const wasLogged = (entry.sets>0 || entry.val>0);
+  entry[field] = +value || 0;
+  localStorage.setItem('jpt_uid', USER.id);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await saveOB(); } catch(e){ /* localStorage already saved */ }
+  const nowLogged = (entry.sets>0 || entry.val>0);
+  // Deliberately no full renderLooksmax() re-render here — that would tear
+  // down and rebuild the input DOM on every keystroke, kicking focus out
+  // mid-type. Just flip the row's "done" styling directly instead.
+  if(!wasLogged && nowLogged){
+    await earnXP('habit', 'looksmax_'+key, 10);
+    const row = document.querySelector(`.habit-item[data-key="lm-${key}"]`);
+    if(row) row.classList.add('done');
+  }
+}
+async function toggleLooksmaxCheckbox(key){
+  OB.looksmax_log = OB.looksmax_log || {};
+  OB.looksmax_log[HABIT_DATE] = OB.looksmax_log[HABIT_DATE] || {};
+  const entry = OB.looksmax_log[HABIT_DATE][key] = OB.looksmax_log[HABIT_DATE][key] || {};
+  const wasDone = !!entry.done;
+  entry.done = !wasDone;
+  localStorage.setItem('jpt_uid', USER.id);
+  localStorage.setItem('jpt_ob', JSON.stringify(OB));
+  try { await saveOB(); } catch(e){ /* localStorage already saved */ }
+  if(!wasDone) await earnXP('habit', 'looksmax_'+key, 10);
+  renderLooksmax();
 }
 
 async function toggleHabit(key){
   const _d = HABIT_DATE;
   habitState[key]=!habitState[key];
-  if (JP_LOOKSMAX_KEYS.has(key)) renderLooksmax(); else renderHabits();
+  renderHabits();
   // Targeted (not "every done item on every render") pop feedback — only
   // the item that was just actually toggled on animates, via a fresh
   // querySelector after the re-render rather than baking the animation
@@ -6620,14 +6694,20 @@ const HABIT_TIME_LOOKUP = {
   custom_breathing_protocol:'Anytime', custom_meal_plan:'Evening',
   custom_pretrain_warmup:'Pre-Training', custom_morning_focus:'Morning', custom_evening_focus:'Evening',
   custom_voice_practice:'Morning', custom_skincare_am:'Morning', custom_skincare_pm:'Evening',
-  custom_tongue_posture:'Anytime', custom_gut_meals:'Anytime', custom_weekly_grooming:'Anytime',
-  custom_eyelash_care:'Evening', custom_eyebrow_care:'Anytime', custom_facial_exercises:'Morning',
-  custom_spine_decompression:'Anytime', custom_hygiene_habits:'Anytime',
+  custom_gut_meals:'Anytime', custom_weekly_grooming:'Anytime',
+  custom_eyelash_care:'Evening', custom_eyebrow_care:'Anytime',
+  custom_hygiene_habits:'Anytime',
   custom_bedding_laundry:'Anytime', custom_towel_care:'Anytime',
-  custom_chewing_split:'Anytime', custom_gua_sha_face:'Anytime', custom_mpr:'Anytime',
-  custom_positive_tilt:'Anytime', custom_lymphatic_drainage:'Anytime',
   custom_hair_care:'Evening', custom_eye_bags:'Morning', custom_beard_growth:'Evening',
-  custom_hyoid_training:'Anytime', custom_shaving:'Morning',
+  custom_shaving:'Morning',
+  // Note: the 9 former grouped Looksmax habits (facial_exercises,
+  // spine_decompression, chewing_split, gua_sha_face, hyoid_training, mpr,
+  // positive_tilt, lymphatic_drainage, tongue_posture) plus inversion_table
+  // no longer route through JP_CUSTOM_HABITS/habitState at all — replaced
+  // 9 Sep 2026 by JP_LOOKSMAX_EXERCISES, its own per-exercise sets/reps/
+  // duration logger with OB.looksmax_log persistence, since a single
+  // habit-checkbox-plus-text-blob per group couldn't represent individual
+  // trackable, progressively-overloadable movements. See renderLooksmax().
 };
 
 /* ════════════════════════════════════════
@@ -9400,26 +9480,16 @@ function applyJPRealProtocol() {
     { key: 'skincare_pm',      name: 'PM Skincare',                 desc: 'Cleanse, moisturise, hyaluronic acid sealed under moisturiser.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'eyelash_care',     name: 'Eyelash Care',                desc: 'Nightly: castor or rosemary oil along the lash line (base of upper lashes, avoid direct eye contact). Daily: curl at the base (not tips) 1-2x for a natural curve; mascara applied mid-lash-to-tip (not at the base/waterline), one coat, twist the wand out rather than pumping it (pumping dries the product and speeds up bacterial growth), de-clump with a clean spoolie/finger; remove gently before bed every time — soak a pad and hold a few seconds, don\'t scrub. Every 4-6 weeks: trim 2-5mm off the outer-corner lashes (dry, not wet), replace the mascara tube outright regardless of how much is left, check the curler\'s rubber pad and replace if hardened/cracked.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'eyebrow_care',     name: 'Eyebrow Care',                desc: 'Weekly tweeze right after a shower — only clear strays outside your natural shape (below the arch, between brows, past the tail), plucked in the direction of growth, never thinning the main body. Trim any individual hairs that grow noticeably longer than the rest with fine scissors — shorten, don\'t pluck. Shape check: start above the inner eye/nostril edge, arch peak above the outer iris, tail on the diagonal from nostril through outer eye corner. Dye separately every 3-4 weeks: patch test 24-48h before first use, barrier cream around the brow, apply per product timing, remove with a damp pad.', days: ['Sunday'], time:'Anytime', priority:false },
-    { key: 'facial_exercises', name: 'Zygomaticus Training',        desc: '5 exercises: (1) Pull mouth corners upward. (2) Max-effort smile hold, 5 sec, 10 sets AM + 10 sets PM. (3) Cheek pushes — fingers at mouth corners, smile against resistance, 10 slow reps, 5 sec hold each. (4) Smirk hold while mewing, 5-10 sec, 10-15 sets. (5) Unilateral — one side relaxed, other side smiles against opposing finger resistance, 10 reps each side, 5 sec hold. Real muscle (zygomaticus major/minor), and (3)/(5) mirror actual facial-rehab resistance technique. Unproven for changing resting/structural smile shape — visible role is dynamic, not static. (2) carries a real trade-off: repeated maximal-effort expression is the same mechanism that deepens nasolabial folds/expression lines over time (same principle as squinting and crow\'s feet) — kept at your explicit request despite the flag. (4) stacks mewing, which is separately unsupported for structural change.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
-    { key: 'spine_decompression', name: 'Spine Decompression',      desc: 'Dead hangs 5×30 sec. Cat-cow 10-15 reps, once morning + once evening. Child\'s pose 30-60 sec, 3x through the day. Back foam rolling 5-10 min — scope to the thoracic spine (T4-T12, rib-protected), avoid direct rolling on the lumbar spine or use very light pressure there. Note: cat-cow and dead hangs already appear in your rotating mobility content (Yoga Flow, Sat/Sun morning focus) at different volumes — this runs as a separate daily block until you decide whether to consolidate.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'hygiene_habits',   name: 'Face Hygiene Habits',         desc: 'Conscious awareness: stop touching your face through the day. Post-exercise: plain lukewarm/cool water rinse only — not a full cleanser, your AM/PM skincare already covers that and a 3rd full cleanse risks over-cleansing/rebound oil. Use a fresh, soft face towel (separate from body towel) each time — pat dry, never rub.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'bedding_laundry',  name: 'Bedding Laundry',             desc: 'Wash bedsheets weekly — hottest water your fabric allows, fragrance-free detergent, full dry, no fabric softener. Wash pillowcase weekly: if silk, cool water + gentle/mild detergent, no bleach or softener, air dry (not tumble dry) — factor the extra care time into whether weekly is realistic for silk vs. rotating in a cotton one.', days: ['Sunday'], time:'Anytime', priority:false },
     { key: 'towel_care',       name: 'Face Towel Wash',             desc: 'Wash/replace face towel — microfiber or soft cotton (not bamboo — the "antibacterial" marketing claim is largely degraded by the chemical processing bamboo fabric goes through). Hot water wash, fragrance-free detergent, full dry every time, no fabric softener (reduces absorbency).', days: ['Sunday','Wednesday'], time:'Anytime', priority:false },
-    { key: 'chewing_split',    name: 'Chewing-Side Check',           desc: 'Check-in: clench and feel which side of your jaw (masseter) is less developed. Bias chewing toward that weaker side, roughly a 70/30 split rather than favoring your natural/dominant side. Real mechanism — masseter is a real muscle, unilateral chewing habits are a documented cause of jaw/facial asymmetry — but the 70/30 ratio isn\'t from a specific study, just a sensible moderate starting point. Stop or ease off if you get any jaw pain or clicking on either side.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
-    { key: 'gua_sha_face',     name: 'Gua Sha',                      desc: 'Jawline, cheeks, and temples, pushing motions, with oil or moisturiser (always use a lubricant to reduce skin friction) — 20 reps each area. Thin evidence base, mostly anecdotal; genuinely low risk. Addresses soft-tissue puffiness/circulation, not underlying bone or muscle asymmetry — helps how one side looks on a given puffy day, not a lasting structural fix.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
-    { key: 'hyoid_training',   name: 'Hyoid Training',               desc: 'Chin tucks: no extra volume needed — already delivered by the daily Postural Protocol (2×10 reps), which covers the "20/day" target for real forward-head-posture reasons; hyoid-positioning claim itself stays unproven, same as when this first came up. Mewing while swallowing: 10 slow reps, tongue against palate during the swallow rather than pushing on teeth — genuinely legitimate, this is standard myofunctional-therapy/SLP practice technique, brief and controlled (different risk category from "hard mewing held all day," which stays excluded). Humming + jaw resistance: sit upright, low-pitch hum with light-moderate resistance on the jaw, 15 sec × 5 sets daily — humming is a real voice-therapy technique (resonant voice therapy), connects to the existing voice-practice habit; jaw resistance loads the TMJ similarly to MPR, keep it moderate and back off if uncomfortable. Hyoid-bone-repositioning claim overall stays unproven across all three, same standing caveat as the rest of this protocol.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
-    { key: 'mpr',              name: 'MPR (Jaw Resistance)',         desc: 'Hands together (prayer position) under the jaw, providing upward resistance — open and close your mouth against it. 20 reps × 8 sets. Loads the suprahyoid muscles (digastric, mylohyoid, geniohyoid) on opening and the jaw-elevators (masseter, temporalis) on closing — real muscle, and resisted suprahyoid strengthening is genuinely documented in dysphagia/swallowing rehabilitation literature (measured increases in muscle thickness/strength). Visible jawline/under-chin definition is driven more by submental fat and skin laxity than this muscle group\'s size, so don\'t expect a dramatic cosmetic change from it alone. Keep resistance moderate — this loads the TMJ directly, more than the cheek/eye exercises — back off if you get jaw clicking or discomfort.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
-    { key: 'positive_tilt',    name: 'Positive Tilt (Occipitalis)',  desc: 'Two exercises, frontalis kept relaxed throughout (avoids forehead wrinkling) — practice in front of a mirror: (1) Occipitalis: sit upright, focus on pulling the scalp backward, feel tightening at the back of the head, 5 sec hold × 15 reps daily. Real, learnable movement for most people, and genuinely connected to brow position via the galea aponeurotica (frontalis and occipitalis share this fibrous sheet as one functional muscle, occipitofrontalis) — the most anatomically grounded exercise in this protocol. (2) Auricularis posterior (corrected from "temporalis" in the source — temporalis is an unrelated jaw-closing muscle with no connection to the ears): pull ears back, palms applying slight assisting pressure to the head, 5 sec hold × 15 reps daily. Caveat: most people have little to no voluntary control over this largely vestigial muscle regardless of practice — if you can\'t feel actual ear movement, that\'s normal anatomy, not a failure of effort, and the hand-pressure version is really a passive scalp stretch rather than true muscular resistance in that case. Both: no evidence daily practice creates a lasting resting-state brow change, same as other facial exercises here — effect (if any) is most plausible during active contraction only.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
-    { key: 'lymphatic_drainage', name: 'Lymphatic Drainage',        desc: 'Light finger pressure (barely indenting skin — pain or marks means too hard), in sequence: (1) neck/collarbone strokes first — clears the actual drainage endpoint before moving fluid toward it, (2) under-jaw, (3) behind ears, (4) face itself working outward/downward toward those cleared points — forehead to temples, cheeks nose-to-ears, under-eyes very gently outward, (5) repeat neck/collarbone to finish. Different technique from gua sha: much lighter pressure, fingers not a tool, specific proximal-to-distal sequence. Real clinical basis (Vodder method, genuine evidence for post-surgical lymphedema) but for general de-puffing the evidence is modest/plausible rather than proven — same tier as gua sha. Skip over active skin infection or acutely swollen/tender nodes.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'hair_care',        name: 'Hair Care (No-Shampoo)',       desc: 'Daily: scalp massage a few minutes (real evidence — Koyama 2016 — for increased thickness over time via mechanical stretch on dermal papilla cells), gentle detangling with a wide-tooth comb from ends up (not root-to-tip), never dry-force through tangles. No co-wash/plant cleanser (removed at your request 7 Sep 2026) — be aware this reopens the buildup/scalp-health tradeoff (Malassezia yeast feeding on accumulated oil can worsen dandruff), worth revisiting if you notice scalp issues. NEVER baking soda/ACV "no-poo" — pH mismatch (baking soda ~9, hair/scalp ~4.5-5.5) genuinely damages the cuticle despite the natural reputation. Weekly: egg yolk mask — real lecithin/protein/fatty-acid conditioning benefit, rinse with cool/lukewarm water only (hot water cooks the egg in your hair). Minimize heat styling, avoid tight hairstyles pulling the hairline (real traction alopecia risk), silk pillowcase already covers the friction-reduction angle. Trim every 8-12 weeks — counterintuitive but correct: removes split ends before they travel up the shaft, preserves more length over time than skipping trims. Growth rate/max length is mostly genetic — the actual lever here is minimizing breakage, not stimulating faster growth.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'eye_bags',         name: 'Eye Bags / Dark Circles',      desc: 'Puffiness (fluid, reversible): already covered by elevated-head sleeping, cold spoons, topical caffeine, lymphatic drainage, and reduced sodium/alcohol elsewhere in this protocol. Dark circles: never rub/scratch the area (repeat mechanical irritation risks post-inflammatory hyperpigmentation, on top of the wrinkle risk already flagged); sunglasses as a targeted UV addition since sunscreen often under-applies right at the lash line; if seasonal allergies ever apply, manage those directly — "allergic shiners" (dark circles from allergy-driven congestion affecting local circulation) is a real, named phenomenon, not an eye-cream problem. Eye-specific low-concentration retinol is a real option if wanting to go further (thickens skin/boosts collagen, reduces visible blood vessels) — must be eye-specific, standard face retinol is too aggressive for this skin. Structural fat-pad herniation (the literal "bag") is NOT fixable topically — age-related orbital septum weakening, only real fix is blepharoplasty, not relevant at 18 but nothing above prevents that specific future mechanism.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
     { key: 'beard_growth',     name: 'Beard Growth',                 desc: 'Current style: goatee + mustache, cheeks/neck kept clean — chosen because growth is currently patchy (normal at 18, density keeps maturing through the mid-20s) and short/defined beats long/scraggly for minimizing visible patchiness. Myth correction: shaving frequency/technique has ZERO effect on growth rate, thickness, or density — shaving only removes hair above the skin, growth is entirely follicle-driven. Nightly: castor/emu/rosemary oil (rosemary diluted in jojoba or almond) on the goatee/mustache — real conditioning benefit, weak-to-no evidence of actual growth stimulation. Beard balm is conditioning, not growth. Twice weekly: derma stamp 0.5-1mm on the goatee/mustache area, alcohol-clean before AND after, cleanse face first, never share the tool, avoid active acne/broken skin. Most evidence-grounded item here: real mechanism (Dhurat 2013) for microneedling + topical minoxidil on scalp AGA — strongest-evidence version would pair with minoxidil, not natural oils, if wanting that later. Nutrition — whole food: zinc (oysters/beef/pumpkin seeds, cofactor for 5-alpha-reductase which drives beard growth via DHT), cysteine-rich protein (eggs/garlic/onions/Brussels sprouts/meat/fish) instead of "keratin." Reassess every 2-3 months whether a fuller style is becoming viable as density naturally improves — see `shaving` habit for the goatee/mustache trim + clean-area shave schedule.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'shaving',          name: 'Shaving & Goatee/Mustache Trim', desc: 'Clean areas (cheeks/neck): shave every 2 days — sharp contrast between clean skin and the goatee/mustache is what makes the style read as deliberate rather than "haven\'t shaved." Technique: define the goatee/mustache boundary first with a detail trimmer or careful razor outline before shaving the surrounding area — neckline follows roughly where your head meets your neck when tilted back, don\'t shave too high under the jaw. Shave WITH the grain first (against-grain increases razor burn/ingrown hairs meaningfully at this frequency); a second gentle pass across (not against) the grain only if wanting closer. Prep: warm water/shower + actual shaving cream/gel, not dry. Aftercare: cool water rinse, alcohol-free balm/moisturiser. Replace blade every 5-7 shaves — a dulling blade is a bigger ingrown-hair risk than the shaving itself. Goatee/mustache itself: don\'t shave, trim every few days to weekly — trimmer with a guard for the goatee (consistent length), scissors for the mustache specifically (keep it above the lip line). Existing 1-2x/week exfoliation habit doubles as ingrown-hair prevention for the now-more-frequently-shaved zones.', days: ['Monday','Wednesday','Friday','Sunday'], time:'Morning', priority:false },
-    { key: 'tongue_posture',   name: 'Hard Mewing (throughout day)',desc: 'Firm, active tongue pressure against the palate, maintained throughout the day (upgraded from passive resting posture at your request). Notice if you\'re mouth-breathing. Real trade-off, kept despite the flag: sustained forceful, uncalibrated tongue pressure held all day is a different risk category than gentle resting contact — teeth can be moved by forces as light as ~1.7g sustained over time, and the tongue can exert up to 500g, so hard pressure held for hours risks genuinely unplanned tooth movement, plus tongue fatigue and inadvertent jaw clenching. Going harder doesn\'t make mewing\'s structural bone-change claim more true for an adult — it stays unproven regardless of force or duration.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'gut_meals',        name: 'Chew + Destress Before Meals',desc: 'Chew each mouthful thoroughly. A minute of slow breathing before eating if rushed/stressed.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'weekly_grooming',  name: 'Weekly Grooming Check',       desc: 'Postural self-photo (shoulder/hip/knee symmetry), swallow-pattern self-check.', days: ['Sunday'], time:'Anytime', priority:false },
     { key: 'oral_health',      name: 'Oral Health (Full Protocol)', desc: 'Unlocked once copper scraper + hydroxyapatite toothpaste + coconut oil are all owned (see Shopping List). AM: copper tongue scrape, floss, brush 2 min with hydroxyapatite toothpaste, spit don\'t rinse. Midday: coconut oil pulling 15-20 min (cold-pressed), spit in a bin not the sink, rinse, brush. PM: floss, brush with hydroxyapatite toothpaste, spit don\'t rinse. Fluoride-free by your choice — hydroxyapatite is the strongest evidence-based substitute (real, non-inferiority trial data) but narrows the gap rather than closing it; revisit fluoride at minimum the nighttime brush if a checkup ever flags rising cavity risk. Whitening strips (once owned): 1-2 week course a few times a year, brush/floss first, follow the product\'s exact timing, don\'t brush for 30-60 min after — UK products are capped at a much lower peroxide concentration than US ones (0.1% OTC vs up to 6% dentist-supervised).', requiresItems:['copper_scraper','hydroxyapatite_toothpaste','coconut_oil'], days: JP_WEEKDAY_NAMES, time:'Anytime', priority:true },
-    { key: 'inversion_table',  name: 'Inversion Table',             desc: 'Unlocked once owned (see Shopping List). 1-2 min/day. Start with a partial angle (20-30°), not full 180° inversion immediately. Real mechanism (fuller axial traction than dead hangs alone), modest evidence specifically for people with diagnosed disc-related back pain — you don\'t have a diagnosed issue this treats, so this is a genuine "nice to have" layered on top of the dead hangs already in spine_decompression, not a gap without it. Skip/avoid if any dizziness, headache, or vision changes occur — stop and don\'t push through it.', requiresItems:['inversion_table'], days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
   ];
   const todayDayLabel = effectiveTodayName();
   const jpCustomKeys = new Set(JP_CUSTOM_HABITS.map(h => h.key));
