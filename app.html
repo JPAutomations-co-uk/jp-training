@@ -8065,18 +8065,28 @@ CREATE POLICY "Users manage own checkins"
     if(m.invert) v = 11 - v;
     return { color: sliderColor(v), label: r[m.key]||'–' };
   };
+  // Click a row to see the actual score behind each dot for that date —
+  // the dots' title="" tooltip already carried this, but that's hover-only
+  // and invisible on mobile. Same expand/collapse pattern already used
+  // elsewhere in this app (renderHabitsWeekCalendar()'s day rows).
   hist.innerHTML=data.map(r=>{
     const sliders = CHECK_METRICS.filter(m=>m.type==='slider');
     const avgVals = sliders.map(m=>{ const v=+r[m.key]||5; return m.invert?(11-v):v; });
     const avg = Math.round(avgVals.reduce((a,b)=>a+b,0)/avgVals.length*10)/10;
+    const detail = CHECK_METRICS.map(m=>{
+      const d = dotFor(m,r);
+      const valText = m.type==='bool' ? d.label : `${r[m.key] ?? '—'}/10`;
+      return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-top:1px solid var(--border)"><span style="color:var(--muted)">${escHtml(m.label)}</span><span style="color:var(--white)">${escHtml(String(valText))}</span></div>`;
+    }).join('');
     return `
-    <div class="checkin-row">
+    <div class="checkin-row" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'" style="cursor:pointer">
       <div class="checkin-date">${new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
       <div class="checkin-dots">
         ${CHECK_METRICS.map(m=>{ const d=dotFor(m,r); return `<div class="dot" style="background:${d.color}" title="${m.label}: ${d.label}"></div>`; }).join('')}
       </div>
       <div style="font-family:var(--D);font-size:20px;font-weight:900;color:var(--teal)">${avg}</div>
     </div>
+    <div style="display:none;padding:2px 14px 10px">${detail}</div>
   `;}).join('');
 }
 
