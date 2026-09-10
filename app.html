@@ -5510,8 +5510,6 @@ const JP_LOOKSMAX_EXERCISES = [
   { key:'expression_training', name:'Expression Training (Mirror)', group:'Face & Jaw', time:'Morning', type:'duration_min', targetVal:5, note:'Practice controlled expressions in the mirror — resting face, smile, brow raise, surprise — deliberately, not just pulling faces. Builds conscious awareness/control over your own expressions, not a structural-change exercise; same evidence tier as the rest of this list. Paired with AM Skincare — you\'re already at a mirror, zero extra friction.' },
   // Neck & Spine
   { key:'dead_hangs', name:'Dead Hangs', group:'Neck & Spine', time:'Morning', type:'sets_duration', targetSets:5, targetVal:30 },
-  { key:'chin_tucks', name:'Chin Tucks', group:'Neck & Spine', time:'Evening', type:'sets_reps', targetSets:2, targetVal:10, note:'5 sec hold each rep. Matches the volume already in your daily Postural Protocol (forward-head-posture correction) — logged here separately now so it actually gets progression tracking, which a bundled checkbox can\'t give you.' },
-  { key:'cat_cow', name:'Cat-Cow', group:'Neck & Spine', time:'Anytime', type:'sets_reps', targetSets:2, targetVal:12, note:'AM + PM.' },
   { key:'childs_pose', name:"Child's Pose", group:'Neck & Spine', time:'Anytime', type:'sets_duration', targetSets:3, targetVal:45, note:'Through the day.' },
   { key:'foam_rolling', name:'Thoracic Foam Rolling', group:'Neck & Spine', time:'Anytime', type:'duration_min', targetVal:7, note:'Thoracic spine (T4-T12) only — avoid direct lumbar rolling.' },
   { key:'inversion', name:'Inversion Table', group:'Neck & Spine', time:'Anytime', type:'duration_min', targetVal:1.5, requiresItems:['inversion_table'], note:'Start partial angle (20-30°), not full 180°. Stop if dizziness/headache/vision changes.' },
@@ -5520,8 +5518,6 @@ const JP_LOOKSMAX_EXERCISES = [
   { key:'lymphatic', name:'Lymphatic Drainage Sequence', group:'Circulation & Skin', time:'Morning', type:'checkbox', note:'Neck/collarbone → under-jaw → behind ears → face outward → repeat neck/collarbone. Paired with AM Skincare, same de-puffing logic as Gua Sha.' },
   // Mouth & Tongue
   { key:'hard_mewing', name:'Hard Mewing', group:'Mouth & Tongue', time:'Anytime', type:'sets_duration', targetSets:20, targetVal:5, note:'Start here, progressively overload from there (more sets, or longer holds) once 20×5s feels easy. Switched from all-day sustained pressure to discrete timed sets per your request — meaningfully lower cumulative tooth-movement exposure than holding it all day (20×5s = 100 sec/session vs. hours of continuous pressure), though the underlying trade-off is the same mechanism, still kept at your request — see memory file for the tooth-movement risk. Do as its own discrete session, not spread through the day, now that it\'s sets-based.' },
-  { key:'mewing_swallow', name:'Mewing While Swallowing', group:'Mouth & Tongue', time:'Anytime', type:'sets_reps', targetSets:1, targetVal:10, note:'Tongue to palate during the swallow, not against teeth. Practice this AT each meal specifically — free reps from your existing meal schedule, nothing to add.' },
-  { key:'humming_jaw', name:'Humming + Jaw Resistance', group:'Mouth & Tongue', time:'Anytime', type:'sets_duration', targetSets:5, targetVal:15, note:'Low pitch, light-moderate jaw resistance. Space away from MPR/Mastic Gum Chewing and away from meals — same TMJ-stacking caution.' },
 ];
 function looksmaxTargetLabel(ex){
   if(ex.type==='sets_duration') return `${ex.targetSets} sets × ${ex.targetVal} sec`;
@@ -9493,16 +9489,10 @@ const JP_MOBILITY_PLAN = {
   Monday: {
     warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
     staticStretch: { label: 'Chest/shoulders, 2×30-45s', drills: ['Doorway pec stretch', 'Cross-body rear delt', 'Overhead tricep', 'Anterior shoulder'] },
-    extras: [
-      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
-    ],
   },
   Tuesday: {
     warmup: { label: 'Lower/Explosive (10-12 min) — precedes plyometrics', drills: ['Walking hip circles ×10 each direction', 'Leg swings front-back ×10 each leg', 'Leg swings lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', 'Walking heel flicks 20m ×2', '2 build-up jumps @ 50%/75% effort'] },
     staticStretch: { label: 'Quads/hip flexors/glutes, 2×30-45s', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Hip abductor side-lying'] },
-    extras: [
-      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
-    ],
   },
   // Wednesday intentionally has no entry — full rest day, same as Sunday
   // (renderMobilityCard() bails gracefully on a missing day key). Reorganised
@@ -9510,23 +9500,14 @@ const JP_MOBILITY_PLAN = {
   Thursday: {
     warmup: { label: 'Upper (6-8 min)', drills: ['Arm circles ×10 each direction', 'Band pull-aparts ×15', 'Thoracic rotation ×10 each direction', 'Scapular push-ups ×10', 'Walking lunge + overhead reach ×8 each side', '2 build-up sets of first compound @ 50%/75%'] },
     staticStretch: { label: 'Lats/rear delts, 2×30-45s', drills: ['Lat overhead stretch', 'Cross-body rear delt', 'Bicep wall stretch', 'Thoracic rotation'] },
-    extras: [
-      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
-    ],
   },
   Friday: {
     warmup: { label: 'Sprint warm-up (5 min) then mobility (10-12 min)', drills: ['A-skips, B-skips, high knees, butt kicks, falling starts (pre-sprint)', 'Walking hip circles ×10 each direction', 'Leg swings front-back + lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', '2-3 build-up strides @ 50%/75% effort'] },
     staticStretch: { label: 'Full-body, 2×30-45s — post-session', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Standing quad stretch', 'Seated thoracic rotation ×10 each direction'] },
-    extras: [
-      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
-    ],
   },
   Saturday: {
     warmup: { label: 'Lower/Explosive (10-12 min) — precedes plyometrics', drills: ['Walking hip circles ×10 each direction', 'Leg swings front-back ×10 each leg', 'Leg swings lateral ×10 each leg', 'Hip flexor lunge + T-rotation ×8 each side', 'Walking quad stretch ×10 each', 'Bodyweight squat-to-stand ×10', 'Lateral band walk ×10 each direction', 'Walking high knees 20m ×2', 'Walking heel flicks 20m ×2', '2 build-up jumps @ 50%/75% effort'] },
     staticStretch: { label: 'Hamstrings/glutes/calves, 2×30-45s', drills: ['Half-kneeling hip flexor (2 min each side)', 'Figure-4 glute', 'Lying hamstring', 'Calf wall stretch', 'Hip abductor side-lying'] },
-    extras: [
-      { label: 'Postural Protocol — 10 min, evening', detail: 'Hip flexor lunge, thoracic extension over foam roller, cat-cow, wall slides, chin tucks, child\'s pose' },
-    ],
   },
 };
 
@@ -9690,33 +9671,48 @@ function buildJPMoveResults(dateStr){
   const amRot = JP_MORNING_ROTATING[dayName] || JP_MORNING_ROTATING.Monday;
   const pmRot = JP_EVENING_ROTATING[dayName] || JP_EVENING_ROTATING.Monday;
 
+  // Rebuilt 10 Sep 2026 per JP's request: fixed daily core (cat-cow, chin
+  // tucks, hip flexor hold, dead bug) now individually sets/reps-tracked
+  // (same mechanism as Train/Looksmax, via mobItemRow()/saveMobilityLog()),
+  // while the rotating day-specific focus becomes a single mark-done
+  // "Grounding Mobility Routine" instead of per-item tracking — amRot is
+  // still used for its descriptive content (what today's rotation actually
+  // is), just not exploded into trackable subItems any more.
   const morning_routine = [
-    { name: 'Morning Mobility Core', duration: '~5 min, right after wake, before breakfast', how_to: 'Hip flexor hold 90s each side → dead bug 2×8.', why: 'The two non-negotiable daily items — anterior pelvic tilt correction + core stability — done before any axial loading (discs are more hydrated/vulnerable to flexion-load injury right after sleep). Same every day regardless of the training split, because this is the one that needs daily consistency to actually work.', habitKey:'custom_morning_mobility',
+    { name: 'Morning Mobility Core', duration: '~5 min, right after wake, before breakfast', how_to: 'Cat-cow 2×12 → chin tuck 2×10 (5s hold) → hip flexor hold 90s each side → dead bug 2×8.', why: 'The non-negotiable daily items — spinal mobility, forward-head correction, anterior pelvic tilt correction, and core stability — done before any axial loading (discs are more hydrated/vulnerable to flexion-load injury right after sleep). Same every day regardless of the training split, because this is the one that needs daily consistency to actually work.', habitKey:'custom_morning_mobility',
       subItems: [
+        { name: 'Cat-Cow', sets_reps: '2×12', key: 'stretch_core_catcow' },
+        { name: 'Chin Tuck', sets_reps: '2×10 reps, 5s hold', key: 'stretch_core_chintucks' },
         { name: 'Hip Flexor Hold', sets_reps: '90s each side', key: 'stretch_core_hipflexor' },
         { name: 'Dead Bug', sets_reps: '2×8', key: 'stretch_core_deadbug' },
       ] },
-    { name: `Today's Focus — ${amRot.label}`, duration: '~5 min', how_to: amRot.items.length ? amRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → ') : 'No extra focus today.', why: 'Rotates by day, tied to what you\'re training — same logic as a gym split, applied to mobility instead of muscle groups.', habitKey:'custom_morning_focus',
-      subItems: amRot.items.map((i,idx)=>({ name: i.name, sets_reps: i.sets_reps, key: `stretch_am_focus_${idx+1}` })) },
+    { name: 'Grounding Mobility Routine', duration: '~5 min', how_to: amRot.items.length ? `Today's rotation: ${amRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → ')}` : 'No extra focus today.', why: 'Rotates by day, tied to what you\'re training — same logic as a gym split, applied to mobility instead of muscle groups. Mark-done only, not tracked stretch-by-stretch — the fixed core above carries the numeric tracking.', habitKey:'custom_morning_focus' },
     { name: 'Daily Walking', duration: '20-30 min, every morning', how_to: 'Easy pace, outdoors if possible — pairs with morning light exposure for circadian entrainment.', why: 'Zero interference with training recovery, and the steady baseline movement your Upper/Lower/Sprint days don\'t otherwise cover.' },
   ];
 
+  // Postural Protocol keeps only the two items with the actual height
+  // mechanism (chin tuck moved to the morning core above, grouped with the
+  // other daily-core items rather than dropped). Evening Wind-Down is new
+  // 10 Sep 2026, replacing the old rotating pm-focus block — fixed content
+  // every day (relaxation doesn't need to vary with the session), also
+  // individually sets/reps-tracked per JP's request. pmRot/JP_EVENING_
+  // ROTATING is no longer used here — left in place elsewhere in the file,
+  // just not wired into this build any more.
   const evening_routine = [
-    { name: 'Postural Protocol (core, non-negotiable)', duration: '10 min, evening', how_to: 'Hip flexor lunge stretch 2×45s each side → thoracic extension over foam roller 1×2min → chin tuck 2×10 reps, 5s hold.', why: 'The one item in this whole protocol with a real, measured payoff — 1-3cm of functional height from correcting compressed posture. Needs daily consistency to hit the 4-8 week structural adaptation window, which is exactly why this doesn\'t rotate with the rest.', habitKey:'custom_postural_protocol',
+    { name: 'Postural Protocol (core, non-negotiable)', duration: '10 min, evening', how_to: 'Hip flexor lunge stretch 2×45s each side → thoracic extension over foam roller 1×2min.', why: 'The one item in this whole protocol with a real, measured payoff — 1-3cm of functional height from correcting compressed posture. Needs daily consistency to hit the 4-8 week structural adaptation window, which is exactly why this doesn\'t rotate with the rest.', habitKey:'custom_postural_protocol',
       subItems: [
         { name: 'Hip Flexor Lunge Stretch', sets_reps: '2×45s each side', key: 'stretch_postural_1' },
         { name: 'Thoracic Extension Over Foam Roller', sets_reps: '1×2min', key: 'stretch_postural_2' },
-        { name: 'Chin Tuck', sets_reps: '2×10 reps, 5s hold', key: 'stretch_postural_3' },
       ] },
-  ];
-  if (pmRot.items.length) {
-    evening_routine.push({ name: `Today's Focus — ${pmRot.label}`, duration: '~5-8 min', how_to: pmRot.items.map(i=>`${i.name} (${i.sets_reps})`).join(' → '), why: 'Rotates by day, tied to what you\'re training.', habitKey:'custom_evening_focus',
-      subItems: pmRot.items.map((i,idx)=>({ name: i.name, sets_reps: i.sets_reps, key: `stretch_pm_focus_${idx+1}` })) });
-  }
-  evening_routine.push(
+    { name: 'Evening Wind-Down', duration: '~8-10 min, evening', how_to: 'Child\'s Pose 2×60s → Wall Slide 2×15 reps → Legs-Up-The-Wall 5min.', why: 'Low-cortisol, parasympathetic-leaning movements to close out the day — passive inversion (legs-up-the-wall) supports venous return and a parasympathetic shift, same reasoning as the existing cold/breathing wind-down protocol elsewhere in your evening routine.', habitKey:'custom_evening_focus',
+      subItems: [
+        { name: "Child's Pose", sets_reps: '2×60s', key: 'stretch_evening_1' },
+        { name: 'Wall Slide', sets_reps: '2×15 reps', key: 'stretch_evening_2' },
+        { name: 'Legs-Up-The-Wall', sets_reps: '5 min', key: 'stretch_evening_3' },
+      ] },
     { name: 'Yoga Flow', duration: '10-15 min, evening — real content, not a placeholder', how_to: 'Cat-cow (10 reps) → downward dog (45 sec) → low lunge each side (45 sec) → pigeon pose each side (60 sec) → seated forward fold (60 sec) → supine spinal twist each side (45 sec).', why: 'Hip-opening and spinal mobility sequence, directly relevant to kick height and general flexibility goals.', habitKey:'custom_nsdr_yoga' },
-    { name: 'NSDR / Yoga Nidra (alternative to the flow above)', duration: '10-20 min', how_to: 'Guided body-scan audio (search "NSDR" or "Yoga Nidra" — Huberman\'s or any 10-20 min guided track works), lying still, eyes closed.', why: 'Real, evidenced dopamine reset (Kjaer 2002, +65%) and nervous-system recovery — use this OR the yoga flow above, not required to do both.', habitKey:'custom_nsdr_yoga' }
-  );
+    { name: 'NSDR / Yoga Nidra (alternative to the flow above)', duration: '10-20 min', how_to: 'Guided body-scan audio (search "NSDR" or "Yoga Nidra" — Huberman\'s or any 10-20 min guided track works), lying still, eyes closed.', why: 'Real, evidenced dopamine reset (Kjaer 2002, +65%) and nervous-system recovery — use this OR the yoga flow above, not required to do both.', habitKey:'custom_nsdr_yoga' },
+  ];
 
   return { ...JP_MOVE_RESULTS_BASE, morning_routine, evening_routine };
 }
@@ -9778,13 +9774,11 @@ function renderMobilityCard(dayName) {
     sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">Before — ${escHtml(m.warmup.label)}${warmupKey?mobCheckbox(warmupKey):''}</div>${drillList(m.warmup.drills, 'stretch_warmup')}</div>`);
   }
   if (m.staticStretch) sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">After — ${escHtml(m.staticStretch.label)}${mobCheckbox('custom_static_stretch')}</div>${drillList(m.staticStretch.drills, 'stretch_static')}</div>`);
-  (m.extras||[]).forEach(e => {
-    let key = null;
-    if (e.label.includes('PNF')) key = 'custom_pnf_prep';
-    else if (e.label.includes('Postural Protocol')) key = 'custom_postural_protocol';
-    else if (e.label.includes('Pre-Speed-Session warm-up') || e.label.includes('Pre-Power-Session warm-up')) key = 'custom_explosive_warmup';
-    sections.push(`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">${escHtml(e.label)}${key?mobCheckbox(key):''}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${escHtml(e.detail)}</div></div>`);
-  });
+  // m.extras (Postural Protocol reference) deliberately not rendered here
+  // any more, per JP's request 10 Sep 2026 — Train's mobility card is now
+  // pre/post-workout stretching only. Postural Protocol has its real home
+  // on the Move tab's evening routine; showing it again here was a
+  // redundant second copy of the same reference, not a second thing to do.
   return `<div class="section-card">
     <div style="font-size:12px;font-weight:700;color:var(--white);margin-bottom:8px">Mobility & Stretching</div>
     ${sections.join('')}
@@ -9844,19 +9838,25 @@ async function renderMoveWeekStrip(){
 // the same work, which is exactly why the week strip could show a day as
 // missed/red that was actually fully logged).
 function jpStretchKeysForDay(dayName){
-  const keys = ['stretch_core_hipflexor', 'stretch_core_deadbug'];
-  const amRot = JP_MORNING_ROTATING[dayName];
-  if (amRot) amRot.items.forEach((_,i)=>keys.push(`stretch_am_focus_${i+1}`));
+  // Fixed daily core (cat-cow, chin tucks, hip flexor hold, dead bug) —
+  // 10 Sep 2026: no longer includes stretch_am_focus_* (the rotating
+  // Grounding Mobility Routine went back to mark-done only, see
+  // buildJPMoveResults()), so amRot/JP_MORNING_ROTATING isn't referenced
+  // here any more even though it's still used for that routine's
+  // descriptive text.
+  const keys = ['stretch_core_catcow', 'stretch_core_chintucks', 'stretch_core_hipflexor', 'stretch_core_deadbug'];
   const m = JP_MOBILITY_PLAN[dayName];
   if (m?.warmup) m.warmup.drills.forEach((_,i)=>keys.push(`stretch_warmup_${i+1}`));
   if (m?.staticStretch) m.staticStretch.drills.forEach((_,i)=>keys.push(`stretch_static_${i+1}`));
   // Postural Protocol is off on Wednesday/Sunday (see its JP_CUSTOM_HABITS
   // entry) — derived from that habit's own `days` list rather than a
   // second hardcoded day-name check, so the two can't drift apart again.
+  // Only 2 items now (chin tuck moved to the morning core above).
   const posturalDays = JP_CUSTOM_HABITS.find(h=>h.key==='postural_protocol')?.days;
-  if (!posturalDays || posturalDays.includes(dayName)) keys.push('stretch_postural_1','stretch_postural_2','stretch_postural_3');
-  const pmRot = JP_EVENING_ROTATING[dayName];
-  if (pmRot) pmRot.items.forEach((_,i)=>keys.push(`stretch_pm_focus_${i+1}`));
+  if (!posturalDays || posturalDays.includes(dayName)) keys.push('stretch_postural_1','stretch_postural_2');
+  // Evening Wind-Down — fixed content every day now (10 Sep 2026, replaced
+  // the old rotating pm-focus block), so no day-conditional check needed.
+  keys.push('stretch_evening_1','stretch_evening_2','stretch_evening_3');
   return keys;
 }
 
@@ -10077,14 +10077,14 @@ function applyJPRealProtocol() {
   // above), no rotation, so a day label here means that actual calendar day.
   JP_CUSTOM_HABITS = [
     { key: 'make_bed',         name: 'Make Bed / Tidy Room',        desc: 'One fully-finished task before anything else — real behavioural-science basis (keystone habit: momentum + lower activation energy for the rest of the day), not tidiness for its own sake. First 5 min after waking.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
-    { key: 'morning_mobility', name: 'Morning Mobility Block',      desc: 'Hip flexor hold 90s each side + dead bug 2×8 (daily core, before any axial loading) plus a rotating day-specific focus tied to what you\'re training — see the Move tab for today\'s exact focus. ~10 min, right after wake, before breakfast.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
+    { key: 'morning_mobility', name: 'Morning Mobility Block',      desc: 'Cat-cow, chin tucks, hip flexor hold 90s each side, dead bug 2×8 — logged individually with sets/reps on the Move tab, same tracking as Train/Looksmax. ~10 min, right after wake, before breakfast. Reorganised 10 Sep 2026: was hip flexor hold + dead bug only, plus a rotating focus now split out into its own Grounding Mobility Routine below.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
     { key: 'evening_reflection',name:'Evening Reflection',          desc: 'What moved things forward today, what didn\'t, one adjustment for tomorrow — 5 min, 21:00. This is the feedback loop that makes the SMIT habit compound instead of repeating the same day.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'explosive_warmup', name: 'Explosive Warm-Up',           desc: 'Full lower/explosive warm-up before any sprint/jump/plyo work — the single highest injury-risk moment in your week if skipped. Covers Tuesday (Lower A plyo), Friday (Sprint Day), Saturday (Lower B plyo).', days: ['Tuesday','Friday','Saturday'], time:'Pre-Training', priority:true },
     { key: 'pretrain_warmup',  name: 'Pre-Training Warm-Up',        desc: 'Dynamic warm-up before lifting — see the mobility card on the Train tab for today\'s exact drills.', days: ['Monday','Thursday'], time:'Pre-Training', priority:true },
     { key: 'static_stretch',   name: 'Post-Session Static Stretch', desc: '2 sets each, 30-45s, matched to today\'s session — see the mobility card on the Train tab.', days: ['Monday','Tuesday','Thursday','Friday','Saturday'], time:'Post-Training', priority:false },
-    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge, thoracic extension, chin tucks — 10 min, evening (real 1-3cm functional height payoff) — plus a rotating day-specific focus on top, see the Move tab for today\'s exact addition. Off Sunday and Wednesday — the two rest days everything else in the plan already backs off too.', days: JP_WEEKDAY_NAMES.filter(d=>d!=='Sunday'&&d!=='Wednesday'), time:'Evening', priority:true },
-    { key: 'morning_focus',    name: 'Morning Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Morning Mobility Core — see the Move tab for today\'s exact stretches.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
-    { key: 'evening_focus',    name: 'Evening Mobility — Today\'s Focus', desc: 'The rotating, day-specific stretch focus that sits on top of the daily Postural Protocol — see the Move tab for today\'s exact stretches. No separate item on Wednesday (Yoga Flow/NSDR already covers that slot — reorganised 9 Sep 2026, was Saturday).', days: ['Sunday','Monday','Tuesday','Thursday','Friday','Saturday'], time:'Evening', priority:false },
+    { key: 'postural_protocol',name: 'Postural Protocol',           desc: 'Hip flexor lunge stretch + thoracic extension over foam roller — 10 min, evening (real 1-3cm functional height payoff, the actual mechanism behind this one). Chin tucks moved to the Morning Mobility Block 10 Sep 2026 — grouped with the other daily-core items instead of here. Off Sunday and Wednesday — the two rest days everything else in the plan already backs off too.', days: JP_WEEKDAY_NAMES.filter(d=>d!=='Sunday'&&d!=='Wednesday'), time:'Evening', priority:true },
+    { key: 'morning_focus',    name: 'Grounding Mobility Routine', desc: 'A rotating, day-specific mobility block tied to what you\'re training — see the Move tab for today\'s exact stretches. Mark-done only (10 Sep 2026 — was individually sets/reps-tracked per stretch; the fixed daily core (cat-cow, chin tucks, hip flexor hold, dead bug) carries the numeric tracking instead, this one stays a single check).', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
+    { key: 'evening_focus',    name: 'Evening Wind-Down (Relaxing Movements)', desc: 'Child\'s Pose, Wall Slide, Legs-Up-The-Wall — low-cortisol, parasympathetic-leaning movements to close out the day, logged individually with sets/reps on the Move tab. Replaced the old rotating day-specific focus 10 Sep 2026 — this one stays the same every day rather than varying with what you trained, on purpose (wind-down doesn\'t need to match the session).', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work. Unlocked once creatine monohydrate is owned (see Shopping List).', requiresItems:['creatine_monohydrate'], days: JP_WEEKDAY_NAMES, time:'Post-Training', priority:true },
     { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
