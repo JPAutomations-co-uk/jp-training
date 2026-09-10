@@ -2098,6 +2098,11 @@
 
     <!-- Phase 7: Results -->
     <div id="mob-phase-7" class="mob-phase">
+      <div class="eat-date-nav" id="move-date-nav" style="display:none;margin-bottom:14px">
+        <button class="eat-nav-btn" onclick="shiftMoveDate(-1)">‹</button>
+        <div class="eat-date-lbl" id="move-date-lbl"></div>
+        <button class="eat-nav-btn" id="move-nav-next" onclick="shiftMoveDate(1)">›</button>
+      </div>
       <div id="mob-results-body"></div>
       <div id="mob-history-content" style="margin-top:20px"></div>
       <button class="mob-add-habits-btn" id="mob-add-habits-btn" onclick="mobAddHabits()">+ Add Mobility Habits to Daily Tracker</button>
@@ -9652,9 +9657,11 @@ const JP_MOVE_RESULTS_BASE = {
 // real calendar weekday), everything else comes from the static base.
 // Called at every seed/render site instead of using a plain constant, so
 // "today's focus" is always actually today's, not whatever day the page
-// happened to load on.
-function buildJPMoveResults(){
-  const dayName = effectiveTodayName();
+// happened to load on. Takes an optional dateStr (added 9 Sep 2026 so the
+// new Move date-navigator can view/log a past day's actual content) —
+// defaults to today, so every existing no-argument call site is unaffected.
+function buildJPMoveResults(dateStr){
+  const dayName = dateStr ? effectiveDayName(dateStr) : effectiveTodayName();
   const amRot = JP_MORNING_ROTATING[dayName] || JP_MORNING_ROTATING.Monday;
   const pmRot = JP_EVENING_ROTATING[dayName] || JP_EVENING_ROTATING.Monday;
 
@@ -13897,16 +13904,19 @@ async function initMove() {
   // the actual current day, not whichever day happened to be live when
   // applyJPRealProtocol() last seeded OB.mobility.
   if (USER?.id === JP_USER_ID) {
-    // Move has no past-day view of its own, but HABIT_DATE is a global
-    // shared with the Habits tab's date-navigator — if JP was browsing a
-    // past day there and switches straight to Move, its checkboxes would
-    // silently read/write against that past date instead of today.
-    // Forcing today + reloading habitState before rendering fixes both
-    // that mis-attribution risk and the plain cold-start race where Move
-    // rendered from whatever habitState happened to already contain.
+    // HABIT_DATE is a global shared with the Habits tab's date-navigator —
+    // if JP was browsing a past day there and switches straight to Move,
+    // its checkboxes would silently read/write against that past date
+    // instead of today. Forcing today on EVERY entry into the tab (not
+    // just once) prevents that silent inheritance — Move gets its own
+    // explicit navigator below instead, so viewing/logging a past day here
+    // is always a deliberate in-tab action, never an accidental leak.
     HABIT_DATE = TODAY;
     await initHabits();
-    const results = buildJPMoveResults();
+    const nav = document.getElementById('move-date-nav');
+    if (nav) nav.style.display = '';
+    renderMoveDateLabel();
+    const results = buildJPMoveResults(HABIT_DATE);
     MOB_STATE = { ...MOB_STATE, results };
     mobRenderResults(results);
     renderMoveWeekStrip();
@@ -13939,6 +13949,32 @@ async function initMove() {
   // Reset scroll so the top of the pane is always visible on entry.
   const c = document.getElementById('content');
   if(c) c.scrollTop = 0;
+}
+
+function renderMoveDateLabel(){
+  const lbl = document.getElementById('move-date-lbl');
+  if(lbl){ const d = new Date(HABIT_DATE+'T00:00:00'); const isT = HABIT_DATE===TODAY; lbl.textContent = (isT?'Today · ':'')+d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); }
+  const next = document.getElementById('move-nav-next');
+  if(next) next.disabled = HABIT_DATE>=TODAY;
+}
+// Move's own date-navigator (added 9 Sep 2026 — JP reported no way to
+// log/backfill a forgotten day's stretches). Same shape as
+// shiftHabitDate() (HABIT_DATE bounded to never exceed TODAY,
+// initHabits() reloads habitState for the new date), but stays inside the
+// Move tab rather than switching away — initMove()'s own hard reset to
+// TODAY on tab entry is left untouched, so this is always a deliberate
+// in-tab action, never a silent inheritance from the Habits tab.
+async function shiftMoveDate(delta){
+  const d = new Date(HABIT_DATE+'T00:00:00');
+  d.setDate(d.getDate()+delta);
+  const nd = _localDateStr(d);
+  if(nd > TODAY) return;
+  HABIT_DATE = nd;
+  await initHabits();
+  renderMoveDateLabel();
+  const results = buildJPMoveResults(HABIT_DATE);
+  MOB_STATE = { ...MOB_STATE, results };
+  mobRenderResults(results);
 }
 
 // Real table, not just the OB.mobility blob it lives alongside — a fire-
