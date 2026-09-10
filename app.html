@@ -9762,37 +9762,18 @@ function renderMobilityCard(dayName) {
   </div>`;
 }
 
-// Which habitKeys must be complete for a given split-day to count as a
-// "full routine" day on the week strip below — mirrors exactly what
-// actually renders a checkbox that day (buildJPMoveResults() +
-// renderMobilityCard()), not a generic "all Move habits" list, since the
-// item set genuinely differs by day (Saturday has no static stretch
-// content or evening rotation, Sunday has no warmup at all, etc).
-// Reorganised 9 Sep 2026 for the new Upper/Lower/Rest/Upper/Sprint/Lower/
-// Rest split. Wednesday and Sunday both correctly omit custom_pretrain_
-// warmup/custom_explosive_warmup/custom_static_stretch/custom_postural_
-// protocol now — no session, no checkbox for any of them, nothing to
-// require. (Sunday's row previously still required custom_postural_
-// protocol despite the habit itself being off on Sunday — a pre-existing
-// bug that meant Sunday could never count as a complete day; fixed here
-// rather than propagated into Wednesday's new row.)
-const JP_MOVE_DAY_REQUIRED_KEYS = {
-  Monday:    ['custom_morning_mobility','custom_morning_focus','custom_pretrain_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
-  Tuesday:   ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
-  Wednesday: ['custom_morning_mobility','custom_morning_focus','custom_evening_focus','custom_nsdr_yoga'],
-  Thursday:  ['custom_morning_mobility','custom_morning_focus','custom_pretrain_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
-  Friday:    ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
-  Saturday:  ['custom_morning_mobility','custom_morning_focus','custom_explosive_warmup','custom_static_stretch','custom_postural_protocol','custom_evening_focus','custom_nsdr_yoga'],
-  Sunday:    ['custom_morning_mobility','custom_morning_focus','custom_evening_focus','custom_nsdr_yoga'],
-};
-
 // Read-only 7-dot completion strip for Move — Train has day-tab dots
 // (renderDayTabIndicators()) but those are attached to real per-day
 // selector buttons Move doesn't have, so this is a small standalone
 // strip instead, same color logic (teal=complete, red=missed,
 // transparent=today-not-yet/future) re-derived from habit_log directly
 // rather than reusing _loggedSessionDates (that Set tracks *workouts*,
-// not mobility completion).
+// not mobility completion). "Complete" now means the same thing here as
+// on the Progress tab's mobility chart — both read jpStretchKeysForDay()
+// (10 Sep 2026 — was a separate hardcoded per-day list of the bundled
+// custom_* habit keys, which JP could never satisfy just by ticking every
+// individual stretch in Move itself, since those are two different
+// habit_log rows entirely).
 async function renderMoveWeekStrip(){
   if (USER?.id !== JP_USER_ID) return;
   const wrap = document.getElementById('move-week-strip');
@@ -9813,7 +9794,7 @@ async function renderMoveWeekStrip(){
 
   wrap.innerHTML = JP_WEEKDAY_NAMES.map((day,i) => {
     const { date } = dayDates[i];
-    const required = JP_MOVE_DAY_REQUIRED_KEYS[day] || [];
+    const required = jpStretchKeysForDay(day);
     const done = doneByDate[date] || new Set();
     const complete = required.length > 0 && required.every(k => done.has(k));
     const diff = i - todayIdx; // <0 earlier this week, 0 today, >0 not reached yet
@@ -9831,12 +9812,19 @@ async function renderMoveWeekStrip(){
 
 // Derives the full list of expected stretch_* keys for a given day NAME
 // (not date) directly from the live content structures, rather than a
-// second hardcoded table alongside JP_MOVE_DAY_REQUIRED_KEYS — a static
-// list here would silently drift out of sync the next time a warmup/
-// static-stretch drill count changes (exactly the kind of duplication
-// bug already found once this session with the old Sprint-Day mobility
-// panel). Mirrors the exact positional-key scheme used when rendering
-// each section (buildJPMoveResults()/renderMobilityCard()).
+// second hardcoded table — a static list here would silently drift out of
+// sync the next time a warmup/static-stretch drill count changes (exactly
+// the kind of duplication bug already found once this session with the
+// old Sprint-Day mobility panel). Mirrors the exact positional-key scheme
+// used when rendering each section (buildJPMoveResults()/
+// renderMobilityCard()). Also the single source of truth for
+// renderMoveWeekStrip()'s "is this day complete" check (10 Sep 2026 —
+// was a separate hardcoded JP_MOVE_DAY_REQUIRED_KEYS checking the bundled
+// custom_* habit keys instead, which JP could satisfy in full by ticking
+// every individual stretch here without ever separately re-ticking those
+// bundled checkboxes elsewhere — two disconnected completion criteria for
+// the same work, which is exactly why the week strip could show a day as
+// missed/red that was actually fully logged).
 function jpStretchKeysForDay(dayName){
   const keys = ['stretch_core_hipflexor', 'stretch_core_deadbug'];
   const amRot = JP_MORNING_ROTATING[dayName];
@@ -9844,7 +9832,11 @@ function jpStretchKeysForDay(dayName){
   const m = JP_MOBILITY_PLAN[dayName];
   if (m?.warmup) m.warmup.drills.forEach((_,i)=>keys.push(`stretch_warmup_${i+1}`));
   if (m?.staticStretch) m.staticStretch.drills.forEach((_,i)=>keys.push(`stretch_static_${i+1}`));
-  keys.push('stretch_postural_1','stretch_postural_2','stretch_postural_3');
+  // Postural Protocol is off on Wednesday/Sunday (see its JP_CUSTOM_HABITS
+  // entry) — derived from that habit's own `days` list rather than a
+  // second hardcoded day-name check, so the two can't drift apart again.
+  const posturalDays = JP_CUSTOM_HABITS.find(h=>h.key==='postural_protocol')?.days;
+  if (!posturalDays || posturalDays.includes(dayName)) keys.push('stretch_postural_1','stretch_postural_2','stretch_postural_3');
   const pmRot = JP_EVENING_ROTATING[dayName];
   if (pmRot) pmRot.items.forEach((_,i)=>keys.push(`stretch_pm_focus_${i+1}`));
   return keys;
