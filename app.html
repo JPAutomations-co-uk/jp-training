@@ -6316,12 +6316,13 @@ function renderDayDetail(day, isToday) {
             const prefillReps = ls?.reps || targetRep || '';
             const suggestKg = overload && ls ? (ls.weight_kg + 2.5) : (ls?.weight_kg || +targetKg || 0);
             const prefillKg = suggestKg || '';
+            const draftDone = _getTrainDraftField(day.day, ex.name, si, 'done');
             return `
             <div class="set-row" id="set-row-${ei}-${si}">
               <span class="set-num">${si+1}</span>
               <input class="set-field" type="number" min="0" placeholder="${prefillReps||'—'}" id="reps-${ei}-${si}" value="${draftReps}" oninput="saveTrainDraft(${ei},${si},'reps',this.value)">
               <input class="set-field" type="number" min="0" step="2.5" placeholder="${prefillKg||'0'}" id="wt-${ei}-${si}" value="${draftKg}" oninput="saveTrainDraft(${ei},${si},'wt',this.value)" onblur="checkPbOnInput(this,'${escHtml(ex.name)}','${ei}-${si}')">
-              <button class="set-done" id="sd-${ei}-${si}" onclick="checkSet('${ei}-${si}')">
+              <button class="set-done${draftDone?' checked':''}" id="sd-${ei}-${si}" onclick="checkSet('${ei}-${si}')">
                 <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
               </button>
             </div>
@@ -6358,13 +6359,23 @@ function renderDayDetail(day, isToday) {
 
 function checkSet(id){
   const btn=document.getElementById('sd-'+id);
-  btn.classList.toggle('checked');
+  const isChecked = btn.classList.toggle('checked');
+  // Found live 11 Sep 2026: this was purely visual with nothing behind it
+  // — the class toggle reset on every re-render/reload, so it never
+  // actually looked "tickable" in any lasting sense (JP's exact report).
+  // Now persisted through the same localStorage draft mechanism already
+  // used for the reps/weight fields (saveTrainDraft()/_getTrainDraftField())
+  // rather than a new storage path — reuses what's already proven to
+  // survive reloads, and _clearTrainDraftDay() already wipes the whole
+  // day's draft (including this) once that day's session is actually saved.
+  const [ei, si] = id.split('-');
+  saveTrainDraft(+ei, +si, 'done', isChecked);
   // Real request: a way to see at a glance which EXERCISES are done, not
   // just which individual sets — this is purely visual (same as the
-  // per-set checkmark it's built on), not a new persisted concept. `id`
-  // is "ei-si"; find every set row for this exercise index and light up
-  // the exercise-level badge once all of them are checked.
-  const ei = id.split('-')[0];
+  // per-set checkmark it's built on), not a new persisted concept beyond
+  // the draft write above. `id` is "ei-si"; find every set row for this
+  // exercise index and light up the exercise-level badge once all of them
+  // are checked.
   const exWrap = document.getElementById('workout-ex-'+ei);
   const badge = document.getElementById('ex-done-'+ei);
   if(!exWrap || !badge) return;
