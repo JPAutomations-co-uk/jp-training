@@ -8192,6 +8192,16 @@ async function loadCheckinHistory(){
   const{data,error}=await sb.from('progress_checkins')
     .select('*').eq('user_id',USER.id).gte('date',APP_LAUNCH_DATE)
     .order('date',{ascending:false}).limit(14);
+  // Weight fetched directly here rather than read from OB.bodyCompLog — that
+  // cache is filled by loadBodyCompLog(), called alongside this function
+  // with no guaranteed ordering, so relying on it risked rendering history
+  // before it's populated. Same date range/limit as the check-in query so
+  // every row above can be matched by date.
+  const { data: bcData } = await sb.from('body_comp_log')
+    .select('date,weight_kg').eq('user_id',USER.id).gte('date',APP_LAUNCH_DATE)
+    .order('date',{ascending:false}).limit(14);
+  const weightByDate = {};
+  (bcData||[]).forEach(r => { if(r.weight_kg) weightByDate[r.date] = r.weight_kg; });
   const hist=document.getElementById('checkin-history');
   if(error?.code==='42P01' || error?.code==='PGRST205'){
     renderCheckinGate(null);
@@ -8257,7 +8267,7 @@ CREATE POLICY "Users manage own checkins"
     }).join('');
     return `
     <div class="checkin-row" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'" style="cursor:pointer">
-      <div class="checkin-date">${new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+      <div class="checkin-date">${new Date(r.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}<div style="font-size:10px;color:var(--dim);margin-top:2px">${weightByDate[r.date]?weightByDate[r.date]+'kg':'—'}</div></div>
       <div class="checkin-dots">
         ${CHECK_METRICS.map(m=>{ const d=dotFor(m,r); return `<div class="dot" style="background:${d.color}" title="${m.label}: ${d.label}"></div>`; }).join('')}
       </div>
