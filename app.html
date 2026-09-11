@@ -2965,6 +2965,43 @@ function _checkDateRollover(){
 document.addEventListener('visibilitychange', () => { if(!document.hidden) _checkDateRollover(); });
 window.addEventListener('focus', _checkDateRollover);
 setInterval(_checkDateRollover, 5 * 60 * 1000);
+
+// Definitive fix for a repeat class of confusion (11 Sep 2026): every fix
+// pushed to this app is useless to whoever's tab is already open until
+// that tab actually re-fetches app.html — this is a PWA, sessions
+// routinely stay open across many deploys, and nothing was ever forcing a
+// refresh. JP kept reporting bugs as "still broken" that were, in every
+// case checked, already fixed and live — just not yet loaded into his
+// running tab. Same shape as _checkDateRollover() above (visibility/focus/
+// interval triggers, unconditional reload on drift, no manual step for
+// JP to remember), applied to code freshness instead of the date: fetches
+// the live file fresh (cache: 'no-store', bypassing the service worker's
+// own cache entirely) and compares its length against what was loaded at
+// boot. No version string to remember to bump — any real edit changes the
+// file's length, so this needs no maintenance on future changes the way a
+// hand-maintained version constant would (see the JP_PROTOCOL_VERSION
+// gate elsewhere in this file for exactly that failure mode already
+// found once).
+let _bootFileLength = null;
+async function _captureBootFileLength(){
+  try {
+    const res = await fetch('/app.html', { cache: 'no-store' });
+    const text = await res.text();
+    _bootFileLength = text.length;
+  } catch(e){}
+}
+async function _checkForNewDeploy(){
+  if(_bootFileLength === null) return;
+  try {
+    const res = await fetch('/app.html', { cache: 'no-store' });
+    const text = await res.text();
+    if(text.length !== _bootFileLength) window.location.reload();
+  } catch(e){}
+}
+_captureBootFileLength();
+document.addEventListener('visibilitychange', () => { if(!document.hidden) _checkForNewDeploy(); });
+window.addEventListener('focus', _checkForNewDeploy);
+setInterval(_checkForNewDeploy, 2 * 60 * 1000);
 // v1 launch date — "The Standard"'s real app, live from this date. Every
 // account's progress (XP/level/streaks, training/habit history, progress
 // charts) is scoped to start counting from here, for every user, not just
