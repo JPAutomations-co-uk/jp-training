@@ -2111,6 +2111,28 @@
       <button class="mob-restart-btn" onclick="mobRestart()">Redo questionnaire</button>
     </div>
   </div>
+
+  <!-- ROADMAP — admin-only pane (JP's personal career/business roadmap,
+       not client-facing). Nav entry point (sidebar-tab + bn-more-item)
+       is hidden for everyone except PROFILE.is_admin, gated in the boot
+       sequence below. Content is static, rendered once by loadRoadmap()
+       on first switch into this tab. Deliberately nested inside #content
+       (like habits/train/eat/coach/lab/move) rather than placed as a
+       sibling of it (like library/community, both pre-existing and both
+       carrying the same latent bug this avoids: a .pane that ends up a
+       direct flex child of #app instead of #content gets its own
+       min-height:100% resolved against #app's full height, which makes
+       it swallow the entire flex column and collapse #content to 0 —
+       symptoms: content looks squeezed and unscrollable, bottom nav
+       pushed off-screen. Confirmed via a real headless-browser
+       reproduction, not guessed from reading the CSS. ══ -->
+  <div id="pane-roadmap" class="pane">
+    <div class="sh">
+      <div class="sh-label">Private — Admin Only</div>
+      <div class="sh-title">My<br><span style="color:var(--teal)">Roadmap</span></div>
+    </div>
+    <div id="roadmap-pane-body"></div>
+  </div>
   </div><!-- /#content -->
 
   <!-- ══ PLAN BUILDER OVERLAY ══ -->
@@ -2183,19 +2205,6 @@
       <button class="lib-filter-btn habit-filter-btn" data-filter="all" onclick="setLibraryFilter('all')">All</button>
     </div>
     <div id="library-list"></div>
-  </div>
-
-  <!-- ROADMAP — admin-only pane (JP's personal career/business roadmap,
-       not client-facing). Nav entry point (sidebar-tab + bn-more-item)
-       is hidden for everyone except PROFILE.is_admin, gated in the boot
-       sequence below. Content is static, rendered once by loadRoadmap()
-       on first switch into this tab. ══ -->
-  <div id="pane-roadmap" class="pane">
-    <div class="sh">
-      <div class="sh-label">Private — Admin Only</div>
-      <div class="sh-title">My<br><span style="color:var(--teal)">Roadmap</span></div>
-    </div>
-    <div id="roadmap-pane-body"></div>
   </div>
 
   <!-- LOG READING SESSION -->
