@@ -1600,6 +1600,7 @@
         <div style="display:flex;gap:8px">
           <input id="checkin-weight-input" type="number" step="0.1" placeholder="Weight (kg)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
           <input id="checkin-bf-input" type="number" step="0.1" placeholder="Body fat (%)" style="flex:1;padding:8px 10px;background:var(--s1);border:1px solid var(--border);color:var(--white);font-size:12px">
+          <button onclick="saveTodayWeight()" style="padding:8px 14px;background:var(--teal);border:none;color:#000;font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap">Save</button>
         </div>
       </div>
       <div class="score-grid" id="score-grid"></div>
@@ -7932,11 +7933,54 @@ function renderCheckinGate(latestRow){
   const doneToday = !!latestRow && latestRow.date === today;
   renderScoreGrid(doneToday ? latestRow : null);
   if(btn) btn.style.display = doneToday ? 'none' : '';
-  const weightWrap = document.getElementById('checkin-weight-wrap');
-  if(weightWrap) weightWrap.style.display = doneToday ? 'none' : '';
+  // Weight/BF deliberately stays visible and editable even once today's
+  // check-in survey is locked in — it's a separate write (body_comp_log,
+  // not progress_checkins) with its own Save button (saveTodayWeight()),
+  // so forgetting to add it during the main submit doesn't mean losing the
+  // ability to add or correct it later that same day.
+  const todayWeight = (OB.bodyCompLog||[]).find(e=>e.date===today);
+  const wInput = document.getElementById('checkin-weight-input');
+  const bfInput = document.getElementById('checkin-bf-input');
+  if(wInput && !wInput.matches(':focus')) wInput.value = todayWeight?.weight_kg || '';
+  if(bfInput && !bfInput.matches(':focus')) bfInput.value = todayWeight?.body_fat || '';
   if(dueEl){
     dueEl.textContent = doneToday ? 'Logged for today — next check-in tomorrow morning' : '';
   }
+}
+
+// Standalone now (10 Sep 2026 — was bundled into submitCheckin(), which
+// meant forgetting to fill it in before submitting the survey lost the
+// ability to add it that day, since the whole weight-wrap used to hide
+// once doneToday). Its own Save button, own write, callable any time the
+// check-in card is visible regardless of whether today's survey is done.
+// Written straight to its own body_comp_log table (not folded into the OB
+// blob) — OB is saved via saveOB(), which swallows write errors by design
+// (see its comment), so a failed save there would silently drop a weight
+// entry with no way to know. A dedicated table gives weight its own real,
+// queryable row per day and surfaces a genuine error (or a one-time
+// missing-table setup card) instead of failing invisibly. Fresh date
+// computed right now, NOT a frozen-at-load constant: this app is a PWA
+// that routinely stays open across a day rollover. upsert onConflict
+// means calling this again the same day correctly edits the existing row
+// rather than erroring or duplicating.
+async function saveTodayWeight(){
+  const today = _localDateStr();
+  const w = +document.getElementById('checkin-weight-input')?.value || null;
+  const bf = +document.getElementById('checkin-bf-input')?.value || null;
+  if(!w && !bf){ showToast('Enter a weight or body fat % first'); return; }
+  const { error: bcError } = await sb.from('body_comp_log')
+    .upsert({ user_id: USER.id, date: today, weight_kg: w, body_fat: bf }, { onConflict: 'user_id,date' });
+  if(bcError){
+    if(bcError.code==='42P01' || bcError.code==='PGRST205'){
+      renderBodyCompSetupCard();
+    } else {
+      showToast('Weight didn’t save — try again');
+      console.error('body_comp_log upsert failed', bcError);
+    }
+    return;
+  }
+  showToast('Weight saved');
+  loadBodyCompLog();
 }
 
 async function submitCheckin(){
@@ -7947,34 +7991,6 @@ async function submitCheckin(){
     scores[m.key] = m.type==='bool' ? (_boolScores[m.key] ?? null) : +document.getElementById('score-'+m.key).value;
   });
   const today = _localDateStr();
-
-  // Weight/body fat lives on the check-in card. Written straight to its own
-  // body_comp_log table (not folded into the OB blob) — OB is saved via
-  // saveOB(), which swallows write errors by design (see its comment), so a
-  // failed save there would silently drop a weight entry with no way to
-  // know. A dedicated table gives weight its own real, queryable row per
-  // day and surfaces a genuine error (or a one-time missing-table setup
-  // card) instead of failing invisibly. Fresh date computed right now, NOT
-  // a frozen-at-load constant: this app is a PWA that routinely stays open
-  // across a day rollover.
-  const w = +document.getElementById('checkin-weight-input')?.value || null;
-  const bf = +document.getElementById('checkin-bf-input')?.value || null;
-  if(w || bf){
-    const { error: bcError } = await sb.from('body_comp_log')
-      .upsert({ user_id: USER.id, date: today, weight_kg: w, body_fat: bf }, { onConflict: 'user_id,date' });
-    if(bcError){
-      if(bcError.code==='42P01' || bcError.code==='PGRST205'){
-        renderBodyCompSetupCard();
-      } else {
-        showToast('Weight didn’t save — try again');
-        console.error('body_comp_log upsert failed', bcError);
-      }
-    } else {
-      document.getElementById('checkin-weight-input').value = '';
-      document.getElementById('checkin-bf-input').value = '';
-      loadBodyCompLog();
-    }
-  }
 
   const{error}=await sb.from('progress_checkins').upsert({user_id:USER.id,date:today,...scores});
   btn.disabled=false;btn.textContent='Submit Check-in';
