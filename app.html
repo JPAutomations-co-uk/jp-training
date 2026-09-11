@@ -6548,6 +6548,15 @@ async function saveWorkout(asToday){
     console.error('workout_sessions insert failed', wsError);
     return;
   }
+  // Found live 11 Sep 2026: _loggedSessionDates (drives the Train tab's
+  // day-tab dot colour) is only ever populated once, by loadTrainingHistory()
+  // on tab load — nothing refreshed it after a save, so backfilling a past
+  // day genuinely saved correctly but its dot stayed red until the next
+  // full Train-tab reload, since the in-memory Set never learned the new
+  // date existed. Updating it here means the dot goes teal immediately,
+  // same tab, no reload needed.
+  _loggedSessionDates.add(saveDate);
+  renderDayTabIndicators();
   const sets=[];
   exercises.forEach((ex)=>{
     const ei=ex._idx;
