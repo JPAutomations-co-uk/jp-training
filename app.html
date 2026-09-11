@@ -6406,10 +6406,21 @@ async function saveWorkout(asToday){
     exercises = s.exercises.map((ex,i)=>({name:ex.name, sets:ex.sets, reps:ex.rep, _idx:i}));
     saveDate = TODAY;
   }
-  const{data:ws}=await sb.from('workout_sessions').insert({
+  // Found live 11 Sep 2026: `error` was being destructured away entirely —
+  // if this insert failed (RLS, network, whatever), the button just quietly
+  // reset with zero feedback. No toast, no console line, nothing to tell
+  // the difference between "saved" and "silently didn't" — exactly the
+  // silent-failure class already fixed elsewhere in this app (habit_log,
+  // body_comp_log). Now surfaces it properly.
+  const{data:ws,error:wsError}=await sb.from('workout_sessions').insert({
     user_id:USER.id,date:saveDate,session_type:sessionName
   }).select().single();
-  if(!ws){ if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = saveBtnLabel; } return; }
+  if(!ws){
+    if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = saveBtnLabel; }
+    showToast('Save failed — try again');
+    console.error('workout_sessions insert failed', wsError);
+    return;
+  }
   const sets=[];
   exercises.forEach((ex)=>{
     const ei=ex._idx;
