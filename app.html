@@ -5877,9 +5877,12 @@ function renderLooksmax(){
           <div class="habit-desc" style="display:none">${escHtml(ex.note||'')}</div>
         </div>
         ${ex.type!=='checkbox' ? `
-        <div style="display:flex;gap:6px;align-items:center;flex:0 0 auto;width:${ex.type!=='duration_min'?'128px':'70px'}" onclick="event.stopPropagation()">
+        <div style="display:flex;gap:6px;align-items:center;flex:0 0 auto;width:${ex.type!=='duration_min'?'168px':'110px'}" onclick="event.stopPropagation()">
           ${ex.type!=='duration_min' ? `<input class="set-field" type="number" min="0" placeholder="sets" value="${e.sets||''}" oninput="saveLooksmaxLog('${ex.key}','sets',this.value)">` : ''}
           <input class="set-field" type="number" min="0" step="${ex.type==='duration_min'?'0.5':'1'}" placeholder="${ex.type==='duration_min'?'min':(ex.type==='sets_duration'?'sec':'reps')}" value="${e.val||''}" oninput="saveLooksmaxLog('${ex.key}','val',this.value)">
+          <button class="set-done${isExDone(ex)?' checked':''}" id="ld-${ex.key}" onclick="logLooksmaxRow('${ex.key}')" title="Log this">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
         </div>` : ''}
       </div>
     `;}).join('')}
@@ -5909,6 +5912,28 @@ async function saveLooksmaxLog(key, field, value){
     const row = document.querySelector(`.habit-item[data-key="lm-${key}"]`);
     if(row) row.classList.add('done');
   }
+}
+// Explicit "log this" button next to the sets/reps fields — the fields
+// themselves already auto-save on every keystroke via saveLooksmaxLog(),
+// but that was the only feedback (a subtle row-tint change), easy to miss
+// and inconsistent with the visible tick button Train uses for the same
+// job. This button doesn't add a second source of truth: it just confirms
+// whatever is already in OB.looksmax_log for this key and gives an
+// unambiguous checked state + toast, matching Train's set-done pattern.
+function logLooksmaxRow(key){
+  const ex = JP_LOOKSMAX_EXERCISES.find(x=>x.key===key);
+  if(!ex) return;
+  const entry = (OB.looksmax_log?.[HABIT_DATE]||{})[key] || {};
+  const logged = (entry.sets>0) || (entry.val>0);
+  if(!logged){
+    showToast('Enter sets/reps first, then tap to log');
+    return;
+  }
+  const btn = document.getElementById(`ld-${key}`);
+  if(btn) btn.classList.add('checked');
+  const row = document.querySelector(`.habit-item[data-key="lm-${key}"]`);
+  if(row) row.classList.add('done');
+  showToast('Logged ✓');
 }
 async function toggleLooksmaxCheckbox(key){
   OB.looksmax_log = OB.looksmax_log || {};
