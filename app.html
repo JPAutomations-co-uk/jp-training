@@ -5848,7 +5848,12 @@ async function saveLooksmaxLog(key, field, value){
   entry[field] = +value || 0;
   localStorage.setItem('jpt_uid', USER.id);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await saveOB(); } catch(e){ /* localStorage already saved */ }
+  // saveOB() now actually reports success/failure (was silently swallowed
+  // before) — same fix as saveMobilityLog(), same underlying risk: looks
+  // saved in this tab via localStorage alone, but is gone once OB reloads
+  // fresh from the DB if the actual write never landed.
+  const saved = await saveOB();
+  if(!saved) showToast('Save failed — check your connection, try again');
   const nowLogged = (entry.sets>0 || entry.val>0);
   // Deliberately no full renderLooksmax() re-render here — that would tear
   // down and rebuild the input DOM on every keystroke, kicking focus out
@@ -5927,7 +5932,12 @@ async function saveMobilityLog(key, field, value){
   if(dates.length > 60) dates.slice(0, dates.length-60).forEach(d=>delete OB.mobility_log[d]);
   localStorage.setItem('jpt_uid', USER.id);
   localStorage.setItem('jpt_ob', JSON.stringify(OB));
-  try { await saveOB(); } catch(e){ /* localStorage already saved */ }
+  // saveOB() now actually reports success/failure (was silently swallowed
+  // before) — surface it, since localStorage alone means it looks saved
+  // in THIS tab but is gone the moment OB gets reloaded fresh from the DB
+  // (a different device, or this same one after a reload).
+  const saved = await saveOB();
+  if(!saved) showToast('Save failed — check your connection, try again');
   const nowLogged = (entry.sets>0 || entry.val>0);
   // Same reasoning as saveLooksmaxLog(): no full re-render mid-keystroke,
   // just flip this row's own "done" styling directly.
@@ -10274,16 +10284,28 @@ async function renderMobilityProgress(){
 // saveOnboardingSection() and friends write) grew large enough for JP's
 // account specifically to bloat his access token to ~50KB, past what
 // Supabase's gateway allows in an Authorization header, silently breaking
-// any request that used it before it ever reached PostgREST. Always
-// resolves (errors swallowed) to match every previous fire-and-forget
-// sb.auth.updateUser call site this replaces — safe to call without
-// awaiting, but returns a promise so `await saveOB()` also works where
-// the old code awaited.
+// any request that used it before it ever reached PostgREST. That
+// specific failure mode was fixed by moving OB off user_metadata onto
+// this table — but the swallow-every-error behaviour below outlived the
+// problem it was built for, and kept silently hiding every OTHER kind of
+// write failure (RLS, network, payload size on this table itself) with
+// zero trace anywhere. Found live 11 Sep 2026 tracing why mobility log
+// entries JP had logged weren't showing up as persisted: saveMobilityLog()
+// awaited this, got back a clean resolve either way, and had no way to
+// know the write never actually reached the database.
+// Still ALWAYS resolves, never rejects — every one of the ~45 existing
+// fire-and-forget `saveOB().catch(()=>{})` call sites depends on that and
+// none of them inspect the resolved value, so this stays fully backward
+// compatible — but now logs the real error and resolves true/false so
+// any NEW caller that actually wants to know can check.
 function saveOB(){
-  if(!USER) return Promise.resolve();
+  if(!USER) return Promise.resolve(true);
   return sb.from('user_state')
     .upsert({ user_id: USER.id, onboarding: OB, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
-    .then(()=>{}, ()=>{});
+    .then(
+      (res) => { if(res?.error){ console.error('saveOB failed:', res.error); return false; } return true; },
+      (err) => { console.error('saveOB failed:', err); return false; }
+    );
 }
 
 async function loadOnboardingData() {
@@ -10445,8 +10467,10 @@ function applyJPRealProtocol() {
     { key: 'eyelash_care',     name: 'Eyelash Care',                desc: 'Unlocked once eyelash oil is owned (see Shopping List). Nightly: castor or rosemary oil along the lash line (base of upper lashes, avoid direct eye contact). Daily: curl at the base (not tips) 1-2x for a natural curve; mascara applied mid-lash-to-tip (not at the base/waterline), one coat, twist the wand out rather than pumping it (pumping dries the product and speeds up bacterial growth), de-clump with a clean spoolie/finger; remove gently before bed every time — soak a pad and hold a few seconds, don\'t scrub. Every 4-6 weeks: trim 2-5mm off the outer-corner lashes (dry, not wet), replace the mascara tube outright regardless of how much is left, check the curler\'s rubber pad and replace if hardened/cracked.', requiresItems:['eyelash_oil'], days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'eyebrow_care',     name: 'Eyebrow Care',                desc: 'Weekly tweeze right after a shower — only clear strays outside your natural shape (below the arch, between brows, past the tail), plucked in the direction of growth, never thinning the main body. Trim any individual hairs that grow noticeably longer than the rest with fine scissors — shorten, don\'t pluck. Shape check: start above the inner eye/nostril edge, arch peak above the outer iris, tail on the diagonal from nostril through outer eye corner. Dye separately every 3-4 weeks: patch test 24-48h before first use, barrier cream around the brow, apply per product timing, remove with a damp pad.', days: ['Sunday'], time:'Anytime', priority:false },
     { key: 'hygiene_habits',   name: 'Face Hygiene Habits',         desc: 'Conscious awareness: stop touching your face through the day. Post-exercise: plain lukewarm/cool water rinse only — not a full cleanser, your AM/PM skincare already covers that and a 3rd full cleanse risks over-cleansing/rebound oil. Use a fresh, soft face towel (separate from body towel) each time — pat dry, never rub.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
-    { key: 'bedding_laundry',  name: 'Bedding Laundry',             desc: 'Wash bedsheets weekly — hottest water your fabric allows, fragrance-free detergent, full dry, no fabric softener. Wash pillowcase weekly: if silk, cool water + gentle/mild detergent, no bleach or softener, air dry (not tumble dry) — factor the extra care time into whether weekly is realistic for silk vs. rotating in a cotton one.', days: ['Sunday'], time:'Anytime', priority:false },
+    { key: 'bedding_laundry',  name: 'Bedsheets + Duvet Cover',      desc: 'Wash bedsheets + duvet cover weekly — hottest water your fabric allows, fragrance-free detergent, full dry, no fabric softener. Dust mites need 55°C+ to actually kill, which is why weekly (not less) matters.', days: ['Sunday'], time:'Anytime', priority:false },
+    { key: 'pillowcase_wash',  name: 'Pillowcase Wash',             desc: 'Split out from the weekly bedding wash — direct face contact 8+ hrs/night means oil/sweat/product residue re-contacts skin every night in between, so this is the higher-leverage item for the acne goal specifically. Cotton: hot wash, fragrance-free detergent, no softener. Silk: cool water, gentle detergent, no bleach/softener, air dry (not tumble dry).', days: ['Sunday','Wednesday'], time:'Anytime', priority:false },
     { key: 'towel_care',       name: 'Face Towel Wash',             desc: 'Wash/replace face towel — microfiber or soft cotton (not bamboo — the "antibacterial" marketing claim is largely degraded by the chemical processing bamboo fabric goes through). Hot water wash, fragrance-free detergent, full dry every time, no fabric softener (reduces absorbency).', days: ['Sunday','Wednesday'], time:'Anytime', priority:false },
+    { key: 'body_towel',       name: 'Body Towel Rotation',         desc: 'Swap for a fresh towel — roughly every 3 uses assuming daily showers. Between uses: hang fully spread out (not bunched on a hook) so it actually dries — a damp, folded towel is what breeds bacterial/fungal growth, not the use itself. Same wash rule as the others: hot water, fragrance-free detergent, no fabric softener (kills absorbency). Directly relevant to shoulder/back acne — this is what\'s dragging across that skin after every shower, and it had zero rotation before now.', days: ['Monday','Thursday','Sunday'], time:'Anytime', priority:false },
     { key: 'hair_care',        name: 'Hair Care (No-Shampoo)',       desc: 'Unlocked once a scalp massage tool is owned (see Shopping List). Daily: scalp massage a few minutes (real evidence — Koyama 2016 — for increased thickness over time via mechanical stretch on dermal papilla cells), gentle detangling with a wide-tooth comb from ends up (not root-to-tip), never dry-force through tangles. No co-wash/plant cleanser (removed at your request 7 Sep 2026) — be aware this reopens the buildup/scalp-health tradeoff (Malassezia yeast feeding on accumulated oil can worsen dandruff), worth revisiting if you notice scalp issues. NEVER baking soda/ACV "no-poo" — pH mismatch (baking soda ~9, hair/scalp ~4.5-5.5) genuinely damages the cuticle despite the natural reputation. Weekly: egg yolk mask — real lecithin/protein/fatty-acid conditioning benefit, rinse with cool/lukewarm water only (hot water cooks the egg in your hair). Minimize heat styling, avoid tight hairstyles pulling the hairline (real traction alopecia risk), silk pillowcase already covers the friction-reduction angle. Trim every 8-12 weeks — counterintuitive but correct: removes split ends before they travel up the shaft, preserves more length over time than skipping trims. Growth rate/max length is mostly genetic — the actual lever here is minimizing breakage, not stimulating faster growth.', requiresItems:['scalp_tool'], days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'beard_growth',     name: 'Beard Growth',                 desc: 'Unlocked once a derma stamp is owned (see Shopping List). Current style: goatee + mustache, cheeks/neck kept clean — chosen because growth is currently patchy (normal at 18, density keeps maturing through the mid-20s) and short/defined beats long/scraggly for minimizing visible patchiness. Myth correction: shaving frequency/technique has ZERO effect on growth rate, thickness, or density — shaving only removes hair above the skin, growth is entirely follicle-driven. Nightly: castor/emu/rosemary oil (rosemary diluted in jojoba or almond) on the goatee/mustache — real conditioning benefit, weak-to-no evidence of actual growth stimulation. Beard balm is conditioning, not growth. Twice weekly: derma stamp 0.5-1mm on the goatee/mustache area, alcohol-clean before AND after, cleanse face first, never share the tool, avoid active acne/broken skin. Most evidence-grounded item here: real mechanism (Dhurat 2013) for microneedling + topical minoxidil on scalp AGA — strongest-evidence version would pair with minoxidil, not natural oils, if wanting that later. Nutrition — whole food: zinc (oysters/beef/pumpkin seeds, cofactor for 5-alpha-reductase which drives beard growth via DHT), cysteine-rich protein (eggs/garlic/onions/Brussels sprouts/meat/fish) instead of "keratin." Reassess every 2-3 months whether a fuller style is becoming viable as density naturally improves — see `shaving` habit for the goatee/mustache trim + clean-area shave schedule.', requiresItems:['derma_stamp'], days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'shaving',          name: 'Shaving & Goatee/Mustache Trim', desc: 'Clean areas (cheeks/neck): shave every 2 days — sharp contrast between clean skin and the goatee/mustache is what makes the style read as deliberate rather than "haven\'t shaved." Technique: define the goatee/mustache boundary first with a detail trimmer or careful razor outline before shaving the surrounding area — neckline follows roughly where your head meets your neck when tilted back, don\'t shave too high under the jaw. Shave WITH the grain first (against-grain increases razor burn/ingrown hairs meaningfully at this frequency); a second gentle pass across (not against) the grain only if wanting closer. Prep: warm water/shower + actual shaving cream/gel, not dry. Aftercare: cool water rinse, alcohol-free balm/moisturiser. Replace blade every 5-7 shaves — a dulling blade is a bigger ingrown-hair risk than the shaving itself. Goatee/mustache itself: don\'t shave, trim every few days to weekly — trimmer with a guard for the goatee (consistent length), scissors for the mustache specifically (keep it above the lip line). Existing 1-2x/week exfoliation habit doubles as ingrown-hair prevention for the now-more-frequently-shaved zones.', days: ['Monday','Wednesday','Friday','Sunday'], time:'Morning', priority:false },
