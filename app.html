@@ -1463,6 +1463,7 @@
         <button class="eat-nav-btn" onclick="shiftEatDate(-1)">‹</button>
         <div class="eat-date-lbl" id="eat-date-lbl"></div>
         <button class="eat-nav-btn" id="eat-nav-next" onclick="shiftEatDate(1)">›</button>
+        <button class="eat-nav-btn" onclick="openNutritionCalendar()" title="Pick a date">📅</button>
       </div>
       <div id="eat-day-score" style="display:none;text-align:center;margin:-6px 0 14px;font-size:12px;color:var(--dim)"></div>
 
@@ -2184,6 +2185,19 @@
     <div id="library-list"></div>
   </div>
 
+  <!-- ROADMAP — admin-only pane (JP's personal career/business roadmap,
+       not client-facing). Nav entry point (sidebar-tab + bn-more-item)
+       is hidden for everyone except PROFILE.is_admin, gated in the boot
+       sequence below. Content is static, rendered once by loadRoadmap()
+       on first switch into this tab. ══ -->
+  <div id="pane-roadmap" class="pane">
+    <div class="sh">
+      <div class="sh-label">Private — Admin Only</div>
+      <div class="sh-title">My<br><span style="color:var(--teal)">Roadmap</span></div>
+    </div>
+    <div id="roadmap-pane-body"></div>
+  </div>
+
   <!-- LOG READING SESSION -->
   <div id="log-reading-modal" onclick="if(event.target===this)closeLogReadingSession()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
     <div class="sheet-panel" style="width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
@@ -2478,6 +2492,22 @@
     </div>
   </div>
 
+  <!-- ══ NUTRITION CALENDAR MODAL ══ -->
+  <div id="nutrition-calendar-modal" onclick="if(event.target===this)closeNutritionCalendar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
+    <div class="sheet-panel" style="width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px">
+        <div style="font-family:var(--D);font-size:22px;font-weight:900">NUTRITION CALENDAR</div>
+        <button onclick="closeNutritionCalendar()" style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px">✕</button>
+      </div>
+      <div style="padding:0 20px 12px;display:flex;justify-content:space-between;align-items:center">
+        <button class="eat-nav-btn" onclick="shiftNutritionCalendarMonth(-1)">‹</button>
+        <div id="nc-month-lbl" style="font-size:13px;font-weight:600;color:var(--white)"></div>
+        <button class="eat-nav-btn" onclick="shiftNutritionCalendarMonth(1)">›</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 20px 20px"><div id="nc-grid"></div></div>
+    </div>
+  </div>
+
   <!-- ══ EVENTS MODAL ══ -->
   <div id="events-modal" onclick="if(event.target===this)closeEvents()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:var(--z-sheet);align-items:flex-end">
     <div class="sheet-panel" style="width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
@@ -2510,12 +2540,10 @@
           <button class="admin-sw-btn active" data-view="applications" onclick="switchAdminView('applications')" style="flex:1;padding:10px;background:var(--teal-lo);border:1px solid var(--teal-mid);color:var(--teal);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Applications</button>
           <button class="admin-sw-btn" data-view="compliance" onclick="switchAdminView('compliance')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Compliance</button>
           <button class="admin-sw-btn" data-view="casestudies" onclick="switchAdminView('casestudies')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Case Studies</button>
-          <button class="admin-sw-btn" data-view="roadmap" onclick="switchAdminView('roadmap')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">My Roadmap</button>
         </div>
         <div id="admin-applications-view"></div>
         <div id="admin-compliance-view" style="display:none"></div>
         <div id="admin-casestudies-view" style="display:none"></div>
-        <div id="admin-roadmap-view" style="display:none"></div>
       </div>
       <!-- Same reasoning as the Events modal's close bar — this backdrop
            physically covers the bottom nav while open; a small header ✕
@@ -2602,6 +2630,10 @@
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       <span>Community</span>
     </button>
+    <button class="sidebar-tab" id="nav-roadmap-sidebar" data-tab="roadmap" onclick="switchTab('roadmap')" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-4 4"/></svg>
+      <span>Roadmap</span>
+    </button>
   </nav>
 
   <!-- WHAT'S NEW -->
@@ -2651,8 +2683,11 @@
       <button class="bn-more-item" data-tab="move" onclick="switchTab('move');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><circle cx="12" cy="5" r="2"/><path d="M12 7v5l-3 4m3-4l3 4M9 10H6m12 0h-3"/></svg> Move
       </button>
-      <button class="bn-more-item" data-tab="library" onclick="switchTab('library');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+      <button class="bn-more-item" data-tab="library" onclick="switchTab('library');toggleMoreMenu()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg> Library
+      </button>
+      <button class="bn-more-item" id="nav-roadmap-more" data-tab="roadmap" onclick="switchTab('roadmap');toggleMoreMenu()" style="display:none;align-items:center;gap:12px;width:100%;padding:14px 10px;background:none;border:none;color:var(--white);font-family:var(--B);font-size:14px;cursor:pointer;text-align:left">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-4 4"/></svg> Roadmap
       </button>
     </div>
   </div>
@@ -2945,6 +2980,7 @@ let HABIT_DATE=TODAY;   // habits + steps can be logged for any past day
 // readout, and getHabits() is invoked eagerly at script load — same
 // temporal-dead-zone risk as JP_USER_ID above if declared later.
 let foods=[];
+let _dayScore=null; // { score, meals_scored } for EAT_DATE, from nutrition_day_scores — null if no row yet
 
 // Time-bucket sort order for chronological grouping in the Habits list.
 const HABIT_TIME_ORDER = ['Morning','Midday','Pre-Training','Post-Training','Evening','Anytime'];
@@ -3296,6 +3332,11 @@ document.querySelectorAll('.reveal-on-scroll').forEach(el => _revealObserver.obs
   await applyV1LaunchReset();
   renderXPUI();
   initAll();
+  // Roadmap tab is JP's private career/business plan, not client-facing —
+  // nav entry points stay hidden (display:none in markup) for every
+  // account except PROFILE.is_admin.
+  document.getElementById('nav-roadmap-sidebar')?.style.setProperty('display', PROFILE?.is_admin ? 'flex' : 'none');
+  document.getElementById('nav-roadmap-more')?.style.setProperty('display', PROFILE?.is_admin ? 'flex' : 'none');
   if (!isIntakeComplete()) showIntake();
   checkForNewFeatures();
 })();
@@ -3768,7 +3809,7 @@ function switchTab(tab){
     closeDmList();
     closePostThread();
   }
-  const overflowTabs = ['coach','lab','move','future-self','looksmax','library'];
+  const overflowTabs = ['coach','lab','move','future-self','looksmax','library','roadmap'];
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.getElementById('bn-more-btn')?.classList.toggle('active', overflowTabs.includes(tab));
   document.querySelectorAll('.sidebar-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
@@ -3785,6 +3826,7 @@ function switchTab(tab){
   if(tab==='progress') { setTimeout(()=>renderMilestones(), 50); }
   if(tab==='move') { setTimeout(()=>initMove(), 50); return; }
   if(tab==='library') { setTimeout(()=>initLibrary(), 50); return; }
+  if(tab==='roadmap') { setTimeout(()=>loadRoadmap(), 50); return; }
   if(tab==='looksmax') { setTimeout(()=>{ renderLooksmax(); renderShoppingList(); }, 50); return; }
   if(tab==='community') { setTimeout(()=>initCommunity(), 50); return; }
   if(tab==='coach') { setTimeout(()=>{ resumeCoachSession(); renderCoachSuggestedPrompts(); }, 50); }
@@ -5268,15 +5310,13 @@ function switchAdminView(view){
   document.getElementById('admin-applications-view').style.display = view === 'applications' ? 'block' : 'none';
   document.getElementById('admin-compliance-view').style.display = view === 'compliance' ? 'block' : 'none';
   document.getElementById('admin-casestudies-view').style.display = view === 'casestudies' ? 'block' : 'none';
-  document.getElementById('admin-roadmap-view').style.display = view === 'roadmap' ? 'block' : 'none';
   if(view === 'compliance') loadCompliance();
   if(view === 'casestudies') loadCaseStudies();
-  if(view === 'roadmap') loadRoadmap();
 }
 
 function loadRoadmap(){
-  const box = document.getElementById('admin-roadmap-view');
-  if(box.dataset.loaded) return;
+  const box = document.getElementById('roadmap-pane-body');
+  if(!box || box.dataset.loaded) return;
   box.dataset.loaded = '1';
 
   const phase = (label, when, checkpoint, items) => `
@@ -6142,6 +6182,72 @@ function renderProgrammeCalendar(){
   el.innerHTML = rows.join('');
 }
 
+// Real month-grid calendar — nothing like it existed elsewhere in this app
+// (the other two "calendars" are a 52-week list and a 7-day accordion,
+// neither a clickable date grid). Reuses the exact same primitive every
+// other date change in this app already uses: set EAT_DATE, call initEat().
+let _ncYear, _ncMonth; // 0-based month, the currently-viewed month in the modal
+function openNutritionCalendar(){
+  const d = new Date(EAT_DATE+'T00:00:00');
+  _ncYear = d.getFullYear(); _ncMonth = d.getMonth();
+  document.getElementById('nutrition-calendar-modal').style.display = 'flex';
+  renderNutritionCalendarGrid();
+}
+function closeNutritionCalendar(){
+  document.getElementById('nutrition-calendar-modal').style.display = 'none';
+}
+function shiftNutritionCalendarMonth(delta){
+  _ncMonth += delta;
+  if(_ncMonth < 0){ _ncMonth = 11; _ncYear--; }
+  if(_ncMonth > 11){ _ncMonth = 0; _ncYear++; }
+  renderNutritionCalendarGrid();
+}
+async function renderNutritionCalendarGrid(){
+  const grid = document.getElementById('nc-grid');
+  const lbl = document.getElementById('nc-month-lbl');
+  if(!grid) return;
+  const first = new Date(_ncYear, _ncMonth, 1);
+  const last = new Date(_ncYear, _ncMonth+1, 0);
+  lbl.textContent = first.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  const firstStr = _localDateStr(first), lastStr = _localDateStr(last);
+
+  const { data } = await sb.from('nutrition_day_scores').select('date,score,meals_scored')
+    .eq('user_id',USER.id).gte('date',firstStr).lte('date',lastStr);
+  const byDate = {};
+  (data||[]).forEach(r=>{ byDate[r.date] = r; });
+
+  // Mon-first grid, matching JP_WEEKDAY_NAMES' convention. getDay() is
+  // 0=Sun..6=Sat — shift so Monday=0..Sunday=6 for the leading blank count.
+  const leadBlanks = (first.getDay()+6)%7;
+  const daysInMonth = last.getDate();
+  const scoreColor = s => s>=8?'var(--teal)':s>=5?'var(--white)':'#f87171';
+
+  let cells = '';
+  for(let i=0;i<leadBlanks;i++) cells += `<div></div>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = `${_ncYear}-${String(_ncMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isFuture = dateStr > TODAY;
+    const isToday = dateStr === TODAY;
+    const row = byDate[dateStr];
+    cells += `<div ${isFuture?'':`onclick="pickNutritionCalendarDate('${dateStr}')"`}
+      style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border:1px solid ${isToday?'var(--teal)':'var(--border)'};opacity:${isFuture?'.3':'1'};
+      cursor:${isFuture?'default':'pointer'};font-size:11px;color:${isToday?'var(--teal)':'var(--white)'}">
+      <span>${day}</span>
+      ${row?.score!=null?`<span style="font-size:9px;font-weight:700;color:${scoreColor(row.score)}">${row.score}</span>`:''}
+    </div>`;
+  }
+  grid.innerHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+    ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div style="text-align:center;font-size:10px;color:var(--dim)">${d}</div>`).join('')}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${cells}</div>`;
+}
+function pickNutritionCalendarDate(dateStr){
+  EAT_DATE = dateStr;
+  closeNutritionCalendar();
+  initEat();
+}
+
 function openHabitsCalendar(){
   document.getElementById('habits-calendar-modal').style.display = 'flex';
   renderHabitsWeekCalendar();
@@ -6533,6 +6639,15 @@ async function initEat(){
       foodRatings[f.id] = { score: f.score, tagline: f.notes||null, headline: null, reasons: null, tips: [], toTen: null, micros: null, mealTime: null };
     }
   });
+  // Per-meal score/tagline are no longer written for new entries (see
+  // logFoodEntry()) — the durable record going forward is one row per day
+  // in nutrition_day_scores. Read it here so a day viewed from a different
+  // device/session (empty foodRatings cache) still shows a real score
+  // instead of nothing; renderFoods() falls back to a live recompute only
+  // when no persisted row exists yet (pre-this-feature days, or a day with
+  // zero rated meals so far).
+  const { data: dayScoreRow } = await sb.from('nutrition_day_scores').select('score,meals_scored').eq('user_id',USER.id).eq('date',EAT_DATE).maybeSingle();
+  _dayScore = dayScoreRow || null;
   renderFoods();
   renderNutritionPlan(); // re-render now foods is populated, for the live macro progress bar
   renderNutrientTracker(); // Micronutrients now lives in the Eat tab, not Progress
@@ -7016,14 +7131,22 @@ function renderFoods(){
   document.getElementById('m-c').textContent=Math.round(totals.c);
   document.getElementById('m-f').textContent=Math.round(totals.fat);
 
-  // Daily eating rating (average of this day's rated foods, out of 10)
+  // Daily eating rating — prefer the persisted nutrition_day_scores row
+  // (_dayScore, set in initEat()) since that's the durable record now that
+  // per-meal score isn't written anymore; fall back to a live recompute
+  // from foodRatings only for a day that predates this feature (real
+  // nutrition_logs rows with old-style per-meal scores) or has zero rated
+  // meals logged in THIS session yet.
   const dayScoreEl = document.getElementById('eat-day-score');
   if(dayScoreEl){
-    const scored = foods.map(f=>foodRatings[f.id]?.score).filter(s=>s!=null);
-    if(scored.length){
-      const avg = Math.round(scored.reduce((a,b)=>a+b,0)/scored.length*10)/10;
+    let avg = _dayScore?.score, count = _dayScore?.meals_scored;
+    if(avg == null){
+      const scored = foods.map(f=>foodRatings[f.id]?.score).filter(s=>s!=null);
+      if(scored.length){ avg = Math.round(scored.reduce((a,b)=>a+b,0)/scored.length*10)/10; count = scored.length; }
+    }
+    if(avg != null && count){
       const col = avg>=8?'var(--teal)':avg>=5?'var(--white)':'#f87171';
-      dayScoreEl.innerHTML = `Day rating <span style="color:${col};font-weight:700;font-size:15px">${avg}</span><span style="color:var(--dim)">/10</span> · ${scored.length} rated`;
+      dayScoreEl.innerHTML = `Day rating <span style="color:${col};font-weight:700;font-size:15px">${avg}</span><span style="color:var(--dim)">/10</span> · ${count} rated`;
       dayScoreEl.style.display='';
     } else {
       dayScoreEl.style.display='none';
@@ -7085,6 +7208,24 @@ function renderFoods(){
       ${tipsHtml}
     </div>`;
   }).join('');
+}
+
+// Recomputes the day's average from whatever's currently in foods/
+// foodRatings (identical math to renderFoods()'s live display) and
+// persists it as the one durable per-day record, now that individual
+// meals no longer carry a permanent score. Called right after any change
+// to that day's food list (log or remove) — both call sites already have
+// fresh foods/foodRatings in memory, no extra fetch needed.
+async function updateDayScore(dateStr){
+  const scored = foods.map(f=>foodRatings[f.id]?.score).filter(s=>s!=null);
+  const avg = scored.length ? Math.round(scored.reduce((a,b)=>a+b,0)/scored.length*10)/10 : null;
+  _dayScore = avg != null ? { score: avg, meals_scored: scored.length } : null;
+  try {
+    await sb.from('nutrition_day_scores').upsert(
+      { user_id: USER.id, date: dateStr, score: avg, meals_scored: scored.length },
+      { onConflict: 'user_id,date' }
+    );
+  } catch(e) {}
 }
 
 function toggleFoodTips(id){
@@ -7205,19 +7346,15 @@ async function logFoodEntry(name, timeVal, d) {
     micros: d.micros||null, mealTime: timeVal||null, context: d._context||null
   } : (timeVal || d?._context ? { mealTime: timeVal||null, context: d?._context||null } : null);
 
-  // Insert only guaranteed columns — meal_time excluded (may not exist in
-  // schema). score/notes DO exist (confirmed against the real rebuilt
-  // schema) but were never written before — the AI rating for every past
-  // meal was only ever cached in localStorage keyed per-date, so it
-  // silently vanished once you moved off that date. notes holds the
-  // tagline (not the full reasons/tips/micros breakdown — no column for
-  // that without a further migration, so that deeper detail stays
-  // session-cache-only; score+tagline is what's actually made permanent).
+  // Per-meal score/notes deliberately NOT written — per JP's direction,
+  // the individual AI score/tagline aren't the important permanent record;
+  // one aggregate score per DAY is (see updateDayScore()/
+  // nutrition_day_scores below). score/notes columns stay on the table
+  // for old rows (never dropped), just unused for new ones going forward.
   const entry = {
     user_id: USER.id, date: EAT_DATE, food_name: name,
     calories: macros.cal, protein_g: macros.protein_g,
-    carbs_g: macros.carbs_g, fat_g: macros.fat_g,
-    score: rating?.score ?? null, notes: rating?.tagline ?? null
+    carbs_g: macros.carbs_g, fat_g: macros.fat_g
   };
 
   const { data, error } = await sb.from('nutrition_logs').insert(entry).select().single();
@@ -7227,6 +7364,7 @@ async function logFoodEntry(name, timeVal, d) {
       foodRatings[data.id] = rating;
       _saveRatingsCache();
     }
+    updateDayScore(EAT_DATE); // sets _dayScore synchronously before renderFoods() reads it
     renderFoods();
     renderNutritionPlan();
     renderNutrientTracker();
@@ -7337,7 +7475,9 @@ async function removeFood(i){
   await sb.from('nutrition_logs').delete().eq('id',f.id);
   delete foodRatings[f.id];
   _saveRatingsCache();
-  foods.splice(i,1);renderFoods();
+  foods.splice(i,1);
+  updateDayScore(EAT_DATE); // sets _dayScore synchronously before renderFoods() reads it
+  renderFoods();
   renderNutritionPlan();
   renderNutrientTracker();
 }
