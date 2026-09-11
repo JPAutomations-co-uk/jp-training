@@ -10001,16 +10001,26 @@ async function renderMoveWeekStrip(){
   const dayDates = JP_WEEKDAY_NAMES.map(d => ({ day: d, date: _dateForWeekday(d) }));
   const log = OB.mobility_log || {};
 
+  // Partial credit instead of binary red/teal (11 Sep 2026) — a flat red
+  // dot looked identical for "0 of 19 logged" and "18 of 19 logged", which
+  // is exactly what kept making a genuinely-almost-complete day (like one
+  // backfilled after the fact) look like a totally missed one. Colour
+  // intensity now scales with how much was actually logged; the tooltip
+  // states the fraction outright rather than making JP guess.
   wrap.innerHTML = JP_WEEKDAY_NAMES.map((day,i) => {
     const { date } = dayDates[i];
     const required = jpStretchKeysForDay(day);
     const done = log[date] || {};
-    const complete = required.length > 0 && required.every(k => (done[k]?.sets>0) || (done[k]?.val>0));
+    const doneCount = required.filter(k => (done[k]?.sets>0) || (done[k]?.val>0)).length;
+    const pct = required.length ? doneCount/required.length : 0;
     const diff = i - todayIdx; // <0 earlier this week, 0 today, >0 not reached yet
     let bg = 'transparent', title = '';
-    if (complete) { bg = 'var(--teal)'; title = 'Full routine done'; }
-    else if (diff < 0) { bg = '#f87171'; title = 'Missed'; }
-    else if (diff === 0) { title = 'Today — not finished yet'; }
+    if (pct === 1) { bg = 'var(--teal)'; title = 'Full routine done'; }
+    else if (diff < 0) {
+      bg = doneCount > 0 ? `rgba(44,212,196,${(0.15 + pct*0.55).toFixed(2)})` : '#f87171';
+      title = doneCount > 0 ? `${doneCount}/${required.length} logged` : 'Missed';
+    }
+    else if (diff === 0) { title = doneCount > 0 ? `${doneCount}/${required.length} logged so far` : 'Today — not finished yet'; }
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px" title="${title}">
       <div style="width:8px;height:8px;border-radius:50%;background:${bg};border:1px solid var(--border)"></div>
       <div style="font-size:9px;color:var(--dim);text-transform:uppercase">${day.slice(0,3)}</div>
