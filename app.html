@@ -3033,6 +3033,7 @@ const CHECK_METRICS=[
   {key:'waking_energy',       label:'Energy on Waking',    type:'slider'},
   {key:'cognitive_sharpness', label:'Cognitive Sharpness',  type:'slider'},
   {key:'stress_load',         label:'Stress Load',         type:'slider', invert:true},
+  {key:'soreness',            label:'Muscle Soreness',     type:'slider', invert:true},
   {key:'morning_erection',    label:'Morning Erection',    type:'bool', goodValue:true},
   {key:'waking_3am',          label:'Woke at 3am',         type:'bool', goodValue:false},
 ];
@@ -8159,6 +8160,7 @@ function renderCheckinColumnSetupCard(){
   ADD COLUMN IF NOT EXISTS waking_energy int CHECK (waking_energy BETWEEN 1 AND 10),
   ADD COLUMN IF NOT EXISTS cognitive_sharpness int CHECK (cognitive_sharpness BETWEEN 1 AND 10),
   ADD COLUMN IF NOT EXISTS stress_load int CHECK (stress_load BETWEEN 1 AND 10),
+  ADD COLUMN IF NOT EXISTS soreness int CHECK (soreness BETWEEN 1 AND 10),
   ADD COLUMN IF NOT EXISTS morning_erection boolean,
   ADD COLUMN IF NOT EXISTS waking_3am boolean;</pre>
   </div>`;
@@ -8182,6 +8184,7 @@ async function loadCheckinHistory(){
   waking_energy int CHECK (waking_energy BETWEEN 1 AND 10),
   cognitive_sharpness int CHECK (cognitive_sharpness BETWEEN 1 AND 10),
   stress_load int CHECK (stress_load BETWEEN 1 AND 10),
+  soreness int CHECK (soreness BETWEEN 1 AND 10),
   morning_erection boolean,
   waking_3am boolean,
   notes text,
