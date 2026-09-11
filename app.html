@@ -2201,7 +2201,7 @@
         style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:8px">
       <textarea id="log-reading-notes" placeholder="Notes (optional)" rows="2"
         style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:12px;resize:vertical"></textarea>
-      <button onclick="submitReadingSession()" style="width:100%;background:var(--teal);color:var(--black);border:none;padding:12px;font-family:var(--D);font-size:14px;font-weight:900;cursor:pointer">Save</button>
+      <button id="log-reading-save-btn" onclick="submitReadingSession()" style="width:100%;background:var(--teal);color:var(--black);border:none;padding:12px;font-family:var(--D);font-size:14px;font-weight:900;cursor:pointer">Save</button>
     </div>
   </div>
 
@@ -2223,7 +2223,7 @@
         <option value="other">Other</option>
       </select>
       <input id="lib-add-category" placeholder="Category / topic (optional)" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:12px">
-      <button onclick="saveNewLibraryItem()" style="width:100%;background:var(--teal);color:var(--black);border:none;padding:12px;font-family:var(--D);font-size:14px;font-weight:900;cursor:pointer">Add</button>
+      <button id="lib-add-save-btn" onclick="saveNewLibraryItem()" style="width:100%;background:var(--teal);color:var(--black);border:none;padding:12px;font-family:var(--D);font-size:14px;font-weight:900;cursor:pointer">Add</button>
     </div>
   </div>
 
@@ -2243,7 +2243,7 @@
           style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:8px">
         <textarea id="lib-session-notes" placeholder="Notes (optional)" rows="2"
           style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:var(--B);font-size:14px;margin-bottom:10px;resize:vertical"></textarea>
-        <button onclick="logSessionForOpenItem()" style="width:100%;background:var(--teal);color:var(--black);border:none;padding:11px;font-family:var(--D);font-size:13px;font-weight:900;cursor:pointer;margin-bottom:10px">Log Session</button>
+        <button id="lib-session-save-btn" onclick="logSessionForOpenItem()" style="width:100%;background:var(--teal);color:var(--black);border:none;padding:11px;font-family:var(--D);font-size:13px;font-weight:900;cursor:pointer;margin-bottom:10px">Log Session</button>
         <button id="lib-detail-complete-btn" onclick="markLibraryItemComplete()" style="width:100%;background:transparent;color:var(--teal);border:1px solid rgba(44,212,196,.4);padding:11px;font-family:var(--D);font-size:13px;font-weight:900;cursor:pointer;margin-bottom:14px">Mark Complete</button>
         <div style="font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Session History</div>
         <div id="lib-session-history"></div>
@@ -2510,10 +2510,12 @@
           <button class="admin-sw-btn active" data-view="applications" onclick="switchAdminView('applications')" style="flex:1;padding:10px;background:var(--teal-lo);border:1px solid var(--teal-mid);color:var(--teal);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Applications</button>
           <button class="admin-sw-btn" data-view="compliance" onclick="switchAdminView('compliance')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Compliance</button>
           <button class="admin-sw-btn" data-view="casestudies" onclick="switchAdminView('casestudies')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Case Studies</button>
+          <button class="admin-sw-btn" data-view="roadmap" onclick="switchAdminView('roadmap')" style="flex:1;padding:10px;background:var(--s1);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">My Roadmap</button>
         </div>
         <div id="admin-applications-view"></div>
         <div id="admin-compliance-view" style="display:none"></div>
         <div id="admin-casestudies-view" style="display:none"></div>
+        <div id="admin-roadmap-view" style="display:none"></div>
       </div>
       <!-- Same reasoning as the Events modal's close bar — this backdrop
            physically covers the bottom nav while open; a small header ✕
@@ -2784,7 +2786,7 @@ function buildSearchIndex(){
   const TABS = [
     {tab:'habits',label:'Habits'}, {tab:'train',label:'Train'}, {tab:'eat',label:'Eat'},
     {tab:'progress',label:'Progress'}, {tab:'coach',label:'Coach'}, {tab:'lab',label:'Lab'},
-    {tab:'move',label:'Move'}, {tab:'community',label:'Community'},
+    {tab:'move',label:'Move'}, {tab:'library',label:'Library'}, {tab:'community',label:'Community'},
   ];
   TABS.forEach(t=>idx.push({ type:'Tab', label:t.label, tab:t.tab }));
   try {
@@ -2945,7 +2947,7 @@ let HABIT_DATE=TODAY;   // habits + steps can be logged for any past day
 let foods=[];
 
 // Time-bucket sort order for chronological grouping in the Habits list.
-const HABIT_TIME_ORDER = ['Morning','Pre-Training','Post-Training','Evening','Anytime'];
+const HABIT_TIME_ORDER = ['Morning','Midday','Pre-Training','Post-Training','Evening','Anytime'];
 
 function getHabits(){
   const h=OB.habits||{};
@@ -3323,6 +3325,7 @@ async function applyV1LaunchReset(){
 function initAll() {
   loadStepsHistory();
   loadReadingToday();
+  loadLibrary();
   initHabits();
   initTrain();
   initEat();
@@ -3477,6 +3480,8 @@ async function checkReadingHabitComplete(){
 }
 
 function openLogReadingSession(){
+  const saveBtn = document.getElementById('log-reading-save-btn');
+  if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
   const sel = document.getElementById('log-reading-item-select');
   if(sel){
     sel.innerHTML = '<option value="__new__">+ New item…</option>' +
@@ -3504,25 +3509,48 @@ async function submitReadingSession(){
   if(!Number.isFinite(minutes) || minutes <= 0){ showToast('Enter minutes first'); return; }
   const notes = document.getElementById('log-reading-notes').value.trim();
   let itemId = sel ? sel.value : '__new__';
+  let createdNewItem = false;
+
+  const btn = document.getElementById('log-reading-save-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving...'; }
 
   if(itemId === '__new__'){
     const title = document.getElementById('log-reading-new-title').value.trim();
-    if(!title){ showToast('Title required for a new item'); return; }
+    if(!title){
+      showToast('Title required for a new item');
+      if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+      return;
+    }
     const author = document.getElementById('log-reading-new-author').value.trim();
     const { data, error } = await sb.from('reading_items').insert({
       user_id: USER.id, title, author: author||null, type: 'book',
-      status: 'in_progress', date_started: TODAY
+      status: 'in_progress', date_started: HABIT_DATE
     }).select('id').single();
-    if(error){ showToast('Save failed — try again'); return; }
+    if(error){
+      showToast('Save failed — try again');
+      if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+      return;
+    }
     itemId = data.id;
+    createdNewItem = true;
   }
 
   const { error: sessErr } = await sb.from('reading_sessions').insert({
     user_id: USER.id, item_id: itemId, date: HABIT_DATE, minutes, notes: notes||null
   });
-  if(sessErr){ showToast('Save failed — try again'); return; }
+  if(sessErr){
+    // The item insert above already committed — if it was a brand-new item,
+    // clean it up rather than leaving a silent 0-session orphan in the
+    // Library that a retry (still pointed at "__new__") would only
+    // duplicate. An existing item picked from the dropdown is left alone.
+    if(createdNewItem){ try{ await sb.from('reading_items').delete().eq('id', itemId); }catch(e){} }
+    showToast('Save failed — try again');
+    if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+    return;
+  }
   await sb.from('reading_items').update({ updated_at: new Date().toISOString() }).eq('id', itemId);
 
+  if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
   closeLogReadingSession();
   showToast(`+${minutes} min logged`);
   await loadLibrary();
@@ -3600,6 +3628,8 @@ function renderLibrary(){
 }
 
 function openAddLibraryItem(){
+  const saveBtn = document.getElementById('lib-add-save-btn');
+  if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = 'Add'; }
   document.getElementById('lib-add-title').value = '';
   document.getElementById('lib-add-author').value = '';
   document.getElementById('lib-add-category').value = '';
@@ -3616,10 +3646,13 @@ async function saveNewLibraryItem(){
   const author = document.getElementById('lib-add-author').value.trim();
   const type = document.getElementById('lib-add-type').value;
   const category = document.getElementById('lib-add-category').value.trim();
+  const btn = document.getElementById('lib-add-save-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving...'; }
   const { error } = await sb.from('reading_items').insert({
     user_id: USER.id, title, author: author||null, type, category: category||null,
     status: 'in_progress', date_started: TODAY
   });
+  if(btn){ btn.disabled = false; btn.textContent = 'Add'; }
   if(error){ showToast('Save failed — try again'); return; }
   closeAddLibraryItem();
   showToast('Added to Library');
@@ -3630,6 +3663,8 @@ function openLibraryItem(id){
   const it = readingItems.find(i=>i.id===id);
   if(!it) return;
   _libraryOpenItemId = id;
+  const saveBtn = document.getElementById('lib-session-save-btn');
+  if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = 'Log Session'; }
   document.getElementById('lib-detail-title').textContent = it.title;
   document.getElementById('lib-detail-meta').textContent = [it.author, it.type, it.category].filter(Boolean).join(' · ');
   document.getElementById('lib-detail-mins').textContent = it.totalMinutes + ' min logged';
@@ -3662,9 +3697,12 @@ async function logSessionForOpenItem(){
   const minutes = parseInt(document.getElementById('lib-session-mins').value, 10);
   if(!Number.isFinite(minutes) || minutes <= 0){ showToast('Enter minutes first'); return; }
   const notes = document.getElementById('lib-session-notes').value.trim();
+  const btn = document.getElementById('lib-session-save-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving...'; }
   const { error } = await sb.from('reading_sessions').insert({
     user_id: USER.id, item_id: itemId, date: HABIT_DATE, minutes, notes: notes||null
   });
+  if(btn){ btn.disabled = false; btn.textContent = 'Log Session'; }
   if(error){ showToast('Save failed — try again'); return; }
   await sb.from('reading_items').update({ updated_at: new Date().toISOString() }).eq('id', itemId);
   showToast(`+${minutes} min logged`);
@@ -5229,8 +5267,105 @@ function switchAdminView(view){
   document.getElementById('admin-applications-view').style.display = view === 'applications' ? 'block' : 'none';
   document.getElementById('admin-compliance-view').style.display = view === 'compliance' ? 'block' : 'none';
   document.getElementById('admin-casestudies-view').style.display = view === 'casestudies' ? 'block' : 'none';
+  document.getElementById('admin-roadmap-view').style.display = view === 'roadmap' ? 'block' : 'none';
   if(view === 'compliance') loadCompliance();
   if(view === 'casestudies') loadCaseStudies();
+  if(view === 'roadmap') loadRoadmap();
+}
+
+function loadRoadmap(){
+  const box = document.getElementById('admin-roadmap-view');
+  if(box.dataset.loaded) return;
+  box.dataset.loaded = '1';
+
+  const phase = (label, when, checkpoint, items) => `
+    <div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid var(--teal);border-radius:8px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        <div style="font-family:var(--D);font-size:18px;font-weight:800">${label}</div>
+        <div style="font-size:11px;color:var(--teal);font-weight:700;letter-spacing:.03em">${when}</div>
+      </div>
+      ${checkpoint ? `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${checkpoint}</div>` : ''}
+      <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.6">
+        ${items.map(i => `<li style="margin-bottom:4px">${i}</li>`).join('')}
+      </ul>
+    </div>`;
+
+  box.innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Private — visible to admin only. Personal career/business roadmap, not client-facing content. Full-time-dedication estimates; some phases are effort-bound (compress with more hours) and some are calendar-bound (visa processing, client trust, audience growth, regulatory evidence periods) and won't compress no matter how hard you work them.</div>
+
+    ${phase('Phase 1 — Foundation', 'Months 0–6', null, [
+      'Finish Level 2 Gym Instructing (in motion)',
+      'Apply to PureGym Sutton Coldfield + other Birmingham gyms on L2 completion — start instructor income immediately',
+      'Start Level 3 PT straight after L2 — full-time focus compresses this to ~2–4 months',
+      'Run Level 3 NHS Exercise Referral (\"Supporting Clients with Long Term Conditions\") alongside L3',
+      'Set up the case-study/evidence tracking system this week, before the first paying client — log starting stats, dated photo/video, stated problem in the client\'s own words for every client from day one',
+      'Start posting YouTube content now, regardless of qualification stage — audience growth is calendar-bound so the earlier it starts the earlier it compounds',
+      'Launch the online coaching offer now using existing Programme Design + nutrition knowledge — don\'t wait for L3/L4',
+      'Fit the Business Skills course in early, not last'
+    ])}
+
+    ${phase('Phase 2 — Build income, evidence, differentiation', 'Months 6–18', 'Partly calendar-bound: Dubai employers want real elapsed months, not just hours logged.', [
+      'Freelance PT + NHS exercise referral clients running concurrently — this is where the 1–2 years of experience Dubai employers want actually accrues',
+      'Complete Level 4 Strength & Conditioning + Level 4 Nutrition for Athletic Performance (months 6–12)',
+      'Fit CPDs in opportunistically (boxing, kettlebells, TRX, circuits, functional, abs/core) — low time cost, diversifies session formats and revenue per hour',
+      'Keep logging every client outcome; ask for testimonials at the moment of the win, not weeks later',
+      'YouTube and online coaching both compounding throughout — don\'t pause either for the quals'
+    ])}
+
+    ${phase('Phase 3 — Dubai transition', 'Months 15–24 (overlaps Phase 2)', 'UK L3 CIMSPA is accepted via REPs UAE (ICREPs reciprocity) — no extra cert needed to be eligible.', [
+      'Start certificate attestation (home embassy + UAE MOFA) around month 15–16 — slow process, start before ready to apply',
+      'Register eligibility with REPs UAE',
+      'Apply directly to Dubai gyms/agencies once ~12–15 months of documented UK experience + case-study portfolio is banked',
+      'Move and start earning: gym-employed ~AED 8,000–15,000/mo (~£1,700–3,250, tax-free); freelance ~AED 15,000–30,000/mo (~£3,250–6,500); top independents far higher',
+      'Convert the affluent Dubai expat client base into the online coaching book — fastest lever toward 20 Standard members'
+    ])}
+
+    ${phase('Phase 4 — Scale to the financial checkpoint', 'Months 24–42 (~3–3.5 yrs)', 'Least compressible phase — client trust and audience size scale with elapsed time, not just hours worked.', [
+      'Push online coaching to 20 active £500/mo Standard members = £10,000/mo',
+      'Grow YouTube toward ~150,000–250,000 monthly views for £1,000+/mo ad revenue (health/fitness RPM ~$5–8)',
+      'Weave in anthropology/regenerative ag self-study (passive — books, podcasts, documentaries) and a self-paced Permaculture Design Certificate',
+      'Fold a WWOOF farm stay into any travel already happening (e.g. an Ireland trip)',
+      'Start the Sutton Coldfield RFC relationship informally — sponsorship, offering S&C support to players — long relationship-build, start early and cheap'
+    ])}
+
+    ${phase('✓ CHECKPOINT — reevaluate', '~Month 36–42', 'Trigger for everything below. Do not start deploying farm capital before both targets are consistently hit.', [
+      'Online coaching consistently ≥ £10,000/month (20 Standard members)',
+      'YouTube ad revenue consistently ≥ £1,000/month',
+      'Dubai role + UK experience banked'
+    ])}
+
+    ${phase('Phase 5 — Farm + distribution', 'Months 42–60 (years 3.5–5)', 'Sutton Coldfield itself sits largely in green belt — realistic site is North Warwickshire/Staffordshire, just outside town, confirm with a local planning consultant before committing capital.', [
+      'Land search filtering for pasture quality, price, AND spring water potential in one search',
+      'Start as a pilot/leased-scale operation, not the full £150k–400k+ vision — let direct-to-consumer sales fund expansion (Polyface/Salatin model)',
+      'Run in parallel: raw dairy + colostrum FSA registration, Spring Water Environmental Health registration (lighter-touch route vs. full Natural Mineral Water\'s 2-year evidence requirement), standard food business registration',
+      'Raw dairy/colostrum: farm-direct or online-direct only — England law does not allow raw milk through third-party retail shops',
+      'Everything else (ghee, tallow, honey, pastured eggs, grass-fed meat, produce) — normal retail placement in Sutton Coldfield town centre shops',
+      'Start the 2-year Natural Mineral Water evidence clock once the spring is producing, as a background process — pursue as a brand upgrade once cash-flowing, not a launch prerequisite'
+    ])}
+
+    ${phase('Phase 6 — Health/performance campus', 'Years 5–7+', 'Split by regulatory weight — this is not one project.', [
+      'Gym + basketball training facility — design as a youth athletic development centre from the outset, not a general gym to pivot later',
+      'DEXA scanner (~£50k–150k) + a bloodwork partnership (lab/phlebotomy provider) — both genuinely attainable at this stage',
+      'MRI: a fundamentally different category (£500k–1.5m+ equipment, CQC registration, IRMER compliance, radiologist staffing) — treat as a much later flagship addition or referral partnership, not a target for this phase'
+    ])}
+
+    ${phase('Phase 7 — Restaurant', 'Years 6–8+', 'Sequenced after the farm is proven — the whole value proposition depends on an already-working supply chain.', [
+      'Uses the farm\'s own produce as the supply chain',
+      'Built before the farm exists it\'s just another restaurant; built after, it\'s the flagship of a vertically integrated system'
+    ])}
+
+    ${phase('Ongoing thread — youth & paediatric specialisation', 'Deepens throughout, birth → end of puberty', 'Athletic-performance and youth-training groundwork already exists — let it shape design now rather than retrofitting later.', [
+      'Shapes Tier 2 (Phase 6) campus design from day one — costs nothing extra to build it youth-first from the start',
+      'Full clinical specialisation deepens with experience across the whole timeline, not something to force early'
+    ])}
+
+    ${phase('Sutton Coldfield RFC', 'Ongoing relationship, not a purchase', 'Confirmed: it\'s a private company limited by guarantee without share capital — a members\' club. There is no share capital to buy.', [
+      'Realistic path: principal sponsor → funded/named facility → elected board seat',
+      'Start the relationship in Phase 4, well before the capital for the rest of the stack exists — this is about trust and integration, not a purchase price'
+    ])}
+
+    <div style="font-size:12px;color:var(--muted);margin-top:6px;padding:12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;line-height:1.6">Total honest estimate at full-time dedication: <b style="color:var(--white)">~3–3.5 years</b> to the financial checkpoint · <b style="color:var(--white)">~5 years</b> to a working farm + distribution business · <b style="color:var(--white)">~7–8+ years</b> to the fuller flagship vision (campus, restaurant, deep rugby club integration).</div>
+  `;
 }
 
 async function loadCaseStudies(){
@@ -7227,6 +7362,7 @@ const HABIT_TIME_LOOKUP = {
   custom_bedding_laundry:'Anytime', custom_towel_care:'Anytime',
   custom_hair_care:'Evening', custom_eye_bags:'Morning', custom_beard_growth:'Evening',
   custom_shaving:'Morning',
+  custom_oral_health_am:'Morning', custom_oral_health_midday:'Midday', custom_oral_health_pm:'Evening',
   // Note: the 9 former grouped Looksmax habits (facial_exercises,
   // spine_decompression, chewing_split, gua_sha_face, hyoid_training, mpr,
   // positive_tilt, lymphatic_drainage, tongue_posture) plus inversion_table
@@ -10112,10 +10248,17 @@ function applyJPRealProtocol() {
     { key: 'morning_focus',    name: 'Grounding Mobility Routine', desc: 'A rotating, day-specific mobility block tied to what you\'re training — see the Move tab for today\'s exact stretches. Mark-done only (10 Sep 2026 — was individually sets/reps-tracked per stretch; the fixed daily core (cat-cow, chin tucks, hip flexor hold, dead bug) carries the numeric tracking instead, this one stays a single check).', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
     { key: 'evening_focus',    name: 'Evening Wind-Down (Relaxing Movements)', desc: 'Child\'s Pose, Wall Slide, Legs-Up-The-Wall — low-cortisol, parasympathetic-leaning movements to close out the day, logged individually with sets/reps on the Move tab. Replaced the old rotating day-specific focus 10 Sep 2026 — this one stays the same every day rather than varying with what you trained, on purpose (wind-down doesn\'t need to match the session).', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'creatine',         name: 'Creatine',                    desc: '5g, post-workout — saturation-based, daily consistency is what makes it work. Unlocked once creatine monohydrate is owned (see Shopping List).', requiresItems:['creatine_monohydrate'], days: JP_WEEKDAY_NAMES, time:'Post-Training', priority:true },
+    { key: 'ashwagandha_am',   name: 'Ashwagandha — AM',            desc: '~07:15, with breakfast — food buffers any GI effect. Split AM/PM dosing matches the RCT with the strongest cortisol result (Pratte 2014, 300mg 2x/day, 30.5% reduction) vs. once-daily dosing.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:false },
+    { key: 'vitamin_d3_k2',    name: 'Vitamin D3 + K2',             desc: '~12:00, with your biggest/fattiest meal (lunch) — both fat-soluble, absorption ~32% higher with a fat-containing meal vs fasted. No need for a separate dose slot.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
+    { key: 'magnesium_glycinate', name: 'Magnesium Glycinate — 200mg', desc: '~20:45-21:00, 30-60min before sleep — this is the timing window shown to lower evening cortisol/improve HRV, not a deficiency-repair dose (diet already covers baseline magnesium). Take BEFORE the pre-bed raw milk, not with it — magnesium and calcium compete for absorption. Currently testing at 200mg (down from 400mg) since dietary intake is already sufficient.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'ashwagandha_pm',   name: 'Ashwagandha — PM',            desc: '~21:30, at lights-out — the bedtime dose is the one shown to reduce evening cortisol specifically and support sleep onset. Pairs with the 4-7-8 breathing right before sleep.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'bovine_collagen',  name: 'Bovine Collagen',             desc: '~12:30-13:00, ~15g, with the vitamin C from your lunch fruit — about 1h before training. Vitamin C is the actual trigger for the collagen-synthesis effect (Shaw et al., Am J Clin Nutr), not collagen alone. Fills a real gap left by cutting bone broth from the diet — glycine/proline/hydroxyproline your muscle-meat protein doesn\'t supply. Don\'t count toward your protein target — incomplete amino profile, doing a structural (skin/tendon/joint) job, not a muscle-building one.', days: JP_WEEKDAY_NAMES, time:'Pre-Training', priority:false },
     { key: 'no_cannabis',      name: 'Cannabis-Free Day',           desc: 'THC measurably suppresses REM sleep, and frequent use is linked to reduced dopamine sensitivity/motivation over time — directly works against the sleep and drive everything else in your protocol depends on. Cutting down, not a moral judgement.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'no_nicotine',      name: 'Nicotine-Free Day',           desc: 'Appetite suppression works against your calorie targets, and nicotine — especially later in the day — fragments sleep quality. Same recovery/growth levers everything else here protects.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
-    { key: 'breathing_protocol',name:'Breathing Protocol',          desc: 'Box breathing or cyclic sighing, 5-10 min — cortisol regulation, nervous system recovery between 2x/day training demands.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
+    { key: 'breathing_protocol',name:'Breathing Protocol — Pre-Bed', desc: '4-7-8 breathing (4 count in, 7 hold, 8 out, 4 cycles), lying in bed right before lights out, ~21:30 — extended exhale drops HR 10-15bpm within 2 min and is the evidence-based pre-sleep cortisol-reduction protocol (vs. box breathing/cyclic sighing, which are better for acute daytime stress spikes — use those anytime tension comes up between training demands).', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
+    { key: 'nsdr_post_lunch',  name: 'NSDR — Post-Lunch',          desc: '10-20 min guided body-scan/yoga nidra audio (search "NSDR" or "Yoga Nidra" — Huberman\'s or any 10-20 min track works), lying still eyes closed, ~13:00 — right after your 12:00 lunch, before training. Combats the post-lunch dip without touching night sleep pressure, and is the real, evidenced dopamine reset (Kjaer 2002, +65%) distinct from the evening Yoga Flow/NSDR slot already on the Move tab.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:true },
     { key: 'meal_plan',        name: 'Followed Meal Plan',          desc: 'Auto-ticks when today\'s logged calories & protein land within 10% of the day\'s targets. Checks totals, not identical foods — can\'t verify exact meal matches from free-text logs.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:true },
+    { key: 'eating_routine',   name: 'Eating Routine — 5-Meal Timing', desc: 'Lean-bulk timing, ~14h eating window (never let the overnight gap exceed 16h — that\'s what suppresses LH/testosterone). 07:15 Breakfast (within 30min of waking, real food not just a banana): eggs + beef/protein + potato + fruit, 30-40g protein. 12:00 Biggest meal of the day: beef, eggs, potato, fruit — peak circadian insulin sensitivity, keep this the largest portion. ~13:30 Train. ~14:30-15:00 Post-workout meal (within 60min of finishing — the one that was missing): protein + carbs, e.g. beef/eggs + potato or fruit. 17:00-18:00 Dinner: same foods as lunch, lighter portion, 4-5h before bed. ~21:00 Raw milk pre-bed — for the full evidence-based 30-40g pre-sleep protein dose, bump to 400-500ml or pair with yoghurt/cottage cheese.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:true },
     { key: 'skincare_am',      name: 'AM Skincare',                 desc: 'Splash face with lukewarm water. Take a pea-to-dime amount of raw or manuka honey (UMF 10+ if you have it), massage into damp skin in circular motions for 30-60 sec — focus on the T-zone and anywhere oily. Rinse fully with warm water (check hairline/jaw for leftover honey), pat dry, don’t rub. While skin is still slightly damp, apply moisturiser (hemp seed oil, rosehip oil, or the tallow/honey/beeswax balm). Then: brush eyebrows into shape with a spoolie (dry, or a touch of clear brow gel for hold). Eye squeeze with resistance: fingers gently at the outer corners holding skin taut (not tugging), close eyes tightly for a few reps — resistance is meant to let the muscle work without the skin creasing into a fold. Unproven for lasting change, same evidence tier as other facial exercises here; keep it gentle given how thin the skin is in that area.', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
     { key: 'skincare_pm',      name: 'PM Skincare',                 desc: 'Honey cleanse: pea-to-dime amount of raw or manuka honey, massage into damp skin 30-60 sec, rinse warm, pat dry. Moisturise (hemp seed oil, rosehip oil, or tallow/honey/beeswax balm), hyaluronic acid sealed underneath.', days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
     { key: 'eyelash_care',     name: 'Eyelash Care',                desc: 'Unlocked once eyelash oil is owned (see Shopping List). Nightly: castor or rosemary oil along the lash line (base of upper lashes, avoid direct eye contact). Daily: curl at the base (not tips) 1-2x for a natural curve; mascara applied mid-lash-to-tip (not at the base/waterline), one coat, twist the wand out rather than pumping it (pumping dries the product and speeds up bacterial growth), de-clump with a clean spoolie/finger; remove gently before bed every time — soak a pad and hold a few seconds, don\'t scrub. Every 4-6 weeks: trim 2-5mm off the outer-corner lashes (dry, not wet), replace the mascara tube outright regardless of how much is left, check the curler\'s rubber pad and replace if hardened/cracked.', requiresItems:['eyelash_oil'], days: JP_WEEKDAY_NAMES, time:'Evening', priority:false },
@@ -10128,7 +10271,9 @@ function applyJPRealProtocol() {
     { key: 'shaving',          name: 'Shaving & Goatee/Mustache Trim', desc: 'Clean areas (cheeks/neck): shave every 2 days — sharp contrast between clean skin and the goatee/mustache is what makes the style read as deliberate rather than "haven\'t shaved." Technique: define the goatee/mustache boundary first with a detail trimmer or careful razor outline before shaving the surrounding area — neckline follows roughly where your head meets your neck when tilted back, don\'t shave too high under the jaw. Shave WITH the grain first (against-grain increases razor burn/ingrown hairs meaningfully at this frequency); a second gentle pass across (not against) the grain only if wanting closer. Prep: warm water/shower + actual shaving cream/gel, not dry. Aftercare: cool water rinse, alcohol-free balm/moisturiser. Replace blade every 5-7 shaves — a dulling blade is a bigger ingrown-hair risk than the shaving itself. Goatee/mustache itself: don\'t shave, trim every few days to weekly — trimmer with a guard for the goatee (consistent length), scissors for the mustache specifically (keep it above the lip line). Existing 1-2x/week exfoliation habit doubles as ingrown-hair prevention for the now-more-frequently-shaved zones.', days: ['Monday','Wednesday','Friday','Sunday'], time:'Morning', priority:false },
     { key: 'gut_meals',        name: 'Chew + Destress Before Meals',desc: 'Chew each mouthful thoroughly. A minute of slow breathing before eating if rushed/stressed.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
     { key: 'weekly_grooming',  name: 'Weekly Grooming Check',       desc: 'Postural self-photo (shoulder/hip/knee symmetry), swallow-pattern self-check.', days: ['Sunday'], time:'Anytime', priority:false },
-    { key: 'oral_health',      name: 'Oral Health (Full Protocol)', desc: 'Unlocked once copper scraper + hydroxyapatite toothpaste + coconut oil are all owned (see Shopping List). AM: copper tongue scrape, floss, brush 2 min with hydroxyapatite toothpaste, spit don\'t rinse. Midday: coconut oil pulling 15-20 min (cold-pressed), spit in a bin not the sink, rinse, brush. PM: floss, brush with hydroxyapatite toothpaste, spit don\'t rinse. Fluoride-free by your choice — hydroxyapatite is the strongest evidence-based substitute (real, non-inferiority trial data) but narrows the gap rather than closing it; revisit fluoride at minimum the nighttime brush if a checkup ever flags rising cavity risk. Whitening strips (once owned): 1-2 week course a few times a year, brush/floss first, follow the product\'s exact timing, don\'t brush for 30-60 min after — UK products are capped at a much lower peroxide concentration than US ones (0.1% OTC vs up to 6% dentist-supervised).', requiresItems:['copper_scraper','hydroxyapatite_toothpaste','coconut_oil'], days: JP_WEEKDAY_NAMES, time:'Anytime', priority:true },
+    { key: 'oral_health_am',   name: 'Oral Health — AM',            desc: 'Unlocked once copper scraper + hydroxyapatite toothpaste + coconut oil are all owned (see Shopping List). Copper tongue scrape (front to back, 2-3 passes, rinse between), floss, brush 2 min with hydroxyapatite toothpaste (soft/electric brush, 45° angle, gentle), spit — don\'t rinse with water (lets the remineralising agent sit). Fluoride-free by your choice — hydroxyapatite is the strongest evidence-based substitute (real non-inferiority trial data) but narrows the gap rather than closing it; revisit fluoride at minimum the nighttime brush if a checkup ever flags rising cavity risk.', requiresItems:['copper_scraper','hydroxyapatite_toothpaste','coconut_oil'], startDate:'2026-09-11', days: JP_WEEKDAY_NAMES, time:'Morning', priority:true },
+    { key: 'oral_health_midday', name: 'Oral Health — Midday Oil Pulling', desc: 'Unlocked once copper scraper + hydroxyapatite toothpaste + coconut oil are all owned (see Shopping List). Cold-pressed coconut oil, swish 15-20 min, spit into a bin — not the sink, it solidifies and can clog pipes. Rinse, then brush. Keep this separate from both brushing sessions, not stacked onto either.', requiresItems:['copper_scraper','hydroxyapatite_toothpaste','coconut_oil'], startDate:'2026-09-11', days: JP_WEEKDAY_NAMES, time:'Midday', priority:true },
+    { key: 'oral_health_pm',   name: 'Oral Health — PM',            desc: 'Unlocked once copper scraper + hydroxyapatite toothpaste + coconut oil are all owned (see Shopping List). Floss, brush 2 min with hydroxyapatite toothpaste, spit — don\'t rinse. During an active whitening course, the treatment goes after this final brush: Whites Beaconsfield Professional Range 7 Day Advanced Whitening Kit, PAP gel + LED tray (peroxide-free but stronger evidence tier than plain sodium-chlorite strips — a deliberate budget/reviews choice made 10 Sep 2026) — fill tray top half with gel (3 syringes ÷ 7 days, ~half syringe/day), 20-30 min, avoid staining food/drink during the course. Results visible from day 1, most change by day 3-4, holds 9-12 weeks — repeat the 7-day course every 2-3 months. This isn\'t a daily habit itself (7-day course every 2-3 months doesn\'t fit the weekday-recurrence model) — treat it as a calendar reminder layered on top of this brush, not something this checkbox tracks.', requiresItems:['copper_scraper','hydroxyapatite_toothpaste','coconut_oil'], startDate:'2026-09-11', days: JP_WEEKDAY_NAMES, time:'Evening', priority:true },
     { key: 'progress_photos',  name: 'Take Progress Photos',        desc: 'Face (front + both profiles) and physique (front/side/back, relaxed) — same time every day, 1:30pm, for genuinely comparable photos. Auto-ticks the moment you upload one in Progress → Photos.', days: JP_WEEKDAY_NAMES, time:'Anytime', priority:false },
   ];
   const todayDayLabel = effectiveTodayName();
@@ -10149,7 +10294,11 @@ function applyJPRealProtocol() {
     // item key is in OB.owned_items — see JP_SHOPPING_LIST/toggleOwnedItem().
     // Habits with no requiresItems field are always live (unchanged behaviour).
     const unlocked = !h.requiresItems || h.requiresItems.every(k => (OB.owned_items || []).includes(k));
-    if (h.days.includes(todayDayLabel) && unlocked) OB.custom_habits.push({ key: h.key, name: h.name, desc: h.desc, time: h.time, priority: h.priority });
+    // startDate: habit only goes live on/after this date, regardless of item
+    // ownership — for habits deliberately deferred to a specific start day
+    // rather than "as soon as you own the stuff".
+    const dateOk = !h.startDate || _localDateStr() >= h.startDate;
+    if (h.days.includes(todayDayLabel) && unlocked && dateOk) OB.custom_habits.push({ key: h.key, name: h.name, desc: h.desc, time: h.time, priority: h.priority });
   });
 }
 
@@ -10166,23 +10315,27 @@ function applyJPRealProtocol() {
 const JP_SHOPPING_LIST = [
   { key:'honey', name:'Raw/Manuka Honey (UMF 10+)', cost:'£8-20', tier:1 },
   { key:'moisturiser', name:'Moisturiser', cost:'£5-15', tier:1 },
-  { key:'coconut_oil', name:'Cold-Pressed Coconut Oil', cost:'£5-10', tier:1, unlocks:'oral_health' },
-  { key:'hydroxyapatite_toothpaste', name:'Hydroxyapatite Toothpaste', cost:'£10-15', tier:1, unlocks:'oral_health' },
+  { key:'coconut_oil', name:'Cold-Pressed Coconut Oil', cost:'£5-10', tier:1, unlocks:'Oral Health (AM / Midday / PM)' },
+  { key:'hydroxyapatite_toothpaste', name:'Hydroxyapatite Toothpaste', cost:'£10-15', tier:1, unlocks:'Oral Health (AM / Midday / PM)' },
   { key:'glass_water', name:'Glass/Spring Water (or glass filter jug)', cost:'~£15-25 jug, or bottled', tier:1, note:'Reduces plastic/BPA exposure — supports the existing hydration habit, no new protocol to unlock.' },
   { key:'ha_serum', name:'Hyaluronic Acid Serum', cost:'£8-15', tier:2 },
   { key:'ltheanine', name:'L-Theanine', cost:'~£10', tier:2, note:'Glycine dropped — bone broth/gelatin covers it, see memory file.' },
-  { key:'copper_scraper', name:'Copper Tongue Scraper', cost:'£5-10', tier:2, unlocks:'oral_health' },
+  { key:'copper_scraper', name:'Copper Tongue Scraper', cost:'£5-10', tier:2, unlocks:'Oral Health (AM / Midday / PM)' },
   { key:'scalp_tool', name:'Scalp Massage Tool', cost:'£5-10', tier:2, unlocks:'hair_care' },
   { key:'derma_stamp', name:'Derma Stamp', cost:'£10-20', tier:2, unlocks:'beard_growth' },
   { key:'exfoliant', name:'Chemical Exfoliant (AHA/BHA)', cost:'£8-15', tier:3 },
   { key:'eyelash_oil', name:'Eyelash Oil (castor/rosemary + carrier)', cost:'£10-15', tier:3, unlocks:'eyelash_care' },
   { key:'beard_oil', name:'Beard Oils (castor/emu/rosemary + carrier)', cost:'£15-25', tier:3, note:'Supports the derma-stamp-gated beard_growth habit once unlocked.' },
-  { key:'whitening_strips', name:'Whitening Strips', cost:'£20-35', tier:3, unlocks:'oral_health' },
+  { key:'whitening_strips', name:'Whites Beaconsfield 7 Day Advanced Whitening Kit (PAP gel + LED tray)', cost:'£15-25', tier:3, note:'Chosen 10 Sep 2026 over a peroxide product on budget/reviews — PAP is peroxide-free but a stronger evidence tier than plain sodium-chlorite strips (an earlier same-day choice, swapped before purchase). See memory file.' },
   { key:'kojic_vitc', name:'Kojic Acid + Vitamin C', cost:'£10-20', tier:3 },
   { key:'inversion_table', name:'Inversion Table', cost:'£50-150', tier:'roadmap', unlocks:'inversion_table' },
   { key:'creatine_monohydrate', name:'Creatine Monohydrate', cost:'£10-20', tier:1, unlocks:'creatine' },
   { key:'gua_sha_tool', name:'Gua Sha Tool', cost:'£5-15', tier:1, unlocks:'gua_sha' },
   { key:'mastic_gum', name:'Mastic Gum (Chios)', cost:'£10-20', tier:1, unlocks:'mastic_gum_chewing' },
+  { key:'wide_tooth_comb', name:'Wide-Tooth Comb', cost:'£3-5', tier:1, note:'Supports the already-active hair_care habit — wet-detangling step, lowest-breakage-risk tool for wet hair.' },
+  { key:'shaving_kit', name:'Shaving Kit (detail trimmer, razor, shaving cream, alcohol-free balm, spare blades)', cost:'£20-35', tier:1, note:'Supports the already-active shaving habit (every 2 days) — technique steps assumed these tools, never listed for purchase until now.' },
+  { key:'hair_brush', name:'Boar Bristle Hairbrush', cost:'£8-15', tier:2, note:'Optional secondary hair tool — dry styling/sebum distribution. Weaker evidence tier than the wide-tooth comb (traditional/anecdotal, not RCT-backed) — low-cost/low-risk inclusion, not a strong evidence case.' },
+  { key:'foam_roller', name:'Foam Roller', cost:'£10-20', tier:2, note:'Supports the already-active spine_decompression habit — back-rolling step. Thoracic spine only; avoid direct hard rolling on the lumbar region.' },
 ];
 
 function renderShoppingList(){
