@@ -6774,6 +6774,13 @@ const FOOD_NUTRIENT_DB = {
   // left as-is — genuinely near-zero magnesium, not a gap.
   'beef mince':      { b1:.05, b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, b7:3, zn:4.8, fe:2.1, se:15, cu:.09, p:165, k:260, mg:20, choline:75, satfat:8.5, monofat:9, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
   'beef steak':      { b1:.08, b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, b7:3, zn:4.8, fe:2.1, se:15, cu:.09, p:165, k:260, mg:20, choline:75, satfat:6, monofat:6.5, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
+  // Promoted from FOOD_ALIASES 12 Sep 2026 (previously both just pointed at
+  // generic 'beef steak') so macro accuracy work could give them distinct
+  // fat/calorie figures — ribeye runs meaningfully fattier than sirloin.
+  // Micronutrient profile copied from 'beef steak' unchanged (cut-specific
+  // micronutrient differences aren't worth modelling for this protocol).
+  'ribeye':          { b1:.08, b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, b7:3, zn:4.8, fe:2.1, se:15, cu:.09, p:165, k:260, mg:20, choline:75, satfat:6, monofat:6.5, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
+  'sirloin':         { b1:.08, b12:2.6, b3:4.8, b6:.35, b2:.15, b5:.55, b7:3, zn:4.8, fe:2.1, se:15, cu:.09, p:165, k:260, mg:20, choline:75, satfat:6, monofat:6.5, taurine:40, carnitine:95, coq10:2.6, creatine:350 },
   'beef liver':      { vitA:4968, b12:59, b9:145, b2:2.8, b3:13, b6:.9, b5:6.2, b7:41, fe:4.9, zn:4, cu:9.8, se:24, p:387, mg:18, choline:333, coq10:3.9, antiox:['beta-carotene'] },
   'beef heart':      { b12:9.1, b3:6.5, b2:.88, fe:4.3, zn:2, p:213, se:23, mg:20, taurine:63, coq10:11.3, creatine:280 },
   'bone marrow':     { b12:.5, choline:20, mg:2, satfat:40, monofat:38 },
@@ -6815,6 +6822,12 @@ const FOOD_NUTRIENT_DB = {
   'mango':           { vitC:36.4, vitA:54, b9:43, fiber:1.6, mg:10 },
   'watermelon':      { vitC:8.1, vitA:28, mg:10, antiox:['lycopene'] },
   'kiwi':            { vitC:92.7, vitK:40.3, vitE:1.5, fiber:3, mg:17, k:312, cu:.13, b9:25 },
+  // Added 12 Sep 2026 alongside the macro-accuracy pass — two more entries
+  // for JP's ~7-8 item rotating fruit set (both were previously absent from
+  // this DB entirely, so any log mentioning them fell straight through to
+  // the AI micronutrient estimate).
+  'apple':           { vitC:4.6, k:107, fiber:2.4 },
+  'orange':          { vitC:53.2, b9:40, k:181, ca:40, fiber:2.4 },
   'papaya':          { vitC:60.9, vitA:47, b9:37, mg:10 },
   'pomegranate':     { vitC:10.2, vitK:16.4, b9:38, mg:12, antiox:['punicalagins'] },
   'dates':           { k:696, fiber:6.7, mn:.3, b6:.25, mg:43 },
@@ -6834,6 +6847,51 @@ const FOOD_NUTRIENT_DB = {
   'black coffee':    { b2:.2, b3:.7, mg:7, k:49 },
   'yerba mate':      { mg:8, k:65, antiox:['chlorogenic acids'] },
   'coconut water':   { k:250, mg:25, vitC:2.4 },
+};
+
+// Per-100g/100ml macro data (protein/carbs/fat, grams), added 12 Sep 2026,
+// scoped to exactly the food groups JP actually logs (raw dairy, red meat,
+// eggs, beef dripping, fruit, potatoes, raw carrots) rather than every key
+// in FOOD_NUTRIENT_DB above. Kept as a SEPARATE table on purpose — not
+// merged into FOOD_NUTRIENT_DB — because computeDayNutrients() blindly
+// sums every key present in a matched food's data object into the
+// micronutrient totals; adding protein_g/carbs_g/fat_g there would get
+// silently swept into that loop too.
+//
+// Deliberately NO "cal" field anywhere in this table. Calories are always
+// DERIVED as protein_g*4 + carbs_g*4 + fat_g*9 wherever this table is
+// consumed, never stored or trusted from any single source — this is the
+// direct fix for the bug found 11 Sep 2026 where a logged meal's own
+// reported kcal didn't even arithmetically agree with its own P/C/F
+// (28P+188C+94F implies 1710kcal, not the 1847 it was given).
+//
+// Sourced from USDA FoodData Central, cooked/as-eaten basis for anything
+// normally cooked (matching FOOD_NUTRIENT_DB's existing convention).
+// 'whole eggs' is deliberately the egg-ALONE value, not pre-inflated for
+// frying fat — cooking fat (beef tallow/dripping) is counted separately via
+// its own match, so pre-inflating eggs here would double-count fat.
+const FOOD_MACRO_DB = {
+  'beef mince':      { protein_g:25.7, carbs_g:0,    fat_g:16.2 }, // generic = 80/20-equivalent, cooked
+  'beef mince 90/10':{ protein_g:26,   carbs_g:0,    fat_g:10   }, // cooked
+  'beef steak':      { protein_g:26,   carbs_g:0,    fat_g:15   }, // generic/unspecified cut, cooked average
+  'ribeye':          { protein_g:24.5, carbs_g:0,    fat_g:21   }, // cooked, trimmed
+  'sirloin':         { protein_g:29,   carbs_g:0,    fat_g:9.4  }, // cooked, trimmed
+  'whole eggs':      { protein_g:12.6, carbs_g:0.7,  fat_g:9.5  }, // raw/boiled, egg alone
+  'raw milk':        { protein_g:3.2,  carbs_g:4.8,  fat_g:3.3  }, // whole, ~3.5% fat
+  'raw kefir':       { protein_g:3.3,  carbs_g:4.5,  fat_g:3.3  }, // whole-milk kefir
+  'beef tallow':     { protein_g:0,    carbs_g:0,    fat_g:100  }, // pure rendered fat
+  'potato':          { protein_g:2.5,  carbs_g:21.2, fat_g:0.1  }, // baked, flesh+skin
+  'carrot':          { protein_g:0.9,  carbs_g:9.6,  fat_g:0.2  }, // raw
+  'banana':          { protein_g:1.1,  carbs_g:22.8, fat_g:0.3  },
+  'kiwi':            { protein_g:1.1,  carbs_g:14.7, fat_g:0.5  },
+  'berries':         { protein_g:0.7,  carbs_g:14.5, fat_g:0.3  }, // mixed-berry average (blueberry basis)
+  'mango':           { protein_g:0.8,  carbs_g:15.0, fat_g:0.4  },
+  'watermelon':      { protein_g:0.6,  carbs_g:7.6,  fat_g:0.2  },
+  'papaya':          { protein_g:0.5,  carbs_g:10.8, fat_g:0.3  },
+  'pineapple':       { protein_g:0.5,  carbs_g:13.1, fat_g:0.1  },
+  'pomegranate':     { protein_g:1.7,  carbs_g:18.7, fat_g:1.2  },
+  'apple':           { protein_g:0.3,  carbs_g:13.8, fat_g:0.2  },
+  'orange':          { protein_g:0.9,  carbs_g:11.8, fat_g:0.1  },
 };
 
 // Real RDA/UL-style targets, general adult baseline (UK Reference Nutrient
@@ -6874,7 +6932,10 @@ const NUTRIENT_META = {
 // food scorer, kept visually distinct as "Estimated" rather than blended
 // in as if it were verified.
 const FOOD_ALIASES = {
-  'ribeye':'beef steak', 'sirloin':'beef steak', 'brisket':'beef steak', 'short rib':'beef steak',
+  // ribeye/sirloin removed 12 Sep 2026 — promoted to real top-level
+  // FOOD_NUTRIENT_DB/FOOD_MACRO_DB keys above instead of aliasing to
+  // generic 'beef steak', so their distinct fat content can be counted.
+  'brisket':'beef steak', 'short rib':'beef steak',
   'liver':'beef liver', 'heart':'beef heart', 'eggs':'whole eggs', 'egg':'whole eggs',
   'kefir':'raw kefir', 'milk':'raw milk', 'cheese':'raw hard cheese', 'butter':'raw butter',
   'cream':'raw cream', 'parmigiano reggiano':'parmigiano', 'tallow':'beef tallow',
@@ -6883,6 +6944,25 @@ const FOOD_ALIASES = {
   'mixed berries':'berries', 'blueberries':'berries', 'strawberries':'berries', 'raspberries':'berries',
   'bell pepper':'bell peppers', 'chocolate':'dark chocolate', 'honey':'raw honey',
   'kiwis':'kiwi', 'avacado':'avocado', 'avocados':'avocado',
+  // Added 12 Sep 2026 for the macro-accuracy pass. 'beef dripping' is a
+  // full-phrase alias listed BEFORE the bare 'dripping' fallback on
+  // purpose: matchFoodToDatabase sorts keys longest-first so the full
+  // phrase wins when present, which matters because a bare 'dripping'
+  // alias alone would leave a stray "beef" token behind after leftover-text
+  // stripping (see detectLeftoverFoodText) — "beef" isn't consumed by
+  // either alias on its own, and would wrongly register as an unmatched
+  // food, pushing the whole entry back to a pure AI estimate.
+  'beef dripping':'beef tallow', 'dripping':'beef tallow',
+  'mince':'beef mince', 'apples':'apple', 'oranges':'orange',
+  // 'baking potato' is specifically the large starchy variety sold for
+  // baking/jacket potatoes — meaningfully bigger than a generic "potato"
+  // (salad/new potatoes skew much smaller). Same micro/macro data as
+  // 'potato' (aliases to the same key), but gets its OWN, larger default
+  // unit-weight below — mirrors the existing 'sweet potato' vs 'potato'
+  // pattern already in this file. Longest-key-first matching means this
+  // wins over the bare 'potato' alias whenever JP's actual phrasing
+  // ("baking potatoes") is present.
+  'baking potato':'potato', 'baking potatoes':'potato', 'jacket potato':'potato',
 };
 // Default weight (g) for ONE typical unit of foods commonly logged by count
 // ("4 eggs", "one avocado") rather than explicit grams — added 8 Sep 2026.
@@ -6894,11 +6974,38 @@ const FOOD_ALIASES = {
 const FOOD_UNIT_WEIGHTS = {
   'whole eggs': 50, 'banana': 118, 'avocado': 200, 'potato': 170,
   'sweet potato': 180, 'carrot': 60, 'mango': 200, 'kiwi': 75,
+  'apple': 182, 'orange': 131,
+  // Keyed by the matched ALIAS text, not the resolved dbKey ('potato') —
+  // matchFoodToDatabase checks this before falling back to the dbKey
+  // weight, so "baking potato"/"jacket potato" get their own bigger
+  // default without disturbing bare "potato" mentions.
+  'baking potato': 280, 'baking potatoes': 280, 'jacket potato': 280,
 };
+// Assumed grams for a cooking fat mentioned with NO explicit quantity and NO
+// count at all ("cooked in beef dripping") — added 12 Sep 2026. Without this,
+// matchFoodToDatabase() fell through to the flat 100g default, which for a
+// pure fat is a ~900kcal error — very likely the actual source of the real
+// bug this whole pass was built to fix (a logged meal with unquantified
+// dripping came back with 94g of fat, roughly double anything plausible).
+// ~10g approximates what's typically used/absorbed frying a few eggs; any
+// match that falls back to this gets flagged as an assumption in the UI,
+// never presented as if it were an exact figure.
+const COOKING_FAT_DEFAULT_G = { 'beef tallow': 10 };
 const WORD_NUMBERS = { 'a':1,'an':1,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'half':.5 };
 function matchFoodToDatabase(name){
   const text = name.toLowerCase();
-  const qtyRe = /~?(\d+(?:\.\d+)?)\s*(g|ml|kg|l)\b/gi;
+  // tsp/tbsp added 12 Sep 2026 — cooking fats (beef tallow/dripping) are
+  // almost always described in spoon units, never grams, and the regex
+  // previously had no way to capture that at all.
+  // Known pre-existing sharp edge, unchanged by this addition: the 20-char
+  // proximity match below picks whichever food is textually CLOSEST to a
+  // quantity, not the food it's semantically attached to — "4 eggs, 1 tbsp
+  // beef dripping" can attribute the tbsp to eggs instead of dripping if
+  // eggs happens to sit closer in the string. Log the fat-quantified item
+  // first (or as its own separate log entry) to sidestep it; not worth a
+  // more complex fix for how rarely this specific ambiguity should occur in
+  // JP's actual whitelist-only logging.
+  const qtyRe = /~?(\d+(?:\.\d+)?)\s*(g|ml|kg|l|tsp|teaspoons?|tbsp|tablespoons?)\b/gi;
   // Longest-key-first: prevents a shorter key that's a substring of a
   // longer one ('potato' inside 'sweet potato', 'egg' inside 'eggs') from
   // creating a spurious second/duplicate match for the same food mention.
@@ -6924,6 +7031,12 @@ function matchFoodToDatabase(name){
     // them all to that one unrelated gram figure instead of falling through
     // to the count-based estimate below.
     let grams = 100;
+    // Tracks whether `grams` came from a real, explicit figure (weight,
+    // volume, spoon measure, or an explicit count) vs a default this
+    // function had to assume — added 12 Sep 2026 so callers can disclose
+    // "calculated" vs "calculated, but a quantity was assumed" rather than
+    // presenting every deterministic match with the same confidence.
+    let assumed = true;
     const idx = text.indexOf(key);
     let best = null, bestDist = Infinity;
     let m; qtyRe.lastIndex = 0;
@@ -6933,15 +7046,25 @@ function matchFoodToDatabase(name){
     }
     if(best){
       let qty = parseFloat(best[1]); let unit = best[2].toLowerCase();
-      if(unit==='kg') qty*=1000; if(unit==='l') qty*=1000;
+      if(unit==='kg') qty*=1000;
+      else if(unit==='l') qty*=1000;
+      else if(unit==='tsp' || unit.startsWith('teaspoon')) qty*=5;
+      else if(unit==='tbsp' || unit.startsWith('tablespoon')) qty*=14;
       grams = qty;
-    } else if(FOOD_UNIT_WEIGHTS[dbKey]){
+      assumed = false;
+    } else if(FOOD_UNIT_WEIGHTS[key] || FOOD_UNIT_WEIGHTS[dbKey]){
       // No explicit weight given — look for a count (digit, fraction, or
       // word-number) in the text just before this food mention instead of
       // silently assuming a flat, often-wrong 100g.
       // Allow ONE arbitrary descriptor word between the count and the food
       // ("4 large eggs", "two baking potatoes") rather than a fixed
       // adjective list — a fixed list missed "baking" on first pass here.
+      // Unit weight prefers FOOD_UNIT_WEIGHTS[key] (the matched alias text,
+      // e.g. 'baking potato') over FOOD_UNIT_WEIGHTS[dbKey] (the resolved
+      // generic food, e.g. 'potato') — added 12 Sep 2026 so a specifically-
+      // named variant can carry its own, more accurate default size without
+      // changing the default for the generic/bare mention of the same food.
+      const unitWeight = FOOD_UNIT_WEIGHTS[key] || FOOD_UNIT_WEIGHTS[dbKey];
       const before = text.slice(Math.max(0, idx-25), idx);
       const fracM = before.match(/(\d+)\s*\/\s*(\d+)\s*(?:\w+\s+)?$/);
       const numM = before.match(/(\d+(?:\.\d+)?)\s*(?:\w+\s+)?$/);
@@ -6950,11 +7073,120 @@ function matchFoodToDatabase(name){
       if(fracM) count = parseFloat(fracM[1])/parseFloat(fracM[2]);
       else if(numM) count = parseFloat(numM[1]);
       else if(wordM) count = WORD_NUMBERS[wordM[1]];
-      grams = count * FOOD_UNIT_WEIGHTS[dbKey];
+      grams = count * unitWeight;
+      assumed = !(fracM || numM || wordM);
+    } else if(COOKING_FAT_DEFAULT_G[dbKey]){
+      // Cooking fat mentioned with no quantity and no count at all
+      // ("cooked in beef dripping") — use the documented small default
+      // instead of falling through to the flat 100g case below (which for
+      // a pure fat would be a ~900kcal error). Always flagged as assumed.
+      grams = COOKING_FAT_DEFAULT_G[dbKey];
+      assumed = true;
     }
-    matched.push({ key: dbKey, grams, data: FOOD_NUTRIENT_DB[dbKey] });
+    matched.push({ key: dbKey, grams, assumed, data: FOOD_NUTRIENT_DB[dbKey] });
   });
-  return { matched, hasMatch: matchedAnyText };
+  return { matched, hasMatch: matchedAnyText, consumedKeys };
+}
+
+// Scans a window around a 'beef mince' mention for a fat-ratio signal.
+// Added 12 Sep 2026. Deliberately NOT encoded as a compound dictionary key
+// (e.g. '80/20 mince') — free text won't reliably put the ratio and the
+// word "mince" in one fixed order ("90/10 mince" vs "lean mince (90/10)" vs
+// "200g mince, 90/10"), so a literal compound key would only ever match one
+// exact phrasing. Same proximity-window idea as the quantity matching
+// above, applied to a fat-ratio instead of a gram figure. No 80/20 branch
+// needed — returning null means "use the generic default", which already
+// represents 80/20-equivalent macros in FOOD_MACRO_DB.
+function detectMinceFatRatio(text, idx){
+  const window = text.slice(Math.max(0, idx-25), idx+25);
+  return /90\s*[\/:]\s*10|extra-?lean|\blean\b/.test(window) ? '90/10' : null;
+}
+
+// Strips every matched food mention (plus digits/units/common stopwords)
+// out of a logged entry and returns whatever meaningful text is left —
+// added 12 Sep 2026 for applyDeterministicMacros() below. Non-empty leftover
+// means the entry wasn't fully accounted for by the database (e.g. "2 eggs
+// and a granola bar"), so it must NOT be treated as fully calculated —
+// doing so would silently drop the unmatched food's macros entirely rather
+// than falling back to an AI estimate for the whole entry.
+const _LEFTOVER_STOPWORDS = new Set([
+  'cooked','fried','baked','raw','with','and','of','the','in','on','plus',
+  'then','into','some','baking','large','small','medium','fresh','whole',
+  'ripe','sliced','diced','chopped','a','an','one','two','three','four',
+  'five','six','seven','eight','half','g','ml','kg','l','tsp','tbsp',
+  'teaspoon','teaspoons','tablespoon','tablespoons',
+  // 'lean'/'extra' added 12 Sep 2026 — without these, "200g lean mince"
+  // registered "lean" as unmatched leftover text (since it isn't consumed
+  // by the 'mince' alias substring), which forced the whole entry back to
+  // an AI estimate even though detectMinceFatRatio() was correctly reading
+  // that same word to pick the 90/10 macros. The two detectors have to
+  // agree on which descriptor words are "part of the food", not leftover.
+  'lean','extra',
+]);
+function detectLeftoverFoodText(rawName, consumedKeys){
+  let text = rawName.toLowerCase();
+  (consumedKeys||[]).forEach(k => { text = text.split(k).join(' '); });
+  const words = text
+    .replace(/[^a-z\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 3 && !_LEFTOVER_STOPWORDS.has(w));
+  return { hasMeaningfulLeftover: words.length > 0, leftoverWords: words };
+}
+
+// Resolves one matchFoodToDatabase() match to its macro data, added 12 Sep
+// 2026. Returns null (not a guess) when the matched food isn't in
+// FOOD_MACRO_DB yet — callers must treat that as "not fully calculated",
+// never silently substitute a zero.
+function resolveMacrosForMatch(m, rawName){
+  if(m.key === 'beef mince'){
+    const idx = rawName.toLowerCase().indexOf('mince');
+    const ratio = idx >= 0 ? detectMinceFatRatio(rawName.toLowerCase(), idx) : null;
+    if(ratio === '90/10') return { macros: FOOD_MACRO_DB['beef mince 90/10'], assumedRatio: false };
+    return { macros: FOOD_MACRO_DB['beef mince'], assumedRatio: true };
+  }
+  const macros = FOOD_MACRO_DB[m.key];
+  return macros ? { macros, assumedRatio: false } : null;
+}
+
+// The core of the macro-accuracy pass, added 12 Sep 2026. Called from
+// addFood()/submitClarification() right after the AI response comes back —
+// if the ENTIRE logged text resolves against the verified database, this
+// overrides the AI's guessed protein/carbs/fat with a deterministic sum
+// from real per-100g data and derives calories from THAT (never a separate
+// stored figure), which is what fixes the bug where a logged meal's own
+// kcal didn't even agree with its own P/C/F. Anything that doesn't fully
+// resolve (off-whitelist food, meaningful leftover text) keeps the AI's
+// macro estimate untouched, but still gets its calorie figure recomputed
+// for internal consistency — every logged food gets a self-consistent
+// kcal figure regardless of which path it took.
+function applyDeterministicMacros(d, rawName){
+  const { matched, hasMatch, consumedKeys } = matchFoodToDatabase(rawName || '');
+  const leftover = detectLeftoverFoodText(rawName || '', consumedKeys);
+  const resolved = hasMatch ? matched.map(m => ({ m, r: resolveMacrosForMatch(m, rawName) })) : [];
+  const fullyResolved = hasMatch && !leftover.hasMeaningfulLeftover && resolved.every(x => x.r != null);
+
+  if(fullyResolved){
+    const sums = resolved.reduce((a, { m, r }) => {
+      const scale = m.grams / 100;
+      a.protein += (r.macros.protein_g||0) * scale;
+      a.carbs   += (r.macros.carbs_g||0) * scale;
+      a.fat     += (r.macros.fat_g||0) * scale;
+      return a;
+    }, { protein: 0, carbs: 0, fat: 0 });
+    d.protein = Math.round(sums.protein * 10) / 10;
+    d.carbs   = Math.round(sums.carbs * 10) / 10;
+    d.fat     = Math.round(sums.fat * 10) / 10;
+    d.cal     = Math.round(d.protein*4 + d.carbs*4 + d.fat*9);
+    d._verified = true;
+    d._assumedComposition = resolved.some(({ m, r }) => m.assumed || r.assumedRatio);
+    d._matchDetail = resolved.map(({ m }) => ({ key: m.key, grams: Math.round(m.grams), assumed: m.assumed }));
+  } else {
+    // AI-estimated path unchanged in substance — only the calorie figure is
+    // recomputed so it can never again silently disagree with its own P/C/F.
+    d.cal = Math.round((+d.protein||0)*4 + (+d.carbs||0)*4 + (+d.fat||0)*9);
+    d._verified = false;
+  }
+  return d;
 }
 
 // JP's real planned meals for the day being viewed — read-only reference
@@ -7278,6 +7510,17 @@ function renderFoods(){
     const r = foodRatings[f.id];
     const hasRating = r != null && r.score != null;
     const scoreHtml = hasRating ? `<div class="food-score ${scoreClass(r.score)}">${r.score}</div>` : '';
+    // Verified-vs-estimated disclosure, added 12 Sep 2026. Prefers the
+    // durable nutrition_logs column (present for every row once migration
+    // 0023 runs) and falls back to the cache-only flag for rows saved
+    // before that column existed — either way, a row with neither present
+    // defaults to "Estimated", which is the correct read for any log
+    // entry that predates this feature entirely.
+    const verified = f.verified != null ? f.verified : (r?.verified || false);
+    const assumedComp = f.assumed_composition != null ? f.assumed_composition : (r?.assumedComposition || false);
+    const verifiedBadge = verified
+      ? `<span style="font-size:9px;color:var(--teal);border:1px solid rgba(44,212,196,.3);padding:1px 5px" title="Calculated from verified food-composition data${assumedComp?', with one quantity/composition detail assumed (hover row for detail)':''}">✓ Calculated${assumedComp?' *':''}</span>`
+      : `<span style="font-size:9px;color:var(--dim);border:1px solid var(--border);padding:1px 5px" title="AI-estimated — not matched to the verified food database">≈ Estimated</span>`;
     const tipsHtml = hasRating ? `<div class="food-tips-wrap" id="tips-${f.id}">
       <div class="food-tips-reasons">${escHtml(r.reasons)}</div>
       ${(r.tips||[]).map(t=>`<div class="food-tip-item">${escHtml(t)}</div>`).join('')}
@@ -7289,7 +7532,7 @@ function renderFoods(){
     return `<div style="background:var(--s1);border:1px solid var(--border);margin-bottom:8px">
       <div class="food-row" onclick="${hasRating?`toggleFoodTips('${f.id}')`:''}" style="${hasRating?'cursor:pointer':''}">
         <div class="food-name">${escHtml(f.food_name)}${timeStr(f)}${ctxStr(f)}</div>
-        <div class="food-macros">${Math.round(f.protein_g||0)}P · ${Math.round(f.carbs_g||0)}C · ${Math.round(f.fat_g||0)}F<br>${Math.round(f.calories||0)} kcal</div>
+        <div class="food-macros">${Math.round(f.protein_g||0)}P · ${Math.round(f.carbs_g||0)}C · ${Math.round(f.fat_g||0)}F<br>${Math.round(f.calories||0)} kcal<br>${verifiedBadge}</div>
         ${scoreHtml}
         <button class="food-share" onclick="event.stopPropagation();shareFoodCard('${f.id}')" title="Share">⤴</button>
         <button class="food-del" onclick="event.stopPropagation();removeFood(${i})">×</button>
@@ -7429,18 +7672,38 @@ async function logFoodEntry(name, timeVal, d) {
     carbs_g: hasData ? (+d.carbs||0) : 0,
     fat_g: hasData ? (+d.fat||0) : 0
   };
+  // Belt-and-suspenders, added 12 Sep 2026: recompute the stored calorie
+  // figure one more time directly from protein/carbs/fat right before
+  // insert, regardless of which path (deterministic DB match or AI
+  // estimate) produced them. By construction they should already agree —
+  // this guarantees it, independent of any future change upstream.
+  if (hasData) macros.cal = Math.round(macros.protein_g*4 + macros.carbs_g*4 + macros.fat_g*9);
   const rating = (hasData && d.score) ? {
     score: d.score, headline: d.headline||null,
     reasons: d.reasons||null, tips: Array.isArray(d.tips)?d.tips:[],
     toTen: d.to_ten||null, tagline: d.tagline||null,
-    micros: d.micros||null, mealTime: timeVal||null, context: d._context||null
-  } : (timeVal || d?._context ? { mealTime: timeVal||null, context: d?._context||null } : null);
+    micros: d.micros||null, mealTime: timeVal||null, context: d._context||null,
+    verified: d._verified||false, assumedComposition: d._assumedComposition||false,
+    matchDetail: d._matchDetail||null
+  } : (timeVal || d?._context || hasData ? {
+    mealTime: timeVal||null, context: d?._context||null,
+    verified: d?._verified||false, assumedComposition: d?._assumedComposition||false,
+    matchDetail: d?._matchDetail||null
+  } : null);
 
   // Per-meal score/notes deliberately NOT written — per JP's direction,
   // the individual AI score/tagline aren't the important permanent record;
   // one aggregate score per DAY is (see updateDayScore()/
   // nutrition_day_scores below). score/notes columns stay on the table
   // for old rows (never dropped), just unused for new ones going forward.
+  // NOTE: verified/assumed_composition are NOT written to nutrition_logs
+  // yet — that needs migration 0023 (adds those two columns) applied to the
+  // live DB first; inserting unknown columns would break every food log.
+  // Until that migration runs, this flag lives cache-only in foodRatings
+  // (same accepted gap as headline/tips/tagline below) — renderFoods()
+  // already prefers a durable f.verified column when present and falls
+  // back to the cache otherwise, so applying the migration later needs no
+  // further code change.
   const entry = {
     user_id: USER.id, date: EAT_DATE, food_name: name,
     calories: macros.cal, protein_g: macros.protein_g,
@@ -7522,6 +7785,7 @@ async function addFood(){
       return;
     }
 
+    applyDeterministicMacros(d, name);
     await logFoodEntry(name, timeVal, d);
   } catch(e) {
     console.error('callFoodAPI threw:', e);
@@ -7550,6 +7814,7 @@ async function submitClarification() {
 
   try {
     const d = await callFoodAPI(fullName, pendingTime);
+    applyDeterministicMacros(d, fullName);
     await logFoodEntry(fullName, pendingTime, d);
   } catch(e) {
     await logFoodEntry(fullName, pendingTime, {});
