@@ -197,6 +197,17 @@ export default async function handler(req) {
     }
   }
 
+  // Deterministic consistency check, added 12 Sep 2026 — same reasoning as
+  // the two corrections above: found live that the model's own "cal" field
+  // does not reliably agree with its own protein/carbs/fat (a real logged
+  // meal came back as 28P/188C/94F/1847kcal, but 28*4+188*4+94*9=1710, not
+  // 1847). Recompute cal here so the raw API response is self-consistent
+  // for any consumer, independent of whether a client-side override (e.g.
+  // app.html's applyDeterministicMacros) also replaces these numbers.
+  if (result.protein != null || result.carbs != null || result.fat != null) {
+    result.cal = Math.round((+result.protein || 0) * 4 + (+result.carbs || 0) * 4 + (+result.fat || 0) * 9)
+  }
+
   return json(result)
 }
 
